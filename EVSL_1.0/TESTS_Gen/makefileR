@@ -1,0 +1,49 @@
+.SUFFIXES : .f .c .o
+
+include ../makefile.in
+
+#EXTLIB = /home/fac01/saad/Projects/EVSL/Rational_GEIG/SuiteSparse
+#EXTLIB =  /Users/Yuanzhe/Documents/SuiteSparse-1
+EXTLIB = /home/li50/workspace/SuiteSparse-4.5.3
+
+# Common flags
+FLAGS = -DUNIX -O3 -g -Wall 
+
+LIB_METIS_5_1 = $(EXTLIB)/metis-5.1.0/build/Linux-x86_64/libmetis
+
+LIB_UMF = -L$(EXTLIB)/UMFPACK/Lib -lumfpack \
+          -L$(EXTLIB)/AMD/Lib/ -lamd \
+          -L$(EXTLIB)/SuiteSparse_config -lsuitesparseconfig \
+          -L$(EXTLIB)/CHOLMOD/Lib -lcholmod \
+	  -L$(EXTLIB)/COLAMD/Lib -lcolamd \
+          -L$(LIB_METIS_5_1) -lmetis \
+          -L$(EXTLIB)/CCOLAMD/Lib -lccolamd \
+	  -L$(EXTLIB)/CAMD/Lib -lcamd
+
+INCLUDES = -I../INC -I../SRC -I $(EXTLIB)/UMFPACK/Include -I $(EXTLIB)/AMD/Include \
+-I $(EXTLIB)/SuiteSparse_config -I $(EXTLIB)/CHOLMOD/Include 
+
+# Object files for rational filter restart lanczos
+OBJS_RR = GenRLanR.o io.o mmio.o 
+# Object files for rational filter Non-restart lanczos
+OBJS_RN = GenRLanN.o io.o mmio.o 
+
+LIB = -L.. -llancheb 
+
+# Rules
+default: GenRLanN.ex 
+
+%.o : %.c
+	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
+
+# Exe
+GenRLanR.ex: $(OBJS_RR) 
+	$(LINK) -o GenRLanR.ex $(OBJS_RR) $(LIB) $(LIB_UMF) $(LIBLAPACK) $(LIBBLAS) $(LIB0)
+
+GenRLanN.ex: $(OBJS_RN) 
+	$(LINK) -o GenRLanN.ex $(OBJS_RN) $(LIB) $(LIB_UMF) $(LIBLAPACK) $(LIBBLAS) $(LIB0)
+
+all: GenRLanR.ex GenRLanN.ex 
+
+clean:
+	rm -f *.o *.ex 

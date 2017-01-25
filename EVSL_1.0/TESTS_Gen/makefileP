@@ -1,0 +1,47 @@
+.SUFFIXES : .c .o
+
+include ../makefile.in
+
+# Common flags
+FLAGS = -DUNIX -O3 -g -Wall 
+
+# Object files for polynomial filter restart lanczos
+OBJS_PR = GenPLanR.o io.o mmio.o 
+
+# Object files for polynomial filter restart lanczos (omp)
+OBJS_PR_O = GenPLanR_omp.o io.o mmio.o 
+
+# Object files for polynomial filter Non-restart lanczos
+OBJS_PN = GenPLanN.o io.o mmio.o
+
+# Object files for subspace iteration
+OBJS_PSI = GenPSI.o io.o mmio.o 
+
+LIB = -L.. -llancheb 
+
+# Rules
+default: GenPLanN.ex 
+
+%.o : %.c
+	$(CC) $(FLAGS) -I ../INC -o $@ -c $<
+# Special rules for omp code
+GenPLanR_omp.o : GenPLanR_omp.c
+	$(CC) $(FLAGS) -I ../INC -fopenmp -o $@ -c $<
+
+# Exe
+GenPLanR.ex: $(OBJS_PR)
+	$(LINK) -o GenPLanR.ex $(OBJS_PR) $(LIB) $(LIBLAPACK) $(LIBBLAS) $(LIB0)
+
+GenPLanN.ex: $(OBJS_PN)
+	$(LINK) -o GenPLanN.ex $(OBJS_PN) $(LIB) $(LIBLAPACK) $(LIBBLAS) $(LIB0)
+
+GenPSI.ex: $(OBJS_PSI)
+	$(LINK) -o GenPSI.ex $(OBJS_PSI) $(LIB) $(LIBLAPACK) $(LIBBLAS) $(LIB0)
+
+GenPLanR_omp.ex: $(OBJS_PR_O)
+	$(LINK) -o GenPLanR_omp.ex $(OBJS_PR_O) $(LIB) $(LIBLAPACK) $(LIBBLAS) $(LIB0) -fopenmp 
+
+all: GenPLanR.ex GenPLanN.ex GenPSI.ex GenPLanR_omp.ex
+
+clean:
+	rm -f *.o *.ex 

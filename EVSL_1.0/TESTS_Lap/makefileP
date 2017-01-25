@@ -1,0 +1,38 @@
+.SUFFIXES : .c .o
+
+include ../makefile.in
+
+FLAGS = -DUNIX -O3 -g -Wall 
+
+# Object files
+OBJS_PN  = LapPLanN.o io.o
+
+OBJS_PR  = LapPLanR.o io.o
+
+OBJS_PSI = LapPSI.o io.o
+
+LIB = -L../ -llancheb 
+
+# Rules
+default: LapPLanN.ex
+
+%.o : %.c
+	$(CC) $(FLAGS)  -I ../INC -o $@ -c $<
+
+# Exe
+LapPLanR.ex: $(OBJS_PR) 
+	$(LINK) -o LapPLanR.ex $(OBJS_PR) $(LIB) \
+	$(LIBLAPACK) $(LIB0)
+
+LapPLanN.ex: $(OBJS_PN) 
+	$(LINK) -o LapPLanN.ex $(OBJS_PN) $(LIB) \
+        $(LIBLAPACK) $(LIB0)
+
+LapPSI.ex: $(OBJS_PSI) 
+	$(LINK) -o LapPSI.ex $(OBJS_PSI) $(LIB) \
+	$(LIBLAPACK) $(LIB0)
+
+all: LapPLanR.ex LapPLanN.ex LapPSI.ex 
+
+clean:
+	rm -f *.o *.ex 

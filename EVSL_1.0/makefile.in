@@ -1,0 +1,15 @@
+# Compilers (only C is needed)
+CC = gcc
+OBJ_TIME = timing.o 
+## 
+LIB0 = -lgfortran -lrt -lm 
+## Linker 
+LINK = gcc
+
+# ar 
+AR = ar rv
+RANLIB = ranlib
+
+## libraries: blas, lapack. 
+#LIBLAPACK = -llapack -lblas
+LIBLAPACK = -L/home/li50/workspace/lapack-3.6.1 -llapack -lrefblas

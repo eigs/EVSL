@@ -1,0 +1,12 @@
+
+`make' will make the library liblancheb.a 
+
+The main functions are 
+
+    chelanTr.c    :  Polynomial Filtered thick restart Lanczos
+    chelanNr.c    :  Polynomial Filtered no-restart Lanczos
+    chebsi.c      :  Polynomial Filtered  Subspace iteration
+    ratlanTr.c    :  Rational Filtered thick restart Lanczos
+    ratlanNr.c    :  Rational Filtered no-restart Lanczos
+
+The rest of the files contain  functions called by the above.

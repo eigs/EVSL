@@ -1,0 +1,37 @@
+These  drivers  are for  testing  a  few methods  on  simple
+Laplacean matrices.   For better  clarity we  have separated
+the  makefiles  in  two:  makefileP  (to  make  the  drivers
+invoking Polynomial  filtering) and  makefileR (to  make the
+drivers invoking Rational filtering).
+
+LapPLanR.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter Lanczos with thick Restart
+    make -f makefileP LapPLanR.ex--> executable LapPLanR.ex
+
+LapPLanN.c :   
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter non-restarting Lanczos 
+    make -f makefileP LapPLanN.ex--> executable LapPLanN.ex
+
+LapPSI.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter Subspace Iteration
+    make -f makefileP LapPSI.ex--> executable LapPSI.ex
+
+LapRLanR.c :  
+    driver for testing spectrum slicing -- with 
+    Rational Filter Lanczos with thick Restart
+    make -f makefileR LapRLanR.ex--> executable LapRLanR.ex
+
+LapRLanN.c :  
+    driver for testing spectrum slicing -- with 
+    Rational Filter non-restart Lanczos 
+    make -f makefileR LapRLanN.ex--> executable LapRLanN.ex
+
+To compute all the eigenvalues of a Laplacian discretized on
+an N1*N2*N3  grid, located in  the interval [D1, D2]  with K
+slices:
+
+./Lap*.ex -nx N1 -ny N2 -nz N3 -a D1 -b D2 -nslices K
+
