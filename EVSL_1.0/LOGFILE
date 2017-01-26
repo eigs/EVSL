@@ -1,0 +1,72 @@
+
+Jan 25, 2017
+ put in the Doxigen files + Doxygen commented files [thanks Luke!]
+ reconled some changes with the files used by Luke. 
+ removed Laplacean related files from SRC and put them in the 
+ TESTS_Lap directory under lapl.c
+ TODO: the documentation (doxygen) excludes INC TESTS_Lap and TESTS_Gen
+       Add those in soon. Need to document files. and 
+       remove EXCLUDE command from file Documentation/Doxyfile 
+
+Aug. 15, 2016
+
+Mon Aug 15 15:50:00 CDT 2016: 1) fixed a bug in chebpoly that affected
+ jackson damping. 2) reorganized the parameters pf the pol. filters into
+ a struct. called polparams .. 3) coded a non-restart lanczos filter
+ procedure. 4) recoded the ChebAv routines to improve speed as well as
+ clarity. YS 
+
+Fri Jul 1 15:00:45 CDT 2016 change rand_double() so it returns numbers
+ between -1  and 1 with mean  0.  and removed the  lines in spslicer.c
+ that enforce  the mean  to be  zero. 
+ added a function  (time_seeder()) to generate a seed  for srand based
+ on the timer/ changed spslicer accordingly..
+ more cleaning  in TEST.
+
+Thu Jun 30 10:59:52 CDT 2016 -- YS
+
+  fixed an error in testL.c so that it can also work for 3D problems.
+  changed the README files according to changes made recently..
+
+Wed Jun 29 18:10:51 CDT 2016 -- YS
+ -- removed test0.c .. and changed testL.c so you can enter
+    some parameters on the command line. (as done initially by Yuanzhe I think)
+
+ -- made a small change to slicer so it treats the particular case of one slice.
+    
+
+
+Mon Nov 23 11:22:30 CST 2015 -- YX
+
+ -- the format of matfile has changed
+ 
+ -- lanblan.* chebsi.* have changed. 
+    The outputs of these functions are written to OUT/ for each matrix
+    
+ -- testG.c testSi.c have changed accordingly. 
+  
+
+Fri Nov 20 11:18:30 CST 2015 -- YS
+
+ -- changed chebpoly -- new functions for selecting 
+    filters/
+
+ -- There were two io.c files (!) one is SRC and one in TESTS.
+    removed unnecessary items in SRC/io.c and renamed it dumps.c
+
+ -- changes to the way a matrix is entered have been made by 
+    yuanzhe. io.h has changed accordingly.. 
+
+ -- in DKGS reorth. You do not need more that 1 reortho.
+    [Kahane's ``twice is enough"]
+
+ 
+Wed Nov 11 14:29:44 PST 2015
+-- changed CGS reortho, now with the DGKS test
+
+
+Sat Oct 31 16:14:32 CDT 2015  -- YS
+ -- changed the makefiles so as to allow compiling on macs
+ -- updated slightly the readme files.
+
+-----------------------------------------------------------------------
