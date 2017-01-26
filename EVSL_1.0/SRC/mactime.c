@@ -4,8 +4,10 @@
 #include <stdio.h>  
 #include <math.h>
       
+/**
+ * @brief uint64_t difference = end - start;  
+ */
 double cheblan_timer() {
-  //  uint64_t difference = end - start;  
   double t;
   uint64_t absNano;
   static mach_timebase_info_data_t    sTimebaseInfo; 
@@ -18,9 +20,10 @@ double cheblan_timer() {
   return t;
 }
 
+/**
+ * @brief Uses the timer to generate a seed to be used for srand.
+ */
 int time_seeder() { 
-  // Uses the timer to generate a seed to be used
-  // for srand.. 
   double t1,t2;
   int iseed, zero=0;
   t1   = cheblan_timer();

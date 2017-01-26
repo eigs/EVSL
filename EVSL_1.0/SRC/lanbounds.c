@@ -6,16 +6,16 @@
 #include "struct.h"
 #include "internal_proto.h"
 
-int LanBounds(csrMat *A, int msteps, double *v, double *lmin, double *lmax) {
-/*----------------------------------------------------------------------
-/    INPUT:
-/    csrMat *A,   = matrix A
-/    int msteps,  = number of Lanczos steps
-/    double *v,   = initial vector
-/    RETURN:
-/    double *lmin,= [lmin lmax] is the desired interval containing  
-/    double *lmax   all eigenvalues of A
+/**----------------------------------------------------------------------
+ *
+*    @param *A    matrix A
+*    @param msteps   number of Lanczos steps
+*    @param *v    initial vector
+*
+*    @param[out] *lmin, *lmax [lmin lmax] is the desired interval containing  
+*    all eigenvalues of A
 *----------------------------------------------------------------------*/   
+int LanBounds(csrMat *A, int msteps, double *v, double *lmin, double *lmax) {
   double *alp, *bet, nbet, nalp, t, *V;
   int one=1, n;
 

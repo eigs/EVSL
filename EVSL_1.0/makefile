@@ -6,4 +6,8 @@ clean:
 	( cd SRC    ; make clean)
 	( cd TESTS_Gen  ; make -f makefileP clean)
 	( cd TESTS_Lap  ; make -f makefileP clean)
+docs:
+	 ( doxygen Documentation/Doxyfile 2> Documentation/Doxygen-Errors.txt )
+cleandocs:
+	( cd Documentation; make  clean)
 

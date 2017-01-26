@@ -11,4 +11,6 @@ AR = ar rv
 RANLIB = ranlib
 
 ## libraries: blas, lapack. 
-#LIBLAPACK = -llapack -lblas
+##LIBLAPACK = -llapack -lblas
+LIBLAPACK = -L/project/scicom/scicom00/SOFT/lib/Linux64 -llapack -lrefblas
+##%%home/li50/workspace/lapack-3.6.1 -llapack -lrefblas

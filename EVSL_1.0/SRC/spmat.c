@@ -3,8 +3,8 @@
 #include "struct.h"
 #include "internal_proto.h"
 
-/*-------------------------------------------------*
- * convert csr to csc
+/**-------------------------------------------------*
+ * @brief convert csr to csc
  * Assume input csr is 0-based index
  * output csc 0/1 index specified by OUTINDEX      *
  * ------------------------------------------------*/
@@ -42,8 +42,8 @@ void csrcsc(int OUTINDEX, int nrow, int ncol, int job,
   iao[0] = OUTINDEX;
 }
 
-/*-------------------------------------------*
- * Sort each row of a csr by increasing column 
+/**-------------------------------------------*
+ * @brief  Sort each row of a csr by increasing column 
  * order
  * By double transposition
  *-------------------------------------------*/
@@ -88,7 +88,7 @@ void free_coo(cooMat *coo) {
 }
 
 /*---------------------------------------------------------
- * convert coo to csr
+ * @brief convert coo to csr
  *---------------------------------------------------------*/
 int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
   int nnz = coo->nnz;
@@ -209,7 +209,9 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
   }
 }
 
-// y = alp*A*x + bet*y
+/**
+* @brief y = alp*A*x + bet*y
+*/
 int matvec_gen(double alp, csrMat *A, double *x, double bet, double *y) {
 #ifdef EVSL_USE_MKL
   int nrows = A->nrows;
@@ -223,7 +225,9 @@ int matvec_gen(double alp, csrMat *A, double *x, double bet, double *y) {
   return 0;
 }
 
-// y = A * x
+/**
+ * @brief y = A * x
+ */
 int matvec(csrMat *A, double *x, double *y) {
 #ifdef EVSL_USE_MKL
   int nrows = A->nrows;
@@ -235,58 +239,3 @@ int matvec(csrMat *A, double *x, double *y) {
 
   return 0;
 }
-
-int lapgen(int nx, int ny, int nz, cooMat *Acoo) {
-  int n = nx * ny * nz;
-  Acoo->nrows = n;
-  Acoo->ncols = n;
-
-  int nzmax = nz > 1 ? 7*n : 5*n;
-  Malloc(Acoo->ir, nzmax, int);
-  Malloc(Acoo->jc, nzmax, int);
-  Malloc(Acoo->vv, nzmax, double);
-
-  int ii, nnz=0;
-  for (ii=0; ii<n; ii++) {
-    double v = -1.0;
-    int i,j,k,jj;
-    k = ii / (nx*ny);
-    i = (ii - k*nx*ny) / nx;
-    j = ii - k*nx*ny - i*nx;
-
-    if (k > 0) {
-      jj = ii - nx * ny;
-      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
-    }
-    if (k < nz-1) {
-      jj = ii + nx * ny;
-      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
-    }
-
-    if (i > 0) {
-      jj = ii - nx;
-      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
-    }
-    if (i < ny-1) {
-      jj = ii + nx;
-      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
-    }
-
-    if (j > 0) {
-      jj = ii - 1;
-      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
-    }
-    if (j < nx-1) {
-      jj = ii + 1;
-      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
-    }
-
-    v = nz > 1 ? 6.0 : 4.0;
-    Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = ii;  Acoo->vv[nnz] = v;  nnz++;
-  }
-
-  Acoo->nnz = nnz;
-
-  return 0;
-}
-

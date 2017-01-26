@@ -8,8 +8,10 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/**
+ * @brief set default values for polparams struct.
+ **/
 void set_pol_def(polparams *pol){
-  // -------------------- this sets default values for polparams struct. 
   pol->max_deg = 300;      // max degree allowed
   pol->min_deg = 2;        // min allowed degree
   pol->damping = 2;        // damping. 0 = no damping, 1 = Jackson, 2 = Lanczos
@@ -19,13 +21,14 @@ void set_pol_def(polparams *pol){
   pol-> deg = 0;           // degree =0 means determine optimal degree.
 }
 
+/**
+ * @brief Computes damping coefficient for cheb. expansions.
+ *
+ * @param damping == 0 --> no damping \n
+ *                == 1 --> Jackson \n
+ *                == 2 --> Lanczos sigma damping
+ **/
 int dampcf(int m, int damping, double *jac){
-  //------------------------------------------------------------
-  // computes damping coefficient for cheb. expansions
-  // damping =  0  -->  no damping
-  // damping =  1  -->  Jackson
-  // damping =  2  -->  Lanczos sigma damping
-  //------------------------------------------------------------
   double thetJ = 0.0, thetL = 0.0, a1 = 0.0, a2 = 0.0, dm = (double) m;
   int k, k1;
   if (damping==1){
@@ -54,22 +57,26 @@ int dampcf(int m, int damping, double *jac){
   return (0);
 }        
 
-int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
-  /*--------------------------------------------------------------  
-    function yi = chebxPltd -- computes yi = p_mu (xi),
-    where xi is a vectors of values. This can used for plotting 
-    the filter given by mu for example --  
-    Jackson (or other) dampings is not explicitly used here but
-    is assumed to be multiplied by mu outside this routine.
+/**
+ *
+ *
+ *  @brief function yi = chebxPltd computes yi = p_mu (xi),
+ *
+ *  where xi is a vectors of values. This can used for plotting 
+ *  the filter given by mu for example --  
+ *  Jackson (or other) dampings is not explicitly used here but
+ *  is assumed to be multiplied by mu outside this routine.
 
-    m        = degree of the polynomial = length(mu)-1
-    mu       = Chev. expansion coefficients in KPM method
-    npts     = number of points in xi, yi
-    xi       = a vector of values where p(xi) is to be computed.
-    Note xi's must be in [-1 1] 
-    OUT:	  
-    yi       = pn(xi(:) )
---------------------------------------------------------------*/
+ *  @param m         degree of the polynomial = length(mu)-1
+ *  @param mu        Chev. expansion coefficients in KPM method
+ *  @param npts     = number of points in xi, yi
+ *  @param xi       = a vector of values where p(xi) is to be computed.
+ *  @warning Note xi's must be in [-1 1] 
+ *
+ *  @param[out] yi       = pn(xi(:) )
+ *  @return 0
+ **/
+int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
   int k, j, one = 1, n = npts;
   double scal;
   double *vkm1 = malloc(n*sizeof(double));
@@ -100,29 +107,40 @@ int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
   free(vk);
   return 0;
 }
-
+/**
+ * @brief Determines polynomial for end interval cases.
+ *
+ *
+ *  In these cases, polynomial is just a scaled Chebyshev polynomial. However
+ *  we need to express it in the same basis as in the other (middle interval)
+ *  cases. This function determines this expansion 
+ *
+ * @param aIn The start index of the transformed interval
+ * @param bIn The end index of the transformed interval
+ * @note [aIn, bIn] is the transformed interval
+ *
+ * @param pol A struct containing the parameters of polynomial.
+ *
+ * @b Modifies
+ * mu Expansion coefficients of best polynomial found.
+ * deg: Degree of polynomial
+ * gam: Site of delta function that is expanded.
+ *      Accurate 'balancing' is done:
+ *             If p(t) is best approximation to delta function at gam 
+ *              then gam is selected so that p(a)=p(b) - within the 
+ *              tolerance tolBal (set in this function to 1.e-10)
+ * bar: If \f$P(\lambda_{i}) \geq \f$ bar, accept eigenvalue as belonging to
+ * interval; else reject.
+ *
+ * @note [a b] is now "interval for eigenvalues to damp",
+ * [aIn, bIn] is the interval of interest
+ * del is used to expand interval of interest slightly so that pn(t)<bar by
+ * some margin.
+ *          
+ *
+ *
+ * * */
 void chext(polparams *pol, double aIn, double bIn){
-  //	   double *bar, int *mbest)
-  /* determines  polynomial for  end interval  cases.  In these cases,
-     polynomial is just a scaled Chebyshev polynomial. However we need
-     to express it in the same basis as in the other (middle interval)
-     cases. This function determines this expansion 
-     [aIn, bIn] = transformed interval 
-     pol        = struct containing the parameters of polynomial.
-     On return these are set in pol:
-     /   mu   : expansion coefficients of best polynomial found 
-     /   deg  : degree of polymomial
-     /   gam  : site of delta function that is expanded.
-     /          accurate 'balancing' is done:
-     /          if p(t) is best approximation to delta function at gam 
-     /           then gam is selected so that p(a)=p(b) - within the 
-     /          tolerance tolBal (set in this function to 1.e-10)
-     /   bar  : if (p(\lambda_i)) >= bar, accept eigenvalue as belonging
-     /          to interval; else reject. 
-     / Note : [a b] is now "interval for eigenvalues to damp", 
-     [aIn, bIn] is the interval of interest 
-     del is used to expand interval of interest slightly so 
-     that pn(t)<bar by some margin ------------------------------*/
   int max_deg = pol->max_deg;
   // int min_deg = pol->min_deg;   NOT used 
   double thresh = pol->thresh_ext;
@@ -211,7 +229,12 @@ void chext(polparams *pol, double aIn, double bIn){
   free(t0);
 }
 
-// find the indexofSmallestElement in array
+/**
+ * @brief Find the indexofSmallestElement in array
+ * @param array Array to find the smallest index of
+ * @param size size of the arry
+ * @return index of smallest entry in array
+**/
 int indexofSmallestElement(double *array, int size){
   int index = 0, i;
   for(i = 1; i < size; i++){
@@ -221,10 +244,21 @@ int indexofSmallestElement(double *array, int size){
   return index;
 }
 
+/**
+ * @brief Finds the roots of linear combination of chebyshev polynomials
+ * @param m   degree of polynomial
+ * @param v difference between cosines on left and right [(3.12) in paper] 
+ * @param jac   damping coefficients 
+ * @param thcIn   initial value of theta_c [refer to paper]
+ * @param tha    theta_a [refer to paper]
+ * @param thb    theta_b [refer to paper]
+ * @param mu     expansion coefficients. 
+ * @param[out] thc  value of theta_c  
+**/
 int rootchb(int m, double *v, double* jac, double thcIn, double tha, 
     double thb, double *mu, double *thc){
   int MaxIterBalan= 2;    // max steps in Newton to balance interval
-  double tolBal=1.e-6;  // tolerance for Newton - based on f val only
+  double tolBal=1.e-6;    // tolerance for Newton - based on f val only
   // do 2 newton steps -- of OK exit otherwise
   // continue to get root by solving eigv. pb
   int j, it, mm, one = 1;
@@ -310,29 +344,32 @@ int rootchb(int m, double *v, double* jac, double thcIn, double tha,
   return 0;
 }
 
+/**
+ *
+ * @brief Sets the values in pol
+ *
+ * @param intv An array of length 4, [intv[0, intv[1]] is the interval of
+ * desired eigenvalues. [intv[2], intv[3]] is the global interval of all
+ * eigenvalues it must contain all eigenvalues of A.
+ *
+ * @param pol The polynomial struct to set the values of.
+ *
+ * @warning Set the following values of pol \n
+ *  mu Expansion coefficients of best polynomial found  \n
+ *  gam  Site of delta function that is expanded. 
+ *          accurate 'balancing' is done:
+ *          if p(t) is best approximation to delta function at gam 
+ *           then gam is selected so that p(a)=p(b) - within the 
+ *          tolerance tolBal (set in this function to 1.e-10) \n
+ *  bar If \f$p(\lambda_i)) \geq \f$ bar, accept eignevalue as belonging to
+ *  interval; else reject.\n
+ *  deg degree of polynomial \n
+ *  dd half-width and... \n
+ *  cc ... Center of interval containing all eigenvalues [these are used by
+ *  ChebAv]
+ *
+**/
 int find_pol(double *intv, polparams *pol){ 
-  /*----------------------------------------------------------------------
-    / IN:
-    / intv  = an array of length 4 
-    /         [intv[0], intv[1]] is the interval of desired eigenvalues
-    /         [intv[2], intv[3]] is the global interval of all eigenvalues
-    /         it must contain all eigenvalues of A
-    /  
-    / OUT:
-    / these are set in pol struct:
-    /   mu   : expansion coefficients of best polynomial found 
-    /   gam  : site of delta function that is expanded.
-    /          accurate 'balancing' is done:
-    /          if p(t) is best approximation to delta function at gam 
-    /           then gam is selected so that p(a)=p(b) - within the 
-    /          tolerance tolBal (set in this function to 1.e-10)
-    /   bar  : if (p(\lambda_i)) >= bar, accept eigenvalue as belonging
-    /          to interval; else reject. 
-    /   deg  : degree of polymomial
-    /    dd  : half-width and.. 
-    /    cc  : ..center of interval containing all eigenvalues 
-    /         [these are used by ChebAv] 
-   * --------------------------------------------------------------------*/
   double *mu, *v, *jac, t=0.0, itv[2],  vals[2];
   int max_deg=pol->max_deg, min_deg=pol->min_deg, damping=pol->damping;
   double tha=0.0, thb=0.0, thc=0.0, thcIn=0.0;
@@ -449,25 +486,22 @@ int find_pol(double *intv, polparams *pol){
 }
 
 
+/**
+ * @brief Computes y=P(A) y, where pn is a Cheb. polynomial expansion [this
+ * does not call matvec - but does the sparse matrix vetor product internally]
+ *
+ * @param A Matrix A
+ * @param pol Struct containing the paramenters and expansion coefficient of
+ * the polynomail.
+ * @param v input vector
+ *
+ * @param[out] y p(A)v
+ *
+ * @b Workspace
+ * @param w Work vector of length 3*n [allocate before call]
+ * @param v is untouched
+ **/
 int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w) {
-  /*----------------------------------------------------------------------
-    Computes  y = p(A) y, where pn is a Cheb. polynomial expansion 
-    [this does not call matvec - but does the sparse matrix vectror product
-    internally] 
-
-    INPUT
-    csrMat *A  = matrix A
-    pol        = struct containing the parameters and expansion
-    coefficients of the polynomial. 
-    double *v  = input vector
-
-    OUT: 
-    double *y,= p(A)v
-
-    WORK SPACE: 
-    double *w = work vector of length 3*n [allocate before call] 
-    v is untouched. 
-----------------------------------------------------------------------*/
   //-------------------- unpack A 
   int n = A->nrows;
   int  *ia = A->ia;
@@ -520,26 +554,26 @@ int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w) {
   return 0;
 }
 
+/**
+ * @brief @b UNUSED Computes y=P(A) y, where pn is a Cheb. polynomial expansion [this
+ * does not call matvec - but does the sparse matrix vetor product internally]
+ * 
+ * This is unused but left here on purpose. It is a simpler but a bit slower
+ * routine. This explicitly calls matvec, so it can be useful for implementing
+ * user-specific matrix-vector multiplication.
+ *
+ * @param A Matrix A
+ * @param pol Struct containing the paramenters and expansion coefficient of
+ * the polynomail.
+ * @param v input vector
+ *
+ * @param[out] y p(A)v
+ *
+ * @b Workspace
+ * @param w Work vector of length 3*n [allocate before call]
+ * @param v is untouched
+ **/
 int ChebAv0(csrMat *A, polparams *pol, double *v, double *y, double *w) {
-  /*----------------------------------------------------------------------
-    / Computes  y = p(A) y, where pn is a Cheb. polynomial expansion 
-    / This is unused but left here on purpose -- simpler but a bit slower 
-    / routine.. This calls explicitly matvec -- so it can be useful for
-    / implementing user-specific matrix-vector multiplication 
-
-    INPUT
-    csrMat *A  = matrix A
-    pol        = struct containing the parameters and expansion
-    coefficients of the polynomial. 
-    double *v  = input vector
-
-    OUT: 
-    double *y,= p(A)v
-
-    WORK SPACE: 
-    double *w = work vector of length 3*n [allocate before call] 
-    v is untouched. 
-  ----------------------------------------------------------------------*/
   //-------------------- unpack n from A  
   int n = A->nrows;
   //-------------------- unpack pol

@@ -1,5 +1,5 @@
 =======================================================================
- --> Version 1.0  Latest changes made on: Fri Sep  9 16:20:25 CDT 2016
+ --> Version 1.0  Latest changes made on: Thu Jan 26 15:24:02 CST 2017
 
 -----------------------------------------------------------------------
   EVSL:  ChebLanTR, ChebLanNR,  ChebSI, RatLanTr, and RatLanNr  
@@ -23,14 +23,13 @@ restart), and a polynomial filtered subspace iteration.
 For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
 -----------------------------------------------------------------------
- This version dated:    Tue Aug 23 16:19:17 CDT 2016
------------------------------------------------------------------------
     
 Description of contents:
 =======================
 
 FILES:
     INC/
+
     evsl.h : function  prototypes and constant definitions
   
     blaslapack.h : C API for BLAS/LAPACK functions used in evsl
@@ -42,8 +41,6 @@ FILES:
                          polparams  : polynomial filter
                          rat        : rational filter
                          solveShift : direct solver interface
-    
-    cheblan.h        : header files for ChebLan* functions
     
     internal_proto.h : internal function prototypes for SRC/
     
@@ -95,9 +92,6 @@ FILES:
                             into slices having approximately the same 
                             number of eigenvalues
    
-    exeiglap3.c   :
-             exeiglap3    : compute the exact eigenvalues of Laplacians
-
     lanbounds.c   :  
              LanBounds    : Lanczos alg. to give a bound of spectrum
 
@@ -164,6 +158,8 @@ FILES:
            LapPSI.c   --> poly. filtering subspace iteration
            LapRLanN.c --> rational filtering non-restart Lanczos
            LapRLanR.c --> rational filtering thick-restart Lanczos
+    	   lapl.c     --> functions to set up a laplacean matrix and also to 
+                          compute the exact eigenvalues of Laplacians
 
            see details in the 00README file in the directory TESTS_Lap/
 

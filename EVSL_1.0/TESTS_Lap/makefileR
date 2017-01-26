@@ -5,8 +5,8 @@ include ../makefile.in
 #EXTLIB = /scratch/syphax/Rational_GEIG/SuiteSparse
 #EXTLIB =  /Users/Yuanzhe/Documents/SuiteSparse-1
 #EXTLIB = /home/rli/workspace/SuiteSparse-4.5.3
-EXTLIB = /home/li50/workspace/SuiteSparse-4.5.3
-#EXTLIB =  /scratch/syphax/Rational_GEIG/SuiteSparse-4.5.3/SuiteSparse
+#EXTLIB = /home/li50/workspace/SuiteSparse-4.5.3
+EXTLIB =  /scratch/syphax/Rational_GEIG/SuiteSparse-4.5.3/SuiteSparse
 # Common flags
 FLAGS = -DUNIX -O3 -g -Wall 
 
@@ -27,9 +27,9 @@ INCLUDES = -I ../INC -I $(EXTLIB)/UMFPACK/Include -I $(EXTLIB)/AMD/Include \
 
 # Object files
 
-OBJS_RR = LapRLanR.o io.o
+OBJS_RR = LapRLanR.o lapl.o io.o
 
-OBJS_RN = LapRLanN.o io.o
+OBJS_RN = LapRLanN.o lapl.o io.o
 
 LIB = -L.. -llancheb 
 

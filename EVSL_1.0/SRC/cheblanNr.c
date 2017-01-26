@@ -7,45 +7,50 @@
 #include "blaslapack.h"
 #include "struct.h"
 #include "internal_proto.h"
-
+/**-----------------------------------------------------------------------
+ *  @brief Chebyshev polynomial filtering Lanczos process [NON-restarted version]
+ *
+ *  @param A        Matrix of size n x n
+ * 
+ *  @param intv     An array of length 4 \n
+ *          [intv[0], intv[1]] is the interval of desired eigenvalues \n
+ *          [intv[2], intv[3]] is the global interval of all eigenvalues \n
+ *          Must contain all eigenvalues of A
+ *  
+ *  @param maxit    Max number of outer Lanczos steps  allowed --[max dim of Krylov 
+ *          subspace]
+ *  
+ *  @param tol       
+ *          Tolerance for convergence. The code uses a stopping criterion based
+ *          on the convergence of the restricted trace. i.e., the sum of the
+ *          eigenvalues of T_k that  are in the desired interval. This test  is
+ *          rather simple since these eigenvalues are between `bar' and  1.0.
+ *          We want the relative error on  this restricted  trace to be  less
+ *          than  tol.  Note that the test  performed on filtered matrix only
+ *          - *but* the actual residual norm associated with the original
+ *          matrix A is returned
+ *  
+ *  @param vinit     Initial  vector for Lanczos -- [optional]
+ * 
+ *  @param pol       A struct containing the parameters of the polynomial..
+ *  This is set up by a call to find_deg prior to calling chenlanNr 
+ * 
+ *  @b Modifies:
+ *  @param[out] nevOut    Number of eigenvalues/vectors computed
+ *  @param[out] Wo        A set of eigenvectors  [n x nevOut matrix]
+ *  @param[out] reso      Associated residual norms [nev x 1 vector]
+ *  @param[out] lamo      Lambda computed
+ *  @param[out] fstats    File stream which stats are printed to
+ *
+ *  @return Returns 0 on success (or if check_intv() is non-positive),  -1
+ *  if |gamB| < 1
+ *
+ *
+ * @warning memory allocation for Wo/lamo/reso within this function 
+ **/
 int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit, 
     polparams *pol, int *nevOut,  double **lamo, double **Wo, 
     double **reso, FILE *fstats) {
-  /*-----------------------------------------------------------------------
-    /  Chebyshev polynomial filtering Lanczos process [NON-restarted version]
-INPUT:
-/ A     = matrix of size n x n
-/
-/ intv  = an array of length 4 
-/         [intv[0], intv[1]] is the interval of desired eigenvalues
-/         [intv[2], intv[3]] is the global interval of all eigenvalues
-/         it must contain all eigenvalues of A
-/ 
-/ maxit = max Num of outer Lanczos steps  allowed --[max dim of Krylov 
-/         subspace]
-/ 
-/ tol   = tolerance  for    convergence.  The  code  uses   a  stopping
-/         criterion  based   on  the  convergence  of   the  restricted
-/         trace. i.e.,  the sum of the  eigenvalues of T_k that  are in
-/         the desired interval. This test  is rather simple since these
-/         eigenvalues are between `bar' and  1.0.  We want the relative
-/         error on  this restricted  trace to be  less than  tol.  Note
-/         that the test  performed on filtered matrix only  - *but* the
-/         actual residual norm associated with the original matrix A is
-/         returned
-/ 
-/ vinit = initial  vector for Lanczos -- [optional]
-/
-/ pol   = a struct containing the parameters of the polynomial.. This is
-/         set up by a call to find_deg prior to calling chenlanNr 
-/
-/ RETURN:
-/ nevOut  = number of eigenvalues/vectors computed
-/ Wo    = a set of eigenvectors  [n x nevOut matrix]
-/ Lamo  = associated eigenvalues [nevOut x 1 vector]
-/ reso  = associated residual norms [nev x 1 vector]
-/ Note: memory allocation for Wo/Lamo/reso within this function 
-/------------------------------------------------------------ */
   /*-------------------- for stats */
   double tm,  tmv=0.0, tr0, tr1, tall;
   double *y, flami; 

@@ -8,28 +8,25 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/**----------------------------------------------------------------------
+ * @brief This function  computes the  coefficients of the  density of
+ * states  in  the  chebyshev   basis.   It  also  returns  the
+ * estimated number of eigenvalues in the interval given by intv.
+ 
+ * @param *A    input matrix
+ * @param Mdeg     degree of polynomial to be used. 
+ * @param damping  type of damping to be used [0=none,1=jackson,2=sigma]
+ * @param nvec     number of random vectors to use for sampling
+ * @param intv   an array of length 4 
+ *                 [intv[0] intv[1]] is the interval of desired eigenvalues
+ *                 that must be cut (sliced) into n_int  sub-intervals
+ *                 [intv[2],intv[3]] is the global interval of eigenvalues
+ *                 it must contain all eigenvalues of A
+ * @param[out] mu   array of Chebyshev coefficients 
+ * @param[out] ecnt estimated num of eigenvalues in the interval of interest
+ *----------------------------------------------------------------------*/
 int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
     double *mu, double *ecnt){
-  /*----------------------------------------------------------------------
-  / This function  computes the  coefficients of the  density of
-  / states  in  the  chebyshev   basis.   It  also  returns  the
-  / estimated number of eigenvalues in the interval given by intv.
-  / -------------------------------------------------------------------------
-  / INPUT: 
-  / csrMat *A   == input matrix
-  / int Mdeg    == degree of polynomial to be used. 
-  / int damping == type of damping to be used [0=none,1=jackson,2=sigma]
-  / int nvec    == number of random vectors to use for sampling
-  / double *intv  == an array of length 4 
-  /                 [intv[0] intv[1]] is the interval of desired eigenvalues
-  /                 that must be cut (sliced) into n_int  sub-intervals
-  /                 [intv[2],intv[3]] is the global interval of eigenvalues
-  /                 it must contain all eigenvalues of A
-  / RETURN
-  / double *mu  == array of Chebyshev coefficients 
-  / double *ecnt== estimated num of eigenvalues in the interval of interest
-  *----------------------------------------------------------------------*/
-
   /*-------------------- initialize variables */
   int n = A->nrows; 
   double *vkp1 = malloc(n*sizeof(double));
@@ -112,16 +109,17 @@ int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
   return 0;
 }
 
+  /**  
+  * @brief Computes the integrals \f$\int_{xi[0]}^{xi[j]} p(t) dt\f$
+  *  where p(t) is the approximate DOS as given in the KPM method
+  *  in the expanded form:  \f$\sum mu_i C_i /\sqrt{1-t^2}\f$
+  **/
 void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) { 
-  //  This computes the integrals   int_xi(0)^xi(j)   p(t) dt
-  //  where p(t) is the approximate DOS as given in the KPM method
-  //  in the expanded form:  \sum mu_i C_i /\sqrt(1-t^2)
   //
   int ndp1, j, k;
   double val0, theta0;
   double *thetas = (double*)malloc(npts*sizeof(double));
   ndp1   = Mdeg+1; 
-
   //  if (xi[0]<-1.0) xi[0] = -1; 
   //if (xi[npts-1]> 1.0) xi[npts-1]  = 1; 
 
@@ -140,32 +138,33 @@ void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) {
   free (thetas);
 }
 
-int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts){ 
-  /*----------------------------------------------------------------------- 
-    / given the dos function defined by mu find a partitioning
-    / of sub-interval [a,b] of the spectrum so each 
-    / subinterval has about the same number of eigenvalues
-    / Mdeg = degree.. mu is of length Mdeg+1  [0---> Mdeg]
-    / on return [ sli[i],sli[i+1] ] is a subinterval (slice).
-    /
-    / double *sli, = see above (output)
-    / double *mu,  = coeffs of polynomial (input)
-    / int Mdeg,    = degree of polynomial (input)
-    / double *intv = an array of length 4 
-    /                [intv[0] intv[1]] is the interval of desired eigenvalues
-    /                that must be cut (sliced) into n_int  sub-intervals
-    /                [intv[2],intv[3]] is the global interval of eigenvalues
-    /                it must contain all eigenvalues of A
-    / int n_int,   = number of slices wanted (input)
-    / int npts     = number of points to use for discretizing the interval
-    /                [a b]. The more points the more accurate the intervals. 
-    /                it is recommended to set npts to a few times the number 
-    /                of eigenvalues in the interval [a b] (input). 
-    /----------------------------------------------------------------------*/
-  //-------------------- transform to [-1, 1]   
+/**----------------------------------------------------------------------- 
+ * @brief given the dos function defined by mu find a partitioning
+ * of sub-interval [a,b] of the spectrum so each 
+ * subinterval has about the same number of eigenvalues
+ * Mdeg = degree.. mu is of length Mdeg+1  [0---> Mdeg]
+ * on return [ sli[i],sli[i+1] ] is a subinterval (slice).
+ *
+ * @param *sli  see above (output)
+ * @param *mu   coeffs of polynomial (input)
+ * @param Mdeg     degree of polynomial (input)
+ * @param *intv  an array of length 4 
+ *                [intv[0] intv[1]] is the interval of desired eigenvalues
+ *                that must be cut (sliced) into n_int  sub-intervals
+ *                [intv[2],intv[3]] is the global interval of eigenvalues
+ *                it must contain all eigenvalues of A
+ * @param n_int   number of slices wanted (input)
+ * @param npts      number of points to use for discretizing the interval
+ *                [a b]. The more points the more accurate the intervals. 
+ *                it is recommended to set npts to a few times the number 
+ *                of eigenvalues in the interval [a b] (input). 
+ *
+ *----------------------------------------------------------------------*/
+int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, 
+	     int npts){
   int ls, ii;
   double  ctr, wid, aL, bL, target, aa, bb;
-
+ 
   if (check_intv(intv, stdout) < 0) {
     return -1;
   }

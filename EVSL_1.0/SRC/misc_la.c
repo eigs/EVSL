@@ -10,18 +10,21 @@
 #include "struct.h"
 #include "internal_proto.h"
 
-/*----------------------------------------------------------------------- */
-// compute all eigenvalues and eigenvectors of a symmetric tridiagonal
-// matrix  n is  the  dimension of  the  symmetric tridiagonal  matrix
-// diag[],sdiag[]  define   the  symmetric  tridiagonal   matrix:  the
-// diagonal elements are diag[0,...,n-1]  in order and the subdiagonal
-// elements are sdiag[0,...,n-2] in order  eigVal is the output vector
-// of length n containing all eigenvalues in ascending order eigVec is
-// the output n-by-n matrix with columns as eigenvectors, in the order
-// as elements in eigVal the return  value is the flag returned by the
-// LAPACK routine DSTEV() (if double  is double) or stev_() (if double
-// is float)
-/*----------------------------------------------------------------------- */
+/**----------------------------------------------------------------------- 
+ *  @brief compute all eigenvalues and eigenvectors of a symmetric tridiagonal
+ *  matrix  
+ *  @param n                The  dimension of the symmetric tridiagonal  matrix
+ *  @param diag[],sdiag[]   Define the symmetric tridiagonal  matrix:  the
+ *          diagonal elements are diag[0,...,n-1]  in order and the subdiagonal
+ *          elements are sdiag[0,...,n-2] in order  
+ *  @param[out] eigVal The output vector of length n containing all eigenvalues
+ *          in ascending order 
+ *  @param[out] eigVec The output n-by-n matrix with columns as eigenvectors,
+ *          in the order as elements in eigVal 
+ *  @return The flag returned by the
+ *  LAPACK routine DSTEV() (if double  is double) or stev_() (if double
+ *  is float)
+ * --------------------------------------------------------------------- */
 
 int SymmTridEig(double *eigVal, double *eigVec, int n, 
 		const double *diag, const double *sdiag) {
@@ -47,13 +50,16 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
     return info;
 }
 
-/*----------------------------------------------------------------------- */
-// compute  eigenvalues and  eigenvectors of  a symmetric  tridiagonal
-// matrix. n is  the  dimension of  the  symmetric tridiagonal  matrix
-// diag[],sdiag[]  define  the   symmetric  tridiagonal  matrix.  This
-// routine  computes selected  eigenvalues/vectors as  specified by  a
-// range of values. This is a wrapper to the LAPACK routine DSTEMR().
-/*----------------------------------------------------------------------- */
+/**----------------------------------------------------------------------- 
+ *  @brief compute  eigenvalues and  eigenvectors of  a symmetric  tridiagonal
+ *  matrix in a slice
+ *  @param n The  dimension of  the  symmetric tridiagonal  matrix
+ *  @param diag[],sdiag[]  define  the   symmetric  tridiagonal  matrix.  
+ *
+ *  This
+ *  routine  computes selected  eigenvalues/vectors as  specified by  a
+ *  range of values. This is a wrapper to the LAPACK routine DSTEMR().
+ * ----------------------------------------------------------------------- */
 int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
 		 int *nevO, const double *diag, const double *sdiag) {
     char jobz = 'V';  // compute eigenvalues and eigenvectors
@@ -109,10 +115,9 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
 }
 
 
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- *     interface to   LAPACK SYMMETRIC EIGEN-SOLVER 
+/**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ *     @brief interface to   LAPACK SYMMETRIC EIGEN-SOLVER 
  *- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-
 void SymEigenSolver(int n, double *A, int lda, 
         double *Q, int ldq, double *lam) {
 /* compute eigenvalues/vectors of A that n x n, symmetric
@@ -147,7 +152,9 @@ void SymEigenSolver(int n, double *A, int lda,
     free(work);
 }
 
-/* Classical GS reortho with Daniel, Gragg, Kaufman, Stewart test */
+/**
+ * @brief Classical GS reortho with Daniel, Gragg, Kaufman, Stewart test
+ **/
 void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, double *w) {
     double eta = 1.0 / sqrt(2.0);
     int i, one=1;
@@ -171,10 +178,16 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
     //if (i) printf("CGS %d\n", i);
 }
 
-/* Orthogonalize columns of n-by-k matrix V */ 
-/* Return result in Vo */ 
 //  max number of reorthogonalizations 
 #define NGS_MAX 2
+/**
+ * @brief Orthogonalize columns of n-by-k matrix V 
+ * @param n number of rows in V
+ * @param V Matrix which columns are to be orthogonalized
+ * @param k number of columns in V
+ * @param[out] Vo Output matrix
+ * @param work work 
+ */
 void orth(double *V, int n, int k, double *Vo, double *work) {
     int i;
     int one=1;

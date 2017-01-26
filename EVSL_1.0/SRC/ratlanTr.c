@@ -9,42 +9,44 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+ /**----------------------------------------------------------------------
+ * @brief RatLanTR polynomial filtering Lanczos process [Thick restart version]
+ *
+ * @param A             Matrix of size n x n
+ * @param solshift      Structure for solving the shifted system, see struct.h
+ * @param lanm          Dimension of Krylov subspace [restart dimension]
+ * @param nev           Estimate of number of eigenvalues in the interval --
+ *         ideally nev == exact number or a little larger.
+ *         This is not used for testing convergence but it
+ *         helps make decisions as to when to test convergence 
+ *         ChebLanTr attempts to compute *all* eigenvalues in the interval
+ *         and stops only when no more eigenvalyes are left. The convergenve
+ *         test is a very simple one based on the residual norm for the 
+ *         filtered matrix 
+ *
+ * @param intv   an array of length 4 
+ *         [intv[0], intv[1]] is the interval of desired eigenvalues
+ *         [intv[2], intv[3]] is the global interval of all eigenvalues
+ *         it must contain all eigenvalues of A
+ * 
+ * @param maxit  max Num of outer Lanczos iterations (restarts) allowed -- 
+ *         Each restart may or use the full lanm lanczos steps or fewer .
+ * 
+ * @param tol           Tolerance for convergence. stop when ||res||< tol
+ * @param vinit         Initial  vector for Lanczos -- [optional]
+ * @param rat           A struct containing the parameters of the polynomial.
+ *
+ * @warning RatLanTr()  Modifies the following variables
+ * @param[out] nev2     Number of eigenvalues/vectors computed
+ * @param[out] Yo       A set of eigenvectors  [n x nev2 matrix]
+ * @param[out] lamo     Associated eigenvalues [nev2 x 1 vector]
+ * @param[out] fstats   File stream which stats are printed to
+ * @param[out] reso     Related Residual values
+ *
+ *------------------------------------------------------------ */
 int RatLanTr(csrMat *A, solveShift *solshift, int lanm, int nev, double *intv, 
     ratparams *rat,  int maxit, double tol, double *vinit, int *nev2, 
     double **lamo, double **Yo, double **reso, FILE *fstats) {
-  /*-----------------------------------------------------------------------
-    / RatLanTR polynomial filtering Lanczos process [Thick restart version]
-    / INPUT:
-    / A     = matrix of size n x n
-    / solshift: structure for solving the shifted system, see struct.h
-    / lanm  = dimension of Krylov subspace [restart dimension]
-    / nev   = Estimate of number of eigenvalues in the interval --
-    /         ideally nev == exact number or a little larger.
-    /         This is not used for testing convergence but it
-    /         helps make decisions as to when to test convergence 
-    /         ChebLanTr attempts to compute *all* eigenvalues in the interval
-    /         and stops only when no more eigenvalyes are left. The convergenve
-    /         test is a very simple one based on the residual norm for the 
-    /         filtered matrix 
-    /
-    / intv  = an array of length 4 
-    /         [intv[0], intv[1]] is the interval of desired eigenvalues
-    /         [intv[2], intv[3]] is the global interval of all eigenvalues
-    /         it must contain all eigenvalues of A
-    / 
-    / maxit = max Num of outer Lanczos iterations (restarts) allowed -- 
-    /         Each restart may or use the full lanm lanczos steps or fewer .
-    / 
-    / tol   = tolerance for convergence. stop when ||res||< tol
-    / vinit = initial  vector for Lanczos -- [optional]
-    /
-    / RETURN:
-    / nev2  = number of eigenvalues/vectors computed
-    / Yo    = a set of eigenvectors  [n x nev2 matrix]
-    / Lamo  = associated eigenvalues [nev2 x 1 vector]
-    / reso  = associated residual norms [nev x 1 vector]
-    / Note: memory allocation for Yo/Lamo/reso within this function 
-    /------------------------------------------------------------ */
   /*-------------------- for stats */
   double tm, tall=0.0, tmv=0.0;
   double tolP = tol;

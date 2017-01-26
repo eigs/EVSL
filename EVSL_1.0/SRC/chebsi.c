@@ -9,36 +9,37 @@
 
 #define NBUF 2
 
+/**
+ * @brief Chebyshev polynomial filtering Subspace Iteration
+ *
+ *   @param A           Matrix of size n x n
+ *   @param nev         Estimate of number of eigenvalues in the interval --
+ *           ideally nev == exact number or a little larger.
+ *           ChebSI stops when  at least nev eigenvalues are              
+ *           found or when no more candidates are left in interval.
+ *   @param intv        An array of length 4 
+ *           [intv[0], intv[1]] is the interval of desired eigenvalues
+ *           [intv[2], intv[3]] is the global interval of all eigenvalues
+ *           it must contain all eigenvalues of A
+ *   @param maxit       Max Num of outer subspace iterations allowed 
+ *   @param tol         Tolerance for convergence. stop when ||res||< tol
+ *   @param vinit       Nev initial vectors [to be made optional]
+ *   @param pol         A struct containing the parameters of the polynomial..
+ *
+ *   @b Modifies:
+ * @param[out] nevo     Number of eigenvalues/vectors computed
+ * @param[out] Yo       A set of eigenvectors  [n x nev2 matrix]
+ * @param[out] lamo     Associated eigenvalues [nev2 x 1 vector]
+ * @param[out] reso     Associated residual norms [nev x 1 vector]
+ * @param[out] fstats   File stream which stats are printed to
+ *
+ *   @warning Memory allocation for Yo/lamo/reso within this function
+ */
+
 int ChebSI(csrMat *A, int nev, double *intv, int maxit, 
         double tol, double *vinit, polparams *pol, int *nevo, 
         double **lamo, double **Yo, double **reso, FILE *fstats) {
 // rename cheblanstat to 'stat' or 'solvestat', etc.
-/*----------------------------------------------------------------
-  Chebyshev polynomial filtering Subspace Iteration 
-INPUT:
-/ 
-/ A     = matrix of size n x n
-/ nev   = Estimate of number of eigenvalues in the interval --
-/         ideally nev == exact number or a little larger.
-/         ChebSI stops when  at least nev eigenvalues are
-/         found or when no more candidates are left in interval.
-/ intv  = an array of length 4 
-/         [intv[0], intv[1]] is the interval of desired eigenvalues
-/         [intv[2], intv[3]] is the global interval of all eigenvalues
-/         it must contain all eigenvalues of A
-/ maxit = max Num of outer subspace iterations allowed 
-/ tol   = tolerance for convergence. stop when ||res||< tol
-/ vinit = nev initial vectors [to be made optional]
-/ min_deg, max_deg = min/max degree of p(A)
-/ 
-OUTPUT:
-/ 
-/ nev2  = number of eigenvalues/vectors computed
-/ Yo    = a set of eigenvectors  [n x nev2 matrix]
-/ Lamo  = associated eigenvalues [nev2 x 1 vector]
-/ reso  = associated residual norms [nev x 1 vector]
-/ Note: memory allocation for Yo/Lamo/reso within this function 
-/------------------------------------------------------------ */
 
     /*-------------------- for stats */
     double tm, tall=0.0, tmv=0.0;

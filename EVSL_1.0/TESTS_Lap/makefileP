@@ -5,11 +5,11 @@ include ../makefile.in
 FLAGS = -DUNIX -O3 -g -Wall 
 
 # Object files
-OBJS_PN  = LapPLanN.o io.o
+OBJS_PN  = LapPLanN.o lapl.o io.o
 
-OBJS_PR  = LapPLanR.o io.o
+OBJS_PR  = LapPLanR.o lapl.o io.o
 
-OBJS_PSI = LapPSI.o io.o
+OBJS_PSI = LapPSI.o lapl.o io.o
 
 LIB = -L../ -llancheb 
 

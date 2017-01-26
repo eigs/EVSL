@@ -7,44 +7,49 @@
 #include "blaslapack.h"
 #include "struct.h"
 #include "internal_proto.h"
-
+/**
+ * @brief Chebyshev polynomial filtering Lanczos process [Thick restart version]
+ *
+ * @param A         Matrix of size n x n
+ * @param lanm      Dimension of Krylov subspace [restart dimension]
+ * @param nev       Estimate of number of eigenvalues in the interval --
+ *         ideally nev == exact number or a little larger.  This is not used
+ *         for testing convergence but it helps make decisions as to when to
+ *         test convergence ChebLanTr attempts to compute *all* eigenvalues in
+ *         the interval and stops only when no more eigenvalyes are left. The
+ *         convergenve test is a very simple one based on the residual norm for
+ *         the filtered matrix 
+ *
+ * @param intv   an array of length 4  \n
+ *         [intv[0], intv[1]] is the interval of desired eigenvalues \n
+ *         [intv[2], intv[3]] is the global interval of all eigenvalues \n
+ *         it must contain all eigenvalues of A
+ * 
+ * @param maxit     max Num of outer Lanczos iterations (restarts) allowed -- 
+ *         Each restart may or use the full lanm lanczos steps or fewer.
+ * 
+ * @param tol       tolerance for convergence. stop when ||res||< tol
+ * @param vinit     initial  vector for Lanczos -- [optional]
+ * @param pol       a struct containing the parameters of the polynomial. This 
+ *         is set up by a call to find_deg prior to calling chenlanNr 
+ *
+ * @b Modifies:
+ * @param[out]  nev2     Number of eigenvalues/vectors computed
+ * @param[out] W         A set of eigenvectors  [n x nev2 matrix]
+ * @param[out] vals      Associated eigenvalues [nev2 x 1 vector]
+ * @param[out] resW      Associated residual norms [nev x 1 vector]
+ * @param[out] fstats    File stream which stats are printed to
+ *
+ * @return Returns 0 on success (or if check_intv() is non-positive), -1 if
+ * gamB is outside [-1, 1], and 2 if there are no eigenvalues found.
+ *
+ *
+ * @warning memory allocation for W/vals/resW within this function 
+ *
+ **/
 int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit, 
     double tol, double *vinit, polparams *pol, int *nev2, 
     double **vals, double **W, double **resW, FILE *fstats) {
-  /*-----------------------------------------------------------------------
-    / Chebyshev polynomial filtering Lanczos process [Thick restart version]
-    / INPUT:
-    / A     = matrix of size n x n
-    / lanm  = dimension of Krylov subspace [restart dimension]
-    / nev   = Estimate of number of eigenvalues in the interval --
-    /         ideally nev == exact number or a little larger.
-    /         This is not used for testing convergence but it
-    /         helps make decisions as to when to test convergence 
-    /         ChebLanTr attempts to compute *all* eigenvalues in the interval
-    /         and stops only when no more eigenvalyes are left. The convergenve
-    /         test is a very simple one based on the residual norm for the 
-    /         filtered matrix 
-    /
-    / intv  = an array of length 4 
-    /         [intv[0], intv[1]] is the interval of desired eigenvalues
-    /         [intv[2], intv[3]] is the global interval of all eigenvalues
-    /         it must contain all eigenvalues of A
-    / 
-    / maxit = max Num of outer Lanczos iterations (restarts) allowed -- 
-    /         Each restart may or use the full lanm lanczos steps or fewer .
-    / 
-    / tol   = tolerance for convergence. stop when ||res||< tol
-    / vinit = initial  vector for Lanczos -- [optional]
-    / pol   = a struct containing the parameters of the polynomial.. This 
-    /         is set up by a call to find_deg prior to calling chenlanNr 
-    /
-    / RETURN:
-    / nev2  = number of eigenvalues/vectors computed
-    / W    = a set of eigenvectors  [n x nev2 matrix]
-    / vals  = associated eigenvalues [nev2 x 1 vector]
-    / resW  = associated residual norms [nev x 1 vector]
-    / Note: memory allocation for W/vals/resW within this function 
-    /------------------------------------------------------------ */
   /*-------------------- for stats */
   double tm, tall=0.0, tmv=0.0;
   double tolP = tol;

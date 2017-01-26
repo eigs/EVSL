@@ -9,15 +9,15 @@
 #include "internal_proto.h"
 
 
+/**------------------------- Cauchy integration-based filter --------------
+ * @brief Compute the locations of the poles
+ *
+ * @param method    0 for Guass Legendre; 1 for midpoint
+ * @param n         Number of poles in the upper half plane
+ * @param[out] zk   Vector of pole locations
+ *
+ *----------------------------------------------------------------------*/
 void contQuad(int method, int n, complex double* zk){
-  /*------------------------- Cauchy integration-based filter --------------
-   * Compute the locations of the poles
-   *== INPUT
-   * method: 0 for Guass Legendre; 1 for midpoint
-   * n     : number of poles in the upper half plane
-   *== OUTPUT
-   * zk    : vector of pole locations
-   *----------------------------------------------------------------------*/
   int i, m, INFO;
   double *beta, *D, *Z, *WORK;
   char JOBZ = 'V';
@@ -51,18 +51,19 @@ void contQuad(int method, int n, complex double* zk){
   }
 }
 
-void ratf2p2(int n, int *mulp, complex double *zk, complex double* alp, int m, double *z, double *xx){
-  /*------------------Multiple pole rational filter evaluation --------------
-   * Compute the function value of the multiple pole rational filter at real locations 
-   *== INPUT
-   * n     : number of the pole
-   * mulp  : multiplicity of the pole
-   * alp   : fractional expansion coefficients
-   * m     : number of locations to be evaluated
-   * z     : real locations to be evaluated
-   *== OUTPUT : 
-   * xx    : function values at real locations z
+  /**------------------Multiple pole rational filter evaluation --------------
+   * @brief Compute the function value of the multiple pole rational filter at real locations 
+   * @param n      number of the pole
+   * @param mulp   multiplicity of the pole
+   * @param zk     array containing the poles.
+   * @param alp    fractional expansion coefficients
+   * @param m      number of locations to be evaluated
+   * @param z      real locations to be evaluated
+   *
+   * @param[out] xx    : function values at real locations z
+   *
    *----------------------------------------------------------------------*/
+void ratf2p2(int n, int *mulp, complex double *zk, complex double* alp, int m, double *z, double *xx){
   complex double y, x, t;
   int i, j, k, k1, k2;
   for (k2=0; k2<m; k2++){
@@ -84,8 +85,10 @@ void ratf2p2(int n, int *mulp, complex double *zk, complex double* alp, int m, d
 
 
 
+/**
+ * @brief Get the fraction expansion of 1/[(z-s1)^k1 (z-s2)^k2]
+ * */
 void pfe2(complex double s1, complex double s2, int k1, int k2, complex double* alp, complex double* bet){
-  //Get the fraction expansion of 1/[(z-s1)^k1 (z-s2)^k2]
   int i;
   complex double d, xp;
   if (cabs(s1-s2)<1.0e-12*(cabs(s1)+cabs(s2))){
@@ -115,8 +118,10 @@ void pfe2(complex double s1, complex double s2, int k1, int k2, complex double* 
   }
 }
 
+  /**
+   * @brief Integration of 1/[(z-s1)^k1 (z-s2)^k2] from a to b
+   */
 complex double integg2(complex double s1, complex double s2, complex double* alp, int k1, complex double* bet, int k2, double a, double b){
-  //Integration of 1/[(z-s1)^k1 (z-s2)^k2] from a to b
   complex double t, t1, t0, scal;
   int k;
   t = 0.0 +0.0*I;
@@ -143,17 +148,18 @@ complex double integg2(complex double s1, complex double s2, complex double* alp
 }
 
 
+/**
+ *------------------multiple pole LS rational filter weights--------------
+ * @brief Compute the LS weight for each multiple pole
+ * @param n      number of poles in the upper half plane
+ * @param zk     pole locations
+ * @param mulp    multiplicity of each pole
+ * @param lambda LS integration weight for [-1, 1]
+ *
+ * @param[out] omega LS weight for each pole
+ *
+ *----------------------------------------------------------------------*/
 void weights(int n, complex double* zk, int* mulp, double lambda, complex double* omega){
-  /*------------------multiple pole LS rational filter weights--------------
-   * Compute the LS weight for each multiple pole
-   *== INPUT
-   * n     : number of poles in the upper half plane
-   * zk    : pole locations
-   * mulp   : multiplicity of each pole
-   * lambda: LS integration weight for [-1, 1]
-   *== OUTPUT
-   * omega : LS weight for each pole
-   *----------------------------------------------------------------------*/
   int INFO;
   int nrhs = 1;
   int *ipiv;
@@ -284,17 +290,17 @@ void weights(int n, complex double* zk, int* mulp, double lambda, complex double
 }
 
 
-int scaleweigthts(int n, double a, double b, complex double *zk, int* mulp, complex double* omegaM){
-  /*------------------Transform poles and weights computed on [-1, 1] to [a, b] ----------
-   * Compute the weights and pole locations on [a, b]
-   *== INPUT
-   * n     : number of poles used in the upper half plane
-   * a,b   : [a, b] is the interval of desired eigenvalues
-   * zk    : location of the poles
-   * mulp   : multiplicity of the poles
-   *== OUTPUT
-   * omegaM: multiple LS weights
+  /**------------------Transform poles and weights computed on [-1, 1] to [a, b] ----------
+   * @brief  Compute the weights and pole locations on [a, b]
+   * @param n     number of poles used in the upper half plane
+   * @param a,b   [a, b] is the interval of desired eigenvalues
+   * @param zk    location of the poles
+   * @param mulp   multiplicity of the poles
+   *
+   * @param[out] omegaM: multiple LS weights
+   *
    *----------------------------------------------------------------------*/
+int scaleweigthts(int n, double a, double b, complex double *zk, int* mulp, complex double* omegaM){
   int i, j, k, nf=0;
   double c, h;
   c = 0.5 * (a + b);
@@ -322,6 +328,9 @@ int scaleweigthts(int n, double a, double b, complex double *zk, int* mulp, comp
 }
 
 
+/**
+ * @brief Sets default values for ratparams struct
+ * */
 void set_ratf_def(ratparams *rat){
   // -------------------- this sets default values for ratparams struct.
   rat->num = 1;            // number of the poles
@@ -335,23 +344,24 @@ void set_ratf_def(ratparams *rat){
   rat->dd = 1.0;           // width of interval
 }
 
+/**----------------------------------------------------------------------
+ * @param intv  = an array of length 4 
+ *         [intv[0], intv[1]] is the interval of desired eigenvalues
+ *         [intv[2], intv[3]] is the global interval of all eigenvalues
+ *         it must contain all eigenvalues of A
+ *  
+ * OUT:
+ * @param[out] rat
+ * these are set in rat struct:\n
+ *   omega : expansion coefficients of rational filter \n
+ *    zk   : location of the poles used\n
+ *    aa  : adjusted left endpoint\n
+ *    bb  : adjusted right endpoint\n
+ *    dd  : half-width and.. \n
+ *    cc  : ..center of interval\n
+ *
+ *--------------------------------------------------------------------*/
 int find_ratf(double *intv, ratparams *rat){
-  /*----------------------------------------------------------------------
-    / IN:
-    / intv  = an array of length 4 
-    /         [intv[0], intv[1]] is the interval of desired eigenvalues
-    /         [intv[2], intv[3]] is the global interval of all eigenvalues
-    /         it must contain all eigenvalues of A
-    /  
-    / OUT:
-    / these are set in rat struct:
-    /   omega : expansion coefficients of rational filter 
-    /    zk   : location of the poles used
-    /    aa  : adjusted left endpoint
-    /    bb  : adjusted right endpoint
-    /    dd  : half-width and.. 
-    /    cc  : ..center of interval
-    * --------------------------------------------------------------------*/
   complex double *omega; // weights of the poles
   complex double *zk;  // location of the poles
   int *mulp;            // multiplicity of the each pole
