@@ -11,8 +11,6 @@
 #define DGEMV    dgemv_
 #define DGEMM    dgemm_
 #define DAXPY    daxpy_
-#define DCSRGEMV dcsrgemv
-#define DCSRMV   dcsrmv
 #define DSTEV    dstev_
 #define DSYEV    dsyev_
 #define DSTEMR   dstemr_
@@ -30,10 +28,6 @@ double DDOT(int *n,double *x,int *incx,double *y,int *incy);
 double DNRM2(int *n,double *x,int *incx);
 void DGEMM(char *transa,char *transb,int *m,int *n,int *k,double *alpha,double *a,int *lda,double *b,int *ldb,double *beta,double *c,int *ldc);
 void DGEMV(char *trans, int *m, int *n, double *alpha, double *a, int *lda, double *x, int *incx, double *beta, double *y, int *incy);
-void DCSRGEMV(char trans, int nrow, int ncol, double alp, double *a, 
-              int *ia, int *ja, double *x, double bet, double *y);
-void DCSRMV(char trans, int nrow, int ncol, double *a, 
-            int *ia, int *ja, double *x, double *y);
 void DSTEV(char *jobz, int *n, double *diagonal, double *subdiagonal, double *V, int *ldz, double *work, int *info);
 void DSYEV(char* jobz,char* uplo,int* n,double* fa,int* lda,double* w, double* work,int* lwork,int* info);
 void DSTEMR(char *jobz, char *range, int *n, double *D, double *E, double *VL, double *VU, int *IL, int *IU, 

@@ -26,9 +26,14 @@
  * @param[out] ecnt estimated num of eigenvalues in the interval of interest
  *----------------------------------------------------------------------*/
 int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
-    double *mu, double *ecnt){
+    double *mu, double *ecnt) {
   /*-------------------- initialize variables */
-  int n = A->nrows; 
+  int n;
+  if (evsldata.Amatvec.func) {
+    n = evsldata.Amatvec.n;
+  } else {
+    n = A->nrows;
+  }
   double *vkp1 = malloc(n*sizeof(double));
   double *w = malloc(n*sizeof(double)); 
   double *vkm1 = malloc(n*sizeof(double)); 
@@ -114,7 +119,7 @@ int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
   *  where p(t) is the approximate DOS as given in the KPM method
   *  in the expanded form:  \f$\sum mu_i C_i /\sqrt{1-t^2}\f$
   **/
-void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) { 
+void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) {
   //
   int ndp1, j, k;
   double val0, theta0;
@@ -160,11 +165,10 @@ void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) {
  *                of eigenvalues in the interval [a b] (input). 
  *
  *----------------------------------------------------------------------*/
-int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, 
-	     int npts){
+int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts) {
   int ls, ii;
   double  ctr, wid, aL, bL, target, aa, bb;
- 
+
   if (check_intv(intv, stdout) < 0) {
     return -1;
   }
