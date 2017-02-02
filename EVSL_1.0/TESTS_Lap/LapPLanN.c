@@ -20,8 +20,7 @@ int main(int argc, char *argv[]) {
     other parameters 
     tol [tolerance for stopping - based on residual]
     Mdeg = pol. degree used for DOS
-    nvec  = number of sample vectors used for DOS 
-    ...
+    nvec  = number of sample vectors used for DOS
     This uses:
     Non-restart Lanczos with polynomial filtering
     ------------------------------------------------------------*/
@@ -41,9 +40,9 @@ int main(int argc, char *argv[]) {
   cooMat Acoo;
   csrMat Acsr;
   /*-------------------- default values */
-  nx   = 41;
-  ny   = 53;
-  nz   = 1;
+  nx   = 15;
+  ny   = 16;
+  nz   = 13;
   a    = 0.4;
   b    = 0.8;
   nslices = 4;
@@ -62,8 +61,7 @@ int main(int argc, char *argv[]) {
   findarg("b", DOUBLE, &b, argc, argv);
   findarg("nslices", INT, &nslices, argc, argv);
   fprintf(fstats,"used nx = %3d ny = %3d nz = %3d",nx,ny,nz);
-  fprintf(fstats," [ a = %4.2f  b= %4.2f],  nslices=%2d \n",a,b,nslices);
-  //----------------------------------------------------------------------- DONE
+  fprintf(fstats," [a = %4.2f  b= %4.2f],  nslices=%2d \n",a,b,nslices);
   //-------------------- eigenvalue bounds set by hand.
   lmin = 0.0;  
   lmax =  ((nz == 1)? 8.0 : 12.0);
@@ -71,20 +69,19 @@ int main(int argc, char *argv[]) {
   xintv[1] = b;
   xintv[2] = lmin;
   xintv[3] = lmax;
-  tol  = 1e-09;
+  tol  = 1e-8;
+  n = nx * ny * nz;
+  /*-------------------- output the problem settings */
+  fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
+  fprintf(fstats, "Laplacian: %d x %d x %d, n = %d\n", nx, ny, nz, n);
+  fprintf(fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
   /*-------------------- generate 2D/3D Laplacian matrix 
    *                     saved in coo format */
-  n = nx * ny * nz;
   ierr = lapgen(nx, ny, nz, &Acoo);
   /*-------------------- convert coo to csr */
   ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
-  /* output the problem settings */
-  fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
-  fprintf(fstats, "Laplacian: %d x %d x %d, n = %d, nnz = %d\n", nx, ny, nz, n, Acoo.nnz);
-  fprintf(fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
-  /* step 0: short Lanczos run to get bounds */  
+  /*-------------------- step 0: get eigenvalue bounds */
   fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
-
   /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
   /*-------------------- define kpmdos parameters */
   Mdeg = 40;
@@ -99,11 +96,12 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
-  fprintf(fstats, " estimated eig count in interval: %10.2e \n",ecount);
+  fprintf(fstats, " estimated eig count in interval: %.15e \n",ecount);
   //-------------------- call splicer to slice the spectrum
-  npts = 10 * ecount; //200; 
+  npts = 10 * ecount; 
   sli = malloc((nslices+1)*sizeof(double));
 
+  fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",Mdeg, nvec, npts);
   ierr = spslicer(sli, mu, Mdeg, xintv, nslices,  npts);
   if (ierr) {
     printf("spslicer error %d\n", ierr);
@@ -116,7 +114,7 @@ int main(int argc, char *argv[]) {
   //-------------------- # eigs per slice
   ev_int = (int) (1 + ecount / ((double) nslices));
   //-------------------- initial vector  
-  vinit = (double*) malloc(n*sizeof(double));
+  vinit = (double *) malloc(n*sizeof(double));
   rand_double(n, vinit);
   //-------------------- debug only :
   //  save_vec(n, vinit, "OUT/vinit.mtx");
@@ -135,19 +133,23 @@ int main(int argc, char *argv[]) {
     //-------------------- approximate number of eigenvalues wanted
     nev = ev_int+2;
     //-------------------- Dimension of Krylov subspace 
-    mlan = max(4*nev,100);  mlan = min(mlan, n);   
+    mlan = max(4*nev, 100);
+    mlan = min(mlan, n);
     //-------------------- ChebLanTr
     xintv[0] = a;     xintv[1] = b;
     xintv[2] = lmin;  xintv[3] = lmax;
     //-------------------- set up default parameters for pol.      
     set_pol_def(&pol);
-    //-------------------- use no damping for polynomial
-    // change some default values here :  
+    //-------------------- this is to show how you can reset some of the
+    //                     parameters to determine the filter polynomial
     pol.damping = 0;
     //-------------------- use a stricter requirement for polynomial
     pol.thresh_int = 0.25;
     pol.thresh_ext = 0.15;
     pol.max_deg  = 300;
+    // pol.deg = 20 //<< this will force this exact degree . not recommended
+    //                   it is better to change the values of the thresholds
+    //                   pol.thresh_ext and plot.thresh_int
     //-------------------- Now determine polymomial to use
     find_pol(xintv, &pol);       
 
@@ -158,6 +160,7 @@ int main(int argc, char *argv[]) {
       printf("ChebLanNr error %d\n", ierr);
       return 1;
     }
+
     /* [compute residual] already computed in res */
     /* sort the eigenvals: ascending order
      * ind: keep the orginal indices */
@@ -196,7 +199,7 @@ int main(int argc, char *argv[]) {
     if (lam)  free(lam);
     if (Y)  free(Y);
     if (res)  free(res);
-    free (pol.mu);
+    free_pol(&pol);
     free(ind);
     free(lam_ex);
   }
@@ -210,3 +213,4 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
+

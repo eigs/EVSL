@@ -142,31 +142,6 @@ double dcsr1nrm(csrMat *A){
   return (ta);
 }
 
-void dcsrgemv(char trans, int nrow, int ncol, double alp, double *a, 
-    int *ia, int *ja, double *x, double bet, double *y) {
-  int i,j;
-  if (trans == 'N') {
-    //#pragma omp parallel for schedule(guided)
-    for (i=0; i<nrow; i++) {
-      double r = 0.0;
-      for (j=ia[i]; j<ia[i+1]; j++) {
-        r += a[j] * x[ja[j]];
-      }
-      y[i] = bet*y[i] + alp*r;
-    }
-  } else {  
-    for (i=0; i<ncol; i++) {
-      y[i] *= bet;
-    }
-    for (i=0; i<nrow; i++) {
-      double xi = alp * x[i];
-      for (j=ia[i]; j<ia[i+1]; j++) {
-        y[ja[j]] += a[j] * xi;
-      }
-    }
-  }
-}
-
 void dcsrmv(char trans, int nrow, int ncol, double *a, 
     int *ia, int *ja, double *x, double *y) {
   int  len, jj=nrow;
@@ -210,32 +185,69 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
 }
 
 /**
-* @brief y = alp*A*x + bet*y
+* @brief y = A * x
 */
-int matvec_gen(double alp, csrMat *A, double *x, double bet, double *y) {
-#ifdef EVSL_USE_MKL
-  int nrows = A->nrows;
-  int ncols = A->ncols;
-  char cN = 'N';
-  mkl_dcsrmv(&cN, &nrows, &ncols, &alp, "GXXCXX", A->a, A->ja, A->ia, A->ia+1, x, &bet, y);
-#else
-  dcsrgemv('N', A->nrows, A->ncols, alp, A->a, A->ia, A->ja, x, bet, y);
-#endif
-
-  return 0;
-}
-
-/**
- * @brief y = A * x
- */
 int matvec(csrMat *A, double *x, double *y) {
-#ifdef EVSL_USE_MKL
-  int nrows = A->nrows;
-  char cN = 'N';
-  mkl_cspblas_dcsrgemv(&cN, &nrows, A->a, A->ia, A->ja, x, y);
-#else
-  dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
-#endif
+  /* if an external matvec routine is set, A will be ignored */
+  if (evsldata.Amatvec.func) {
+    (evsldata.Amatvec.func)(x, y, evsldata.Amatvec.data);
+  } else {
+    dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
+  }
+  return 0;
+}
+
+int lapgen(int nx, int ny, int nz, cooMat *Acoo) {
+  int n = nx * ny * nz;
+  Acoo->nrows = n;
+  Acoo->ncols = n;
+
+  int nzmax = nz > 1 ? 7*n : 5*n;
+  Malloc(Acoo->ir, nzmax, int);
+  Malloc(Acoo->jc, nzmax, int);
+  Malloc(Acoo->vv, nzmax, double);
+
+  int ii, nnz=0;
+  for (ii=0; ii<n; ii++) {
+    double v = -1.0;
+    int i,j,k,jj;
+    k = ii / (nx*ny);
+    i = (ii - k*nx*ny) / nx;
+    j = ii - k*nx*ny - i*nx;
+
+    if (k > 0) {
+      jj = ii - nx * ny;
+      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
+    }
+    if (k < nz-1) {
+      jj = ii + nx * ny;
+      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
+    }
+
+    if (i > 0) {
+      jj = ii - nx;
+      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
+    }
+    if (i < ny-1) {
+      jj = ii + nx;
+      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
+    }
+
+    if (j > 0) {
+      jj = ii - 1;
+      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
+    }
+    if (j < nx-1) {
+      jj = ii + 1;
+      Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = jj;  Acoo->vv[nnz] = v;  nnz++;
+    }
+
+    v = nz > 1 ? 6.0 : 4.0;
+    Acoo->ir[nnz] = ii;  Acoo->jc[nnz] = ii;  Acoo->vv[nnz] = v;  nnz++;
+  }
+
+  Acoo->nnz = nnz;
 
   return 0;
 }
+

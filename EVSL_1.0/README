@@ -1,5 +1,5 @@
 =======================================================================
- --> Version 1.0  Latest changes made on: Thu Jan 26 15:24:02 CST 2017
+ --> Version 1.0  Latest changes made on: Sat Nov  5 23:18:02 PDT 2016
 
 -----------------------------------------------------------------------
   EVSL:  ChebLanTR, ChebLanNR,  ChebSI, RatLanTr, and RatLanNr  
@@ -23,13 +23,14 @@ restart), and a polynomial filtered subspace iteration.
 For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
 -----------------------------------------------------------------------
+ This version dated:    Tue Aug 23 16:19:17 CDT 2016
+-----------------------------------------------------------------------
     
 Description of contents:
 =======================
 
 FILES:
     INC/
-
     evsl.h : function  prototypes and constant definitions
   
     blaslapack.h : C API for BLAS/LAPACK functions used in evsl
@@ -41,6 +42,8 @@ FILES:
                          polparams  : polynomial filter
                          rat        : rational filter
                          solveShift : direct solver interface
+    
+    cheblan.h        : header files for ChebLan* functions
     
     internal_proto.h : internal function prototypes for SRC/
     
@@ -92,6 +95,9 @@ FILES:
                             into slices having approximately the same 
                             number of eigenvalues
    
+    exeiglap3.c   :
+             exeiglap3    : compute the exact eigenvalues of Laplacians
+
     lanbounds.c   :  
              LanBounds    : Lanczos alg. to give a bound of spectrum
 
@@ -102,7 +108,6 @@ FILES:
              free_csr        : memory dealloc for CSR
              free_coo        : memory dealloc for COO
              cooMat_to_csrMat: convert COO to CSR
-             matvec_gen      : general form of matvec: y = alp*A*x + bet*y
              matvec          : y = A*x
              lapgen          : generate Laplacian on (nx)x(ny)x(nz) grid
 
@@ -158,8 +163,6 @@ FILES:
            LapPSI.c   --> poly. filtering subspace iteration
            LapRLanN.c --> rational filtering non-restart Lanczos
            LapRLanR.c --> rational filtering thick-restart Lanczos
-    	   lapl.c     --> functions to set up a laplacean matrix and also to 
-                          compute the exact eigenvalues of Laplacians
 
            see details in the 00README file in the directory TESTS_Lap/
 
@@ -267,4 +270,59 @@ FILES:
   5.1.0)  as  well   (to  make  libmetis.a,  type   `make  config'  in
   metis-5.1.0/ and then `make') Please  refer to SuiteSparse and METIS
   for installation details.
+
+-----------------------------------------------------------------------
+  MATRIX-FREE SOLVERS
+-----------------------------------------------------------------------
+  All  the  iterative solvers  in  EVSL  can  be used  in  matrix-free
+  ways. Users need only to  provide the matrix-vector product function
+  of the following prototype:
+  
+  void Matvec(double *x, double *y, void *data);
+
+  where y  = A *  x and data  is the pointer  to the associated  data to
+  perform the  matvec. The  (void *)  argument is  to provide  a uniform
+  interface  to all  user-specific  functions. For  a particular  Matvec
+  function, one can pack all data  needed by this function into a struct
+  and pass the  pointer of this struct  to EVSL (after cast  it to (void
+  *)). This  function needs to  be passed to EVSL  as well, so  EVSL can
+  call  this  function  to  perform  all matvecs.  Note  that  when  the
+  user-input  matvec  function  is  set,  the CSR  matrix  will  not  be
+  referenced even if it  is provided (so it is safe to give NULL for the
+  matrix input in this case).
+
+  In  TEST_LAP,  an example  of  matvec  functions for  2D/3D  Laplacian
+  matrices is  provided, where the  matrix is not explicitly  formed but
+  5pt/7pt stencil is used instead. In  this example, a struct for matvec
+  is first defined:
+
+  typedef struct _lapmv_t {  
+    int  nx,  ny,  nz; 
+    double  *stencil;  
+  } lapmv_t;
+
+  and the matvec function is implemented
+
+  void Lap2D3DMatvec(double  *x, double  *y,  void  *data) {  
+    lapmv_t *lapmv = (lapmv_t *) data; 
+    int nx = lapmv->nx; 
+    int ny = lapmv->ny;
+    int nz = lapmv->nz; 
+    double *stencil = lapmv->stencil; 
+    ...  
+  }
+
+  in  which   the  pointer  is  first   casted  and  all  the   data  is
+  unpacked. Once these are ready, they can be passed to EVSL by calling
+    
+  SetMatvecFunc(n, &Lap2D3DMatvec, (void*) &lapmv);
+
+  where the first input is the size of the "matrix", the second input is
+  the  function pointer  and the  third one  is the  data pointer.  Once
+  "SetMatvecFunc"  is  called,  EVSL  will  use  the  registered  matvec
+  function to perform all matvecs.
+
+  Users should first create a function  wrapper of the above type for an
+  external matvec routine. Then, following  the steps in the example, it
+  will be straightforward to use it in EVSL.
 

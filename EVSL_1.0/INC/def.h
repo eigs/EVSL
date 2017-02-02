@@ -13,15 +13,15 @@
 //#define CHKREQ(ierr) { if (ierr) { return (ierr); } }
 
 #define Malloc(base, nmem, type) {\
-  (base) = (type *)malloc((nmem)*sizeof(type)); \
+  (base) = (type*) malloc((nmem)*sizeof(type)); \
   CHKERR((base) == NULL); \
 }
 #define Calloc(base, nmem, type) {\
-  (base) = (type *)calloc((nmem), sizeof(type)); \
+  (base) = (type*) calloc((nmem), sizeof(type)); \
   CHKERR((base) == NULL); \
 }
 #define Realloc(base, nmem, type) {\
-  (base) = (type *)realloc((base), (nmem)*sizeof(type)); \
+  (base) = (type*) realloc((base), (nmem)*sizeof(type)); \
   CHKERR((base) == NULL && nmem > 0); \
 }
 
