@@ -22,12 +22,12 @@ UMF_INC = -I$(SUITESPARSE_DIR)/UMFPACK/Include \
           -I$(SUITESPARSE_DIR)/CHOLMOD/Include 
 
 # Object files
-OBJS_PN  = LapPLanN.o io.o
-OBJS_PR  = LapPLanR.o io.o
-OBJS_RN  = LapRLanN.o io.o
-OBJS_RR  = LapRLanR.o io.o
-OBJS_PSI = LapPSI.o io.o
-OBJS_PN_MatFree = LapPLanN_MatFree.o io.o
+OBJS_PN  = LapPLanN.o io.o lapl.o
+OBJS_PR  = LapPLanR.o io.o lapl.o
+OBJS_RN  = LapRLanN.o io.o lapl.o
+OBJS_RR  = LapRLanR.o io.o lapl.o
+OBJS_PSI = LapPSI.o io.o lapl.o
+OBJS_PN_MatFree = LapPLanN_MatFree.o io.o lapl.o
 
 LIB = -L../ -llancheb 
 

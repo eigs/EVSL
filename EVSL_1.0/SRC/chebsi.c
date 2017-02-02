@@ -37,8 +37,8 @@
  */
 
 int ChebSI(csrMat *A, int nev, double *intv, int maxit, 
-        double tol, double *vinit, polparams *pol, int *nevo, 
-        double **lamo, double **Yo, double **reso, FILE *fstats) {
+           double tol, double *vinit, polparams *pol, int *nevo, 
+           double **lamo, double **Yo, double **reso, FILE *fstats) {
   /*-------------------- for stats */
   double tm, tall=0.0, tmv=0.0;
   int icol, nmv = 0;

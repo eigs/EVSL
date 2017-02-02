@@ -15,4 +15,5 @@ LIBLAPACK = -L/home/li50/lapack-3.6.1/ -llapack -lblas
 #LIBLAPACK = -L/home/ruipeng/workspace/lapack-3.7.0 -llapack -lrefblas
 
 ## SuiteSparse dir
+## if empty, evsl will be compiled without rational filters
 SUITESPARSE_DIR = /home/li50/workspace/SuiteSparse-4.5.3
