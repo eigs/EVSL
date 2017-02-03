@@ -6,9 +6,9 @@ FLAGS = -DUNIX -O3 -g -Wall
 
 LIB_METIS_5_1 = $(SUITESPARSE_DIR)/metis-5.1.0/build/Linux-x86_64/libmetis
 LIB_UMF = -L$(SUITESPARSE_DIR)/UMFPACK/Lib -lumfpack \
-          -L$(SUITESPARSE_DIR)/AMD/Lib/ -lamd \
           -L$(SUITESPARSE_DIR)/SuiteSparse_config -lsuitesparseconfig \
           -L$(SUITESPARSE_DIR)/CHOLMOD/Lib -lcholmod \
+          -L$(SUITESPARSE_DIR)/AMD/Lib/ -lamd \
 	  -L$(SUITESPARSE_DIR)/COLAMD/Lib -lcolamd \
           -L$(LIB_METIS_5_1) -lmetis \
           -L$(SUITESPARSE_DIR)/CCOLAMD/Lib -lccolamd \
@@ -36,6 +36,11 @@ ifneq ($(SUITESPARSE_DIR),)
 ALLEXE += LapRLanR.ex LapRLanN.ex
 endif
 
+ifneq ($(SUITESPARSE_DIR),)
+LIB_EXT = $(LIB_UMF) -fopenmp
+endif
+LIB_EXT += $(LIBLAPACK) $(LIB0)
+
 # Rules
 default: LapPLanN.ex
 
@@ -43,29 +48,25 @@ default: LapPLanN.ex
 	$(CC) $(FLAGS)  -I ../INC -o $@ -c $<
 
 # Exe
+## polynomial
 LapPLanR.ex: $(OBJS_PR) 
-	$(LINK) -o LapPLanR.ex $(OBJS_PR) $(LIB) \
-	$(LIBLAPACK) $(LIB0)
+	$(LINK) -o LapPLanR.ex $(OBJS_PR) $(LIB) $(LIB_EXT) 	
 
 LapPLanN.ex: $(OBJS_PN) 
-	$(LINK) -o LapPLanN.ex $(OBJS_PN) $(LIB) \
-        $(LIBLAPACK) $(LIB0)
+	$(LINK) -o LapPLanN.ex $(OBJS_PN) $(LIB) $(LIB_EXT)
 
 LapPSI.ex: $(OBJS_PSI) 
-	$(LINK) -o LapPSI.ex $(OBJS_PSI) $(LIB) \
-	$(LIBLAPACK) $(LIB0)
-
-LapRLanR.ex: $(OBJS_RR) 
-	$(LINK) -o LapRLanR.ex $(OBJS_RR) $(LIB) $(LIB_UMF) $(LIBLAPACK) \
-	$(LIBBLAS) $(LIB0)
-
-LapRLanN.ex: $(OBJS_RN) 
-	$(LINK) -o LapRLanN.ex $(OBJS_RN) $(LIB) $(LIB_UMF) $(LIBLAPACK) \
-	$(LIBBLAS) $(LIB0)
+	$(LINK) -o LapPSI.ex $(OBJS_PSI) $(LIB) $(LIB_EXT)
 
 LapPLanN_MatFree.ex: $(OBJS_PN_MatFree)
-	$(LINK) -o LapPLanN_MatFree.ex $(OBJS_PN_MatFree) $(LIB) \
-        $(LIBLAPACK) $(LIB0)
+	$(LINK) -o LapPLanN_MatFree.ex $(OBJS_PN_MatFree) $(LIB) $(LIB_EXT)
+
+## rational
+LapRLanR.ex: $(OBJS_RR) 
+	$(LINK) -o LapRLanR.ex $(OBJS_RR) $(LIB) $(LIB_EXT)
+
+LapRLanN.ex: $(OBJS_RN) 
+	$(LINK) -o LapRLanN.ex $(OBJS_RN) $(LIB) $(LIB_EXT)
 
 all: $(ALLEXE)
 

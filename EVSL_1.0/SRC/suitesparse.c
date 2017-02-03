@@ -140,3 +140,65 @@ void free_rat_default_sol(ratparams *rat) {
   }
 }
 
+/* a wrapper of cholmod_ sparse */
+cholmod_sparse* csrMat_to_cholmod_sparse(csrMat *A, int stype) {
+  cholmod_sparse *B = NULL;
+  Malloc(B, 1, cholmod_sparse);
+  B->nrow = A->nrows;
+  B->ncol = A->ncols;
+  B->nzmax = A->ia[A->nrows];
+  B->p = A->ja;
+  B->i = A->ia;
+  B->nz = NULL;
+  B->x = A->a;
+  B->z = NULL;
+  B->stype = stype;
+  B->itype = CHOLMOD_INT;
+  B->xtype = CHOLMOD_REAL;
+  B->dtype = CHOLMOD_DOUBLE;
+  B->sorted = 0;
+  B->packed = 1;
+
+  return B;
+}
+
+int factor_Bmatrix_default(csrMat *B) {
+  cholmod_sparse *Bcholmod;
+  cholmod_common *cc;
+  cholmod_factor *LB;
+
+  /* unset B just in case it was not freed */
+  if (evsldata.hasB && evsldata.isDefaultLB) {
+    free_Bfactor_default();
+  }
+
+  /* start CHOLMOD */
+  Malloc(cc, 1, cholmod_common);
+  cholmod_start(cc);
+  /* convert matrix */
+  Bcholmod = csrMat_to_cholmod_sparse(B, 1);
+  /* check the matrix */
+  cholmod_check_common(cc);
+  cholmod_check_sparse(Bcholmod, cc);
+  /* symbolic fact */
+  LB = cholmod_analyze(Bcholmod, cc);
+  cholmod_factorize(Bcholmod, LB, cc);
+  /* check the factor */
+  cholmod_check_factor(LB, cc);
+  /* save the factor and cc */
+  evsldata.LB = (void *) LB;
+  evsldata.cc = (void *) cc;
+  /* free the matrix wrapper */
+  free(Bcholmod);
+
+  return 0;
+}
+
+void free_Bfactor_default() {
+  cholmod_factor *LB = (cholmod_factor *) evsldata.LB;
+  cholmod_common *cc = (cholmod_common *) evsldata.cc;
+  cholmod_free_factor(&LB, cc);
+  cholmod_finish(cc);
+  free(cc);
+}
+

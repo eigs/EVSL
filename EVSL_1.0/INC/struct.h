@@ -96,10 +96,13 @@ typedef struct _externalMatvec {
 typedef struct _evsldata {
   /* external matvec routine and the associated data for A */
   externalMatvec Amatvec;
-  /* if has right-hand matrix B */
+  /* if right-hand matrix B is set */
   int hasB;
-  /* B = LB * LB^T is the Cholesky factorization of B
-   * function and associated data to perform y=LB \ x and y=LB' \ x */
+  /* if the factor of B is computed by the default solver */
+  int isDefaultLB;
+  /* LB (and cc) are the Cholesky factor of B */
+  void *LB, *cc;
+  /* function and associated data to perform y=LB \ x and y=LB' \ x */
   //solverFunc_C LBsol, LBTsol;
   /* functions to perform y=LB * x and y=LB' * x */
 } evslData;

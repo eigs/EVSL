@@ -10,6 +10,8 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv);
+int lapgen(int nx, int ny, int nz, cooMat *Acoo);
+int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
 
 int main(int argc, char *argv[]) {
   /*------------------------------------------------------------

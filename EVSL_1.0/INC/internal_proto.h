@@ -72,6 +72,8 @@ void csr_resize(int nrow, int ncol, int nnz, csrMat *csr);
 /*- - - - - - - - - suitesparse.c */
 int set_ratf_solfunc_default(csrMat *A, ratparams *rat);
 void free_rat_default_sol(ratparams *rat);
+int factor_Bmatrix_default(csrMat *B);
+void free_Bfactor_default();
 
 /*- - - - - - - - - timing.c */
 int time_seeder();

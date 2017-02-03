@@ -28,10 +28,6 @@ void free_pol(polparams *pol);
 int ChebSI(csrMat *A, int nev, double *intv, int maxit, double tol, double *vinit, polparams *pol, int *nevo, double **lamo, double **Yo, double **reso, FILE *fstats);
 
 
-/*- - - - - - - - - exeiglap3.c */
-int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
-
-
 /*- - - - - - - - - lanbounds.c */
 int LanBounds(csrMat *A, int msteps, double *v, double *lmin, double *lmax);
 
@@ -62,12 +58,16 @@ int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr);
 void free_csr(csrMat *csr);
 // free a COO
 void free_coo(cooMat *coo);
-// generate a 2D/3D Laplacian matrix in COO format
-int lapgen(int nx, int ny, int nz, cooMat *Acoo);
+
+/*- - - - - - - - - evsl.c */
 // set an external matvec function
 void SetMatvecFunc(int n, matvecFunc func, void *data);
 // unset an external matvec function
 void UnsetMatvecFunc();
+/* set matrix B */
+int SetRhsMatrix(csrMat *B);
+/* unset matrix B */
+void UnsetRhsMatrix();
 
 /*- - - - - - - - - spslicer.c */
 //
