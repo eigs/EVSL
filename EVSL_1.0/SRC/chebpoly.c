@@ -506,10 +506,10 @@ void free_pol(polparams *pol) {
  * @param v is untouched
  **/
 int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w) {
-  /* user-provided matvec */
-  if (evsldata.Amatvec.func) {
-    ChebAv0(NULL, pol, v, y, w);
-    return 0;
+  /* user-provided matvec or generalized e.v. prob */
+  if (evsldata.Amatvec.func || evsldata.hasB) {
+    int err = ChebAv0(NULL, pol, v, y, w);
+    return err;
   }
   //-------------------- unpack A 
   int n = A->nrows;
@@ -619,7 +619,11 @@ int ChebAv0(csrMat *A, polparams *pol, double *v, double *y, double *w) {
     t = (k==1 ? t1:t2); 
     /*-------------------- Vkp1 = A*Vk - cc*Vk; */    
     s = mu[k];
-    matvec (A, vk, vkp1);
+    if (evsldata.hasB) {
+      matvec_with_Bfactor(A, vk, vkp1);
+    } else {
+      matvec(A, vk, vkp1);
+    }
     for (i=0; i<n; i++){
       vkp1[i] = t*(vkp1[i]-cc*vk[i]) - vkm1[i];
       //-------------------- for degree 2 and up: 

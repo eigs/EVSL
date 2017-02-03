@@ -140,15 +140,18 @@ void free_rat_default_sol(ratparams *rat) {
   }
 }
 
-/* a wrapper of cholmod_ sparse */
+/* @brief Create cholmod_sparse matrix just as a wrapper of a csrMat 
+ * @warning cholmod_sparse is a CSC format. But since A is symmetric, it is the same */
 cholmod_sparse* csrMat_to_cholmod_sparse(csrMat *A, int stype) {
   cholmod_sparse *B = NULL;
   Malloc(B, 1, cholmod_sparse);
   B->nrow = A->nrows;
   B->ncol = A->ncols;
   B->nzmax = A->ia[A->nrows];
-  B->p = A->ja;
-  B->i = A->ia;
+  /* column pointers */
+  B->p = A->ia;
+  /* row indices */
+  B->i = A->ja;
   B->nz = NULL;
   B->x = A->a;
   B->z = NULL;
@@ -162,43 +165,52 @@ cholmod_sparse* csrMat_to_cholmod_sparse(csrMat *A, int stype) {
   return B;
 }
 
+typedef struct _default_LBdata {
+  cholmod_common cc;
+  cholmod_factor *LB;
+} default_LBdata;
+
 int factor_Bmatrix_default(csrMat *B) {
   cholmod_sparse *Bcholmod;
-  cholmod_common *cc;
-  cholmod_factor *LB;
+  default_LBdata *LBdata;
 
   /* unset B just in case it was not freed */
   if (evsldata.hasB && evsldata.isDefaultLB) {
     free_Bfactor_default();
   }
 
+  Malloc(LBdata, 1, default_LBdata);
+  cholmod_common *cc = &LBdata->cc;
+
   /* start CHOLMOD */
-  Malloc(cc, 1, cholmod_common);
   cholmod_start(cc);
-  /* convert matrix */
+  /* convert matrix. 
+   * stype=1 means the upper triangular part of B will be accessed */
   Bcholmod = csrMat_to_cholmod_sparse(B, 1);
   /* check the matrix */
   cholmod_check_common(cc);
   cholmod_check_sparse(Bcholmod, cc);
   /* symbolic fact */
-  LB = cholmod_analyze(Bcholmod, cc);
-  cholmod_factorize(Bcholmod, LB, cc);
+  LBdata->LB = cholmod_analyze(Bcholmod, cc);
+  cholmod_factorize(Bcholmod, LBdata->LB, cc);
   /* check the factor */
-  cholmod_check_factor(LB, cc);
+  cholmod_check_factor(LBdata->LB, cc);
   /* save the factor and cc */
-  evsldata.LB = (void *) LB;
-  evsldata.cc = (void *) cc;
+  evsldata.LBdata = (void *) LBdata;
   /* free the matrix wrapper */
   free(Bcholmod);
-
+  /* malloc workspace */
+  Malloc(evsldata.LBwork, 2*B->nrows, double);
   return 0;
 }
 
 void free_Bfactor_default() {
-  cholmod_factor *LB = (cholmod_factor *) evsldata.LB;
-  cholmod_common *cc = (cholmod_common *) evsldata.cc;
+  default_LBdata *LBdata = (default_LBdata *) evsldata.LBdata;
+  cholmod_factor *LB = LBdata->LB;
+  cholmod_common *cc = &LBdata->cc;
   cholmod_free_factor(&LB, cc);
   cholmod_finish(cc);
-  free(cc);
+  free(evsldata.LBdata);
+  free(evsldata.LBwork);
 }
 

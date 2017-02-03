@@ -61,7 +61,7 @@ void free_coo(cooMat *coo);
 
 /*- - - - - - - - - evsl.c */
 // set an external matvec function
-void SetMatvecFunc(int n, matvecFunc func, void *data);
+void SetMatvecFunc(int n, MVFunc func, void *data);
 // unset an external matvec function
 void UnsetMatvecFunc();
 /* set matrix B */

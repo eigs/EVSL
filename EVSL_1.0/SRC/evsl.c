@@ -5,7 +5,7 @@
 /* global variable evslData, which is guaranteed to be initialized */
 evslData evsldata;
 
-void SetMatvecFunc(int n, matvecFunc func, void *data) {
+void SetMatvecFunc(int n, MVFunc func, void *data) {
   evsldata.Amatvec.n = n;
   evsldata.Amatvec.func = func;
   evsldata.Amatvec.data = data;
@@ -24,7 +24,8 @@ int SetRhsMatrix(csrMat *B) {
   evsldata.hasB = 1;
   evsldata.isDefaultLB = 1;
 #else
-  printf("error: EVSL was not compiled with the default solver \n");
+  printf("error: EVSL was not compiled with SuiteSparse, ");
+  printf("so the current version cannot solve generalized e.v. problem\n");
   err = -1;
 #endif
   return err;
@@ -39,3 +40,8 @@ void UnsetRhsMatrix() {
   evsldata.hasB = 0;
   evsldata.isDefaultLB = 0;
 }
+
+int matvec_with_Bfactor(csrMat *A, double *x, double *y) {
+  evsldata.LBTsolv(x, y, evsldata.LBdata);
+}
+

@@ -429,7 +429,8 @@ int set_ratf_solfunc(ratparams *rat, csrMat *A, linSolFunc *funcs, void **data) 
     rat->use_default_solver = 1;
     err = set_ratf_solfunc_default(A, rat);
 #else
-    printf("error: EVSL was not compiled with the default solver \n");
+    printf("error: EVSL was not compiled with the default solver, ");
+    printf("so the users must provide solvers\n");
     err = -1;
 #endif
     return err;

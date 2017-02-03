@@ -54,11 +54,16 @@ typedef struct _polparams {
  * data  needed  by  the  solver. 
  */
 typedef void (*linSolFunc)(int n, double *br, double *bz, double *xr, double *xz, void *data);
-/* [Real version] */
-typedef void (*linSolFunc_R)(int n, double *b, double *x, void *data);
+/* function pointer to apply the following operations with LB
+ *   y = LB  \ x 
+ *   y = LB' \ x
+ *   y = LB  * x
+ *   y = LB' * x
+ */
+typedef void (*LBFunc)(double *x, double *y, void *data);
 
 /* matvec function prototype */
-typedef void (*matvecFunc)(double *x, double *y, void *data);
+typedef void (*MVFunc)(double *x, double *y, void *data);
 
 typedef struct _ratparams {
   /* parameters for rational filter */
@@ -88,7 +93,7 @@ typedef struct _ratparams {
 
 typedef struct _externalMatvec {
   int n;
-  matvecFunc func;
+  MVFunc func;
   void *data;
 } externalMatvec;
 
@@ -100,11 +105,12 @@ typedef struct _evsldata {
   int hasB;
   /* if the factor of B is computed by the default solver */
   int isDefaultLB;
-  /* LB (and cc) are the Cholesky factor of B */
-  void *LB, *cc;
-  /* function and associated data to perform y=LB \ x and y=LB' \ x */
-  //solverFunc_C LBsol, LBTsol;
-  /* functions to perform y=LB * x and y=LB' * x */
+  /* LBdata is the Cholesky factor of B */
+  void *LBdata;
+  /* functions to perform y=LB * x, y=LB' * x,  y=LB \ x, and y=LB' \ x */
+  LBFunc LBmult, LBTmult, LBsolv, LBTsolv;
+  /* work space for performing these operations */
+  double *LBwork;
 } evslData;
 
 /* global variable: evslData */

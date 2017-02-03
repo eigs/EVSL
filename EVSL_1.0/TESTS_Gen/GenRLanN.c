@@ -65,7 +65,10 @@ int main () {
   }
   /*-------------------- read number of matrices ..*/  
   memset( line, 0, MAX_LINE );
-  fgets( line, MAX_LINE, fmat );
+  if (NULL == fgets( line, MAX_LINE, fmat )) {
+    fprintf( flog, "error in reading matfile...\n" );
+    exit(2);
+  }
   if( ( numat = atoi( line ) ) <= 0 ) {
     fprintf( flog, "Invalid count of matrices...\n" );
     exit(3);

@@ -28,12 +28,13 @@ OBJS_RN  = LapRLanN.o io.o lapl.o
 OBJS_RR  = LapRLanR.o io.o lapl.o
 OBJS_PSI = LapPSI.o io.o lapl.o
 OBJS_PN_MatFree = LapPLanN_MatFree.o io.o lapl.o
+OBJS_PR_GEN = LapPLanR_Gen.o io.o lapl.o
 
 LIB = -L../ -llancheb 
 
 ALLEXE = LapPLanR.ex LapPLanN.ex LapPSI.ex LapPLanN_MatFree.ex
 ifneq ($(SUITESPARSE_DIR),)
-ALLEXE += LapRLanR.ex LapRLanN.ex
+ALLEXE += LapRLanR.ex LapRLanN.ex LapPLanR_Gen.ex
 endif
 
 ifneq ($(SUITESPARSE_DIR),)
@@ -67,6 +68,10 @@ LapRLanR.ex: $(OBJS_RR)
 
 LapRLanN.ex: $(OBJS_RN) 
 	$(LINK) -o LapRLanN.ex $(OBJS_RN) $(LIB) $(LIB_EXT)
+
+## generalized
+LapPLanR_Gen.ex: $(OBJS_PR_GEN) 
+	$(LINK) -o LapPLanR_Gen.ex $(OBJS_PR_GEN) $(LIB) $(LIB_EXT)
 
 all: $(ALLEXE)
 
