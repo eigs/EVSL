@@ -168,39 +168,120 @@ cholmod_sparse* csrMat_to_cholmod_sparse(csrMat *A, int stype) {
 typedef struct _default_LBdata {
   cholmod_common cc;
   cholmod_factor *LB;
+  cholmod_dense *Y, *E, *W;
 } default_LBdata;
 
+void vector_to_cholmod_dense(int nrow, int ncol, double *v, int ldv,
+                             cholmod_dense *x) {
+  x->nrow = nrow;
+  x->ncol = ncol;
+  x->nzmax = nrow * ncol;
+  x->d = ldv;
+  x->x = v;
+  x->z = NULL;
+  x->xtype = CHOLMOD_REAL;
+  x->dtype = CHOLMOD_DOUBLE;
+}
+
+/*
+ * soltype = 1 : x = P' * L' \ B
+ *         = 2 : x = L \ P * B
+ */ 
+void cholmod_sol_combine(int soltype, double *b, int nb, int ldb,
+                         double *x, int nx, int ldx, void *data) {
+  int err1=1, err2=1, n;
+  default_LBdata *LBdata = (default_LBdata *) data;
+  cholmod_factor *LB = LBdata->LB;
+  cholmod_common *cc = &LBdata->cc;
+  n = LB->n;
+  /* cholmod solve work space */
+  cholmod_dense **Y, **E;
+  Y = &LBdata->Y;
+  E = &LBdata->E;
+  cholmod_dense *oldY, *oldE;
+  oldY = LBdata->Y;
+  oldE = LBdata->E;
+  /* convert to cholmod dense */
+  cholmod_dense B, X, *Xptr;
+  vector_to_cholmod_dense(n, nb, b, ldb, &B);
+  vector_to_cholmod_dense(n, nb, x, ldx, &X);
+  Xptr = &X;
+  cholmod_dense *Wptr = LBdata->W;
+  /* solve with LB */
+  if (1 == soltype) {
+    /* W = L' \ B */
+    err1 = cholmod_solve2(5, LB, &B, NULL, &Wptr, NULL, Y, E, cc);
+    /* X = P' * W */
+    err2 = cholmod_solve2(8, LB, Wptr, NULL, &Xptr, NULL, Y, E, cc);
+  } else if (2 == soltype) {
+    /* W = P * B */
+    err1 = cholmod_solve2(7, LB, &B, NULL, &Wptr, NULL, Y, E, cc);
+    /* X = L \ W */
+    err2 = cholmod_solve2(4, LB, Wptr, NULL, &Xptr, NULL, Y, E, cc);
+  }
+  /* W, X should have NOT been reallocated */
+  CHKERR(Xptr != &X);
+  CHKERR(Wptr != LBdata->W);
+  /* Y and E should be only alloced once */
+  if (oldY) { CHKERR(oldY != *Y); }
+  if (oldE) { CHKERR(oldE != *E); }
+
+  if (err1 != 1 || err2 != 1) {
+    printf("cholmod solve2 error err1 %d, err2 %d\n", err1, err2);
+  }
+}
+
+void default_LSol(double *x, double *y, void *data) {
+  cholmod_sol_combine(2, x, y, data);
+}
+
+void default_LTSol(double *x, double *y, void *data) {
+  cholmod_sol_combine(1, x, y, data);
+}
+
 int factor_Bmatrix_default(csrMat *B) {
+  int n = B->nrows;
   cholmod_sparse *Bcholmod;
   default_LBdata *LBdata;
 
   /* unset B just in case it was not freed */
-  if (evsldata.hasB && evsldata.isDefaultLB) {
-    free_Bfactor_default();
-  }
+  //if (evsldata.hasB && evsldata.isDefaultLB) {
+  //  free_Bfactor_default();
+  //}
 
   Malloc(LBdata, 1, default_LBdata);
   cholmod_common *cc = &LBdata->cc;
-
   /* start CHOLMOD */
   cholmod_start(cc);
+  /* force to have LL factor */
+  cc->final_asis = 0;
+  cc->final_ll = 1;
   /* convert matrix. 
    * stype=1 means the upper triangular part of B will be accessed */
   Bcholmod = csrMat_to_cholmod_sparse(B, 1);
-  /* check the matrix */
+  /* check common and the matrix */
   cholmod_check_common(cc);
   cholmod_check_sparse(Bcholmod, cc);
-  /* symbolic fact */
+  /* symbolic and numeric fact */
   LBdata->LB = cholmod_analyze(Bcholmod, cc);
   cholmod_factorize(Bcholmod, LBdata->LB, cc);
   /* check the factor */
+  CHKERR(LBdata->LB->is_ll == 0);
   cholmod_check_factor(LBdata->LB, cc);
-  /* save the factor and cc */
+  /* set NULL to workspace Y and E,
+   * will be allocated at the first call of solve */
+  LBdata->Y = NULL;
+  LBdata->E = NULL;
+  /* allocate workspace W */
+  LBdata->W = cholmod_allocate_dense(n, 1, n, CHOLMOD_REAL, cc);
+  /* save the struct to global variable */
   evsldata.LBdata = (void *) LBdata;
   /* free the matrix wrapper */
   free(Bcholmod);
-  /* malloc workspace */
-  Malloc(evsldata.LBwork, 2*B->nrows, double);
+
+  evsldata.LBsolv = default_LSol;
+  evsldata.LBTsolv = default_LTSol;
+  
   return 0;
 }
 
@@ -208,9 +289,13 @@ void free_Bfactor_default() {
   default_LBdata *LBdata = (default_LBdata *) evsldata.LBdata;
   cholmod_factor *LB = LBdata->LB;
   cholmod_common *cc = &LBdata->cc;
+  cholmod_dense *Y = LBdata->Y;
+  cholmod_dense *E = LBdata->E;
+  cholmod_dense *W = LBdata->W;
   cholmod_free_factor(&LB, cc);
+  cholmod_free_dense(&Y, cc);
+  cholmod_free_dense(&E, cc);
+  cholmod_free_dense(&W, cc);
   cholmod_finish(cc);
-  free(evsldata.LBdata);
-  free(evsldata.LBwork);
 }
 

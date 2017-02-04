@@ -81,7 +81,7 @@ int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
     /*-------------------- Chebyshev (degree) loop */
     for (k=0; k<Mdeg; k++){
       /*-------------------- Cheb. recurrence */
-      matvec(A, vk, vkp1);
+      matvec_genev(A, vk, vkp1);
       scal = k==0 ? 1.0 : 2.0;
       scal /= wid;
       for (i=0; i<n; i++)

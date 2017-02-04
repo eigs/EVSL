@@ -187,7 +187,7 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
 /**
 * @brief y = A * x
 */
-int matvec(csrMat *A, double *x, double *y) {
+int matvec_A(csrMat *A, double *x, double *y) {
   /* if an external matvec routine is set, A will be ignored */
   if (evsldata.Amatvec.func) {
     (evsldata.Amatvec.func)(x, y, evsldata.Amatvec.data);
@@ -196,4 +196,5 @@ int matvec(csrMat *A, double *x, double *y) {
   }
   return 0;
 }
+
 

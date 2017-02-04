@@ -205,7 +205,7 @@ int ChebSI(csrMat *A, int nev, double *intv, int maxit,
         if (resP < tolP) {
           /*---  Compute norm of AV(:,i) - V(:,i)*Lambda(i)   */
           tm = cheblan_timer();
-          matvec(A, V+i*n, buf);
+          matvec_genev(A, V+i*n, buf);
           tmv += cheblan_timer() - tm;
           nmv++;
           double rq = DDOT(&n, V+i*n, &one, buf, &one);  // Rayleigh Quotient for A

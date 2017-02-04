@@ -47,8 +47,8 @@ int main(int argc, char *argv[]) {
   nx   = 16;
   ny   = 16;
   nz   = 16;
-  a    = 0.4;
-  b    = 0.8;
+  a    = 0.6;
+  b    = 0.9;
   nslices = 4;
   //-----------------------------------------------------------------------
   //-------------------- reset some default values from command line [Yuanzhe/]
@@ -66,19 +66,14 @@ int main(int argc, char *argv[]) {
   findarg("nslices", INT, &nslices, argc, argv);
   fprintf(fstats,"used nx = %3d ny = %3d nz = %3d",nx,ny,nz);
   fprintf(fstats," [a = %4.2f  b= %4.2f],  nslices=%2d \n",a,b,nslices);
-  //-------------------- eigenvalue bounds set by hand.
-  lmin = 0.0;  
-  lmax =  ((nz == 1)? 8.0 : 12.0);
-  xintv[0] = a;
-  xintv[1] = b;
-  xintv[2] = lmin;
-  xintv[3] = lmax;
-  tol  = 1e-8;
+  /*-------------------- matrix size */
   n = nx * ny * nz;
+  /*-------------------- stopping tol */
+  tol  = 1e-8;
   /*-------------------- output the problem settings */
   fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
   fprintf(fstats, "Laplacian A : %d x %d x %d, n = %d\n", nx, ny, nz, n);
-  fprintf(fstats, "Laplacian B : %d x %d,      n = %d\n", nx*ny,  nz, n);
+  fprintf(fstats, "Laplacian B : %d x %d, n = %d\n", nx*ny,  nz, n);
   fprintf(fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
   /*-------------------- generate 2D/3D Laplacian matrix 
    *                     saved in coo format */
@@ -89,9 +84,18 @@ int main(int argc, char *argv[]) {
   ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
   /*-------------------- set the right-hand side matrix B */
   SetRhsMatrix(&Bcsr);
-  return 1;
   /*-------------------- step 0: get eigenvalue bounds */
-  fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
+  //-------------------- initial vector  
+  vinit = (double *) malloc(n*sizeof(double));
+  rand_double(n, vinit);
+  ierr = LanBounds(&Acsr, 60, vinit, &lmin, &lmax);
+  fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n", 
+          lmin, lmax);
+  /*-------------------- interval and eig bounds */
+  xintv[0] = a;
+  xintv[1] = b;
+  xintv[2] = lmin;
+  xintv[3] = lmax;
   /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
   /*-------------------- define kpmdos parameters */
   Mdeg = 40;
@@ -123,19 +127,12 @@ int main(int argc, char *argv[]) {
   }
   //-------------------- # eigs per slice
   ev_int = (int) (1 + ecount / ((double) nslices));
-  //-------------------- initial vector  
-  vinit = (double *) malloc(n*sizeof(double));
-  rand_double(n, vinit);
-  //-------------------- debug only :
-  //  save_vec(n, vinit, "OUT/vinit.mtx");
   //-------------------- For each slice call ChebLanr
   for (sl =0; sl<nslices; sl++){
     printf("======================================================\n");
     int nev2;
     double *lam, *Y, *res;
     int *ind;
-    int nev_ex;
-    double *lam_ex;
     //-------------------- 
     a = sli[sl];
     b = sli[sl+1];
@@ -178,30 +175,14 @@ int main(int argc, char *argv[]) {
      * ind: keep the orginal indices */
     ind = (int *) malloc(nev2*sizeof(int));
     sort_double(nev2, lam, ind);
-    /* compute exact eigenvalues */
-    exeiglap3(nx, ny, nz, a, b, &nev_ex, &lam_ex);
-    printf(" number of eigenvalues: %d, found: %d\n", nev_ex, nev2);
+    printf(" number of eigenvalues found: %d\n", nev2);
 
     /* print eigenvalues */
-    fprintf(fstats, "                                   Eigenvalues in [a, b]\n");
-    fprintf(fstats, "    Computed [%d]       ||Res||              Exact [%d]", nev2, nev_ex);
-    if (nev2 == nev_ex) {
-      fprintf(fstats, "                 Err");
-    }
+    fprintf(fstats, "     Eigenvalues in [a, b]\n");
+    fprintf(fstats, "    Computed [%d]        ||Res||              ", nev2);
     fprintf(fstats, "\n");
-    for (i=0; i<max(nev2, nev_ex); i++) {
-      if (i < nev2) {
-        fprintf(fstats, "% .15e  %.1e", lam[i], res[ind[i]]);
-      } else {
-        fprintf(fstats, "                               ");
-      }
-      if (i < nev_ex) { 
-        fprintf(fstats, "        % .15e", lam_ex[i]);
-      }
-      if (nev2 == nev_ex) {
-        fprintf(fstats, "        % .1e", lam[i]-lam_ex[i]);
-      }
-      fprintf(fstats,"\n");
+    for (i=0; i<nev2; i++) {
+      fprintf(fstats, "% .15e  %.1e\n", lam[i], res[ind[i]]);
       if (i>50) {
         fprintf(fstats,"                        -- More not shown --\n");
         break;
@@ -213,7 +194,6 @@ int main(int argc, char *argv[]) {
     if (res)  free(res);
     free_pol(&pol);
     free(ind);
-    free(lam_ex);
   }
   //-------------------- free other allocated space 
   free(vinit);

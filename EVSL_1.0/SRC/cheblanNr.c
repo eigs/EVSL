@@ -251,7 +251,7 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
     u = &W[nev*n];  
     DGEMV(&cN, &n, &kdim, &done, V, &n, y, &one, &dzero, u, &one);
     /*--------------------   w = A*u        */
-    matvec(A, u, wk);
+    matvec_genev(A, u, wk);
     nmv ++;
     /*--------------------   Ritzval: t = (y'*w)/(y'*y) */
     t1 = DDOT(&n, u, &one, u, &one);  // should be one

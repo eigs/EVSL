@@ -54,6 +54,7 @@ typedef struct _polparams {
  * data  needed  by  the  solver. 
  */
 typedef void (*linSolFunc)(int n, double *br, double *bz, double *xr, double *xz, void *data);
+
 /* function pointer to apply the following operations with LB
  *   y = LB  \ x 
  *   y = LB' \ x
@@ -103,14 +104,14 @@ typedef struct _evsldata {
   externalMatvec Amatvec;
   /* if right-hand matrix B is set */
   int hasB;
-  /* if the factor of B is computed by the default solver */
+  /* if B is factored by the default solver */
   int isDefaultLB;
-  /* LBdata is the Cholesky factor of B */
-  void *LBdata;
+  /* LBdata is the data for Cholesky factor of B */
+  void *LBfuncdata;
   /* functions to perform y=LB * x, y=LB' * x,  y=LB \ x, and y=LB' \ x */
   LBFunc LBmult, LBTmult, LBsolv, LBTsolv;
-  /* work space for performing these operations */
-  double *LBwork;
+  /* work space for performing matvec, y = L \ A / L' x */
+  double *matvec_gen_workspace;
 } evslData;
 
 /* global variable: evslData */

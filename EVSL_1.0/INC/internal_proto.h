@@ -31,6 +31,9 @@ void savedensemat(double *A, int lda, int m, int n, const char *fn);
 //
 void save_vec(int n, double *x, const char fn[]);
 
+/*- - - - - - - - - evsl.c */
+//
+int matvec_genev(csrMat *A, double *x, double *y);
 
 /*- - - - - - - - - misc_la.c */
 //
@@ -64,7 +67,7 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w3);
 
 /*- - - - - - - - - spmat.c */
 // matvec: y = A * x
-int matvec(csrMat *A, double *x, double *y);
+int matvec_A(csrMat *A, double *x, double *y);
 // memory allocation/reallocation for a CSR matrix
 void csr_resize(int nrow, int ncol, int nnz, csrMat *csr);
 
