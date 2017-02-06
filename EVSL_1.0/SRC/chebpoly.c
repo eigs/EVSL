@@ -78,10 +78,10 @@ int dampcf(int m, int damping, double *jac){
  **/
 int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
   int k, j, one = 1, n = npts;
-  double scal;
-  double *vkm1 = malloc(n*sizeof(double));
-  double *vkp1 = malloc(n*sizeof(double));
-  double *vk   = malloc(n*sizeof(double));
+  double scal, *vkm1, *vkp1, *vk;
+  Malloc(vkm1, n, double);
+  Malloc(vkp1, n, double);
+  Malloc(vk, n, double);
   double *tmp;
   //-------------------- compute p(xi)
   memset(vkm1, 0, n*sizeof(double));
@@ -317,7 +317,7 @@ int rootchb(int m, double *v, double* jac, double thcIn, double tha,
   Malloc(evi, m, double);
   Malloc(work, lwork, double);
   DHSEQR(&jobz, &compz, &m, &ilo, &ihi, T, &m, evr, evi, 
-      z, &ldz, work, &lwork,&info);
+         z, &ldz, work, &lwork,&info);
   if (info != 0) {
     fprintf(stdout, "DHSEQR error: %d\n", info);
     return(1);

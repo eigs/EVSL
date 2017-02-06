@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
   double *vinit;
   polparams pol;
   FILE *fstats = NULL;
-  if (!(fstats = fopen("OUT/LapPLanR","w"))) {
+  if (!(fstats = fopen("OUT/LapPLanR.out","w"))) {
     printf(" failed in opening output file in OUT/\n");
     fstats = stdout;
   }
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
   fprintf(fstats," [a = %4.2f  b= %4.2f],  nslices=%2d \n",a,b,nslices);
   //-------------------- eigenvalue bounds set by hand.
   lmin = 0.0;  
-  lmax =  ((nz == 1)? 8.0 : 12.0);
+  lmax = nz == 1 ? 8.0 : 12.0;
   xintv[0] = a;
   xintv[1] = b;
   xintv[2] = lmin;
@@ -156,7 +156,8 @@ int main(int argc, char *argv[]) {
     //-------------------- Now determine polymomial to use
     find_pol(xintv, &pol);       
 
-    fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
+    fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",
+            pol.deg,pol.bar, pol.gam);
     //-------------------- then call ChenLanNr
     ierr = ChebLanTr(&Acsr, mlan, nev, xintv, max_its, tol, vinit,
                      &pol, &nev2, &lam, &Y, &res, fstats);
@@ -164,8 +165,7 @@ int main(int argc, char *argv[]) {
       printf("ChebLanTr error %d\n", ierr);
       return 1;
     }
-
-    /* [compute residual] already computed in res */
+    /*--------------------- residuals were already computed in res */
     /* sort the eigenvals: ascending order
      * ind: keep the orginal indices */
     ind = (int *) malloc(nev2*sizeof(int));

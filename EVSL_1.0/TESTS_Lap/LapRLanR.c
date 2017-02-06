@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   int pow = 2; // multiplicity of each pole
   double beta = 0.01; // beta in the LS approximation
   FILE *fstats = NULL;
-  if (!(fstats = fopen("OUT/LapRLanR","w"))) {
+  if (!(fstats = fopen("OUT/LapRLanR.out","w"))) {
     printf(" failed in opening output file in OUT/\n");
     fstats = stdout;
   }
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
   fprintf(fstats," [a = %4.2f  b= %4.2f],  nslices=%2d \n",a,b,nslices);
   //-------------------- eigenvalue bounds set by hand.
   lmin = 0.0;  
-  lmax =  ((nz == 1)? 8.0 :12) ;
+  lmax = nz == 1 ? 8.0 : 12.0;
   xintv[0] = a;
   xintv[1] = b;
   xintv[2] = lmin;
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     printf("kpmdos error %d\n", ierr);
     return 1;
   }
-  fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
+  fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f \n",t);
   fprintf(fstats, " estimated eig count in interval: %10.2e \n",ecount);
   //-------------------- call splicer to slice the spectrum
   npts = 10 * ecount; 
@@ -156,8 +156,8 @@ int main(int argc, char *argv[]) {
     mlan = max(4*nev,100);  mlan = min(mlan, n); 
     max_its = 3*mlan;
     //-------------------- RationalLanTr
-    ierr = RatLanTr(&Acsr, mlan, nev, intv, &rat, max_its, tol, vinit, &nev2, &lam, 
-                    &Y, &res, fstats);
+    ierr = RatLanTr(&Acsr, mlan, nev, intv, &rat, max_its, tol, vinit, &nev2, 
+                    &lam, &Y, &res, fstats);
     if (ierr) {
       printf("RatLanTr error %d\n", ierr);
       return 1;

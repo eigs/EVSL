@@ -27,14 +27,14 @@ int main(int argc, char *argv[]) {
     Non-restart Lanczos with polynomial filtering
     ------------------------------------------------------------*/
   int n, nx, ny, nz, i, j, npts, nslices, nvec, Mdeg, nev, 
-      mlan,  ev_int, sl, flg, ierr;
+      mlan, ev_int, sl, flg, ierr;
   /* find the eigenvalues of A in the interval [a,b] */
-  double a, b, lmax, lmin, ecount, tol,   *sli, *mu;
+  double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
   double *vinit;
   polparams pol;
   FILE *fstats = NULL;
-  if (!(fstats = fopen("OUT/LapPLanN","w"))) {
+  if (!(fstats = fopen("OUT/LapPLanN.out","w"))) {
     printf(" failed in opening output file in OUT/\n");
     fstats = stdout;
   }
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
   b    = 0.8;
   nslices = 4;
   //-----------------------------------------------------------------------
-  //-------------------- reset some default values from command line [Yuanzhe/]
+  //-------------------- reset some default values from command line
   /* user input from command line */
   flg = findarg("help", NA, NULL, argc, argv);
   if (flg) {
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
   fprintf(fstats," [a = %4.2f  b= %4.2f],  nslices=%2d \n",a,b,nslices);
   //-------------------- eigenvalue bounds set by hand.
   lmin = 0.0;  
-  lmax =  ((nz == 1)? 8.0 : 12.0);
+  lmax = nz == 1 ? 8.0 : 12.0;
   xintv[0] = a;
   xintv[1] = b;
   xintv[2] = lmin;
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
   //-------------------- debug only :
   //  save_vec(n, vinit, "OUT/vinit.mtx");
   //-------------------- For each slice call ChebLanr
-  for (sl =0; sl<nslices; sl++){
+  for (sl=0; sl<nslices; sl++){
     printf("======================================================\n");
     int nev2;
     double *lam, *Y, *res;

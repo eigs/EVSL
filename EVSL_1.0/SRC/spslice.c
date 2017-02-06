@@ -34,11 +34,12 @@ int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
   } else {
     n = A->nrows;
   }
-  double *vkp1 = malloc(n*sizeof(double));
-  double *w = malloc(n*sizeof(double)); 
-  double *vkm1 = malloc(n*sizeof(double)); 
-  double *vk = malloc(n*sizeof(double));
-  double *jac =  malloc((Mdeg+1)*sizeof(double));
+  double *vkp1, *w, *vkm1, *vk, *jac;
+  Malloc(vkp1, n, double);
+  Malloc(w, n, double);
+  Malloc(vkm1, n, double);
+  Malloc(vk, n, double);
+  Malloc(jac, Mdeg+1, double);
   double *tmp,  ctr, wid; 
   double scal, t, tcnt, beta1, beta2, aa, bb;
   int k, k1, i, m, mdegp1, one=1;
@@ -122,8 +123,8 @@ int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
 void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) {
   //
   int ndp1, j, k;
-  double val0, theta0;
-  double *thetas = (double*)malloc(npts*sizeof(double));
+  double val0, theta0, *thetas;
+  Malloc(thetas, npts, double);
   ndp1   = Mdeg+1; 
   //  if (xi[0]<-1.0) xi[0] = -1; 
   //if (xi[npts-1]> 1.0) xi[npts-1]  = 1; 
@@ -197,8 +198,9 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npt
   aL = max(aL,-1.0);
   bL = min(bL,1.0);
   npts = max(npts,2*n_int+1);
-  double *xi = (double*)malloc(npts*sizeof(double));
-  double *yi = malloc(npts*sizeof(double));
+  double *xi, *yi;
+  Malloc(xi, npts, double);
+  Malloc(yi, npts, double);
   linspace(aL, bL, npts, xi);
   //printf(" aL %15.3e bL %15.3e \n",aL,bL);
   //-------------------- get all integrals at the xi's 

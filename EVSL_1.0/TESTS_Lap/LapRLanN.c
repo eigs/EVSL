@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   int pow = 2; // multiplicity of each pole
   double beta = 0.01; // beta in the LS approximation
   FILE *fstats = NULL;
-  if (!(fstats = fopen("OUT/LapRLanN","w"))) {
+  if (!(fstats = fopen("OUT/LapRLanN.out","w"))) {
     printf(" failed in opening output file in OUT/\n");
     fstats = stdout;
   }

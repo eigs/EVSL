@@ -106,12 +106,14 @@ typedef struct _evsldata {
   int hasB;
   /* if B is factored by the default solver */
   int isDefaultLB;
-  /* LBdata is the data for Cholesky factor of B */
-  void *LBfuncdata;
-  /* functions to perform y=LB * x, y=LB' * x,  y=LB \ x, and y=LB' \ x */
-  LBFunc LBmult, LBTmult, LBsolv, LBTsolv;
-  /* work space for performing matvec, y = L \ A / L' x */
-  double *matvec_gen_workspace;
+  /* functions and the data to perform y=LB * x, y=LB' * x,  y=LB \ x, and y=LB' \ x */
+  LBFunc LB_mult, LBT_mult, LB_solv, LBT_solv;
+  void *LB_func_data;
+  /* work space for performing matvec_gen, y = L \ A / L' x 
+   *      y = L' \ x;
+   *   work = A  * y 
+   *      y = L  \ work */
+  double *matvec_gen_work;
 } evslData;
 
 /* global variable: evslData */

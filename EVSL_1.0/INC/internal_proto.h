@@ -70,13 +70,18 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w3);
 int matvec_A(csrMat *A, double *x, double *y);
 // memory allocation/reallocation for a CSR matrix
 void csr_resize(int nrow, int ncol, int nnz, csrMat *csr);
-
+//
+void sortrow(csrMat *A);
+//
+int check_full_diag(char type, csrMat *A);
+//
+int tri_sol_upper(char trans, csrMat *R, double *b, double *x);
 
 /*- - - - - - - - - suitesparse.c */
 int set_ratf_solfunc_default(csrMat *A, ratparams *rat);
 void free_rat_default_sol(ratparams *rat);
-int factor_Bmatrix_default(csrMat *B);
-void free_Bfactor_default();
+int set_default_LBdata(csrMat *B);
+void free_default_LBdata();
 
 /*- - - - - - - - - timing.c */
 int time_seeder();
@@ -84,6 +89,8 @@ int time_seeder();
 
 /*- - - - - - - - - vect.c */
 void vecset(int n, double t, double *v); 
+void vec_perm(int n, int *p, double *x, double *y);
+void vec_iperm(int n, int *p, double *x, double *y);
 
 /*- - - - - - - - - - check if an interval is valid */
 static inline int check_intv(double *intv, FILE *fstats) {

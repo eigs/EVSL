@@ -6,6 +6,30 @@
 /* global variable evslData, which is guaranteed to be initialized */
 evslData evsldata;
 
+void EVSLStart() {
+  evsldata.Amatvec.n = -1;
+  evsldata.Amatvec.func = NULL;
+  evsldata.Amatvec.data = NULL;
+  evsldata.hasB = 0;
+  evsldata.isDefaultLB = 0;
+  evsldata.LB_mult = NULL;
+  evsldata.LBT_mult = NULL;
+  evsldata.LB_solv = NULL;
+  evsldata.LBT_solv = NULL;
+  evsldata.LB_func_data = NULL;
+  evsldata.matvec_gen_work = NULL;
+}
+
+void EVSLFinish() {
+  if (evsldata.hasB && evsldata.isDefaultLB) {
+    free_default_LBdata();
+    free(evsldata.LB_func_data);
+  }
+  if (evsldata.matvec_gen_work) {
+    free(evsldata.matvec_gen_work);
+  }
+}
+
 void SetMatvecFunc(int n, MVFunc func, void *data) {
   evsldata.Amatvec.n = n;
   evsldata.Amatvec.func = func;
@@ -21,11 +45,11 @@ void UnsetMatvecFunc() {
 int SetRhsMatrix(csrMat *B) {
   int err;
 #ifdef EVSL_WITH_SUITESPARSE
-  err = factor_Bmatrix_default(B);
+  err = set_default_LBdata(B);
   evsldata.hasB = 1;
   evsldata.isDefaultLB = 1;
-  /* malloc some workspace */
-  Malloc(evsldata.LBwork, 2*B->nrows, double);
+  /* alloc some workspace */
+  Malloc(evsldata.matvec_gen_work, 2*B->nrows, double);
 #else
   printf("error: EVSL was not compiled with SuiteSparse, ");
   printf("so the current version cannot solve generalized e.v. problem\n");
@@ -37,18 +61,24 @@ int SetRhsMatrix(csrMat *B) {
 void UnsetRhsMatrix() {
 #ifdef EVSL_WITH_SUITESPARSE
   if (evsldata.hasB && evsldata.isDefaultLB) {
-    free_Bfactor_default();
-    free(evsldata.LBdata);
+    free_default_LBdata();
+    free(evsldata.LB_func_data);
   }
-  free(evsldata.LBwork);
 #endif
   evsldata.hasB = 0;
   evsldata.isDefaultLB = 0;
-  evsldata.LBsolv = NULL;
-  evsldata.LBTsolv = NULL;
-  evsldata.LBwork = NULL;
+  evsldata.LB_mult = NULL;
+  evsldata.LBT_mult = NULL;
+  evsldata.LB_solv = NULL;
+  evsldata.LBT_solv = NULL;
+  evsldata.LB_func_data = NULL;
+  if (evsldata.matvec_gen_work) {
+    free(evsldata.matvec_gen_work);
+    evsldata.matvec_gen_work = NULL;
+  }
 }
 
+/* matvec routine */
 int matvec_genev(csrMat *A, double *x, double *y) {
   /* if B is not set, so just y = A * x */
   if (!evsldata.hasB) {
@@ -56,10 +86,10 @@ int matvec_genev(csrMat *A, double *x, double *y) {
     return 0;
   }
   /* for gen e.v, y = L \ A / L' *x */
-  double *w = evsldata.LBwork;
-  evsldata.LBTsolv(x, y, evsldata.LBdata);
+  double *w = evsldata.matvec_gen_work;
+  evsldata.LBT_solv(x, y, evsldata.LB_func_data);
   matvec_A(A, y, w);
-  evsldata.LBsolv(w, y, evsldata.LBdata);
+  evsldata.LB_solv(w, y, evsldata.LB_func_data);
   return 0;
 }
 

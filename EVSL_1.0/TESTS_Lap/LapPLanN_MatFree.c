@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
   lapmv.nx = nx;  lapmv.ny = ny;  lapmv.nz = nz;  lapmv.stencil = stencil;
   //-------------------- eigenvalue bounds set by hand.
   lmin = 0.0;  
-  lmax =  ((nz == 1)? 8.0 : 12.0);
+  lmax = nz == 1 ? 8.0 : 12.0;
   xintv[0] = a;
   xintv[1] = b;
   xintv[2] = lmin;

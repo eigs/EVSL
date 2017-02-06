@@ -271,6 +271,15 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
     res[nev] = res0;
     nev++;
   }
+
+  /* for generalized eigenvalue problem: L' \ W */
+  if (evsldata.hasB) {
+    for (i=0; i<nev; i++) {
+      evsldata.LBT_solv(W+i*n, wk, evsldata.LB_func_data);
+      DCOPY(&n, wk, &one, W+i*n, &one);
+    }
+  }
+
   /*-------------------- Done.  output : */
   *nevOut = nev;
   *lamo = Lam;

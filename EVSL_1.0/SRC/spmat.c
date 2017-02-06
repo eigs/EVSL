@@ -1,3 +1,4 @@
+#include <string.h>
 #include "def.h"
 #include "blaslapack.h"
 #include "struct.h"
@@ -183,9 +184,19 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
     }
   }
 }
+/*
+* @brief matvec for CSR matrix, y = A * x
+*/
+int matvec_csr(csrMat *A, double *x, double *y) {
+  dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
+  return 0;
+}
 
-/**
+/*
 * @brief y = A * x
+* This is a special matvec function for the matrix A in
+*    A * x = \lambda * B * x
+* When matvec function is set, A will be ignored so it can be NULL
 */
 int matvec_A(csrMat *A, double *x, double *y) {
   /* if an external matvec routine is set, A will be ignored */
@@ -197,4 +208,55 @@ int matvec_A(csrMat *A, double *x, double *y) {
   return 0;
 }
 
+/* @warning: A must have been `sortrow' already */
+int check_full_diag(char type, csrMat *A) {
+  int i,j;
+  for (i=0; i<A->nrows; i++) {
+    /* if row i is empty, error */
+    if (A->ia[i] == A->ia[i+1]) {
+      return 2;
+    }
+    /* j is the location of the diag entry of row i 
+     * !!! A is assumed to be sorted !!! */   
+    if (type == 'U' || type == 'u') {
+      j = A->ia[i];
+    } else {
+      j = A->ia[i+1]-1;
+    }
+    if (A->ja[j] != i) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/* @brief solve R x = b or R' x = b */
+int tri_sol_upper(char trans, csrMat *R, double *b, double *x) {
+  int i, j, i1, i2, n = R->nrows;
+  double d, xi;
+  if (trans == 'T' || trans == 't') {
+    memcpy(x, b, n*sizeof(double));
+    for (i=0; i<n; i++) {
+      i1 = R->ia[i];
+      i2 = R->ia[i+1];
+      d = R->a[i1];
+      xi = x[i] = x[i] / d;
+      for (j=i1+1; j<i2; j++) {
+        x[R->ja[j]] -= xi * R->a[j];
+      }
+    }
+  } else {
+    for (i=n-1; i>=0; i--) {
+      i1 = R->ia[i];
+      i2 = R->ia[i+1];
+      d = R->a[i1];
+      xi = b[i];
+      for (j=i1+1; j<i2; j++) {
+        xi -= R->a[j] * x[R->ja[j]];
+      }
+      x[i] = xi / d;
+    }
+  }
+  return 0;
+}
 

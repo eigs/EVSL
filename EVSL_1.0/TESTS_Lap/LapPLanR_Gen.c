@@ -10,6 +10,8 @@
 int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv);
 int lapgen(int nx, int ny, int nz, cooMat *Acoo);
 int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
+void daxpy_(int *n,double *alpha,double *x,int *incx,double *y,int *incy);
+double dnrm2_(int *n,double *x,int *incx);
 
 int main(int argc, char *argv[]) {
   /*------------------------------------------------------------
@@ -31,7 +33,7 @@ int main(int argc, char *argv[]) {
   int n, nx, ny, nz, i, j, npts, nslices, nvec, Mdeg, nev, 
       mlan, max_its, ev_int, sl, flg, ierr;
   /* find the eigenvalues of A in the interval [a,b] */
-  double a, b, lmax, lmin, ecount, tol,   *sli, *mu;
+  double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
   double *vinit;
   polparams pol;
@@ -44,9 +46,9 @@ int main(int argc, char *argv[]) {
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
   /*-------------------- default values */
-  nx   = 16;
-  ny   = 16;
-  nz   = 16;
+  nx   = 8;
+  ny   = 8;
+  nz   = 8;
   a    = 0.6;
   b    = 0.9;
   nslices = 4;
@@ -82,6 +84,8 @@ int main(int argc, char *argv[]) {
   /*-------------------- convert coo to csr */
   ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
   ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
+  /*-------------------- start EVSL */
+  EVSLStart();
   /*-------------------- set the right-hand side matrix B */
   SetRhsMatrix(&Bcsr);
   /*-------------------- step 0: get eigenvalue bounds */
@@ -170,7 +174,21 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    /* [compute residual] already computed in res */
+    /* compute residual: r = A*x - lam*B*x */
+    double *r = (double *) malloc(n*sizeof(double));
+    double *w = (double *) malloc(n*sizeof(double));
+    int one = 1;
+    for (i=0; i<nev2; i++) {
+      double *y = Y+i*n;
+      double t = -lam[i];
+      matvec_csr(&Acsr, y, r);
+      matvec_csr(&Bcsr, y, w);
+      daxpy_(&n, &t, w, &one, r, &one);
+      res[i] = dnrm2_(&n, r, &one);
+    }
+    free(r);
+    free(w);
+
     /* sort the eigenvals: ascending order
      * ind: keep the orginal indices */
     ind = (int *) malloc(nev2*sizeof(int));
@@ -200,8 +218,13 @@ int main(int argc, char *argv[]) {
   free(sli);
   free_coo(&Acoo);
   free_csr(&Acsr);
+  free_coo(&Bcoo);
+  free_csr(&Bcsr);
   free(mu);
   fclose(fstats);
+
+  /*-------------------- finalize EVSL */
+  EVSLFinish();
 
   return 0;
 }
