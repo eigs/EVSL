@@ -260,3 +260,56 @@ int tri_sol_upper(char trans, csrMat *R, double *b, double *x) {
   return 0;
 }
 
+/* C = alp * A + bet * B */
+int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C) {
+  int *iw, nnzA, nnzB, nnzC, i, j;
+
+  /* check dimension */
+  if (A->nrows != B->nrows || A->ncols != B->ncols) {
+    return 1;
+  }
+
+  nnzA = A->ia[A->nrows];
+  nnzB = B->ia[B->nrows];
+  /* alloc C [at most has nnz = nnzA + nnzB] */
+  csr_resize(A->nrows, A->ncols, nnzA+nnzB, C);
+  /* marker array */
+  Malloc(iw, A->ncols, int);
+  for (i=0; i<A->ncols; i++) {
+    iw[i] = -1;
+  }
+
+  nnzC = 0;
+  for (i=0; i<A->nrows; i++) {
+    /* row i of A */
+    for (j=A->ia[i]; j<A->ia[i+1]; j++) {
+      int col = A->ja[j];
+      C->ja[nnzC] = col;
+      C->a[nnzC] = alp * A->a[j];
+      iw[col] = nnzC++;
+    }
+    /* row i of B */
+    for (j=B->ia[i]; j<B->ia[i+1]; j++) {
+      int col = B->ja[j];
+      int pos = iw[col];
+      if (-1 == pos) {
+        C->ja[nnzC] = col;
+        C->a[nnzC] = bet * B->a[j];
+        iw[col] = nnzC++;
+      } else {
+        CHKERR(C->ja[pos] != col);
+        C->a[pos] += bet * B->a[j];
+      }
+    }
+    C->ia[i+1] = nnzC;
+    // reset iw
+    for (j=C->ia[i]; j<C->ia[i+1]; j++) {
+      iw[C->ja[j]] = -1;
+    }
+  }
+
+  free(iw);
+
+  return 0;
+}
+
