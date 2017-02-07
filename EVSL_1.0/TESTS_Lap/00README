@@ -7,27 +7,33 @@ drivers invoking Rational filtering).
 LapPLanR.c : 
     driver for testing spectrum slicing -- with 
     Polynomial Filter Lanczos with thick Restart
-    make -f makefileP LapPLanR.ex--> executable LapPLanR.ex
+    make LapPLanR.ex --> executable LapPLanR.ex
 
 LapPLanN.c :   
     driver for testing spectrum slicing -- with 
     Polynomial Filter non-restarting Lanczos 
-    make -f makefileP LapPLanN.ex--> executable LapPLanN.ex
+    make LapPLanN.ex --> executable LapPLanN.ex
 
 LapPSI.c : 
     driver for testing spectrum slicing -- with 
     Polynomial Filter Subspace Iteration
-    make -f makefileP LapPSI.ex--> executable LapPSI.ex
+    make LapPSI.ex --> executable LapPSI.ex
 
 LapRLanR.c :  
     driver for testing spectrum slicing -- with 
     Rational Filter Lanczos with thick Restart
-    make -f makefileR LapRLanR.ex--> executable LapRLanR.ex
+    make LapRLanR.ex --> executable LapRLanR.ex
 
 LapRLanN.c :  
     driver for testing spectrum slicing -- with 
     Rational Filter non-restart Lanczos 
-    make -f makefileR LapRLanN.ex--> executable LapRLanN.ex
+    make LapRLanN.ex --> executable LapRLanN.ex
+
+LapPLanN_MatFree.c :  
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter non-restart Lanczos
+    [This example is to illustrate the use of Matrix-free solvers]
+    make LapPLanN_MatFree.ex --> executable LapPLanN_MatFree.ex
 
 To compute all the eigenvalues of a Laplacian discretized on
 an N1*N2*N3  grid, located in  the interval [D1, D2]  with K

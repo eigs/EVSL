@@ -33,7 +33,7 @@ int LanBounds(csrMat *A, int msteps, double *v, double *lmin, double *lmax) {
   int j;
   for (j=0; j<msteps; j++) {
     // w = A*v
-    matvec(A, &V[j*n], &V[(j+1)*n]);
+    matvec_genev(A, &V[j*n], &V[(j+1)*n]);
     // w = w - bet * vold
     if (j) {
       nbet = -bet[j-1];

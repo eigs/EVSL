@@ -10,13 +10,17 @@
 int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv);
 int lapgen(int nx, int ny, int nz, cooMat *Acoo);
 int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
+void daxpy_(int *n,double *alpha,double *x,int *incx,double *y,int *incy);
+double dnrm2_(int *n,double *x,int *incx);
 
 int main(int argc, char *argv[]) {
   /*------------------------------------------------------------
-    generates a laplacean matrix on an nx x ny x nz mesh 
-    and computes all eigenvalues in a given interval [a  b]
+    generates a laplacean matrix A on an nx x ny x nz mesh and
+    matrix B on an (nx x ny) x nz x 1 mesh,
+    and computes all eigenvalues of A x = lambda B x
+    in a given interval [a  b]
     The default set values are
-    nx = 41; ny = 53; nz = 1;
+    nx = 16; ny = 16; nz = 16;
     a = 0.4; b = 0.8;
     nslices = 1 [one slice only] 
     other parameters 
@@ -29,24 +33,24 @@ int main(int argc, char *argv[]) {
   int n, nx, ny, nz, i, j, npts, nslices, nvec, Mdeg, nev, 
       mlan, max_its, ev_int, sl, flg, ierr;
   /* find the eigenvalues of A in the interval [a,b] */
-  double a, b, lmax, lmin, ecount, tol,   *sli, *mu;
+  double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
   double *vinit;
   polparams pol;
   FILE *fstats = NULL;
-  if (!(fstats = fopen("OUT/LapPLanR.out","w"))) {
+  if (!(fstats = fopen("OUT/LapPLanR_Gen.out","w"))) {
     printf(" failed in opening output file in OUT/\n");
     fstats = stdout;
   }
-  /*-------------------- matrix A: coo format and csr format */
-  cooMat Acoo;
-  csrMat Acsr;
+  /*-------------------- matrices A, B: coo format and csr format */
+  cooMat Acoo, Bcoo;
+  csrMat Acsr, Bcsr;
   /*-------------------- default values */
-  nx   = 41;
-  ny   = 53;
-  nz   = 1;
-  a    = 0.4;
-  b    = 0.8;
+  nx   = 8;
+  ny   = 8;
+  nz   = 8;
+  a    = 0.6;
+  b    = 0.9;
   nslices = 4;
   //-----------------------------------------------------------------------
   //-------------------- reset some default values from command line [Yuanzhe/]
@@ -64,26 +68,38 @@ int main(int argc, char *argv[]) {
   findarg("nslices", INT, &nslices, argc, argv);
   fprintf(fstats,"used nx = %3d ny = %3d nz = %3d",nx,ny,nz);
   fprintf(fstats," [a = %4.2f  b= %4.2f],  nslices=%2d \n",a,b,nslices);
-  //-------------------- eigenvalue bounds set by hand.
-  lmin = 0.0;  
-  lmax = nz == 1 ? 8.0 : 12.0;
-  xintv[0] = a;
-  xintv[1] = b;
-  xintv[2] = lmin;
-  xintv[3] = lmax;
-  tol  = 1e-8;
+  /*-------------------- matrix size */
   n = nx * ny * nz;
+  /*-------------------- stopping tol */
+  tol  = 1e-8;
   /*-------------------- output the problem settings */
   fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
-  fprintf(fstats, "Laplacian: %d x %d x %d, n = %d\n", nx, ny, nz, n);
+  fprintf(fstats, "Laplacian A : %d x %d x %d, n = %d\n", nx, ny, nz, n);
+  fprintf(fstats, "Laplacian B : %d x %d, n = %d\n", nx*ny,  nz, n);
   fprintf(fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
   /*-------------------- generate 2D/3D Laplacian matrix 
    *                     saved in coo format */
   ierr = lapgen(nx, ny, nz, &Acoo);
+  ierr = lapgen(nx*ny, nz, 1, &Bcoo);
   /*-------------------- convert coo to csr */
   ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
+  ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
+  /*-------------------- start EVSL */
+  EVSLStart();
+  /*-------------------- set the right-hand side matrix B */
+  SetRhsMatrix(&Bcsr);
   /*-------------------- step 0: get eigenvalue bounds */
-  fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
+  //-------------------- initial vector  
+  vinit = (double *) malloc(n*sizeof(double));
+  rand_double(n, vinit);
+  ierr = LanBounds(&Acsr, 60, vinit, &lmin, &lmax);
+  fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n", 
+          lmin, lmax);
+  /*-------------------- interval and eig bounds */
+  xintv[0] = a;
+  xintv[1] = b;
+  xintv[2] = lmin;
+  xintv[3] = lmax;
   /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
   /*-------------------- define kpmdos parameters */
   Mdeg = 40;
@@ -115,19 +131,12 @@ int main(int argc, char *argv[]) {
   }
   //-------------------- # eigs per slice
   ev_int = (int) (1 + ecount / ((double) nslices));
-  //-------------------- initial vector  
-  vinit = (double *) malloc(n*sizeof(double));
-  rand_double(n, vinit);
-  //-------------------- debug only :
-  //  save_vec(n, vinit, "OUT/vinit.mtx");
   //-------------------- For each slice call ChebLanr
   for (sl =0; sl<nslices; sl++){
     printf("======================================================\n");
     int nev2;
     double *lam, *Y, *res;
     int *ind;
-    int nev_ex;
-    double *lam_ex;
     //-------------------- 
     a = sli[sl];
     b = sli[sl+1];
@@ -156,8 +165,7 @@ int main(int argc, char *argv[]) {
     //-------------------- Now determine polymomial to use
     find_pol(xintv, &pol);       
 
-    fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",
-            pol.deg,pol.bar, pol.gam);
+    fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
     //-------------------- then call ChenLanNr
     ierr = ChebLanTr(&Acsr, mlan, nev, xintv, max_its, tol, vinit,
                      &pol, &nev2, &lam, &Y, &res, fstats);
@@ -165,35 +173,34 @@ int main(int argc, char *argv[]) {
       printf("ChebLanTr error %d\n", ierr);
       return 1;
     }
-    /*--------------------- residuals were already computed in res */
+
+    /* compute residual: r = A*x - lam*B*x */
+    double *r = (double *) malloc(n*sizeof(double));
+    double *w = (double *) malloc(n*sizeof(double));
+    int one = 1;
+    for (i=0; i<nev2; i++) {
+      double *y = Y+i*n;
+      double t = -lam[i];
+      matvec_csr(&Acsr, y, r);
+      matvec_csr(&Bcsr, y, w);
+      daxpy_(&n, &t, w, &one, r, &one);
+      res[i] = dnrm2_(&n, r, &one);
+    }
+    free(r);
+    free(w);
+
     /* sort the eigenvals: ascending order
      * ind: keep the orginal indices */
     ind = (int *) malloc(nev2*sizeof(int));
     sort_double(nev2, lam, ind);
-    /* compute exact eigenvalues */
-    exeiglap3(nx, ny, nz, a, b, &nev_ex, &lam_ex);
-    printf(" number of eigenvalues: %d, found: %d\n", nev_ex, nev2);
+    printf(" number of eigenvalues found: %d\n", nev2);
 
     /* print eigenvalues */
-    fprintf(fstats, "                                   Eigenvalues in [a, b]\n");
-    fprintf(fstats, "    Computed [%d]       ||Res||              Exact [%d]", nev2, nev_ex);
-    if (nev2 == nev_ex) {
-      fprintf(fstats, "                 Err");
-    }
+    fprintf(fstats, "     Eigenvalues in [a, b]\n");
+    fprintf(fstats, "    Computed [%d]        ||Res||              ", nev2);
     fprintf(fstats, "\n");
-    for (i=0; i<max(nev2, nev_ex); i++) {
-      if (i < nev2) {
-        fprintf(fstats, "% .15e  %.1e", lam[i], res[ind[i]]);
-      } else {
-        fprintf(fstats, "                               ");
-      }
-      if (i < nev_ex) { 
-        fprintf(fstats, "        % .15e", lam_ex[i]);
-      }
-      if (nev2 == nev_ex) {
-        fprintf(fstats, "        % .1e", lam[i]-lam_ex[i]);
-      }
-      fprintf(fstats,"\n");
+    for (i=0; i<nev2; i++) {
+      fprintf(fstats, "% .15e  %.1e\n", lam[i], res[ind[i]]);
       if (i>50) {
         fprintf(fstats,"                        -- More not shown --\n");
         break;
@@ -205,15 +212,19 @@ int main(int argc, char *argv[]) {
     if (res)  free(res);
     free_pol(&pol);
     free(ind);
-    free(lam_ex);
   }
   //-------------------- free other allocated space 
   free(vinit);
   free(sli);
   free_coo(&Acoo);
   free_csr(&Acsr);
+  free_coo(&Bcoo);
+  free_csr(&Bcsr);
   free(mu);
   fclose(fstats);
+
+  /*-------------------- finalize EVSL */
+  EVSLFinish();
 
   return 0;
 }

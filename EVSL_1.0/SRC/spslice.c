@@ -28,14 +28,20 @@
  *
  *----------------------------------------------------------------------*/
 int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
-    double *mu, double *ecnt){
+    double *mu, double *ecnt) {
   /*-------------------- initialize variables */
-  int n = A->nrows; 
-  double *vkp1 = malloc(n*sizeof(double));
-  double *w = malloc(n*sizeof(double)); 
-  double *vkm1 = malloc(n*sizeof(double)); 
-  double *vk = malloc(n*sizeof(double));
-  double *jac =  malloc((Mdeg+1)*sizeof(double));
+  int n;
+  if (evsldata.Amatvec.func) {
+    n = evsldata.Amatvec.n;
+  } else {
+    n = A->nrows;
+  }
+  double *vkp1, *w, *vkm1, *vk, *jac;
+  Malloc(vkp1, n, double);
+  Malloc(w, n, double);
+  Malloc(vkm1, n, double);
+  Malloc(vk, n, double);
+  Malloc(jac, Mdeg+1, double);
   double *tmp,  ctr, wid; 
   double scal, t, tcnt, beta1, beta2, aa, bb;
   int k, k1, i, m, mdegp1, one=1;
@@ -78,7 +84,7 @@ int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
     /*-------------------- Chebyshev (degree) loop */
     for (k=0; k<Mdeg; k++){
       /*-------------------- Cheb. recurrence */
-      matvec(A, vk, vkp1);
+      matvec_genev(A, vk, vkp1);
       scal = k==0 ? 1.0 : 2.0;
       scal /= wid;
       for (i=0; i<n; i++)
@@ -116,11 +122,11 @@ int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
   *  where p(t) is the approximate DOS as given in the KPM method
   *  in the expanded form:  \f$\sum mu_i C_i /\sqrt{1-t^2}\f$
   **/
-void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) { 
+void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) {
   //
   int ndp1, j, k;
-  double val0, theta0;
-  double *thetas = (double*)malloc(npts*sizeof(double));
+  double val0, theta0, *thetas;
+  Malloc(thetas, npts, double);
   ndp1   = Mdeg+1; 
   //  if (xi[0]<-1.0) xi[0] = -1; 
   //if (xi[npts-1]> 1.0) xi[npts-1]  = 1; 
@@ -162,11 +168,10 @@ void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) {
  *                of eigenvalues in the interval [a b] (input). 
  *
  *----------------------------------------------------------------------*/
-int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, 
-	     int npts){
+int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts) {
   int ls, ii;
   double  ctr, wid, aL, bL, target, aa, bb;
- 
+
   if (check_intv(intv, stdout) < 0) {
     return -1;
   }
@@ -195,8 +200,9 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int,
   aL = max(aL,-1.0);
   bL = min(bL,1.0);
   npts = max(npts,2*n_int+1);
-  double *xi = (double*)malloc(npts*sizeof(double));
-  double *yi = malloc(npts*sizeof(double));
+  double *xi, *yi;
+  Malloc(xi, npts, double);
+  Malloc(yi, npts, double);
   linspace(aL, bL, npts, xi);
   //printf(" aL %15.3e bL %15.3e \n",aL,bL);
   //-------------------- get all integrals at the xi's 

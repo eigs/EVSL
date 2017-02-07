@@ -45,9 +45,9 @@
  * @param[out] fstats   File stream which stats are printed to
  *
 * ------------------------------------------------------------ */
-int RatLanNr(csrMat *A, solveShift *solshift, double *intv,
-	     ratparams *rat, int maxit, double tol, double *vinit, int *nevOut,
-	     double **lamo, double **Wo, double **reso, FILE *fstats) {
+int RatLanNr(csrMat *A, double *intv, ratparams *rat, int maxit, double tol, 
+             double *vinit, int *nevOut, double **lamo, double **Wo, 
+             double **reso, FILE *fstats) {
   /*-------------------- for stats */
   double tm,  tmv=0.0, tr0, tr1, tall;
   double *y, flami; 
@@ -64,11 +64,17 @@ int RatLanNr(csrMat *A, solveShift *solshift, double *intv,
   int one = 1;
   double done=1.0,dzero=0.0;
   /*--------------------   Ntest = when to start testing convergence */
-  int Ntest = 10; 
+  int Ntest = 30; 
   /*--------------------   how often to test */
   int cycle = 20; 
-  /*   size of A */
-  int n = A->nrows;
+  /* size of the matrix */
+  int n;
+  /* if users provided their own matvec function, input matrix A will be ignored */
+  if (evsldata.Amatvec.func) {
+    n = evsldata.Amatvec.n;
+  } else {
+    n = A->nrows;
+  }
   maxit = min(n, maxit);
   /*--------------------Rational filter with pole at ((a+b)/2,(b-a)/2) with 
     multiplicity pow, bar value equals 1/2        */
@@ -93,14 +99,14 @@ int RatLanNr(csrMat *A, solveShift *solshift, double *intv,
   /*-------------------- diag. subdiag of Tridiagional matrix */
   Malloc(dT, maxit, double);
   Malloc(eT, maxit, double);
-  double *W, *Lam, *res, *Flam, *EvalT, *EvecT, *FY;
+  double *W, *Lam, *res, /**Flam,*/ *EvalT, *EvecT/*, *FY*/;
   /*-------------------- Lam, W: the converged (locked) Ritz values*/
   Malloc(Lam, maxit, double);         // holds computed Ritz values
   Malloc(res, maxit, double);         // holds residual norms (w.r.t. ro(A))
-  Malloc(Flam, maxit, double);        // holds rho(th_i) filtered Ritz values
+  //Malloc(Flam, maxit, double);        // holds rho(th_i) filtered Ritz values
   Malloc(EvalT, maxit, double);       // eigenvalues of tridia. matrix  T
   Malloc(EvecT, maxit*maxit, double); // Eigen vectors of T  
-  Malloc(FY, maxit*maxit, double);    // coeffs of Ritz vectors in Lan basis
+  //Malloc(FY, maxit*maxit, double);    // coeffs of Ritz vectors in Lan basis
   /*-------------------- nev = current number of converged e-pairs 
     nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
@@ -130,20 +136,19 @@ int RatLanNr(csrMat *A, solveShift *solshift, double *intv,
   double *vold, *v, *w;
   /*--------------------  Lanczos recurrence coefficients */
   double alpha, nalpha, beta=0.0, nbeta, resi;
-  double vl = bar - DBL_EPSILON, vu=10000;  // needed by SymmTridEigS
-  int count;
-  // we actually do maxit -1 steps.. 
+  int count = 0;
+  // ---------------- main Lanczos loop 
   for (k=0; k<maxit; k++) {
-    /*--------------------   a quick reference to V(:,k-1) - only when k>0*/
+    /*-------------------- quick reference to V(:,k-1) when k>0*/
     vold = k > 0 ? V+(k-1)*n : NULL; 
-    /*--------------------   a quick reference to V(:,k) */
+    /*-------------------- a quick reference to V(:,k) */
     v = &V[k*n];
     /*--------------------   next Lanczos vector V(:,k+1)*/
     w = v + n;
     /*-------------------- compute   w = p[(A-cc)/dd] * v */
     /*  orthgonlize against the locked ones first */
     tm = cheblan_timer();
-    RatFiltApply(n, solshift, rat, v, w, w3);
+    RatFiltApply(n, rat, v, w, w3);
     tmv += cheblan_timer() - tm;
     nsv += deg;
     /*   w = w - beta*vold */
@@ -178,34 +183,36 @@ int RatLanNr(csrMat *A, solveShift *solshift, double *intv,
     t = 1.0 / beta;
     DSCAL(&n, &t, w, &one);
     /*--------------------  test for Ritz vectors */
-    if (((k < Ntest) || (k % cycle != 0)) && (k != maxit-1))
+    if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 ) {
       continue;
+    }
     /*--------------------   diagonalize  T(1:k,1:k)       */
     /*                       vals in EvalT, vecs in EvecT  */
-    //-------------------- THIS uses dsetv
-    //int count = k;
-    //SymmTridEig(EvalT, EvecT, k, dT, eT);
-    //count = k;
-    //-------------------- END 
-    //-------------------- THIS uses dstemr:
     kdim = k+1;
+#if 1
+    //-------------------- THIS uses dsetv
+    SymmTridEig(EvalT, EvecT, kdim, dT, eT);
+    count = kdim;
+#else
+    //-------------------- THIS uses dstemr:
+    double vl = bar - DBL_EPSILON, vu=10000;  // needed by SymmTridEigS
     SymmTridEigS(EvalT, EvecT, kdim, vl, vu, &count, dT, eT);
-    //SymmTridEig(EvalT, EvecT, kdim, dT, eT);
-    //count = kdim;
-    //-------------------- END 
+#endif
     tr1 = 0;     // restricted trace -- used for convergence test
     /*-------------------- get residual norms and check acceptance of
-      Ritz values for p(A). */
+      Ritz values for p(A). nconv records number of eigenvalues whose
+      residual for p(A) is smaller than tol. */
     nconv = 0;
     for (i=0; i<count; i++) {
       flami = EvalT[i];
       if (fabs(flami) >= bar) tr1+= flami;
+      // the last row of EvecT: EvecT[i*kdim+kdim-1]
       if (beta*fabs(EvecT[(i+1)*kdim-1]) < tol) nconv++;
     }
 
     if (do_print) {
       fprintf(fstats, "k %4d:   # sols %8d, nconv %4d  tr1 %21.15e\n",
-	      k, nsv, nconv,tr1);
+              k, nsv, nconv,tr1);
     }
     //-------------------- simple test because all eigenvalues
     // are between gamB and ~1.
@@ -226,8 +233,7 @@ int RatLanNr(csrMat *A, solveShift *solshift, double *intv,
       continue;
     y = &EvecT[i*kdim];
     //-------------------- make sure to normalize
-    t = DNRM2(&kdim, y, &one);
-    t = 1.0 / t; 
+    t = DNRM2(&kdim, y, &one);  t = 1.0 / t; 
     DSCAL(&kdim, &t, y, &one);
     //-------------------- residual norm 
     resi = beta*fabs(y[kdim-1]);
@@ -237,7 +243,7 @@ int RatLanNr(csrMat *A, solveShift *solshift, double *intv,
     u = &W[nev*n];  
     DGEMV(&cN, &n, &kdim, &done, V, &n, y, &one, &dzero, u, &one);
     /*--------------------   w = A*u        */
-    matvec(A, u, wk);
+    matvec_genev(A, u, wk);
     nmv ++;
     /*--------------------   Ritzval: t = (y'*w)/(y'*y) */
     t1 = DDOT(&n, u, &one, u, &one);  // should be one
@@ -268,8 +274,8 @@ int RatLanNr(csrMat *A, solveShift *solshift, double *intv,
   free(eT);
   free(EvalT);
   free(EvecT);
-  free(Flam);
-  free(FY);
+  //free(Flam);
+  //free(FY);
   free(wk);
   //free(w3);
   /*-------------------- record stats */
@@ -293,13 +299,12 @@ int RatLanNr(csrMat *A, solveShift *solshift, double *intv,
  *
  * @param[out] x Becomes R(A)b
  * */
-void RatFiltApply(int n, solveShift *sol, ratparams *rat,
-  double *b, double *x, double *w4) {
-  int ii, jj, kk, k, kf;
+void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w4) {
+  int ii, jj, kk, k=0, kf;
   int *mulp = rat->mulp;
   int num = rat->num;
   complex double *omega = rat->omega;
-  k = 0;
+  
   double *xr, *xz, *bz, *br;
   double zkr, zkc;
   xr = w4;
@@ -309,7 +314,8 @@ void RatFiltApply(int n, solveShift *sol, ratparams *rat,
   for (ii=0; ii<n; ii++){
     x[ii] = 0.0;
   }
-  for (kk=0;kk<num;kk++){// loop through each pole
+  /* loop through each pole */
+  for (kk=0; kk<num; kk++) {
     //make sure br bz are zero vectors of size n
     for (ii=0; ii<n; ii++){
       xr[ii] = xz[ii] = 0.0;
@@ -320,11 +326,11 @@ void RatFiltApply(int n, solveShift *sol, ratparams *rat,
       zkc = cimag(omega[jj]);
       //Initilize the right hand side
       for(ii=0; ii<n; ii++) {
-	br[ii] = zkr*b[ii] + xr[ii];
-	bz[ii] = zkc*b[ii] + xz[ii];
+        br[ii] = zkr*b[ii] + xr[ii];
+        bz[ii] = zkc*b[ii] + xz[ii];
       }
       // Solve (Ax+Az*1I)(xr+xz*1I) = (br+bz*1I)
-      sol->func(n, br, bz, xr, xz, sol->data[kk]);
+      (rat->solshift[kk])(n, br, bz, xr, xz, rat->solshiftdata[kk]);
     }
     for(ii=0; ii<n; ii++) {
       x[ii] = x[ii]+ 2*xr[ii];

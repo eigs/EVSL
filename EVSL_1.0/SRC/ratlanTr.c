@@ -44,9 +44,9 @@
  * @param[out] reso     Related Residual values
  *
  *------------------------------------------------------------ */
-int RatLanTr(csrMat *A, solveShift *solshift, int lanm, int nev, double *intv, 
-    ratparams *rat,  int maxit, double tol, double *vinit, int *nev2, 
-    double **lamo, double **Yo, double **reso, FILE *fstats) {
+int RatLanTr(csrMat *A, int lanm, int nev, double *intv, ratparams *rat,  
+             int maxit, double tol, double *vinit, int *nev2, double **lamo,
+             double **Yo, double **reso, FILE *fstats) {
   /*-------------------- for stats */
   double tm, tall=0.0, tmv=0.0;
   double tolP = tol;
@@ -56,8 +56,14 @@ int RatLanTr(csrMat *A, solveShift *solshift, int lanm, int nev, double *intv,
   if (fstats == NULL){
     do_print = 0;
   }  
-  /*--------------------- size of A */
-  int n = A->nrows;
+  /* size of the matrix */
+  int n;
+  /* if users provided their own matvec function, input matrix A will be ignored */
+  if (evsldata.Amatvec.func) {
+    n = evsldata.Amatvec.n;
+  } else {
+    n = A->nrows;
+  }
   /*--------------------- adjust lanm and maxit */
   lanm = min(lanm, n);
   int lanm1=lanm+1;
@@ -165,7 +171,7 @@ res: related residual norms */
       double *w = v + n;
       /*    w = R(A)v     */
       tm = cheblan_timer();
-      RatFiltApply(n, solshift, rat, v, w, w3);
+      RatFiltApply(n, rat, v, w, w3);
       tmv += cheblan_timer() - tm;
       nsv += rat->pow;
       if (lock > 0) {
@@ -228,7 +234,7 @@ res: related residual norms */
       double *w = v + n;
       /*   w = R(A) * v */
       tm = cheblan_timer();
-      RatFiltApply(n, solshift, rat, v, w, w3);
+      RatFiltApply(n, rat, v, w, w3);
       tmv += cheblan_timer() - tm;
       nsv += rat->pow;
       it++;
@@ -351,7 +357,7 @@ res: related residual norms */
       DSCAL(&n, &t, y, &one);
       /*--------------------   w = A*y */
       //-- matvec
-      matvec(A, y, w);
+      matvec_genev(A, y, w);
       nmv ++;
       /*--------------------   Ritzval: t3 = (y'*w)/(y'*y) */
       //-- Rayleigh quotient 
@@ -449,7 +455,7 @@ res: related residual norms */
   /*-------------------- record stats */
   tall = cheblan_timer() - tall;
   /*-------------------- print stat */
-  if (do_print){
+  if (do_print) {
     fprintf(fstats, "------This slice consumed: \n");
     fprintf(fstats, "# of solves    :    %d\n", nsv);
     fprintf(fstats, "# of Matvec    :    %d\n", nmv);

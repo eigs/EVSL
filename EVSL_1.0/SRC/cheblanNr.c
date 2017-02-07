@@ -70,8 +70,14 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
   int Ntest = 30; 
   /*--------------------   how often to test */
   int cycle = 20; 
-  /*   size of A */
-  int n = A->nrows;
+  /* size of the matrix */
+  int n;
+  /* if users provided their own matvec function, input matrix A will be ignored */
+  if (evsldata.Amatvec.func) {
+    n = evsldata.Amatvec.n;
+  } else {
+    n = A->nrows;
+  }
   maxit = min(n, maxit);
   /*--------------------polynomial filter  approximates the delta
     function centered at 'gamB'. 
@@ -106,13 +112,13 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
   /*-------------------- diag. subdiag of Tridiagional matrix */
   Malloc(dT, maxit, double);
   Malloc(eT, maxit, double);
-  double *W, *Lam, *res, *EvalT, *EvecT, *FY;
+  double *W, *Lam, *res, *EvalT, *EvecT/*, *FY*/;
   /*-------------------- Lam, W: the converged (locked) Ritz values*/
   Malloc(Lam, maxit, double);         // holds computed Ritz values
   Malloc(res, maxit, double);         // residual norms (w.r.t. ro(A))
-  Malloc(EvalT, maxit, double);         // eigenvalues of tridia. matrix  T
+  Malloc(EvalT, maxit, double);       // eigenvalues of tridia. matrix  T
   Malloc(EvecT, maxit*maxit, double); // Eigen vectors of T  
-  Malloc(FY, maxit*maxit, double);      // coeffs of Ritz vectors in Lan basis
+  //Malloc(FY, maxit*maxit, double);    // coeffs of Ritz vectors in Lan basis
   /*-------------------- nev = current number of converged e-pairs 
     nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
@@ -138,10 +144,9 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
   double *vold, *v, *w;
   /*--------------------  Lanczos recurrence coefficients */
   double alpha, nalpha, beta=0.0, nbeta, resi;
-  double vl = bar - DBL_EPSILON, vu=2.0;  // needed by SymmTridEigS
-  int count;
+  int count = 0;
   // ---------------- main Lanczos loop 
-  for (k=0; k<maxit; k++){ 
+  for (k=0; k<maxit; k++) {
     /*-------------------- quick reference to V(:,k-1) when k>0*/
     vold = k > 0 ? V+(k-1)*n : NULL; 
     /*-------------------- a quick reference to V(:,k) */
@@ -186,20 +191,21 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
     t = 1.0 / beta;
     DSCAL(&n, &t, w, &one);
     /*--------------------  test for Ritz vectors */
-    if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 )
+    if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 ) {
       continue;
+    }
     /*--------------------   diagonalize  T(1:k,1:k)       */
     /*                       vals in EvalT, vecs in EvecT  */
-    //-------------------- THIS uses dsetv
-    //int count = k;
-    //SymmTridEig(EvalT, EvecT, k, dT, eT);
-    //count = k;
-    //-------------------- END 
-    //-------------------- THIS uses dstemr:
-    //SymmTridEigS(EvalT, EvecT, k, vl, vu, &count, dT, eT);
     kdim = k+1;
+#if 1
+    //-------------------- THIS uses dsetv
+    SymmTridEig(EvalT, EvecT, kdim, dT, eT);
+    count = kdim;
+#else
+    //-------------------- THIS uses dstemr:
+    double vl = bar - DBL_EPSILON, vu = 2.0;  // needed by SymmTridEigS
     SymmTridEigS(EvalT, EvecT, kdim, vl, vu, &count, dT, eT);
-    //-------------------- END 
+#endif
     tr1 = 0;     // restricted trace -- used for convergence test
     /*-------------------- get residual norms and check acceptance of
       Ritz values for p(A). nconv records number of eigenvalues whose
@@ -208,11 +214,13 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
     for (i=0; i<count; i++) {
       flami = EvalT[i];
       if (flami >= bar) tr1+= flami;
+      // the last row of EvecT: EvecT[i*kdim+kdim-1]
       if (beta*fabs(EvecT[(i+1)*kdim-1]) < tol) nconv++;
     }
+
     if (do_print) {
       fprintf(fstats, "k %4d:   nMV %8d, nconv %4d  tr1 %21.15e\n",
-          k, nmv, nconv,tr1);
+              k, nmv, nconv,tr1);
     }
     //-------------------- simple test because all eigenvalues
     // are between gamB and ~1.
@@ -233,8 +241,7 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
       continue;
     y = &EvecT[i*kdim];
     //-------------------- make sure to normalize
-    t = DNRM2(&kdim, y, &one);
-    t = 1.0 / t; 
+    t = DNRM2(&kdim, y, &one);  t = 1.0 / t; 
     DSCAL(&kdim, &t, y, &one);
     //-------------------- residual norm 
     resi = beta*fabs(y[kdim-1]);
@@ -244,7 +251,7 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
     u = &W[nev*n];  
     DGEMV(&cN, &n, &kdim, &done, V, &n, y, &one, &dzero, u, &one);
     /*--------------------   w = A*u        */
-    matvec(A, u, wk);
+    matvec_genev(A, u, wk);
     nmv ++;
     /*--------------------   Ritzval: t = (y'*w)/(y'*y) */
     t1 = DDOT(&n, u, &one, u, &one);  // should be one
@@ -264,6 +271,15 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
     res[nev] = res0;
     nev++;
   }
+
+  /* for generalized eigenvalue problem: L' \ W */
+  if (evsldata.hasB) {
+    for (i=0; i<nev; i++) {
+      evsldata.LBT_solv(W+i*n, wk, evsldata.LB_func_data);
+      DCOPY(&n, wk, &one, W+i*n, &one);
+    }
+  }
+
   /*-------------------- Done.  output : */
   *nevOut = nev;
   *lamo = Lam;
@@ -275,7 +291,7 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
   free(eT);
   free(EvalT);
   free(EvecT);
-  free(FY);
+  /*free(FY);*/
   free(wk);
   /*-------------------- record stats */
   tall = cheblan_timer() - tall;

@@ -1,3 +1,4 @@
+#include <string.h>
 #include "def.h"
 #include "blaslapack.h"
 #include "struct.h"
@@ -142,31 +143,6 @@ double dcsr1nrm(csrMat *A){
   return (ta);
 }
 
-void dcsrgemv(char trans, int nrow, int ncol, double alp, double *a, 
-    int *ia, int *ja, double *x, double bet, double *y) {
-  int i,j;
-  if (trans == 'N') {
-    //#pragma omp parallel for schedule(guided)
-    for (i=0; i<nrow; i++) {
-      double r = 0.0;
-      for (j=ia[i]; j<ia[i+1]; j++) {
-        r += a[j] * x[ja[j]];
-      }
-      y[i] = bet*y[i] + alp*r;
-    }
-  } else {  
-    for (i=0; i<ncol; i++) {
-      y[i] *= bet;
-    }
-    for (i=0; i<nrow; i++) {
-      double xi = alp * x[i];
-      for (j=ia[i]; j<ia[i+1]; j++) {
-        y[ja[j]] += a[j] * xi;
-      }
-    }
-  }
-}
-
 void dcsrmv(char trans, int nrow, int ncol, double *a, 
     int *ia, int *ja, double *x, double *y) {
   int  len, jj=nrow;
@@ -208,34 +184,132 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
     }
   }
 }
-
-/**
-* @brief y = alp*A*x + bet*y
+/*
+* @brief matvec for CSR matrix, y = A * x
 */
-int matvec_gen(double alp, csrMat *A, double *x, double bet, double *y) {
-#ifdef EVSL_USE_MKL
-  int nrows = A->nrows;
-  int ncols = A->ncols;
-  char cN = 'N';
-  mkl_dcsrmv(&cN, &nrows, &ncols, &alp, "GXXCXX", A->a, A->ja, A->ia, A->ia+1, x, &bet, y);
-#else
-  dcsrgemv('N', A->nrows, A->ncols, alp, A->a, A->ia, A->ja, x, bet, y);
-#endif
-
-  return 0;
-}
-
-/**
- * @brief y = A * x
- */
-int matvec(csrMat *A, double *x, double *y) {
-#ifdef EVSL_USE_MKL
-  int nrows = A->nrows;
-  char cN = 'N';
-  mkl_cspblas_dcsrgemv(&cN, &nrows, A->a, A->ia, A->ja, x, y);
-#else
+int matvec_csr(csrMat *A, double *x, double *y) {
   dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
-#endif
+  return 0;
+}
+
+/*
+* @brief y = A * x
+* This is a special matvec function for the matrix A in
+*    A * x = \lambda * B * x
+* When matvec function is set, A will be ignored so it can be NULL
+*/
+int matvec_A(csrMat *A, double *x, double *y) {
+  /* if an external matvec routine is set, A will be ignored */
+  if (evsldata.Amatvec.func) {
+    (evsldata.Amatvec.func)(x, y, evsldata.Amatvec.data);
+  } else {
+    dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
+  }
+  return 0;
+}
+
+/* @warning: A must have been `sortrow' already */
+int check_full_diag(char type, csrMat *A) {
+  int i,j;
+  for (i=0; i<A->nrows; i++) {
+    /* if row i is empty, error */
+    if (A->ia[i] == A->ia[i+1]) {
+      return 2;
+    }
+    /* j is the location of the diag entry of row i 
+     * !!! A is assumed to be sorted !!! */   
+    if (type == 'U' || type == 'u') {
+      j = A->ia[i];
+    } else {
+      j = A->ia[i+1]-1;
+    }
+    if (A->ja[j] != i) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/* @brief solve R x = b or R' x = b */
+int tri_sol_upper(char trans, csrMat *R, double *b, double *x) {
+  int i, j, i1, i2, n = R->nrows;
+  double d, xi;
+  if (trans == 'T' || trans == 't') {
+    memcpy(x, b, n*sizeof(double));
+    for (i=0; i<n; i++) {
+      i1 = R->ia[i];
+      i2 = R->ia[i+1];
+      d = R->a[i1];
+      xi = x[i] = x[i] / d;
+      for (j=i1+1; j<i2; j++) {
+        x[R->ja[j]] -= xi * R->a[j];
+      }
+    }
+  } else {
+    for (i=n-1; i>=0; i--) {
+      i1 = R->ia[i];
+      i2 = R->ia[i+1];
+      d = R->a[i1];
+      xi = b[i];
+      for (j=i1+1; j<i2; j++) {
+        xi -= R->a[j] * x[R->ja[j]];
+      }
+      x[i] = xi / d;
+    }
+  }
+  return 0;
+}
+
+/* C = alp * A + bet * B */
+int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C) {
+  int *iw, nnzA, nnzB, nnzC, i, j;
+
+  /* check dimension */
+  if (A->nrows != B->nrows || A->ncols != B->ncols) {
+    return 1;
+  }
+
+  nnzA = A->ia[A->nrows];
+  nnzB = B->ia[B->nrows];
+  /* alloc C [at most has nnz = nnzA + nnzB] */
+  csr_resize(A->nrows, A->ncols, nnzA+nnzB, C);
+  /* marker array */
+  Malloc(iw, A->ncols, int);
+  for (i=0; i<A->ncols; i++) {
+    iw[i] = -1;
+  }
+
+  nnzC = 0;
+  for (i=0; i<A->nrows; i++) {
+    /* row i of A */
+    for (j=A->ia[i]; j<A->ia[i+1]; j++) {
+      int col = A->ja[j];
+      C->ja[nnzC] = col;
+      C->a[nnzC] = alp * A->a[j];
+      iw[col] = nnzC++;
+    }
+    /* row i of B */
+    for (j=B->ia[i]; j<B->ia[i+1]; j++) {
+      int col = B->ja[j];
+      int pos = iw[col];
+      if (-1 == pos) {
+        C->ja[nnzC] = col;
+        C->a[nnzC] = bet * B->a[j];
+        iw[col] = nnzC++;
+      } else {
+        CHKERR(C->ja[pos] != col);
+        C->a[pos] += bet * B->a[j];
+      }
+    }
+    C->ia[i+1] = nnzC;
+    // reset iw
+    for (j=C->ia[i]; j<C->ia[i+1]; j++) {
+      iw[C->ja[j]] = -1;
+    }
+  }
+
+  free(iw);
 
   return 0;
 }
+

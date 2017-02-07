@@ -17,6 +17,8 @@ int dampcf(int m, int damping, double *jac);
 int chebxPltd(int m, double *mu, int n, double *xi, double *yi);
 //
 int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w);
+
+int ChebAv0(csrMat *A, polparams *pol, double *v, double *y, double *w);
 //
 void chext(polparams *pol, double aIn, double bIn);
 
@@ -29,6 +31,9 @@ void savedensemat(double *A, int lda, int m, int n, const char *fn);
 //
 void save_vec(int n, double *x, const char fn[]);
 
+/*- - - - - - - - - evsl.c */
+//
+int matvec_genev(csrMat *A, double *x, double *y);
 
 /*- - - - - - - - - misc_la.c */
 //
@@ -58,17 +63,25 @@ void weights(int n, complex double* zk, int* pow, double lambda, complex double*
 int scaleweigthts(int n, double a, double b, complex double *zk, int* pow, complex double* omegaM);
 
 /*- - - - - - - - - ratlanNr.c */
-void RatFiltApply(int n, solveShift *sol, ratparams *rat,
-                  double *b, double *x, double *w3);
+void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w3);
 
 /*- - - - - - - - - spmat.c */
-// matvec_gen: y = alp * A*x  + bet *y
-int matvec_gen(double alp, csrMat *A, double *x, double bet, double *y);
 // matvec: y = A * x
-int matvec(csrMat *A, double *x, double *y);
+int matvec_A(csrMat *A, double *x, double *y);
 // memory allocation/reallocation for a CSR matrix
 void csr_resize(int nrow, int ncol, int nnz, csrMat *csr);
+//
+void sortrow(csrMat *A);
+//
+int check_full_diag(char type, csrMat *A);
+//
+int tri_sol_upper(char trans, csrMat *R, double *b, double *x);
 
+/*- - - - - - - - - suitesparse.c */
+int set_ratf_solfunc_default(csrMat *A, ratparams *rat);
+void free_rat_default_sol(ratparams *rat);
+int set_default_LBdata(csrMat *B);
+void free_default_LBdata();
 
 /*- - - - - - - - - timing.c */
 int time_seeder();
@@ -76,6 +89,8 @@ int time_seeder();
 
 /*- - - - - - - - - vect.c */
 void vecset(int n, double t, double *v); 
+void vec_perm(int n, int *p, double *x, double *y);
+void vec_iperm(int n, int *p, double *x, double *y);
 
 /*- - - - - - - - - - check if an interval is valid */
 static inline int check_intv(double *intv, FILE *fstats) {

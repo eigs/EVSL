@@ -7,6 +7,9 @@
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv);
+int lapgen(int nx, int ny, int nz, cooMat *Acoo);
+int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int main(int argc, char *argv[]) {
   /*------------------------------------------------------------
@@ -25,7 +28,7 @@ int main(int argc, char *argv[]) {
     Subspace iteration  with polynomial filtering
     ------------------------------------------------------------*/
   FILE *fstats = NULL;
-  if (!(fstats = fopen("OUT/LapPSI","w"))) {
+  if (!(fstats = fopen("OUT/LapPSI.out","w"))) {
     printf(" failed in opening output file in OUT/\n");
     fstats = stdout;
   }
@@ -33,7 +36,7 @@ int main(int argc, char *argv[]) {
       max_its, sl, flg, ierr;
   //int ev_int;
   /* find the eigenvalues of A in the interval [a,b] */
-  double a, b, lmax, lmin, ecount, tol,   *sli, *mu;
+  double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
   double *vinit;
   polparams pol;
@@ -48,7 +51,7 @@ int main(int argc, char *argv[]) {
   b    = 0.8;
   nslices = 4;
   //-----------------------------------------------------------------------
-  //-------------------- reset some default values from command line [Yuanzhe/]
+  //-------------------- reset some default values from command line
   /* user input from command line */
   flg = findarg("help", NA, NULL, argc, argv);
   if (flg) {
@@ -63,27 +66,27 @@ int main(int argc, char *argv[]) {
   findarg("nslices", INT, &nslices, argc, argv);
   fprintf(fstats,"used nx = %3d ny = %3d nz = %3d",nx,ny,nz);
   fprintf(fstats," [ a = %4.2f  b= %4.2f],  nslices=%2d \n",a,b,nslices);
-  //----------------------------------------------------------------------- DONE
   //-------------------- eigenvalue bounds set by hand.
   lmin = 0.0;  
-  lmax =  ((nz == 1)? 8.0 :12) ;
+  lmax = nz == 1 ? 8.0 : 12.0;
   xintv[0] = a;
   xintv[1] = b;
   xintv[2] = lmin;
   xintv[3] = lmax;
   tol = 1e-8;
+  n = nx * ny * nz;
+
+  /* output the problem settings */
+  fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
+  fprintf(fstats, "Laplacian: %d x %d x %d, n = %d\n", nx, ny, nz, n);
+  fprintf(fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
+
   /*-------------------- generate 2D/3D Laplacian matrix 
    *                     saved in coo format */
-  n = nx * ny * nz;
   ierr = lapgen(nx, ny, nz, &Acoo);
   /*-------------------- convert coo to csr */
   ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
-  /* output the problem settings */
-  fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
-  fprintf(fstats, "Laplacian: %d x %d x %d, n = %d, nnz = %d\n", nx, ny, nz, n, Acoo.nnz);
-  fprintf(fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
   /* step 0: short Lanczos run to get bounds */
-
   fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
 
   /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
@@ -100,8 +103,8 @@ int main(int argc, char *argv[]) {
     printf("kpmdos error %d\n", ierr);
     return 1;
   }
-  fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
-  printf(" estimated eig count in interval - %10.2e \n",ecount);
+  fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f \n",t);
+  fprintf(fstats, " estimated eig count in interval: %10.2e \n",ecount);
   //-------------------- call splicer to slice the spectrum
   npts = 10 * ecount; //200; 
   sli = malloc((nslices+1)*sizeof(double));
@@ -124,7 +127,7 @@ int main(int argc, char *argv[]) {
   //-------------------- For each slice call ChebLanr
   // set polynomial defaults
   // forced degree 
-  for (sl =0; sl<nslices; sl++){
+  for (sl=0; sl<nslices; sl++){
     printf("======================================================\n");
     int nevOut;
     double *lam, *Y, *res;
@@ -136,7 +139,8 @@ int main(int argc, char *argv[]) {
     b = sli[sl+1];
     printf(" subinterval: [%.4e , %.4e]\n", a, b); 
     //-------------------- approximate number of eigenvalues wanted
-    double fac = 1.2;   // this factor insures that # of eigs per slice is slightly overestimated 
+    // this factor insures that #eigs per slice is slightly overestimated 
+    double fac = 1.2;   
     nev = (int) (1 + ecount / ((double) nslices));  // # eigs per slice
     nev = (int)(fac*nev);                        // want an overestimate of ev_int 
     max_its = 1000;
@@ -154,15 +158,16 @@ int main(int argc, char *argv[]) {
     //-------------------- get polynomial to use :
     find_pol(xintv, &pol);       
 
-    printf(" polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
+    fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",
+            pol.deg,pol.bar,pol.gam);
     //-------------------- then call ChenLanNr
 
     double *V0;
     V0 = (double *) malloc(n*nev*sizeof(double));
     rand_double(n*nev, V0);
 
-    ierr = ChebSI(&Acsr, nev, xintv, max_its, tol, V0,
-        &pol, &nevOut, &lam, &Y, &res, fstats);
+    ierr = ChebSI(&Acsr, nev, xintv, max_its, tol, V0, &pol, &nevOut, 
+                  &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebSI error %d\n", ierr);
       return 1;
@@ -175,10 +180,12 @@ int main(int argc, char *argv[]) {
     sort_double(nevOut, lam, ind);
     /* compute exact eigenvalues */
     exeiglap3(nx, ny, nz, a, b, &nev_ex, &lam_ex);
+    printf(" number of eigenvalues: %d, found: %d\n", nev_ex, nevOut);
 
     /* print eigenvalues */
     fprintf(fstats, "                                   Eigenvalues in [a, b]\n");
-    fprintf(fstats, "    Computed [%d]       ||Res||              Exact [%d]", nevOut, nev_ex);
+    fprintf(fstats, "    Computed [%d]       ||Res||              Exact [%d]",
+            nevOut, nev_ex);
     if (nevOut == nev_ex) {
       fprintf(fstats, "                 Err");
     }
@@ -210,7 +217,7 @@ int main(int argc, char *argv[]) {
     if (lam)  free(lam);
     if (Y) free(Y);
     if (res)  free(res);
-    free (pol.mu);
+    free_pol(&pol);
     free(ind);
     free(lam_ex);
   }
@@ -224,3 +231,4 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
+
