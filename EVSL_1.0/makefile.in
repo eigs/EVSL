@@ -11,8 +11,7 @@ AR = ar rv
 RANLIB = ranlib
 
 ## libraries: blas, lapack. 
-LIBLAPACK = -L/home/li50/lapack-3.6.1/ -llapack -lblas
-#LIBLAPACK = -L/home/ruipeng/workspace/lapack-3.7.0 -llapack -lrefblas
+LIBLAPACK = -L/home/li50/workspace/lapack-3.6.1/ -llapack -lrefblas
 
 ## SuiteSparse dir
 ## if empty, evsl will be compiled without rational filters
