@@ -268,7 +268,7 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C) {
   if (A->nrows != B->nrows || A->ncols != B->ncols) {
     return 1;
   }
-
+  /* nnz of A and B */
   nnzA = A->ia[A->nrows];
   nnzB = B->ia[B->nrows];
   /* alloc C [at most has nnz = nnzA + nnzB] */
@@ -278,7 +278,7 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C) {
   for (i=0; i<A->ncols; i++) {
     iw[i] = -1;
   }
-
+  // main loop
   nnzC = 0;
   for (i=0; i<A->nrows; i++) {
     /* row i of A */
@@ -307,9 +307,9 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C) {
       iw[C->ja[j]] = -1;
     }
   }
-
+  Realloc(C->ja, nnzC, int);
+  Realloc(C->a, nnzC, double);
   free(iw);
-
   return 0;
 }
 
