@@ -55,6 +55,15 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
  *  matrix in a slice
  *  @param n The  dimension of  the  symmetric tridiagonal  matrix
  *  @param diag[],sdiag[]  define  the   symmetric  tridiagonal  matrix.  
+ *  @param[out] eigVal Total number of eigenvalues found.
+ *  @param[out] eigVec The first M elements contain teh selected eigenvalues in
+ *  ascending oredr
+ *  @param[in] vl If range='V', The lower bound of the interval to be searched
+ *  for eigen values.
+ *  @param[in] vu If  range='V', the upper bound of the interval to be searched
+ *  for eigenvalues.
+ *  @param[in] nevO If range='I', the index of the smallest eigen value to be
+ *  returned.
  *
  *  This
  *  routine  computes selected  eigenvalues/vectors as  specified by  a

@@ -357,7 +357,7 @@ res: related residual norms */
       DSCAL(&n, &t, y, &one);
       /*--------------------   w = A*y */
       //-- matvec
-      matvec(A, y, w);
+      matvec_genev(A, y, w);
       nmv ++;
       /*--------------------   Ritzval: t3 = (y'*w)/(y'*y) */
       //-- Rayleigh quotient 

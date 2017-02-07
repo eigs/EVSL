@@ -27,6 +27,9 @@ void set_pol_def(polparams *pol){
  * @param damping == 0 --> no damping \n
  *                == 1 --> Jackson \n
  *                == 2 --> Lanczos sigma damping
+ * @param m         degree of the polynomial
+ * @param[out] jac  output array of dampened coefficients
+ * @return 0
  **/
 int dampcf(int m, int damping, double *jac){
   double thetJ = 0.0, thetL = 0.0, a1 = 0.0, a2 = 0.0, dm = (double) m;
@@ -78,10 +81,10 @@ int dampcf(int m, int damping, double *jac){
  **/
 int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
   int k, j, one = 1, n = npts;
-  double scal;
-  double *vkm1 = malloc(n*sizeof(double));
-  double *vkp1 = malloc(n*sizeof(double));
-  double *vk   = malloc(n*sizeof(double));
+  double scal, *vkm1, *vkp1, *vk;
+  Malloc(vkm1, n, double);
+  Malloc(vkp1, n, double);
+  Malloc(vk, n, double);
   double *tmp;
   //-------------------- compute p(xi)
   memset(vkm1, 0, n*sizeof(double));
@@ -317,7 +320,7 @@ int rootchb(int m, double *v, double* jac, double thcIn, double tha,
   Malloc(evi, m, double);
   Malloc(work, lwork, double);
   DHSEQR(&jobz, &compz, &m, &ilo, &ihi, T, &m, evr, evi, 
-      z, &ldz, work, &lwork,&info);
+         z, &ldz, work, &lwork,&info);
   if (info != 0) {
     fprintf(stdout, "DHSEQR error: %d\n", info);
     return(1);
@@ -506,10 +509,11 @@ void free_pol(polparams *pol) {
  * @param v is untouched
  **/
 int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w) {
-  /* user-provided matvec */
-  if (evsldata.Amatvec.func) {
-    ChebAv0(NULL, pol, v, y, w);
-    return 0;
+  /* if user-provided matvec, OR, generalized e.v. prob,
+   * use another version which calls matvec_genev routine */
+  if (evsldata.Amatvec.func || evsldata.hasB) {
+    int err = ChebAv0(A, pol, v, y, w);
+    return err;
   }
   //-------------------- unpack A 
   int n = A->nrows;
@@ -619,7 +623,9 @@ int ChebAv0(csrMat *A, polparams *pol, double *v, double *y, double *w) {
     t = (k==1 ? t1:t2); 
     /*-------------------- Vkp1 = A*Vk - cc*Vk; */    
     s = mu[k];
-    matvec (A, vk, vkp1);
+    
+    matvec_genev(A, vk, vkp1);
+
     for (i=0; i<n; i++){
       vkp1[i] = t*(vkp1[i]-cc*vk[i]) - vkm1[i];
       //-------------------- for degree 2 and up: 

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "def.h"
 #include "struct.h"
 #include "internal_proto.h"
@@ -138,5 +139,177 @@ void free_rat_default_sol(ratparams *rat) {
       umfpack_zl_free_numeric(&rat->solshiftdata[i]);
     }
   }
+}
+
+/* @brief Create cholmod_sparse matrix just as a wrapper of a csrMat 
+ * @warning cholmod_sparse is a CSC format. But since A is symmetric, it is the same */
+cholmod_sparse* csrMat_to_cholmod_sparse(csrMat *A, int stype) {
+  cholmod_sparse *B = NULL;
+  Malloc(B, 1, cholmod_sparse);
+  B->nrow = A->nrows;
+  B->ncol = A->ncols;
+  B->nzmax = A->ia[A->nrows];
+  /* column pointers */
+  B->p = A->ia;
+  /* row indices */
+  B->i = A->ja;
+  B->nz = NULL;
+  B->x = A->a;
+  B->z = NULL;
+  B->stype = stype;
+  B->itype = CHOLMOD_INT;
+  B->xtype = CHOLMOD_REAL;
+  B->dtype = CHOLMOD_DOUBLE;
+  B->sorted = 0;
+  B->packed = 1;
+
+  return B;
+}
+
+typedef struct _default_LBdata {
+  csrMat R;
+  int *perm;
+  double *work;
+} default_LBdata;
+
+/*
+void vector_to_cholmod_dense(int nrow, int ncol, double *v, int ldv,
+                             cholmod_dense *x) {
+  x->nrow = nrow;
+  x->ncol = ncol;
+  x->nzmax = nrow * ncol;
+  x->d = ldv;
+  x->x = v;
+  x->z = NULL;
+  x->xtype = CHOLMOD_REAL;
+  x->dtype = CHOLMOD_DOUBLE;
+}
+*/
+
+/*
+ * soltype = 1 : x = P' * L' \ b
+ *         = 2 : x = L \ P * b
+ */ 
+void default_Lsol_combine(int soltype, double *b, double *x, void *data) {
+  int n;
+  default_LBdata *LBdata = (default_LBdata *) data;
+  csrMat *R = &LBdata->R;
+  int *p = LBdata->perm;
+  double *w = LBdata->work;
+  n = R->nrows;
+
+  /* solve with L */
+  if (1 == soltype) {
+    /* w = L' \ b */
+    tri_sol_upper('N', R, b, w);
+    /* x = P' * w */
+    vec_iperm(n, p, w, x);
+  } else if (2 == soltype) {
+    /* w = P * b */
+    vec_perm(n, p, b, w);
+    /* x = L \ w */
+    tri_sol_upper('T', R, w, x);
+  }
+}
+
+void default_LSol(double *x, double *y, void *data) {
+  default_Lsol_combine(2, x, y, data);
+}
+
+void default_LTSol(double *x, double *y, void *data) {
+  default_Lsol_combine(1, x, y, data);
+}
+
+int set_default_LBdata(csrMat *B) {
+  int i, n = B->nrows, nnzL;
+  cholmod_sparse *Bcholmod, *LBmat;
+  cholmod_factor *LB;
+  default_LBdata *LBdata;
+
+  /* unset B just in case it was not freed */
+  //if (evsldata.hasB && evsldata.isDefaultLB) {
+  //  free_Bfactor_default();
+  //}
+
+  Malloc(LBdata, 1, default_LBdata);
+  cholmod_common cm, *cc;
+  cc = &cm;
+  /* start CHOLMOD */
+  cholmod_start(cc);
+  /* force to have LL factor */
+  cc->final_asis = 0;
+  cc->final_ll = 1;
+  /* convert matrix. 
+   * stype=1 means the upper triangular part of B will be accessed */
+  Bcholmod = csrMat_to_cholmod_sparse(B, 1);
+  /* check common and the matrix */
+  cholmod_check_common(cc);
+  cholmod_check_sparse(Bcholmod, cc);
+  /* symbolic and numeric fact */
+  LB = cholmod_analyze(Bcholmod, cc);
+  cholmod_factorize(Bcholmod, LB, cc);
+  /* check the factor */
+  CHKERR(LB->is_ll == 0);
+  cholmod_check_factor(LB, cc);
+  /* convert factor to sparse matrix [col format as in CHOLMOD]*/
+  LBmat = cholmod_factor_to_sparse(LB, cc);
+  /* check some fields of LBmat */
+  if (!LBmat->packed) {
+    printf("error: cholmod_sparse matrix L is not packed\n");
+    CHKERR(1);
+  }
+  CHKERR(n != LBmat->ncol || n != LBmat->nrow);
+  /* convert it to csrMat, which is *upper* triangular */
+  nnzL = ((int *) (LBmat->p))[n];
+  csr_resize(n, n, nnzL, &LBdata->R);
+  LBdata->R.nrows = n;
+  LBdata->R.ncols = n;
+  memcpy(LBdata->R.ia, LBmat->p, (n+1)*sizeof(int));
+  memcpy(LBdata->R.ja, LBmat->i, nnzL*sizeof(int));
+  memcpy(LBdata->R.a, LBmat->x, nnzL*sizeof(double));
+  /* R should be sorted */
+  if (!LBmat->sorted) {
+    printf("cholmod_sparse L was not sorted, so we do the sorting\n");
+    /* make rows of R have increasing col ids */
+    sortrow(&LBdata->R);
+  }
+  /* check diag of */
+  if (check_full_diag('U', &LBdata->R)) {
+    printf("error: R has zero diag entry!\n");
+    return 1;
+  }
+  /* copy the perm array */
+  int *cholmod_perm = (int*) LB->Perm;
+  if (cholmod_perm) {
+    Malloc(LBdata->perm, n, int);
+    for (i=0; i<n; i++) {
+      LBdata->perm[i] = cholmod_perm[i];
+    }
+  } else {
+    LBdata->perm = NULL;
+  }
+  /* allocate workspace */
+  Malloc(LBdata->work, n, double);
+  /* save the struct to global variable */
+  evsldata.LB_func_data = (void *) LBdata;
+  evsldata.LB_solv = default_LSol;
+  evsldata.LBT_solv = default_LTSol;
+  /* free the matrix wrapper */
+  free(Bcholmod);
+  /* free the factor */
+  cholmod_free_factor(&LB, cc);
+  /* free sparse matrix */
+  cholmod_free_sparse(&LBmat, cc);
+  /* finish cholmod */
+  cholmod_finish(cc);
+  
+  return 0;
+}
+
+void free_default_LBdata() {
+  default_LBdata *LBdata = (default_LBdata *) evsldata.LB_func_data;
+  free_csr(&LBdata->R);
+  free(LBdata->perm);
+  free(LBdata->work);
 }
 

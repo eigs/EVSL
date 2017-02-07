@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "def.h"
 #include "struct.h"
 #include "internal_proto.h"
@@ -74,5 +75,30 @@ void sort_double(int n, double *v, int *ind) {
     ind[i] = vv[i].i;
   }
   free(vv);
+}
+
+/* @brief y = x(p) */
+void vec_perm(int n, int *p, double *x, double *y) {
+  if (!p) {
+    memcpy(y, x, n*sizeof(double));
+  } else {
+    int i;
+    for (i=0; i<n; i++) {
+      y[i] = x[p[i]];
+    }
+  }
+}
+
+
+/* @brief y(p) = x */
+void vec_iperm(int n, int *p, double *x, double *y) {
+  if (!p) {
+    memcpy(y, x, n*sizeof(double));
+  } else {
+    int i;
+    for (i=0; i<n; i++) {
+      y[p[i]] = x[i];
+    }
+  }
 }
 

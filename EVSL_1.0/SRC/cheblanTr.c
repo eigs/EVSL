@@ -48,8 +48,8 @@
  *
  **/
 int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit, 
-    double tol, double *vinit, polparams *pol, int *nev2, 
-    double **vals, double **W, double **resW, FILE *fstats) {
+              double tol, double *vinit, polparams *pol, int *nev2, 
+              double **vals, double **W, double **resW, FILE *fstats) {
   /*-------------------- for stats */
   double tm, tall=0.0, tmv=0.0;
   double tolP = tol;
@@ -126,7 +126,7 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
   /*-------------------- T must be zeroed out initially*/
   Calloc(T, lanm1*lanm1, double);
   /*-------------------- Lam, Y: the converged (locked) Ritz values/vectors 
-res: related residual norms */
+                         res: related residual norms */
   double *Y, *Lam, *res;
   Malloc(Y, n*nev, double);
   Malloc(Lam, nev, double);
@@ -317,16 +317,19 @@ res: related residual norms */
           }
         }
         //-------------------- testing (partial) convergence for restart
-        if (do_print)
+        if (do_print) {
           fprintf(fstats,"  --> testing conv k %4d, it %4d, count %3d  jl %3d trlen %3d\n",
-              k, it, count, jl, trlen);
+                  k, it, count, jl, trlen);
+        }
         /*-------------------- enough good candidates 1st time -> break */
         //if ((count*evFrac >= nev-lock) && (prtrlen==-1))
-        if (count*evFrac >= nev-lock)
+        if (count*evFrac >= nev-lock) {
           break;
+        }
         /*-------------------- count & jl unchanged since last test --> break */
-        if ((count<=last_count) && (jl<=last_jl))
+        if ((count<=last_count) && (jl<=last_jl)) {
           break;
+        }
         last_count = count;  
         last_jl = jl;
       }   //                 if -- [Restarting test] block
@@ -368,7 +371,7 @@ res: related residual norms */
       DSCAL(&n, &t, y, &one);
       /*--------------------   w = A*y */
       //-- matvec
-      matvec(A, y, w);
+      matvec_genev(A, y, w);
       nmv ++;
       /*--------------------   Ritzval: t3 = (y'*w)/(y'*y) */
       //-- Rayleigh quotient 
@@ -448,6 +451,15 @@ res: related residual norms */
     fprintf(fstats, "     Number of evals found = %d\n", lock);
     fprintf(fstats, "--------------------------------------------------\n");
   }
+
+  /* for generalized eigenvalue problem: L' \ Y */
+  if (evsldata.hasB) {
+    for (i=0; i<lock; i++) {
+      evsldata.LBT_solv(Y+i*n, work, evsldata.LB_func_data);
+      DCOPY(&n, work, &one, Y+i*n, &one);
+    }
+  }
+
   /*-------------------- Done.  output : */
   *nev2 = lock;
   *vals = Lam;
