@@ -262,7 +262,7 @@ int tri_sol_upper(char trans, csrMat *R, double *b, double *x) {
 }
 
 /* C = alp * A + bet * B 
- * Note: Assume that A and B are sorted */
+ * Note: A and B MUST be sorted */
 int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
            int *mapA, int *mapB) {
   int nnzA, nnzB, i, j, k;
@@ -276,29 +276,33 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
   nnzB = B->ia[B->nrows];
   /* alloc C [at most has nnz = nnzA + nnzB] */
   csr_resize(A->nrows, A->ncols, nnzA+nnzB, C);
-
-  k = 0; /* nnz counter of C */
+  /* nnz counter of C */
+  k = 0; 
   C->ia[0] = 0;
   for (i=0; i<nrow; i++) {
     /* open row i of A and B */
-    for (jA=A->ia[i],jB=B->ia[i]; ; ) {
+    /* merging two sorted list */
+    for (jA=A->ia[i], jB=B->ia[i]; ; ) {
       if (jA < A->ia[i+1] && jB < B->ia[i+1]) {
-        /* will insert an element */
+        /* will insert the element with smaller col id */
         if (A->ja[jA] <= B->ja[jB]) {
           /* insert jA */
-          if (k > Cp[i] && Ci[k-1] == A->ja[jA]) {
-            Cx[k-1] = A->a[jA];
-            Cz[k-1] = 0.0;
+          if (k > C->ia[i] && C->ja[k-1] == A->ja[jA]) {
+            /* add to existing entry */
+            if (mapA) { mapA[jA] = k-1; }
+            C->a[k-1] += alp * A->a[jA];
           } else {
-            Ci[k] = A->ja[jA];
-            Cx[k] = A->a[jA];
-            Cz[k] = 0.0;
+            /* create new entry */
+            if (mapA) { mapA[jA] = k; }
+            C->ja[k] = A->ja[jA];
+            C->a[k] = alp * A->a[jA];
             k++;
           }
           jA ++;
         } else {
           /* instert jB */
           map[jB] = k;
+          if (k > C->ia[i] && C->ja[k-1] == A->ja[jA]) {
           if (k == Cp[i] || Ci[k-1] != B->ja[jA]) {
             Ci[k] = B->ja[jA];
             Cx[k] = 0.0;
