@@ -8,6 +8,17 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv);
+/* Example for matrix-free solvers: 2D/3D (constant coefficient) Laplacian matrices
+ * The matrix is not formed, so we give NULL to the solver
+ * We provide a matvec routine, which only needs the stencil and grid sizes 
+ * The matvec routine and the associated data will need to be registered */
+/* matvec routine [it must be of this prototype] */
+void Lap2D3DMatvec(double *x, double *y, void *data);
+/* datatype for performing matvec for Laplacians */
+typedef struct _lapmv_t {
+  int nx, ny, nz;
+  double *stencil;
+} lapmv_t;
 
 int main(int argc, char *argv[]) {
   /*------------------------------------------------------------
@@ -22,27 +33,24 @@ int main(int argc, char *argv[]) {
     Mdeg = pol. degree used for DOS
     nvec  = number of sample vectors used for DOS
     This uses:
-    Thick-restart Lanczos with polynomial filtering
+    Non-restart Lanczos with polynomial filtering
     ------------------------------------------------------------*/
   int n, nx, ny, nz, i, j, npts, nslices, nvec, Mdeg, nev, 
-      mlan, max_its, ev_int, sl, flg, ierr;
+      mlan,  ev_int, sl, flg, ierr;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol,   *sli, *mu;
   double xintv[4];
   double *vinit;
   polparams pol;
   FILE *fstats = NULL;
-  if (!(fstats = fopen("OUT/LapPLanR","w"))) {
+  if (!(fstats = fopen("OUT/LapPLanN","w"))) {
     printf(" failed in opening output file in OUT/\n");
     fstats = stdout;
   }
-  /*-------------------- matrix A: coo format and csr format */
-  cooMat Acoo;
-  csrMat Acsr;
   /*-------------------- default values */
-  nx   = 41;
-  ny   = 53;
-  nz   = 1;
+  nx   = 15;
+  ny   = 16;
+  nz   = 13;
   a    = 0.4;
   b    = 0.8;
   nslices = 4;
@@ -62,6 +70,13 @@ int main(int argc, char *argv[]) {
   findarg("nslices", INT, &nslices, argc, argv);
   fprintf(fstats,"used nx = %3d ny = %3d nz = %3d",nx,ny,nz);
   fprintf(fstats," [a = %4.2f  b= %4.2f],  nslices=%2d \n",a,b,nslices);
+  //------ 5pt or 7pt stencil: [self, x-1, x+1, y-1, y+1, z-1, z+1]
+  // assume that grid points are ordered by x first then y and then z
+  double stencil[7] = {0.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0};
+  stencil[0] = nz <= 1 ? 4.0 : 6.0;
+  /* this struct will be passed to the matvec routine */
+  lapmv_t lapmv;
+  lapmv.nx = nx;  lapmv.ny = ny;  lapmv.nz = nz;  lapmv.stencil = stencil;
   //-------------------- eigenvalue bounds set by hand.
   lmin = 0.0;  
   lmax =  ((nz == 1)? 8.0 : 12.0);
@@ -75,11 +90,9 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
   fprintf(fstats, "Laplacian: %d x %d x %d, n = %d\n", nx, ny, nz, n);
   fprintf(fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
-  /*-------------------- generate 2D/3D Laplacian matrix 
-   *                     saved in coo format */
-  ierr = lapgen(nx, ny, nz, &Acoo);
-  /*-------------------- convert coo to csr */
-  ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
+  /*-------------------- without forming the matrix, 
+   *                     just setup the matvec function and data */
+  SetMatvecFunc(n, &Lap2D3DMatvec, (void*) &lapmv);
   /*-------------------- step 0: get eigenvalue bounds */
   fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
   /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
@@ -89,7 +102,7 @@ int main(int argc, char *argv[]) {
   mu = malloc((Mdeg+1)*sizeof(double));
   //-------------------- call kpmdos 
   double t = cheblan_timer();
-  ierr = kpmdos(&Acsr, Mdeg, 1, nvec, xintv, mu, &ecount);
+  ierr = kpmdos(NULL, Mdeg, 1, nvec, xintv, mu, &ecount);
   t = cheblan_timer() - t;
   if (ierr) {
     printf("kpmdos error %d\n", ierr);
@@ -135,7 +148,6 @@ int main(int argc, char *argv[]) {
     //-------------------- Dimension of Krylov subspace 
     mlan = max(4*nev, 100);
     mlan = min(mlan, n);
-    max_its = 3*mlan;
     //-------------------- ChebLanTr
     xintv[0] = a;     xintv[1] = b;
     xintv[2] = lmin;  xintv[3] = lmax;
@@ -156,10 +168,9 @@ int main(int argc, char *argv[]) {
 
     fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
     //-------------------- then call ChenLanNr
-    ierr = ChebLanTr(&Acsr, mlan, nev, xintv, max_its, tol, vinit,
-                     &pol, &nev2, &lam, &Y, &res, fstats);
+    ierr = ChebLanNr(NULL, xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {
-      printf("ChebLanTr error %d\n", ierr);
+      printf("ChebLanNr error %d\n", ierr);
       return 1;
     }
 
@@ -208,11 +219,40 @@ int main(int argc, char *argv[]) {
   //-------------------- free other allocated space 
   free(vinit);
   free(sli);
-  free_coo(&Acoo);
-  free_csr(&Acsr);
   free(mu);
   fclose(fstats);
 
   return 0;
+}
+
+/*----------------- external matvec routine provided by users */
+void Lap2D3DMatvec(double *x, double *y, void *data) {
+  /* y = A * x
+   * data: pointer to a struct that contains all needed data
+   */ 
+  lapmv_t *lapmv = (lapmv_t *) data;
+  int nx = lapmv->nx;
+  int ny = lapmv->ny;
+  int nz = lapmv->nz;
+  double *stencil = lapmv->stencil;
+  int i,j,k,p;
+
+  for (k=0; k<nz; k++) {
+    for (j=0; j<ny; j++) {
+      for (i=0; i<nx; i++) {
+        p = k*nx*ny + j*nx + i;
+        y[p] = stencil[0] * x[p];
+        // x-1, x+1
+        if (i>0)    { y[p] += stencil[1] * x[p-1]; }
+        if (i<nx-1) { y[p] += stencil[2] * x[p+1]; }
+        // y-1, y+1
+        if (j>0)    { y[p] += stencil[3] * x[p-nx]; }
+        if (j<ny-1) { y[p] += stencil[4] * x[p+nx]; }
+        // z-1, z+1
+        if (k>0)    { y[p] += stencil[5] * x[p-nx*ny]; }
+        if (k<nz-1) { y[p] += stencil[6] * x[p+nx*ny]; }
+      }
+    }
+  }
 }
 

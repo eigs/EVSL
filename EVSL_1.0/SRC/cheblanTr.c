@@ -58,9 +58,15 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
   // handle case where fstats is NULL. Then no output. Needed for openMP.
   if (fstats == NULL){
     do_print = 0;
-  }  
-  /*--------------------- size of A */
-  int n = A->nrows;
+  }
+  /* size of the matrix */
+  int n;
+  /* if users provided their own matvec function, input matrix A will be ignored */
+  if (evsldata.Amatvec.func) {
+    n = evsldata.Amatvec.n;
+  } else {
+    n = A->nrows;
+  }
   /*--------------------- adjust lanm and maxit */
   lanm = min(lanm, n);
   int lanm1=lanm+1;

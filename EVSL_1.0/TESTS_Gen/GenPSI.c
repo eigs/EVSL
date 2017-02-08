@@ -248,7 +248,7 @@ int main () {
       if (Y)  free(Y);
       if (res)  free(res);
       free(ind);
-      free(pol.mu);
+      free_pol(&pol);
       free(V0);
       /*-------------------- end slice loop */
     }

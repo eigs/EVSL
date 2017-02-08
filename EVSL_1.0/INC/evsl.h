@@ -21,7 +21,8 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit, double tol,
 void set_pol_def(polparams *pol);
 //
 int find_pol(double *intv, polparams *pol);
-
+//
+void free_pol(polparams *pol);
 
 /*- - - - - - - - - chebsi.c */
 int ChebSI(csrMat *A, int nev, double *intv, int maxit, double tol, double *vinit, polparams *pol, int *nevo, double **lamo, double **Yo, double **reso, FILE *fstats);
@@ -40,15 +41,19 @@ int LanBounds(csrMat *A, int msteps, double *v, double *lmin, double *lmax);
 void set_ratf_def(ratparams *rat);
 //
 int find_ratf(double *intv, ratparams *rat);
+//
+int set_ratf_solfunc(ratparams *rat, csrMat *A, linSolFunc *funcs, void **data);
+//
+void free_rat(ratparams *rat);
 
 /*- - - - - - - - - ratlanNr.c */
 //
-int RatLanNr(csrMat *A, solveShift *solshift, double *intv, ratparams *, int maxit, double tol, double *vinit, int *nevOut, double **lamo, double **Wo, double **reso, FILE *fstats);
+int RatLanNr(csrMat *A, double *intv, ratparams *, int maxit, double tol, double *vinit, int *nevOut, double **lamo, double **Wo, double **reso, FILE *fstats);
 
 
 /*- - - - - - - - - ratlanTr.c */
 //
-int RatLanTr(csrMat *A, solveShift *solshift, int lanm, int nev, double *intv, ratparams*, int maxit, double tol, double *vinit, int *nev2, double **lamo, double **Yo, double **reso, FILE *fstats);
+int RatLanTr(csrMat *A, int lanm, int nev, double *intv, ratparams*, int maxit, double tol, double *vinit, int *nev2, double **lamo, double **Yo, double **reso, FILE *fstats);
 
 /*- - - - - - - - - spmat.c */
 // convert a COO matrix to a CSR matrix
@@ -59,7 +64,10 @@ void free_csr(csrMat *csr);
 void free_coo(cooMat *coo);
 // generate a 2D/3D Laplacian matrix in COO format
 int lapgen(int nx, int ny, int nz, cooMat *Acoo);
-
+// set an external matvec function
+void SetMatvecFunc(int n, matvecFunc func, void *data);
+// unset an external matvec function
+void UnsetMatvecFunc();
 
 /*- - - - - - - - - spslicer.c */
 //

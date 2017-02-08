@@ -3,9 +3,9 @@
 #include <unistd.h>
 #include <stdio.h>  
 #include <math.h>
-      
+
 /**
- * @brief uint64_t difference = end - start;  
+ * @brief evsl timer for mac
  */
 double cheblan_timer() {
   double t;
@@ -23,7 +23,7 @@ double cheblan_timer() {
 /**
  * @brief Uses the timer to generate a seed to be used for srand.
  */
-int time_seeder() { 
+int time_seeder() {
   double t1,t2;
   int iseed, zero=0;
   t1   = cheblan_timer();

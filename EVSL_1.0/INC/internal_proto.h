@@ -17,6 +17,8 @@ int dampcf(int m, int damping, double *jac);
 int chebxPltd(int m, double *mu, int n, double *xi, double *yi);
 //
 int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w);
+
+int ChebAv0(csrMat *A, polparams *pol, double *v, double *y, double *w);
 //
 void chext(polparams *pol, double aIn, double bIn);
 
@@ -58,17 +60,18 @@ void weights(int n, complex double* zk, int* pow, double lambda, complex double*
 int scaleweigthts(int n, double a, double b, complex double *zk, int* pow, complex double* omegaM);
 
 /*- - - - - - - - - ratlanNr.c */
-void RatFiltApply(int n, solveShift *sol, ratparams *rat,
-                  double *b, double *x, double *w3);
+void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w3);
 
 /*- - - - - - - - - spmat.c */
-// matvec_gen: y = alp * A*x  + bet *y
-int matvec_gen(double alp, csrMat *A, double *x, double bet, double *y);
 // matvec: y = A * x
 int matvec(csrMat *A, double *x, double *y);
 // memory allocation/reallocation for a CSR matrix
 void csr_resize(int nrow, int ncol, int nnz, csrMat *csr);
 
+
+/*- - - - - - - - - suitesparse.c */
+int set_ratf_solfunc_default(csrMat *A, ratparams *rat);
+void free_rat_default_sol(ratparams *rat);
 
 /*- - - - - - - - - timing.c */
 int time_seeder();

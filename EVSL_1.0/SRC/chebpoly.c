@@ -17,7 +17,7 @@ void set_pol_def(polparams *pol){
   pol->damping = 2;        // damping. 0 = no damping, 1 = Jackson, 2 = Lanczos
   pol->thresh_ext = 0.50;  // threshold for accepting polynomial for end intervals 
   pol->thresh_int = 0.8;   // threshold for accepting polynomial for interior
-  //intervals 
+                           // intervals 
   pol-> deg = 0;           // degree =0 means determine optimal degree.
 }
 
@@ -110,6 +110,7 @@ int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
   free(vk);
   return 0;
 }
+
 /**
  * @brief Determines polynomial for end interval cases.
  *
@@ -372,7 +373,7 @@ int rootchb(int m, double *v, double* jac, double thcIn, double tha,
  *  ChebAv]
  *
 **/
-int find_pol(double *intv, polparams *pol){ 
+int find_pol(double *intv, polparams *pol) {
   double *mu, *v, *jac, t=0.0, itv[2],  vals[2];
   int max_deg=pol->max_deg, min_deg=pol->min_deg, damping=pol->damping;
   double tha=0.0, thb=0.0, thc=0.0, thcIn=0.0;
@@ -488,6 +489,9 @@ int find_pol(double *intv, polparams *pol){
   return 0;
 }
 
+void free_pol(polparams *pol) {
+  free(pol->mu);
+}
 
 /**
  * @brief Computes y=P(A) y, where pn is a Cheb. polynomial expansion [this
@@ -505,6 +509,11 @@ int find_pol(double *intv, polparams *pol){
  * @param v is untouched
  **/
 int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w) {
+  /* user-provided matvec */
+  if (evsldata.Amatvec.func) {
+    ChebAv0(NULL, pol, v, y, w);
+    return 0;
+  }
   //-------------------- unpack A 
   int n = A->nrows;
   int  *ia = A->ia;
@@ -524,30 +533,32 @@ int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w) {
   int k, i, j;
   double r, s, t, *tmp;
 
-  double t1 = 1./dd, t2 = 2.0/dd;
+  double t1 = 1.0 / dd, t2 = 2.0 / dd;
   //-------------------- vk <- v; vkm1 <- zeros(n,1)
   memcpy(vk, v, n*sizeof(double));
   memset(vkm1,zer,n*sizeof(double));
   /*-------------------- special case: k == 0 */
   s = mu[0];
-  for (i=0; i<n; i++) 
+  for (i=0; i<n; i++) {
     y[i] = s*vk[i];
+  }
   //-------------------- degree loop. k IS the degree.  
   for (k=1; k<=m; k++) {
     /*-------------------- y = mu[k]*Vk + y */
     t = (k==1 ? t1 : t2);
     /*-------------------- Vkp1 = A*Vk - cc*Vk; */
     s = mu[k]; 
-    for (i=0; i<n; i++){
+    for (i=0; i<n; i++) {
       r = -cc*vk[i];
-      for (j=ia[i]; j<ia[i+1];j++) 	
+      for (j=ia[i]; j<ia[i+1]; j++) {
         r += vk[ja[j]]*a[j];
+      }
       //-------------------- t* ( A*Vk - cc*Vk) - vkm1
-      r = r*t - vkm1[i] ;
+      r = r*t - vkm1[i];
       //-------------------- save v_{k+1} and update y
       vkp1[i] = r;
-      y[i]+=s*r;
-    }   
+      y[i] += s*r;
+    }
     //-------------------- next step: rotate vectors via pointer exchange
     tmp = vkm1;
     vkm1 = vk;
@@ -577,8 +588,14 @@ int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w) {
  * @param v is untouched
  **/
 int ChebAv0(csrMat *A, polparams *pol, double *v, double *y, double *w) {
-  //-------------------- unpack n from A  
-  int n = A->nrows;
+  int n;
+  if (evsldata.Amatvec.func) {
+    //-------------------- unpack n from ext_mv 
+    n = evsldata.Amatvec.n;
+  } else {
+    //-------------------- unpack n from A  
+    n = A->nrows;
+  }
   //-------------------- unpack pol
   double *mu = pol->mu;
   double dd = pol->dd;
@@ -596,7 +613,7 @@ int ChebAv0(csrMat *A, polparams *pol, double *v, double *y, double *w) {
   memcpy(vk, v, n*sizeof(double));
   memset(vkm1,zer,n*sizeof(double));
   /*-------------------- special case: k == 0 */
-  s = mu[0] ;
+  s = mu[0];
   for (i=0; i<n; i++) 
     y[i] = s*vk[i]; 
   //-------------------- degree loop. k IS the degree.     

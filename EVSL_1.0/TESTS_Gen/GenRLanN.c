@@ -5,36 +5,24 @@
 #include <complex.h>
 #include "evsl.h"
 #include "io.h"
-#include "cholmod.h"
-#include "umfpack.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define TRIV_SLICER 0
 
-/*------------ data needed by umfpack for solving a linear system */
-typedef struct _umfdata {
-  SuiteSparse_long *Ap;
-  SuiteSparse_long *Ai;
-  double *Ax;
-  double *Az;
-  void *Numeric;
-} umfdata;
-
 /*-------------------- Protos */
 int read_coo_MM(const char *matfile, int idxin, int idxout,   cooMat *Acoo); 
-int get_matrix_info( FILE *fmat, io_t *pio );
-void solvefunc(int n, double *br, double *bz, double *xr, double *xz, void *data);
+int get_matrix_info(FILE *fmat, io_t *pio);
 /*-------------------- End Protos */
 
 int main () { 
   int ierr = 0;
   /*--------------------------------------------------------------
    * this tests the spectrum slicing idea for a generic matrix
-   * read in matrix format -- using 
+   * read in matrix format -- using
    * Thick-Restarted Lanczos with rational filtering.
    *-------------------------------------------------------------*/
-  int n=0, nnz=0, sl, i, j, k, nev, totcnt; 
+  int n=0, nnz=0, sl, i, j, nev, totcnt; 
   double a, b, ecount, xintv[4];
   double lmin, lmax; 
   double *alleigs; 
@@ -43,10 +31,6 @@ int main () {
   /*-------------------- matrix A: coo format and csr format */
   cooMat Acoo;
   csrMat Acsr; 
-  /*-------------------- Pass pointers from Acsr to Ap, Ai, Ax, Az for umfpack*/
-  SuiteSparse_long  *Ap, *Ai;
-  int *diag; 
-  double **Ax, **Az;   
   /* tolerance to accept ev */
   double tol;
   /* total #ev computed; the computed eig val/vec */
@@ -97,7 +81,7 @@ int main () {
     a = io.a; // left endpoint of input interval
     b = io.b; // right endpoint of input interval
     n_intv = io.n_intv;
-    char path[1024] ;   // path to write the output files
+    char path[1024];   // path to write the output files
     strcpy( path, "OUT/GenRLanN_");
     strcat( path, io.MatNam);
     fstats = fopen(path,"w"); // write all the output to the file io.MatNam 
@@ -106,7 +90,8 @@ int main () {
       fstats = stdout;
     }
     fprintf(fstats, "MATRIX: %s...\n", io.MatNam);
-    fprintf(fstats,"Partition the interval of interest [%f,%f] into %d slices\n", a,b,n_intv);
+    fprintf(fstats,"Partition the interval of interest [%f,%f] into %d slices\n",
+            a,b,n_intv);
     counts = malloc(n_intv*sizeof(int)); 
     sli = malloc( (n_intv+1)*sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
@@ -130,38 +115,14 @@ int main () {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
-    // format convertion for umfpack (short-cut version) 
-    solveShift solshift;
-    diag = (int *)malloc(n*sizeof(int)); // location of diagonal entries 
-    Ap = (SuiteSparse_long *)malloc((n+1)*sizeof(SuiteSparse_long));    // pointer to starting point of each row
-    Ai = (SuiteSparse_long *)malloc(nnz*sizeof(SuiteSparse_long));  // column indices
-    Ax = (double **)malloc(n_intv*sizeof(double *));//Ax[i] = real part of the ith shifted matrix 
-    Az = (double **)malloc(n_intv*sizeof(double *));//Az[i]: imaginary part of the ith shifted matrix
-    // each shifted matrix shares the same Ap and Ai
-    for (i=0; i<n+1; i++) {
-      Ap[i] = Acsr.ia[i];
-    }
-    for (i=0; i<nnz; i++) {
-      Ai[i] = Acsr.ja[i];
-    }
-    //--------------------find the location of the diagonal entries in CSR format n_intv 
-    //                    shifted matrices share the same diag, Ax and Az
-    for (i = 0 ; i < n ; i++){
-      for (j = Ap[i] ; j < Ap[i+1] ; j++){      
-        k = Ai[j];
-        if(i == k){
-          diag[i] = j;
-          break;
-        }
-      }
-    }
-    /*-------------------- define parameters for DOS*/
+    /*-------------------- define parameters for DOS */
     alleigs = malloc(n*sizeof(double)); 
     vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);
     /*-------------------- get lambda_min lambda_max estimates */
     ierr = LanBounds(&Acsr, 60, vinit, &lmin, &lmax);
-    fprintf(fstats, "Step 0: Eigenvalue bounds for A: [%.15e, %.15e]\n", lmin, lmax);
+    fprintf(fstats, "Step 0: Eigenvalue bounds for A: [%.15e, %.15e]\n",
+            lmin, lmax);
     /*-------------------- define [a b] now so we can get estimates now    
       on number of eigenvalues in [a b] from kpmdos */
     fprintf(fstats," --> interval: a  %9.3e  b %9.3e \n",a, b);
@@ -180,8 +141,9 @@ int main () {
 	return 1;
       }
       fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
-      fprintf(fstats, "Step 1a: Estimated eig count in interval - %10.2e \n",ecount);
-      if ((ecount <0) | (ecount > n)) {
+      fprintf(fstats, "Step 1a: Estimated eig count in interval - %10.2e \n",
+              ecount);
+      if (ecount < 0 || ecount > n) {
         printf(" e-count estimate is incorrect \n ");
         exit(7);
       }
@@ -198,7 +160,8 @@ int main () {
         return 1;
       }
     }
-    fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",Mdeg, nvec, npnts);
+    fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",
+            Mdeg, nvec, npnts);
     fprintf(fstats, "Step 1b: Slices found: \n");
     for (j=0; j<n_intv;j++)
       fprintf(fstats,"[% 12.4e , % 12.4e]\n", sli[j],sli[j+1]);
@@ -209,16 +172,10 @@ int main () {
     nev = (int) (1 + ecount / ((double) n_intv));  // # eigs per slice
     nev = (int)(fac*nev);                        // want an overestimate of ev_int 
     max_its = max(4*nev,100);  max_its = min(max_its, n);   
-    fprintf(fstats,"Step 2: In each slice compute %d eigenvalues ... \n", nev);
+    fprintf(fstats, "Step 2: In each slice compute %d eigenvalues ... \n", nev);
     /*-------------------- MAIN intv LOOP: for each sclice Do: */
     totcnt = 0;
-    for (sl =0; sl<n_intv; sl++) {
-      // Allocate memory for the slth shifted matrix  A - (mid+width*1i)I    
-      Ax[sl] = (double *)malloc(nnz*sizeof(double));//real part of each shifted matrix entries
-      Az[sl] = (double *)malloc(nnz*sizeof(double));//imaginary part of each shifted matrix entries   
-      for(i=0; i<nnz; i++){
-        Az[sl][i] = 0.0;
-      }  
+    for (sl=0; sl<n_intv; sl++) {
       fprintf(fstats,"======================================================\n");
       double *lam, *Y, *res;
       int *ind;
@@ -227,13 +184,14 @@ int main () {
       b = sli[sl+1];
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b); 
       //-------------------- Parameters for RatLanNr
-      fprintf(fstats, "Max Lanczos steps %d\n", max_its);
+      fprintf(fstats, " Max Lanczos steps %d\n", max_its);
       double intv[4]; // endpoints of this slice and spectrum
       intv[0] = a; 
       intv[1] = b;
       intv[2] = lmin;
       intv[3] = lmax;
-      printf("==============Compute the %dth subinterval: [%.4e, %.4e] out of %d==============\n",sl+1, a, b, n_intv); 
+      printf("=== Compute the %dth subinterval: [%.4e, %.4e] out of %d ===\n",
+             sl+1, a, b, n_intv); 
       //------------Find the rational filter on this slice
       ratparams rat;
       //------------Set up default parameters for rat
@@ -243,53 +201,11 @@ int main () {
       rat.pow = pow;
       //-------------Now determine rational filter
       find_ratf(intv, &rat);    
-      double mid = rat.cc;
-      double width = rat.dd;         
-      //------------ Form the shifted matrix A_shifted = A - (mid+width*1i)*I
-      memcpy(Ax[sl],Acsr.a,nnz*sizeof(double));
-      for(i = 0 ; i <n ; i++){
-        Ax[sl][diag[i]] = Ax[sl][diag[i]] - mid;
-        Az[sl][diag[i]] = - width;
-      }
-      //------------Call Umfpack to factor A - (mid+width*1i)*I
-      //double Control [UMFPACK_CONTROL];  umfpack_zl_defaults(Control);  Control[UMFPACK_PRL] = 3;
-      void *Symbolic, *Numeric;
-      //------------Umfpack symbolic factorization
-      int status;
-      status = umfpack_zl_symbolic (n, n, Ap, Ai, Ax[sl], Az[sl], &Symbolic, NULL, NULL);
-      if (status < 0) {
-        printf("umfpack_zl_symbolic failed and exit");
-        return 1;
-      }
-      //------------Umfpack numerical factorization 
-      double tall = 0.0;
-      tall = cheblan_timer();
-      status = umfpack_zl_numeric(Ap, Ai, Ax[sl], Az[sl], Symbolic, &Numeric,NULL, NULL);
-      if (status < 0) {
-        printf("umfpack_zl_numeric failed and exit");
-        return 1;
-      }
-      //------------Release the memory
-      umfpack_zl_free_symbolic(&Symbolic);
-      tall = cheblan_timer()-tall;
-      printf("factorization  time :    %.2f\n", tall);
-
-      // special case for 1 pole
-      umfdata *umf = (umfdata *) malloc(1*sizeof(umfdata));
-      umf[0].Ap = Ap;  umf[0].Ai = Ai;  umf[0].Ax = Ax[sl];  umf[0].Az = Az[sl];  umf[0].Numeric = Numeric;
-      // structure for linear solver passed to RatLanNr
-      // func [function pointer]: function to solve complex shifted system
-      // it must be a function of the following type:
-      // void (*solveShiftFunc)(int n, double *br, double *bz,
-      //                        double *xr, double *xz, void *data);
-      // void **data: encapsulates all data needed by the direct solver
-      // An example is given here for using UMFPACK by T.Davis
-      solshift.func = &solvefunc;  
-      solshift.data = malloc(1*sizeof(void *));
-      solshift.data[0] = &umf[0];
-
-      //-------------------- RationalLanTr
-      ierr = RatLanNr(&Acsr,&solshift, intv, &rat, max_its, tol, vinit, &nevOut, &lam, &Y, &res, fstats);
+      // use the default solver function from UMFPACK
+      set_ratf_solfunc(&rat, &Acsr, NULL, NULL);
+      //-------------------- RationalLanNr
+      ierr = RatLanNr(&Acsr, intv, &rat, max_its, tol, vinit, &nevOut, &lam, 
+                      &Y, &res, fstats);
 
       if (ierr) {
         printf("RatLanNr error %d\n", ierr);
@@ -302,9 +218,11 @@ int main () {
 
       /* print eigenvalues */
       fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
-      fprintf(fstats, "                                   Eigenvalues in [%f, %f]\n",a,b);
+      fprintf(fstats, "                                   Eigenvalues in [%f, %f]\n",
+              a,b);
       fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
-      fprintf(fstats, "    Computed [%d out of %d estimated]           ||Res||     ", nevOut, nev);
+      fprintf(fstats, "    Computed [%d out of %d estimated]           ||Res||     ",
+              nevOut, nev);
       fprintf(fstats, "\n");
       for (i=0; i<nevOut; i++) {
         fprintf(fstats, "        % .15e                 %.1e", lam[i], res[ind[i]]);
@@ -315,16 +233,11 @@ int main () {
       totcnt += nevOut;
       counts[sl] = nevOut;
       /*-------------------- free memory within  this loop */
-      free(Ax[sl]);
-      free(Az[sl]);
       if (lam)  free(lam);
       if (Y)  free(Y);
       if (res)  free(res);
       free(ind);
-      free(rat.omega);
-      umfpack_zl_free_numeric (&Numeric);
-      free(umf);
-      free(solshift.data);
+      free_rat(&rat);
       /*-------------------- end slice loop */
     }
     fprintf(fstats," --> Total eigenvalues found = %d\n",totcnt);
@@ -336,17 +249,12 @@ int main () {
       fclose(fmtout);
     }
     /*-------------------- free memory within  this loop */
-    free(counts);
-    free(sli);
     free(vinit);
     free_coo(&Acoo);
     free_csr(&Acsr);
+    free(sli);
+    free(counts);
     free(alleigs);
-    free(Ap);
-    free(diag);
-    free(Ai);
-    free(Ax);
-    free(Az);
     if (fstats != stdout) fclose(fstats);
     /*-------------------- end matrix loop */
   }
@@ -355,28 +263,5 @@ int main () {
   if( flog != stdout ) fclose ( flog );
   fclose( fmat );
   return 0;
-}
-
-void solvefunc(int n, double *br, double *bz, double *xr, double *xz, void *data) {
-  /*-------------------------------------------------------------------------------
-   * complex linear solver routine passed to evsl
-   * NOTE: This function MUST be of this prototype
-   * INPUT:
-   *   n: size of the system
-   *   br, bz: vectors of length n, complex right-hand side (real and imaginary)
-   *   data: all data that are needed for solving the system
-   * OUTPUT:
-   *   xr, xz: vectors of length n, complex solution (real and imaginary)
-   *------------------------------------------------------------------------------*/
-  umfdata *umf = (umfdata *) data;
-  SuiteSparse_long* Ap = umf->Ap;
-  SuiteSparse_long* Ai = umf->Ai;
-  double* Ax = umf->Ax;
-  double* Az = umf->Az;  
-  void* Numeric = umf->Numeric;
-  double Control[UMFPACK_CONTROL]; 
-  umfpack_zl_defaults(Control);
-  Control[UMFPACK_IRSTEP] = 0; // no iterative refinement for umfpack 
-  umfpack_zl_solve(UMFPACK_A, Ap, Ai, Ax, Az, xr, xz, br, bz, Numeric, Control, NULL); 
 }
 
