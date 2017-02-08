@@ -28,62 +28,37 @@ void umfpack_solvefunc(int n, double *br, double *bz, double *xr, double *xz,
 }
 
 int set_ratf_solfunc_gen_default(csrMat *A, csrMat *B, ratparams *rat) {
-  int i, j, jA, jB, k, nrow, ncol, nnzA, nnzB, nnzC_max, *iw, *map, status;
+  int i, j, nrow, ncol, nnzB, nnzC, *map, status;
+  csrMat C;
   /* UMFPACK matrix for the shifted matrix 
    * C = A - s * B */
-  SuiteSparse_long *Cp, *Ci, lj;
+  SuiteSparse_long *Cp, *Ci;
   double *Cx, *Cz;
   void *Symbolic=NULL, *Numeric=NULL;
   
   nrow = A->nrows;
   ncol = A->ncols;
-  nnzA = A->ia[nrow];
   nnzB = B->ia[nrow];
-  /* C at most has nnzA+nnzB nonzeros */
-  nnzC_max = nnzA + nnzB;
-  Malloc(Cp, nrow+1, SuiteSparse_long);
-  Malloc(Ci, nnzC_max, SuiteSparse_long);
-  Malloc(Cx, nnzC_max, double);
-  Malloc(Cz, nnzC_max, double);
   /* map from nnz in B to nnz in C */
   Malloc(map, nnzB, int);
-  /* marker array */
-  Malloc(iw, ncol, int);
-  for (i=0; i<ncol; i++) {
-    iw[i] = -1;
+  /* C = A + 0.0 * B */
+  matadd(1.0, 0.0, A, B, &C, NULL, map);
+  nnzC = C.ia[nrow];
+  
+  Malloc(Cp, nrow+1, SuiteSparse_long);
+  Malloc(Ci, nnzC, SuiteSparse_long);
+  Malloc(Cx, nnzC, double);
+  Malloc(Cz, nnzC, double);
+  /* copy to SuiteSparse matrix */
+  for (i=0; i<nrow+1; i++) {
+    Cp[i] = C.ia[i];
   }
-  /* C = A + Pattern(B) 
-   * NOTE: C must be sorted */
-
-      Ci[k] = c;
-      Cx[k] = A->a[j];
-      Cz[k] = 0.0;
-      iw[c] = k++;
-
-      int p = iw[c];
-      if (-1 == p) {
-        /* new entry */
-        Ci[k] = c;
-        Cx[k] = 0.0;
-        Cz[k] = 0.0;
-        /* location of nz j of B in C */
-        map[j] = iw[c] = k++;
-      } else {
-        /* existing entry */
-        CHKERR(Ci[p] != c);
-        map[j] = p;
-      }
-    }
-    /* row pointer */
-    Cp[i+1] = k;
-    /* reset iw */
-    for (lj=Cp[i]; lj<Cp[i+1]; lj++) {
-      iw[Ci[lj]] = -1;
-    }
+  for (i=0; i<nnzC; i++) {
+    Ci[i] = C.ja[i];
+    Cx[i] = C.a[i];
+    Cz[i] = 0.0;
   }
-
-  free(iw);
-
+  free_csr(&C);
   /* for each pole we shift with B and factorize */
   for (i=0; i<rat->num; i++) {
     /* the complex shift for pole i */

@@ -76,6 +76,9 @@ void sortrow(csrMat *A);
 int check_full_diag(char type, csrMat *A);
 //
 int tri_sol_upper(char trans, csrMat *R, double *b, double *x);
+//
+int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
+           int *mapA, int *mapB);
 
 /*- - - - - - - - - suitesparse.c */
 int set_ratf_solfunc_default(csrMat *A, ratparams *rat);

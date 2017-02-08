@@ -263,10 +263,31 @@ int tri_sol_upper(char trans, csrMat *R, double *b, double *x) {
 
 /* C = alp * A + bet * B 
  * Note: A and B MUST be sorted */
+/* inline function used by mat add */
+inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k, int *j, int *map) {
+  if (*k > C->ia[i] && C->ja[*k-1] == A->ja[*j]) {
+    if (map) {
+      /* j maps to k-1 in C */
+      map[*j] = *k - 1;
+    }
+    /* add to existing entry */
+    C->a[*k-1] += t * A->a[*j];
+  } else {
+    if (map) {
+      /* jA maps to k in C */
+      map[*j] = *k; 
+    }
+    /* create new entry */
+    C->ja[*k] = A->ja[*j];
+    C->a[*k] = t * A->a[*j];
+    (*k)++;
+  }
+  (*j) ++;
+}
+
 int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
            int *mapA, int *mapB) {
-  int nnzA, nnzB, i, j, k;
-
+  int nnzA, nnzB, i, jA, jB, k;
   /* check dimension */
   if (A->nrows != B->nrows || A->ncols != B->ncols) {
     return 1;
@@ -279,7 +300,7 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
   /* nnz counter of C */
   k = 0; 
   C->ia[0] = 0;
-  for (i=0; i<nrow; i++) {
+  for (i=0; i<A->nrows; i++) {
     /* open row i of A and B */
     /* merging two sorted list */
     for (jA=A->ia[i], jB=B->ia[i]; ; ) {
@@ -287,46 +308,29 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
         /* will insert the element with smaller col id */
         if (A->ja[jA] <= B->ja[jB]) {
           /* insert jA */
-          if (k > C->ia[i] && C->ja[k-1] == A->ja[jA]) {
-            /* add to existing entry */
-            if (mapA) { mapA[jA] = k-1; }
-            C->a[k-1] += alp * A->a[jA];
-          } else {
-            /* create new entry */
-            if (mapA) { mapA[jA] = k; }
-            C->ja[k] = A->ja[jA];
-            C->a[k] = alp * A->a[jA];
-            k++;
-          }
-          jA ++;
+          matadd_insert(alp, A, C, i, &k, &jA, mapA);
         } else {
           /* instert jB */
-          map[jB] = k;
-          if (k > C->ia[i] && C->ja[k-1] == A->ja[jA]) {
-          if (k == Cp[i] || Ci[k-1] != B->ja[jA]) {
-            Ci[k] = B->ja[jA];
-            Cx[k] = 0.0;
-            Cz[k] = 0.0;
-            k++;
-          }
-          jB ++;
+          matadd_insert(bet, B, C, i, &k, &jB, mapB);
         }
       } else if (jA == A->ia[i+1]) {
         for (; jB < B->ia[i+1]; jB++) {
+          /* instert jB */
+          matadd_insert(bet, B, C, i, &k, &jB, mapB);
         }
         break;
       } else {
         for (; jA < A->ia[i+1]; jA++) {
+          /* insert jA */
+          matadd_insert(alp, A, C, i, &k, &jA, mapA);
         }
         break;
       }
     }
-
-
-  
-
-  Realloc(C->ja, nnzC, int);
-  Realloc(C->a, nnzC, double);
-  free(iw);
+    C->ia[i+1] = k;
+  }
+  Realloc(C->ja, k, int);
+  Realloc(C->a, k, double);
   return 0;
 }
+
