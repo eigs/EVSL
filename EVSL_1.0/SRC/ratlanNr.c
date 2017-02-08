@@ -329,8 +329,22 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w4) {
         br[ii] = zkr*b[ii] + xr[ii];
         bz[ii] = zkc*b[ii] + xz[ii];
       }
-      // Solve (Ax+Az*1I)(xr+xz*1I) = (br+bz*1I)
-      (rat->solshift[kk])(n, br, bz, xr, xz, rat->solshiftdata[kk]);
+      /* solve shifted system */
+      if (!evsldata.hasB) {
+        // Solve (Ax+Az*1I)(xr+xz*1I) = (br+bz*1I)
+        (rat->solshift[kk])(n, br, bz, xr, xz, rat->solshiftdata[kk]);
+      } else {
+        double *wr = evsldata.LB_func_work;
+        double *wz = wr + n;
+        /* x = L * b */
+        evsldata.LB_mult(br, xr, evsldata.LB_func_data);
+        evsldata.LB_mult(bz, xz, evsldata.LB_func_data);
+        /* w = (A-sB) \ x */
+        (rat->solshift[kk])(n, xr, xz, wr, wz, rat->solshiftdata[kk]);
+        /* x = L' * w */
+        evsldata.LBT_mult(wr, xr, evsldata.LB_func_data);
+        evsldata.LBT_mult(wz, xz, evsldata.LB_func_data);
+      }
     }
     for(ii=0; ii<n; ii++) {
       x[ii] = x[ii]+ 2*xr[ii];

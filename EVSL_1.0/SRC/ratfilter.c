@@ -418,7 +418,8 @@ int find_ratf(double *intv, ratparams *rat) {
   return 0;
 }
 
-int set_ratf_solfunc(ratparams *rat, csrMat *A, linSolFunc *funcs, void **data) {
+int set_ratf_solfunc(ratparams *rat, csrMat *A, csrMat *B, linSolFunc *funcs, 
+                     void **data) {
   int i,err;
   /* (re)allocate enough space (number of poles) */
   Realloc(rat->solshift, rat->num, linSolFunc);
@@ -427,7 +428,19 @@ int set_ratf_solfunc(ratparams *rat, csrMat *A, linSolFunc *funcs, void **data) 
   if (funcs == NULL) {
 #ifdef EVSL_WITH_SUITESPARSE
     rat->use_default_solver = 1;
-    err = set_ratf_solfunc_default(A, rat);
+    if (B) {
+      if (!evsldata.hasB) {
+        printf("warning [%s (%d)]: Rhs mat B has not been set with 'SetRhsMatrix'\n",
+               __FILE__, __LINE__);
+      }
+      err = set_ratf_solfunc_gen_default(A, B, rat);
+    } else {
+      if (evsldata.hasB) {
+        printf("warning [%s (%d)]: Rhs mat B has been set but B=NULL is given\n",
+               __FILE__, __LINE__);
+      }
+      err = set_ratf_solfunc_default(A, rat);
+    }
 #else
     printf("error: EVSL was not compiled with the default solver, ");
     printf("so the users must provide solvers\n");

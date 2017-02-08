@@ -42,7 +42,8 @@ void set_ratf_def(ratparams *rat);
 //
 int find_ratf(double *intv, ratparams *rat);
 //
-int set_ratf_solfunc(ratparams *rat, csrMat *A, linSolFunc *funcs, void **data);
+int set_ratf_solfunc(ratparams *rat, csrMat *A, csrMat *B, linSolFunc *funcs, 
+                     void **data);
 //
 void free_rat(ratparams *rat);
 
@@ -67,7 +68,7 @@ void free_csr(csrMat *csr);
 // free a COO
 void free_coo(cooMat *coo);
 // matvec y = A*x
-int matvec_csr(csrMat *A, double *x, double *y);
+int matvec_csr(char trans, csrMat *A, double *x, double *y);
 
 /*- - - - - - - - - evsl.c */
 /* set an external matvec function */

@@ -208,7 +208,7 @@ int main () {
       //-------------Now determine rational filter
       find_ratf(intv, &rat);    
       // use the default solver function from UMFPACK
-      set_ratf_solfunc(&rat, &Acsr, NULL, NULL);
+      set_ratf_solfunc(&rat, &Acsr, NULL, NULL, NULL);
       //-------------------- RationalLanTr
       ierr = RatLanTr(&Acsr, mlan, nev, intv, &rat, max_its, tol, vinit, &nevOut, &lam, 
                       &Y, &res, fstats);

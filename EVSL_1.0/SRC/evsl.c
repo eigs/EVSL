@@ -17,7 +17,7 @@ void EVSLStart() {
   evsldata.LB_solv = NULL;
   evsldata.LBT_solv = NULL;
   evsldata.LB_func_data = NULL;
-  evsldata.matvec_gen_work = NULL;
+  evsldata.LB_func_work = NULL;
 }
 
 void EVSLFinish() {
@@ -25,8 +25,8 @@ void EVSLFinish() {
     free_default_LBdata();
     free(evsldata.LB_func_data);
   }
-  if (evsldata.matvec_gen_work) {
-    free(evsldata.matvec_gen_work);
+  if (evsldata.LB_func_work) {
+    free(evsldata.LB_func_work);
   }
 }
 
@@ -49,7 +49,7 @@ int SetRhsMatrix(csrMat *B) {
   evsldata.hasB = 1;
   evsldata.isDefaultLB = 1;
   /* alloc some workspace */
-  Malloc(evsldata.matvec_gen_work, 2*B->nrows, double);
+  Malloc(evsldata.LB_func_work, 2*B->nrows, double);
 #else
   printf("error: EVSL was not compiled with SuiteSparse, ");
   printf("so the current version cannot solve generalized e.v. problem\n");
@@ -72,9 +72,9 @@ void UnsetRhsMatrix() {
   evsldata.LB_solv = NULL;
   evsldata.LBT_solv = NULL;
   evsldata.LB_func_data = NULL;
-  if (evsldata.matvec_gen_work) {
-    free(evsldata.matvec_gen_work);
-    evsldata.matvec_gen_work = NULL;
+  if (evsldata.LB_func_work) {
+    free(evsldata.LB_func_work);
+    evsldata.LB_func_work = NULL;
   }
 }
 
@@ -86,7 +86,7 @@ int matvec_genev(csrMat *A, double *x, double *y) {
     return 0;
   }
   /* for gen e.v, y = L \ A / L' *x */
-  double *w = evsldata.matvec_gen_work;
+  double *w = evsldata.LB_func_work;
   evsldata.LBT_solv(x, y, evsldata.LB_func_data);
   matvec_A(A, y, w);
   evsldata.LB_solv(w, y, evsldata.LB_func_data);

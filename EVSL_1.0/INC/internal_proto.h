@@ -79,6 +79,7 @@ int tri_sol_upper(char trans, csrMat *R, double *b, double *x);
 
 /*- - - - - - - - - suitesparse.c */
 int set_ratf_solfunc_default(csrMat *A, ratparams *rat);
+int set_ratf_solfunc_gen_default(csrMat *A, csrMat *B, ratparams *rat);
 void free_rat_default_sol(ratparams *rat);
 int set_default_LBdata(csrMat *B);
 void free_default_LBdata();

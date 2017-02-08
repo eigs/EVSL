@@ -29,18 +29,21 @@ int main(int argc, char *argv[]) {
     Mdeg = pol. degree used for DOS
     nvec  = number of sample vectors used for DOS
     This uses:
-    Thick-restart Lanczos with polynomial filtering
+    Non-restart Lanczos with rational filtering
     ------------------------------------------------------------*/
   int n, nx, ny, nz, i, j, npts, nslices, nvec, Mdeg, nev, 
-      mlan, max_its, ev_int, sl, flg, ierr;
+      max_its, ev_int, sl, flg, ierr;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
   /* initial vector: random */
   double *vinit;
-  polparams pol;
+  /* parameters for rational filter */
+  int num = 1; // number of poles used for each slice
+  int pow = 2; // multiplicity of each pole
+  double beta = 0.01; // beta in the LS approximation
   FILE *fstats = NULL;
-  if (!(fstats = fopen("OUT/LapPLanR_Gen.out","w"))) {
+  if (!(fstats = fopen("OUT/LapRLanN_Gen.out","w"))) {
     printf(" failed in opening output file in OUT/\n");
     fstats = stdout;
   }
@@ -133,7 +136,7 @@ int main(int argc, char *argv[]) {
   }
   //-------------------- # eigs per slice
   ev_int = (int) (1 + ecount / ((double) nslices));
-  //-------------------- For each slice call ChebLanr
+  //-------------------- For each slice call RatLanrNr
   for (sl=0; sl<nslices; sl++) {
     printf("======================================================\n");
     int nev2;
@@ -143,36 +146,32 @@ int main(int argc, char *argv[]) {
     a = sli[sl];
     b = sli[sl+1];
     printf(" subinterval: [%.4e , %.4e]\n", a, b); 
+    double intv[4];
+    intv[0] = a;
+    intv[1] = b;
+    intv[2] = lmin;
+    intv[3] = lmax;
+    // find the rational filter on this slice
+    ratparams rat;
+    // setup default parameters for rat
+    set_ratf_def(&rat);
+    // change some default parameters here:
+    rat.pw = pow;
+    rat.num = num;
+    rat.beta = beta;
+    // now determine rational filter
+    find_ratf(intv, &rat);
+    // use the default solver function from UMFPACK
+    set_ratf_solfunc(&rat, &Acsr, &Bcsr, NULL, NULL);
     //-------------------- approximate number of eigenvalues wanted
     nev = ev_int+2;
-    //-------------------- Dimension of Krylov subspace 
-    mlan = max(4*nev, 100);
-    mlan = min(mlan, n);
-    max_its = 3*mlan;
-    //-------------------- ChebLanTr
-    xintv[0] = a;     xintv[1] = b;
-    xintv[2] = lmin;  xintv[3] = lmax;
-    //-------------------- set up default parameters for pol.      
-    set_pol_def(&pol);
-    //-------------------- this is to show how you can reset some of the
-    //                     parameters to determine the filter polynomial
-    pol.damping = 0;
-    //-------------------- use a stricter requirement for polynomial
-    pol.thresh_int = 0.25;
-    pol.thresh_ext = 0.15;
-    pol.max_deg  = 300;
-    // pol.deg = 20 //<< this will force this exact degree . not recommended
-    //                   it is better to change the values of the thresholds
-    //                   pol.thresh_ext and plot.thresh_int
-    //-------------------- Now determine polymomial to use
-    find_pol(xintv, &pol);       
-
-    fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
-    //-------------------- then call ChenLanNr
-    ierr = ChebLanTr(&Acsr, mlan, nev, xintv, max_its, tol, vinit,
-                     &pol, &nev2, &lam, &Y, &res, fstats);
+    //-------------------- maximal Lanczos iterations   
+    max_its = max(4*nev,100);  max_its = min(max_its, n);
+    //-------------------- RationalLanNr
+    ierr = RatLanNr(&Acsr, intv, &rat, max_its, tol, vinit, &nev2, &lam, 
+                    &Y, &res, fstats);
     if (ierr) {
-      printf("ChebLanTr error %d\n", ierr);
+      printf("RatLanNr error %d\n", ierr);
       return 1;
     }
 
@@ -210,7 +209,7 @@ int main(int argc, char *argv[]) {
     if (lam) free(lam);
     if (Y) free(Y);
     if (res) free(res);
-    free_pol(&pol);
+    free_rat(&rat);
     free(ind);
   } //for (sl=0; sl<nslices; sl++)
   //-------------------- free other allocated space 

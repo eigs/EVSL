@@ -148,7 +148,7 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
   int  len, jj=nrow;
   if (trans == 'N') {  
     //#pragma omp parallel for schedule(guided)
-    double r ;
+    double r;
     /*for (i=0; i<nrow; i++) {
       r = 0.0;
       for (j=ia[i]; j<ia[i+1]; j++) {
@@ -166,7 +166,8 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
       *y++ = r;
     }
   } else {
-    double xi; int jj, len;
+    double xi; 
+    int jj, len;
     jj = nrow;
     //-------------------- this is from the matvec used in FILTLAN
     //                     column oriented - gains up to 15% in time 
@@ -185,10 +186,10 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
   }
 }
 /*
-* @brief matvec for CSR matrix, y = A * x
+* @brief matvec for CSR matrix, y = A * x or y = A' * x
 */
-int matvec_csr(csrMat *A, double *x, double *y) {
-  dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
+int matvec_csr(char trans, csrMat *A, double *x, double *y) {
+  dcsrmv(trans, A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
   return 0;
 }
 
@@ -260,9 +261,11 @@ int tri_sol_upper(char trans, csrMat *R, double *b, double *x) {
   return 0;
 }
 
-/* C = alp * A + bet * B */
-int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C) {
-  int *iw, nnzA, nnzB, nnzC, i, j;
+/* C = alp * A + bet * B 
+ * Note: Assume that A and B are sorted */
+int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
+           int *mapA, int *mapB) {
+  int nnzA, nnzB, i, j, k;
 
   /* check dimension */
   if (A->nrows != B->nrows || A->ncols != B->ncols) {
@@ -273,43 +276,53 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C) {
   nnzB = B->ia[B->nrows];
   /* alloc C [at most has nnz = nnzA + nnzB] */
   csr_resize(A->nrows, A->ncols, nnzA+nnzB, C);
-  /* marker array */
-  Malloc(iw, A->ncols, int);
-  for (i=0; i<A->ncols; i++) {
-    iw[i] = -1;
-  }
-  // main loop
-  nnzC = 0;
-  for (i=0; i<A->nrows; i++) {
-    /* row i of A */
-    for (j=A->ia[i]; j<A->ia[i+1]; j++) {
-      int col = A->ja[j];
-      C->ja[nnzC] = col;
-      C->a[nnzC] = alp * A->a[j];
-      iw[col] = nnzC++;
-    }
-    /* row i of B */
-    for (j=B->ia[i]; j<B->ia[i+1]; j++) {
-      int col = B->ja[j];
-      int pos = iw[col];
-      if (-1 == pos) {
-        C->ja[nnzC] = col;
-        C->a[nnzC] = bet * B->a[j];
-        iw[col] = nnzC++;
+
+  k = 0; /* nnz counter of C */
+  C->ia[0] = 0;
+  for (i=0; i<nrow; i++) {
+    /* open row i of A and B */
+    for (jA=A->ia[i],jB=B->ia[i]; ; ) {
+      if (jA < A->ia[i+1] && jB < B->ia[i+1]) {
+        /* will insert an element */
+        if (A->ja[jA] <= B->ja[jB]) {
+          /* insert jA */
+          if (k > Cp[i] && Ci[k-1] == A->ja[jA]) {
+            Cx[k-1] = A->a[jA];
+            Cz[k-1] = 0.0;
+          } else {
+            Ci[k] = A->ja[jA];
+            Cx[k] = A->a[jA];
+            Cz[k] = 0.0;
+            k++;
+          }
+          jA ++;
+        } else {
+          /* instert jB */
+          map[jB] = k;
+          if (k == Cp[i] || Ci[k-1] != B->ja[jA]) {
+            Ci[k] = B->ja[jA];
+            Cx[k] = 0.0;
+            Cz[k] = 0.0;
+            k++;
+          }
+          jB ++;
+        }
+      } else if (jA == A->ia[i+1]) {
+        for (; jB < B->ia[i+1]; jB++) {
+        }
+        break;
       } else {
-        CHKERR(C->ja[pos] != col);
-        C->a[pos] += bet * B->a[j];
+        for (; jA < A->ia[i+1]; jA++) {
+        }
+        break;
       }
     }
-    C->ia[i+1] = nnzC;
-    // reset iw
-    for (j=C->ia[i]; j<C->ia[i+1]; j++) {
-      iw[C->ja[j]] = -1;
-    }
-  }
+
+
+  
+
   Realloc(C->ja, nnzC, int);
   Realloc(C->a, nnzC, double);
   free(iw);
   return 0;
 }
-

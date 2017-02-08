@@ -22,9 +22,124 @@ void umfpack_solvefunc(int n, double *br, double *bz, double *xr, double *xz,
   void* Numeric = data;
   double Control[UMFPACK_CONTROL]; 
   umfpack_zl_defaults(Control);
-  Control[UMFPACK_IRSTEP] = 0; // no iterative refinement for umfpack 
+  Control[UMFPACK_IRSTEP] = 0; // no iterative refinement for umfpack
   umfpack_zl_solve(UMFPACK_A, NULL, NULL, NULL, NULL, xr, xz, br, bz, 
-                   Numeric, Control, NULL); 
+                   Numeric, Control, NULL);
+}
+
+int set_ratf_solfunc_gen_default(csrMat *A, csrMat *B, ratparams *rat) {
+  int i, j, jA, jB, k, nrow, ncol, nnzA, nnzB, nnzC_max, *iw, *map, status;
+  /* UMFPACK matrix for the shifted matrix 
+   * C = A - s * B */
+  SuiteSparse_long *Cp, *Ci, lj;
+  double *Cx, *Cz;
+  void *Symbolic=NULL, *Numeric=NULL;
+  
+  nrow = A->nrows;
+  ncol = A->ncols;
+  nnzA = A->ia[nrow];
+  nnzB = B->ia[nrow];
+  /* C at most has nnzA+nnzB nonzeros */
+  nnzC_max = nnzA + nnzB;
+  Malloc(Cp, nrow+1, SuiteSparse_long);
+  Malloc(Ci, nnzC_max, SuiteSparse_long);
+  Malloc(Cx, nnzC_max, double);
+  Malloc(Cz, nnzC_max, double);
+  /* map from nnz in B to nnz in C */
+  Malloc(map, nnzB, int);
+  /* marker array */
+  Malloc(iw, ncol, int);
+  for (i=0; i<ncol; i++) {
+    iw[i] = -1;
+  }
+  /* C = A + Pattern(B) 
+   * NOTE: C must be sorted */
+
+      Ci[k] = c;
+      Cx[k] = A->a[j];
+      Cz[k] = 0.0;
+      iw[c] = k++;
+
+      int p = iw[c];
+      if (-1 == p) {
+        /* new entry */
+        Ci[k] = c;
+        Cx[k] = 0.0;
+        Cz[k] = 0.0;
+        /* location of nz j of B in C */
+        map[j] = iw[c] = k++;
+      } else {
+        /* existing entry */
+        CHKERR(Ci[p] != c);
+        map[j] = p;
+      }
+    }
+    /* row pointer */
+    Cp[i+1] = k;
+    /* reset iw */
+    for (lj=Cp[i]; lj<Cp[i+1]; lj++) {
+      iw[Ci[lj]] = -1;
+    }
+  }
+
+  free(iw);
+
+  /* for each pole we shift with B and factorize */
+  for (i=0; i<rat->num; i++) {
+    /* the complex shift for pole i */
+    double zkr = creal(rat->zk[i]);
+    double zkc = cimag(rat->zk[i]);
+    // shift B
+    for (j=0; j<nnzB; j++) {
+      int p = map[j];
+      double v = B->a[j];
+      CHKERR(Ci[p] != B->ja[j]);
+      Cx[p] -= zkr * v;
+      Cz[p] = -zkc * v;
+    }
+
+    /* only do symbolic factorization once */
+    if (i==0) {
+      /* Symbolic Factorization */
+      status = umfpack_zl_symbolic(nrow, ncol, Cp, Ci, Cx, Cz, &Symbolic, 
+                                   NULL, NULL);
+      if (status < 0) {
+        printf("umfpack_zl_symbolic failed, %d\n", status);
+        return 1;
+      }
+    }
+    /* Numerical Factorization */
+    status = umfpack_zl_numeric(Cp, Ci, Cx, Cz, Symbolic, &Numeric, NULL, NULL);
+    if (status < 0) {
+      printf("umfpack_zl_numeric failed and exit, %d\n", status);
+      return 1;
+    }
+
+    /* set solver pointer and data */
+    rat->solshift[i] = umfpack_solvefunc;
+    rat->solshiftdata[i] = Numeric;
+
+    /* shift B back */
+    for (j=0; j<nnzB; j++) {
+      int p = map[j];
+      double v = B->a[j];
+      Cx[p] += zkr * v;
+      //Cz[p] = 0.0;
+    }
+  } /* for (i=...)*/
+  
+  /* free the symbolic fact */
+  if (Symbolic) {
+    umfpack_zl_free_symbolic(&Symbolic);
+  }
+
+  free(map);
+  free(Cp);
+  free(Ci);
+  free(Cx);
+  free(Cz);
+
+  return 0;
 }
 
 /* set default solver */
@@ -198,7 +313,6 @@ void default_Lsol_combine(int soltype, double *b, double *x, void *data) {
   double *w = LBdata->work;
   n = R->nrows;
 
-  /* solve with L */
   if (1 == soltype) {
     /* w = L' \ b */
     tri_sol_upper('N', R, b, w);
@@ -218,6 +332,39 @@ void default_LSol(double *x, double *y, void *data) {
 
 void default_LTSol(double *x, double *y, void *data) {
   default_Lsol_combine(1, x, y, data);
+}
+
+/*
+ * soltype = 1 : x = L' * P * b
+ *         = 2 : x = P' * L * b
+ */ 
+void default_Lmult_combine(int soltype, double *b, double *x, void *data) {
+  int n;
+  default_LBdata *LBdata = (default_LBdata *) data;
+  csrMat *R = &LBdata->R;
+  int *p = LBdata->perm;
+  double *w = LBdata->work;
+  n = R->nrows;
+
+  if (1 == soltype) {
+    /* w = P * b */
+    vec_perm(n, p, b, w);
+    /* x = L' * w */
+    matvec_csr('N', R, w, x);
+  } else if (2 == soltype) {
+    /* w = L * b */
+    matvec_csr('T', R, b, w);
+    /* x = P' * w */
+    vec_iperm(n, p, w, x);
+  }
+}
+
+void default_LMult(double *x, double *y, void *data) {
+  default_Lmult_combine(2, x, y, data);
+}
+
+void default_LTMult(double *x, double *y, void *data) {
+  default_Lmult_combine(1, x, y, data);
 }
 
 int set_default_LBdata(csrMat *B) {
@@ -294,6 +441,8 @@ int set_default_LBdata(csrMat *B) {
   evsldata.LB_func_data = (void *) LBdata;
   evsldata.LB_solv = default_LSol;
   evsldata.LBT_solv = default_LTSol;
+  evsldata.LB_mult = default_LMult;
+  evsldata.LBT_mult = default_LTMult;
   /* free the matrix wrapper */
   free(Bcholmod);
   /* free the factor */

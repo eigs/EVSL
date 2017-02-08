@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
     // now determine rational filter
     find_ratf(intv, &rat);
     // use the default solver function from UMFPACK
-    set_ratf_solfunc(&rat, &Acsr, NULL, NULL);
+    set_ratf_solfunc(&rat, &Acsr, NULL, NULL, NULL);
     //-------------------- approximate number of eigenvalues wanted
     nev = ev_int+2;
     //-------------------- maximal Lanczos iterations   

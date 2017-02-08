@@ -29,12 +29,13 @@ OBJS_RR  = LapRLanR.o io.o lapl.o
 OBJS_PSI = LapPSI.o io.o lapl.o
 OBJS_PN_MatFree = LapPLanN_MatFree.o io.o lapl.o
 OBJS_PR_GEN = LapPLanR_Gen.o io.o lapl.o
+OBJS_RN_GEN = LapRLanN_Gen.o io.o lapl.o
 
 LIB = -L../ -llancheb 
 
 ALLEXE = LapPLanR.ex LapPLanN.ex LapPSI.ex LapPLanN_MatFree.ex
 ifneq ($(SUITESPARSE_DIR),)
-ALLEXE += LapRLanR.ex LapRLanN.ex LapPLanR_Gen.ex
+ALLEXE += LapRLanR.ex LapRLanN.ex LapPLanR_Gen.ex LapRLanN_Gen.ex
 endif
 
 ifneq ($(SUITESPARSE_DIR),)
@@ -50,28 +51,31 @@ default: LapPLanN.ex
 
 # Exe
 ## polynomial
-LapPLanR.ex: $(OBJS_PR) 
+LapPLanR.ex: $(OBJS_PR)
 	$(LINK) -o LapPLanR.ex $(OBJS_PR) $(LIB) $(LIB_EXT) 	
 
-LapPLanN.ex: $(OBJS_PN) 
+LapPLanN.ex: $(OBJS_PN)
 	$(LINK) -o LapPLanN.ex $(OBJS_PN) $(LIB) $(LIB_EXT)
 
-LapPSI.ex: $(OBJS_PSI) 
+LapPSI.ex: $(OBJS_PSI)
 	$(LINK) -o LapPSI.ex $(OBJS_PSI) $(LIB) $(LIB_EXT)
 
 LapPLanN_MatFree.ex: $(OBJS_PN_MatFree)
 	$(LINK) -o LapPLanN_MatFree.ex $(OBJS_PN_MatFree) $(LIB) $(LIB_EXT)
 
 ## rational
-LapRLanR.ex: $(OBJS_RR) 
+LapRLanR.ex: $(OBJS_RR)
 	$(LINK) -o LapRLanR.ex $(OBJS_RR) $(LIB) $(LIB_EXT)
 
-LapRLanN.ex: $(OBJS_RN) 
+LapRLanN.ex: $(OBJS_RN)
 	$(LINK) -o LapRLanN.ex $(OBJS_RN) $(LIB) $(LIB_EXT)
 
-## generalized
-LapPLanR_Gen.ex: $(OBJS_PR_GEN) 
+## generalized e.v 
+LapPLanR_Gen.ex: $(OBJS_PR_GEN)
 	$(LINK) -o LapPLanR_Gen.ex $(OBJS_PR_GEN) $(LIB) $(LIB_EXT)
+
+LapRLanN_Gen.ex: $(OBJS_RN_GEN)
+	$(LINK) -o LapRLanN_Gen.ex $(OBJS_RN_GEN) $(LIB) $(LIB_EXT)
 
 all: $(ALLEXE)
 
