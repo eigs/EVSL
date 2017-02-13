@@ -68,7 +68,9 @@ int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
     /*  (ANSI C X3.159-1989, Sec. 4.9.6.2, p. 136 lines 13-15)            */
  
     for (i=0; i<nz; i++)   {
-        fscanf(f, "%d %d %lg\n", &I[i], &J[i], &val[i]);
+        if (3 != fscanf(f, "%d %d %lg\n", &I[i], &J[i], &val[i])) {
+          printf("warning: fscanf may not be successfully done\n");
+        }
         I[i]--;  /* adjust from 1-based to 0-based */
         J[i]--;
     }

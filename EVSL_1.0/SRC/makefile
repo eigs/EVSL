@@ -19,6 +19,7 @@ OBJS = 	vect.o cheblanTr.o cheblanNr.o ratlanTr.o ratlanNr.o ratfilter.o \
 ifneq ($(SUITESPARSE_DIR),)
   OBJS += suitesparse.o
   INCLUDES += $(INC_UMF)
+  FLAGS += -DEVSL_WITH_SUITESPARSE
 endif
 
 ### OBJ_TIME = defined in makefile.in 
@@ -32,6 +33,7 @@ default: $(LIB)
 
 %.o : %.c
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
+
 $(LIB): $(OBJS) $(OBJ_TIME) 
 	$(AR) $@ $(OBJS) $(OBJ_TIME)
 	$(RANLIB) $@

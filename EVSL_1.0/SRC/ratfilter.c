@@ -419,14 +419,20 @@ int find_ratf(double *intv, ratparams *rat) {
 }
 
 int set_ratf_solfunc(ratparams *rat, csrMat *A, linSolFunc *funcs, void **data) {
-  int i;
+  int i,err;
   /* (re)allocate enough space (number of poles) */
   Realloc(rat->solshift, rat->num, linSolFunc);
   Realloc(rat->solshiftdata, rat->num, void *);
   /* if funcs are not provided, use the default sovler: UMFPACK */
   if (funcs == NULL) {
+#ifdef EVSL_WITH_SUITESPARSE
     rat->use_default_solver = 1;
-    int err = set_ratf_solfunc_default(A, rat);
+    err = set_ratf_solfunc_default(A, rat);
+#else
+    printf("error: EVSL was not compiled with the default solver, ");
+    printf("so the users must provide solvers\n");
+    err = -1;
+#endif
     return err;
   }
   /* if funcs are provided, copy the function pointers and data */
@@ -443,7 +449,9 @@ void free_rat(ratparams *rat) {
   free(rat->omega);
   free(rat->zk);
   free(rat->solshift);
+#ifdef EVSL_WITH_SUITESPARSE
   free_rat_default_sol(rat);
+#endif
   free(rat->solshiftdata);
 }
 

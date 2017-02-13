@@ -36,3 +36,6 @@
 # Vi swp files
 *.swp
 *.swo
+
+# Output files
+*.out

@@ -25,7 +25,9 @@ int get_matrix_info( FILE *fmat, io_t *pio ){
   int count, n_intv;
   double a, b;
   /*-------------------- READ LINE */
-  fscanf(fmat,"%s %s %s %s %s %s\n",path,MatNam,Fmt, ca, cb, cn_intv); 
+  if (6 != fscanf(fmat,"%s %s %s %s %s %s\n",path,MatNam,Fmt, ca, cb, cn_intv)) {
+    printf("warning: fscanf may not be successfully done\n");
+  }
   /*-------------------- file pathname */
   count = strlen(path);
   memset(pio->Fname,0,MAX_LINE*sizeof(char));

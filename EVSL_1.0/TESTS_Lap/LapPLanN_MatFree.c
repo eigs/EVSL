@@ -8,6 +8,8 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv);
+int lapgen(int nx, int ny, int nz, cooMat *Acoo);
+int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
 /* Example for matrix-free solvers: 2D/3D (constant coefficient) Laplacian matrices
  * The matrix is not formed, so we give NULL to the solver
  * We provide a matvec routine, which only needs the stencil and grid sizes 
@@ -79,7 +81,7 @@ int main(int argc, char *argv[]) {
   lapmv.nx = nx;  lapmv.ny = ny;  lapmv.nz = nz;  lapmv.stencil = stencil;
   //-------------------- eigenvalue bounds set by hand.
   lmin = 0.0;  
-  lmax =  ((nz == 1)? 8.0 : 12.0);
+  lmax = nz == 1 ? 8.0 : 12.0;
   xintv[0] = a;
   xintv[1] = b;
   xintv[2] = lmin;

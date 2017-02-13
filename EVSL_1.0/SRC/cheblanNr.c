@@ -251,7 +251,7 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
     u = &W[nev*n];  
     DGEMV(&cN, &n, &kdim, &done, V, &n, y, &one, &dzero, u, &one);
     /*--------------------   w = A*u        */
-    matvec(A, u, wk);
+    matvec_genev(A, u, wk);
     nmv ++;
     /*--------------------   Ritzval: t = (y'*w)/(y'*y) */
     t1 = DDOT(&n, u, &one, u, &one);  // should be one
@@ -271,6 +271,15 @@ int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
     res[nev] = res0;
     nev++;
   }
+
+  /* for generalized eigenvalue problem: L' \ W */
+  if (evsldata.hasB) {
+    for (i=0; i<nev; i++) {
+      evsldata.LBT_solv(W+i*n, wk, evsldata.LB_func_data);
+      DCOPY(&n, wk, &one, W+i*n, &one);
+    }
+  }
+
   /*-------------------- Done.  output : */
   *nevOut = nev;
   *lamo = Lam;
