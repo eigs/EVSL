@@ -42,9 +42,9 @@ int main(int argc, char *argv[]) {
   cooMat Acoo;
   csrMat Acsr;
   /*-------------------- default values */
-  nx   = 15;
+  nx   = 16;
   ny   = 16;
-  nz   = 13;
+  nz   = 20;
   a    = 0.4;
   b    = 0.8;
   nslices = 4;
@@ -86,12 +86,16 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
   /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
   /*-------------------- define kpmdos parameters */
-  Mdeg = 40;
-  nvec = 100;
-  mu = malloc((Mdeg+1)*sizeof(double));
-  //-------------------- call kpmdos 
+  Mdeg = 300;
+  nvec = 60;
+  /*-------------------- start EVSL */
+  EVSLStart();
+  /*-------------------- set the left-hand side matrix A */
+  SetAMatrix(&Acsr);
+  /*-------------------- call kpmdos */
+  mu = (double *) malloc((Mdeg+1)*sizeof(double));
   double t = cheblan_timer();
-  ierr = kpmdos(&Acsr, Mdeg, 1, nvec, xintv, mu, &ecount);
+  ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
   t = cheblan_timer() - t;
   if (ierr) {
     printf("kpmdos error %d\n", ierr);
@@ -103,7 +107,8 @@ int main(int argc, char *argv[]) {
   npts = 10 * ecount; 
   sli = malloc((nslices+1)*sizeof(double));
 
-  fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",Mdeg, nvec, npts);
+  fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",
+          Mdeg, nvec, npts);
   ierr = spslicer(sli, mu, Mdeg, xintv, nslices,  npts);
   if (ierr) {
     printf("spslicer error %d\n", ierr);
@@ -146,7 +151,7 @@ int main(int argc, char *argv[]) {
     //                     parameters to determine the filter polynomial
     pol.damping = 0;
     //-------------------- use a stricter requirement for polynomial
-    pol.thresh_int = 0.25;
+    pol.thresh_int = 0.5;
     pol.thresh_ext = 0.15;
     pol.max_deg  = 300;
     // pol.deg = 20 //<< this will force this exact degree . not recommended
@@ -157,7 +162,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
     //-------------------- then call ChenLanNr
-    ierr = ChebLanNr(&Acsr, xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res, fstats);
+    ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebLanNr error %d\n", ierr);
       return 1;
@@ -212,7 +217,8 @@ int main(int argc, char *argv[]) {
   free_csr(&Acsr);
   free(mu);
   fclose(fstats);
-
+  /*-------------------- finalize EVSL */
+  EVSLFinish();
   return 0;
 }
 

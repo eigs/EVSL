@@ -1,8 +1,5 @@
-These  drivers  are for  testing  a  few methods  on  simple
-Laplacean matrices.   For better  clarity we  have separated
-the  makefiles  in  two:  makefileP  (to  make  the  drivers
-invoking Polynomial  filtering) and  makefileR (to  make the
-drivers invoking Rational filtering).
+These  drivers  are for testing a few methods on simple
+Laplacean matrices.   
 
 LapPLanR.c : 
     driver for testing spectrum slicing -- with 

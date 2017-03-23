@@ -13,8 +13,6 @@
  * @brief This function  computes the  coefficients of the  density of
  * states  in  the  chebyshev   basis.   It  also  returns  the
  * estimated number of eigenvalues in the interval given by intv.
- 
- * @param *A    input matrix
  * @param Mdeg     degree of polynomial to be used. 
  * @param damping  type of damping to be used [0=none,1=jackson,2=sigma]
  * @param nvec     number of random vectors to use for sampling
@@ -27,18 +25,25 @@
  * @param[out] ecnt estimated num of eigenvalues in the interval of interest
  *
  *----------------------------------------------------------------------*/
-int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
+int kpmdos(int Mdeg, int damping, int nvec, double *intv,
     double *mu, double *ecnt) {
   /*-------------------- initialize variables */
   int n;
-  if (evsldata.Amatvec.func) {
-    n = evsldata.Amatvec.n;
+  csrMat *A;
+  if (evsldata.Amv) {
+    n = evsldata.Amv->n;
   } else {
+    A = evsldata.A;
     n = A->nrows;
   }
-  double *vkp1, *w, *vkm1, *vk, *jac;
+  double *vkp1, *v, *vkm1, *vk, *jac;
+  double *w = NULL;
+  /*-------------------- workspace for generalized eigenvalue prob */
+  if (evsldata.ifGenEv) {
+    Malloc(w, n, double);
+  }
   Malloc(vkp1, n, double);
-  Malloc(w, n, double);
+  Malloc(v, n, double);
   Malloc(vkm1, n, double);
   Malloc(vk, n, double);
   Malloc(jac, Mdeg+1, double);
@@ -64,31 +69,53 @@ int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
   beta2 = acos(t);
   /*-------------------- compute damping coefs. */
   dampcf(Mdeg, damping, jac);
-  //-------------------- readjust jac[0] it was divided by 2
+  /*-------------------- readjust jac[0] it was divided by 2 */
   jac[0] = 1.0;
   memset(mu,0,(Mdeg+1)*sizeof(double));
-  //-------------------- seed the random generator 
+  /*-------------------- seed the random generator */
   i = time_seeder();
   srand(i);
   tcnt = 0.0;
   /*-------------------- for random loop */
-  for (m=0; m<nvec; m++){
-    rand_double(n, w);
-    t = 1.0 / DNRM2(&n, w, &one);
-    DSCAL(&n, &t, w, &one);
+  for (m=0; m<nvec; m++) {
+    if (evsldata.ifGenEv) {
+      /* unit 2-norm v */
+      rand_double(n, v);
+      t = 1.0 / DNRM2(&n, v, &one);
+      DSCAL(&n, &t, v, &one);  
+      /*  w = L^{-T}v */
+      evsldata.LTsol->func(v, w, evsldata.Bsol->data);
+      /* v = B*w */
+      matvec_B(w, v);
+      t = DDOT(&n, v, &one, w, &one);
+      memcpy(vk, w, n*sizeof(double));
+    } else {
+      /* unit 2-norm */
+      rand_double(n, v);
+      t = 1.0 / DNRM2(&n, v, &one);
+      DSCAL(&n, &t, v, &one);
+      memcpy(vk, v, n*sizeof(double));
+    }
+    
     memset(vkm1, 0, n*sizeof(double));
-    memcpy(vk, w, n*sizeof(double));
     mu[0] += jac[0];
     //-------------------- for eigCount
     tcnt -= jac[0]*(beta2-beta1);  
     /*-------------------- Chebyshev (degree) loop */
     for (k=0; k<Mdeg; k++){
       /*-------------------- Cheb. recurrence */
-      matvec_genev(A, vk, vkp1);
+      if (evsldata.ifGenEv) {
+        /* v_{k+1} := B \ A * v_k (partial result) */
+        matvec_A(vk, w);
+        evsldata.Bsol->func(w, vkp1, evsldata.Bsol->data);
+      } else {
+        matvec_A(vk, vkp1);
+      }
       scal = k==0 ? 1.0 : 2.0;
       scal /= wid;
-      for (i=0; i<n; i++)
-        vkp1[i] = scal*(vkp1[i]-ctr*vk[i]) -vkm1[i];
+      for (i=0; i<n; i++) {
+        vkp1[i] = scal*(vkp1[i]-ctr*vk[i]) - vkm1[i];
+      }
       //-------------------- rotate pointers to exchange vectors
       tmp = vkm1;
       vkm1 = vk;
@@ -96,7 +123,7 @@ int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
       vkp1 = tmp;
       /*-------------------- accumulate dot products for DOS expansion */
       k1 = k+1;
-      t = 2*jac[k1]*DDOT(&n, vk, &one, w, &one);
+      t = 2*jac[k1] * DDOT(&n, vk, &one, v, &one);
       mu[k1] += t;
       /*-------------------- for eig. counts */
       tcnt -= t*(sin(k1*beta2)-sin(k1*beta1))/k1;  
@@ -110,10 +137,14 @@ int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *intv,
   *ecnt = tcnt;
   /*-------------------- free memory  */
   free(vkp1);
-  free(w);
+  free(v);
   free(vkm1);
   free(vk);
   free(jac);
+  if (evsldata.ifGenEv) {
+    free(w);
+  }
+
   return 0;
 }
 
@@ -169,7 +200,7 @@ void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) {
  *
  *----------------------------------------------------------------------*/
 int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts) {
-  int ls, ii;
+  int ls, ii, err=0;
   double  ctr, wid, aL, bL, target, aa, bb;
 
   if (check_intv(intv, stdout) < 0) {
@@ -206,7 +237,7 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npt
   linspace(aL, bL, npts, xi);
   //printf(" aL %15.3e bL %15.3e \n",aL,bL);
   //-------------------- get all integrals at the xi's 
-  //-------------------- exact integrals  used.
+  //-------------------- exact integrals used.
   intChx(Mdeg, mu, npts, xi, yi) ; 
   //-------------------- goal: equal share of integral per slice
   target = yi[npts-1] / (double)n_int;
@@ -234,20 +265,27 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npt
 
   // use the unadjust left boundary
   sli[n_int] = intv[1];
-  /*-------------------- free arrays */
-  free(xi);
-  free(yi);
 
   //-------------------- check errors
   if (ls != n_int) {
-    return 1;
+    err = 1;
   }
   for (ii=1; ii<=n_int; ii++) {
     if (sli[ii] <= sli[ii-1]) {
-      return 2;
+      err += 2;
+      break;
     }
   }
-  return 0;
+
+  if (err) {
+    save_vec(npts, xi, "OUT/xi.out");
+    save_vec(npts, yi, "OUT/yi.out");
+  }
+
+  /*-------------------- free arrays */
+  free(xi);
+  free(yi);
+  return err;
 }
 
 

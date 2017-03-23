@@ -10,11 +10,6 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define TRIV_SLICER 0
 
-/*-------------------- Protos */
-int read_coo_MM(const char *matfile, int idxin, int idxout,   cooMat *Acoo); 
-int get_matrix_info( FILE *fmat, io_t *pio );
-/*-------------------- End Protos */
-
 int main () { 
   int ierr = 0;
   /*--------------------------------------------------------------
@@ -53,8 +48,10 @@ int main () {
   double *vinit;
   tol = 1e-8;
   //-------------------- slicer parameters
-  Mdeg = 100;
-  nvec = 100;
+  Mdeg = 300;
+  nvec = 60;
+  /*-------------------- start EVSL */
+  EVSLStart();
   //-------------------- interior eigensolver parameters  
   double *mu = malloc((Mdeg+1)*sizeof(double));
   int *counts; 
@@ -87,7 +84,7 @@ int main () {
     n_intv = io.n_intv;
     /*-------------------- path to write the output files*/
     char path[1024];
-    strcpy( path, "OUT/GenPLanR_OMP_");
+    strcpy( path, "OUT/MMPLanR_OMP_");
     strcat( path, io.MatNam);
     fstats = fopen(path,"w"); // write all the output to the file io.MatNam
     if (!fstats) {
@@ -117,12 +114,14 @@ int main () {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
+    /*-------------------- set the left-hand side matrix A */
+    SetAMatrix(&Acsr);       
     /*-------------------- define ChebLanTr parameters */
     alleigs = (double *) malloc(n*sizeof(double)); 
     vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);
     /*-------------------- get lambda_min lambda_max estimates */
-    ierr = LanBounds(&Acsr, 60, vinit, &lmin, &lmax);
+    ierr = LanBounds(60, vinit, &lmin, &lmax);
     fprintf(fstats, "Step 0: Eigenvalue bounds for A: [%.15e, %.15e]\n", lmin, lmax);
     /*-------------------- define [a b] now so we can get estimates now    
                            on number of eigenvalues in [a b] from kpmdos */
@@ -135,7 +134,7 @@ int main () {
       linspace(a, b, n_intv+1,  sli);
     } else {
       double t = cheblan_timer();
-      ierr = kpmdos(&Acsr, Mdeg, 1, nvec, xintv, mu, &ecount);
+      ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
       t = cheblan_timer() - t;
       if (ierr) {
         printf("kpmdos error %d\n", ierr);
@@ -204,7 +203,7 @@ int main () {
 
       set_pol_def(&pol);
       find_pol(intv, &pol);
-      ierr = ChebLanTr(&Acsr, mlan, nev, intv, max_its, tol, vinit,
+      ierr = ChebLanTr(mlan, nev, intv, max_its, tol, vinit,
                        &pol, &nevOut, &lam, &Y, &res, NULL);
       if (ierr) {
         printf("ChebLanTr error %d\n", ierr);
@@ -284,5 +283,7 @@ int main () {
   free(mu);
   if( flog != stdout ) fclose ( flog );
   fclose( fmat );
+  /*-------------------- finalize EVSL */
+  EVSLFinish();
   return 0;
 }

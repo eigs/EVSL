@@ -12,7 +12,6 @@
 /**
  * @brief Chebyshev polynomial filtering Subspace Iteration
  *
- *   @param A           Matrix of size n x n
  *   @param nev         Estimate of number of eigenvalues in the interval --
  *           ideally nev == exact number or a little larger.
  *           ChebSI stops when  at least nev eigenvalues are              
@@ -36,7 +35,7 @@
  *   @warning Memory allocation for Yo/lamo/reso within this function
  */
 
-int ChebSI(csrMat *A, int nev, double *intv, int maxit, 
+int ChebSI(int nev, double *intv, int maxit, 
            double tol, double *vinit, polparams *pol, int *nevo, 
            double **lamo, double **Yo, double **reso, FILE *fstats) {
   /*-------------------- for stats */
@@ -48,10 +47,10 @@ int ChebSI(csrMat *A, int nev, double *intv, int maxit,
   /*-------------------   size of A */
   int n;
   /* if users provided their own matvec function, input matrix A will be ignored */
-  if (evsldata.Amatvec.func) {
-    n = evsldata.Amatvec.n;
+  if (evsldata.Amv) {
+    n = evsldata.Amv->n;
   } else {
-    n = A->nrows;
+    n = evsldata.A->nrows;
   }
   /*--------------------   some constants frequently used */
   char cT = 'T';
@@ -125,10 +124,8 @@ int ChebSI(csrMat *A, int nev, double *intv, int maxit,
 
   tm = cheblan_timer();
   for (icol = 0; icol<nev; icol++) {
-    ChebAv(A, pol, V+icol*n, PV+icol*n, work);
-  }
-
-  // polyfilt(A, deg, mu, dd, cc, V, nev, PV, work);           
+    ChebAv(pol, V+icol*n, PV+icol*n, work);
+  }     
   tmv += cheblan_timer() - tm;
   nmv += deg*nev;
 
@@ -146,19 +143,15 @@ int ChebSI(csrMat *A, int nev, double *intv, int maxit,
       DGEMM(&cN, &cN, &n, &nact, &nlock, &dmone, V, &n, T, &nev, &done, V+nnlock, &n);
     }
     /*--- Orthogonormalize columns of V(:,nlock:nev-1) */ 
-
     orth(V+nnlock, n, nact, buf, work);
     DCOPY(&nnact, buf, &one, V+nnlock, &one);
-
     /*---  PV <- P(A)*V */
     tm = cheblan_timer();
     //polyfilt(A, deg, mu, dd, cc, V+nnlock, nact, PV+nnlock, work); 
     for (icol = nlock; icol<nlock+nact; icol++)
-      ChebAv(A, pol, V+icol*n, PV+icol*n, work);
-
+      ChebAv(pol, V+icol*n, PV+icol*n, work);
     tmv += cheblan_timer() - tm;
     nmv += deg*nact;
-
     // orthogonalize PVact against Vlocked
     if ( nlock>0 ) { 
       DGEMM(&cT, &cN, &nlock, &nact, &n, &done, V, &n, PV+nnlock, &n, &dzero, T, &nev);
@@ -167,16 +160,6 @@ int ChebSI(csrMat *A, int nev, double *intv, int maxit,
     // end orthogonalize PVact against Vlocked
     /*---  Lock converged pairs */
     if ( ((it+1)%cvcheck == 0) || ((it+1)==maxit)  ) {
-
-      //          /*---  T = V'p(A)V; [evecT,evalT]=eig(T);    */
-      //          DGEMM(&cT,&cN,&nev,&nev,&n,&done,V,&n,PV,&n,&dzero,T,&nev);     
-      //          SymEigenSolver(nev, T, nev, evecT, nev, evalT);
-      //          /*---  V <- V*evecT; p(A)V <- PV*evecT (update only active columns)    */ 
-      //          DGEMM(&cN,&cN,&n,&nact,&nev,&done,V,&n,evecT+nev*nlock,&nev,&dzero,buf,&n);
-      //          DCOPY(&nnact, buf, &one, V+nnlock, &one);
-      //          DGEMM(&cN,&cN,&n,&nact,&nev,&done,PV,&n,evecT+nev*nlock,&nev,&dzero,buf,&n);
-      //          DCOPY(&nnact, buf, &one, PV+nnlock, &one);
-
       //// Rayleigh--Ritz with unconverged columns V
       /*---  T = V'p(A)V; [evecT,evalT]=eig(T);    */
       DGEMM(&cT,&cN,&nact,&nact,&n,&done,V+nnlock,&n,PV+nnlock,&n,&dzero,T,&nev);     
@@ -186,7 +169,6 @@ int ChebSI(csrMat *A, int nev, double *intv, int maxit,
       DCOPY(&nnact, buf, &one, V+nnlock, &one);
       DGEMM(&cN,&cN,&n,&nact,&nact,&done,PV+nnlock,&n,evecT,&nev,&dzero,buf,&n);
       DCOPY(&nnact, buf, &one, PV+nnlock, &one);
-
       /*---  Compute active residuals R = PV - V*diag(evalT)    */
       for (i=nlock; i<nev; i++) {
         double t = -evalT[i]; 
@@ -205,7 +187,7 @@ int ChebSI(csrMat *A, int nev, double *intv, int maxit,
         if (resP < tolP) {
           /*---  Compute norm of AV(:,i) - V(:,i)*Lambda(i)   */
           tm = cheblan_timer();
-          matvec_genev(A, V+i*n, buf);
+          matvec_A(V+i*n, buf);
           tmv += cheblan_timer() - tm;
           nmv++;
           double rq = DDOT(&n, V+i*n, &one, buf, &one);  // Rayleigh Quotient for A
@@ -248,10 +230,6 @@ int ChebSI(csrMat *A, int nev, double *intv, int maxit,
       nlock += nlock_new;
       nlock_ab += nlock_ab_new;
 
-      //for (i=0;i<nlock; i++){
-      //
-      //}
-
       fprintf(fstats, "it %4d:   nMV %7d,  nlock %3d, nlock_ab  %3d\n",
           it+1, nmv, nlock, nlock_ab);
 
@@ -283,9 +261,9 @@ int ChebSI(csrMat *A, int nev, double *intv, int maxit,
       idx++;  
     }   
   } 
-
+ 
   /*-------------------- Done.  output : */
-  *nevo = nlock_ab;
+  *nevo = idx;
   *lamo = Lam_out;
   *Yo = V_out;
   *reso = res_out;  
@@ -302,9 +280,6 @@ int ChebSI(csrMat *A, int nev, double *intv, int maxit,
   free(lock_idx);
   free(buf);
   free(work);
-
-
-
   /*-------------------- record stats */
   tall = cheblan_timer() - tall;
   /*-------------------- print stat */

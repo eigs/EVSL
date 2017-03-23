@@ -5,15 +5,11 @@
 #include <complex.h>
 #include "evsl.h"
 #include "io.h"
+#include "evsl_suitesparse.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define TRIV_SLICER 0
-
-/*-------------------- Protos */
-int read_coo_MM(const char *matfile, int idxin, int idxout,   cooMat *Acoo); 
-int get_matrix_info(FILE *fmat, io_t *pio);
-/*-------------------- End Protos */
 
 int main () { 
   int ierr = 0;
@@ -53,7 +49,10 @@ int main () {
   double beta = 0.01; // beta in the LS approximation
   /* slicer parameters */
   npnts = 1000;
-  Mdeg = 100;  nvec = 100;  
+  Mdeg = 300;
+  nvec = 100;
+  /*-------------------- start EVSL */
+  EVSLStart();
   /* interior eigensolver parameters */  
   double *mu = malloc((Mdeg+1)*sizeof(double)); // coeff. for kpmdos
   int *counts; // #ev computed in each slice
@@ -85,7 +84,7 @@ int main () {
     b = io.b; // right endpoint of input interval
     n_intv = io.n_intv;
     char path[1024];   // path to write the output files
-    strcpy( path, "OUT/GenRLanR_");
+    strcpy( path, "OUT/MMRLanR_");
     strcat( path, io.MatNam);
     fstats = fopen(path,"w"); // write all the output to the file io.MatNam 
     if (!fstats) {
@@ -118,12 +117,14 @@ int main () {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
+    /*-------------------- set the left-hand side matrix A */
+    SetAMatrix(&Acsr);        
     /*-------------------- define parameters for DOS */
     alleigs = malloc(n*sizeof(double)); 
     vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);
     /*-------------------- get lambda_min lambda_max estimates */
-    ierr = LanBounds(&Acsr, 60, vinit, &lmin, &lmax);
+    ierr = LanBounds(60, vinit, &lmin, &lmax);
     fprintf(fstats, "Step 0: Eigenvalue bounds for A: [%.15e, %.15e]\n",
             lmin, lmax);
     /*-------------------- define [a b] now so we can get estimates now    
@@ -137,7 +138,7 @@ int main () {
       linspace(a, b, n_intv+1,  sli);
     } else {
       double t = cheblan_timer();
-      ierr = kpmdos(&Acsr, Mdeg, 0, nvec, xintv, mu, &ecount);
+      ierr = kpmdos(Mdeg, 0, nvec, xintv, mu, &ecount);
       t = cheblan_timer() - t;
       if (ierr) {
 	printf("kpmdos error %d\n", ierr);
@@ -207,12 +208,15 @@ int main () {
       rat.pow = pow;
       //-------------Now determine rational filter
       find_ratf(intv, &rat);    
-      // use the default solver function from UMFPACK
-      set_ratf_solfunc(&rat, &Acsr, NULL, NULL);
+     /*------------ use the solver function from UMFPACK */
+      void **solshiftdata = (void **) malloc(rat.num*sizeof(void *));
+     /*------------ factoring the shifted matrices and store the factors */
+      SetupASIGMABSolSuiteSparse(&Acsr, NULL, rat.num, rat.zk, solshiftdata);
+     /*------------ give the data to rat */
+      SetASigmaBSol(&rat, NULL, ASIGMABSolSuiteSparse, solshiftdata);    
       //-------------------- RationalLanTr
-      ierr = RatLanTr(&Acsr, mlan, nev, intv, &rat, max_its, tol, vinit, &nevOut, &lam, 
+      ierr = RatLanTr(mlan, nev, intv, max_its, tol, vinit, &rat, &nevOut, &lam, 
                       &Y, &res, fstats);
-
       if (ierr) {
         printf("RatLanTr error %d\n", ierr);
         return 1;
@@ -243,6 +247,8 @@ int main () {
       if (Y)  free(Y);
       if (res)  free(res);
       free(ind);
+      FreeASIGMABSolSuiteSparse(rat.num, solshiftdata);
+      free(solshiftdata);            
       free_rat(&rat);
       /*-------------------- end slice loop */
     }
@@ -268,6 +274,8 @@ int main () {
   free(mu);
   if( flog != stdout ) fclose ( flog );
   fclose( fmat );
+  /*-------------------- finalize EVSL */
+  EVSLFinish();
   return 0;
 }
 

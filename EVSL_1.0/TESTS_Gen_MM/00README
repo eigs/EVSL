@@ -1,0 +1,40 @@
+This directory  contains drivers for testing  a few routines
+for computing eigenvalues of general sparse (symmetric real)
+matrix pair (A, B), where B has to be positive definite. 
+These matrices are read  from a file in the matrix
+market format.  note: HB matrix format is not supported.
+
+For  the rational  filter driver  you will  need to  link to
+various modules  from the  SuiteSparse package. 
+
+MMRLanR.c : 
+    driver for testing spectrum slicing -- with 
+    Rational Filter Lanczos with thick Restart
+    make MMRLanR.ex--> executable MMRLanR.ex
+
+MMRLanN.c : 
+    driver for testing spectrum slicing -- with 
+    Rational Filter non-restarting Lanczos 
+    make MMRLanN.ex--> executable MMRLanN.ex
+
+matfile : input file containing the path to the matrix to be read by Gen*.c
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+	  1                                                 %% number of matrices
+          MatrixFile_A  MatrixFile_B MatrixName_A MatrixName_B  MatrixFormat  a  b  nslices
+          MatrixFormat: coordinate format (matrix market format)
+            MM0: matrix format indexing starts at 0 
+            MM1: matrix format indexing starts at 1
+          a, b : interval [a, b] of interest
+          nslices: number of slices for spectrum slicing
+          Example:
+          /MATRICES/A.mtx /MATRICES/B.mtx stiff1 mass1 MM1  28.617629  1746.952 2
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+io.c    : functions - in particular for reading matrices in mm format
+mmio.c  : support functions for mm format [not all are needed] 
+
+The computed eigenvalues are saved in OUT/ folder. 
+ 
+Run:
+
+./MM*.ex 

@@ -11,7 +11,8 @@ int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv
 int lapgen(int nx, int ny, int nz, cooMat *Acoo);
 int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
 /* Example for matrix-free solvers: 2D/3D (constant coefficient) Laplacian matrices
- * The matrix is not formed, so we give NULL to the solver
+ * Ax = \lambda x
+ * The matrix A is not formed.
  * We provide a matvec routine, which only needs the stencil and grid sizes 
  * The matvec routine and the associated data will need to be registered */
 /* matvec routine [it must be of this prototype] */
@@ -45,14 +46,14 @@ int main(int argc, char *argv[]) {
   double *vinit;
   polparams pol;
   FILE *fstats = NULL;
-  if (!(fstats = fopen("OUT/LapPLanN","w"))) {
+  if (!(fstats = fopen("OUT/LapPLanN_MatFree.out","w"))) {
     printf(" failed in opening output file in OUT/\n");
     fstats = stdout;
   }
   /*-------------------- default values */
   nx   = 15;
   ny   = 16;
-  nz   = 13;
+  nz   = 25;
   a    = 0.4;
   b    = 0.8;
   nslices = 4;
@@ -92,19 +93,21 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
   fprintf(fstats, "Laplacian: %d x %d x %d, n = %d\n", nx, ny, nz, n);
   fprintf(fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
-  /*-------------------- without forming the matrix, 
-   *                     just setup the matvec function and data */
-  SetMatvecFunc(n, &Lap2D3DMatvec, (void*) &lapmv);
   /*-------------------- step 0: get eigenvalue bounds */
   fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
   /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
   /*-------------------- define kpmdos parameters */
-  Mdeg = 40;
-  nvec = 100;
+  Mdeg = 300;
+  nvec = 60;
+  /*-------------------- start EVSL */
+  EVSLStart();
+  /*-------------------- without forming the matrix, 
+   *                     just setup the matvec function and data */
+  SetAMatvec(n, &Lap2D3DMatvec, (void*) &lapmv);
+  /*-------------------- call kpmdos */
   mu = malloc((Mdeg+1)*sizeof(double));
-  //-------------------- call kpmdos 
   double t = cheblan_timer();
-  ierr = kpmdos(NULL, Mdeg, 1, nvec, xintv, mu, &ecount);
+  ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
   t = cheblan_timer() - t;
   if (ierr) {
     printf("kpmdos error %d\n", ierr);
@@ -112,7 +115,7 @@ int main(int argc, char *argv[]) {
   }
   fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
   fprintf(fstats, " estimated eig count in interval: %.15e \n",ecount);
-  //-------------------- call splicer to slice the spectrum
+  /*-------------------- call splicer to slice the spectrum */
   npts = 10 * ecount; 
   sli = malloc((nslices+1)*sizeof(double));
 
@@ -159,7 +162,7 @@ int main(int argc, char *argv[]) {
     //                     parameters to determine the filter polynomial
     pol.damping = 0;
     //-------------------- use a stricter requirement for polynomial
-    pol.thresh_int = 0.25;
+    pol.thresh_int = 0.5;
     pol.thresh_ext = 0.15;
     pol.max_deg  = 300;
     // pol.deg = 20 //<< this will force this exact degree . not recommended
@@ -170,7 +173,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
     //-------------------- then call ChenLanNr
-    ierr = ChebLanNr(NULL, xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res, fstats);
+    ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebLanNr error %d\n", ierr);
       return 1;
@@ -223,7 +226,8 @@ int main(int argc, char *argv[]) {
   free(sli);
   free(mu);
   fclose(fstats);
-
+  /*-------------------- finalize EVSL */
+  EVSLFinish();
   return 0;
 }
 

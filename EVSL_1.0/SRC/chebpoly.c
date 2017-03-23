@@ -61,6 +61,24 @@ int dampcf(int m, int damping, double *jac){
 }        
 
 /**
+ *@brief function dif_eval(v, m, thc, jac)
+ * evaluates the difference between the right and left
+ * values of the polynomial expressed in chebyshev expansion
+ * @param v  vector of coefficients [see paper]
+ * @param m  degree 
+ * @param thc  angle theta corresponding to peak of polynomial
+ * @param jac vector of damping coefficients
+**/
+
+double dif_eval(double *v, int m, double thc, double *jac){
+  double fval = 0.0;
+  int j;
+  for (j=0; j<=m; j++) 
+    fval += v[j]*cos(j*thc)*jac[j]; 
+  return (fval);
+}
+
+/**
  *
  *
  *  @brief function yi = chebxPltd computes yi = p_mu (xi),
@@ -151,7 +169,9 @@ void chext(polparams *pol, double aIn, double bIn){
   double *mu = pol->mu;
   //-------------------- local variables 
   double del = 0.1*sqrt((bIn-aIn)*0.5); 
-  double eps = 1e-13;
+  //double del = 0.0;
+  double eps = 1e-13;  
+  //double eps = 0.0;
   double a, b, x, e, c, sigma, sigma1, sigma_new, g0, g1, gnew, s1, s2, s3;
   double *t0, *t1, *tnew; // coef. of three consecutive cheby. expansions
   double bar, gam;
@@ -259,92 +279,52 @@ int indexofSmallestElement(double *array, int size){
  * @param mu     expansion coefficients. 
  * @param[out] thc  value of theta_c  
 **/
-int rootchb(int m, double *v, double* jac, double thcIn, double tha, 
-    double thb, double *mu, double *thc){
-  int MaxIterBalan= 2;    // max steps in Newton to balance interval
-  double tolBal=1.e-6;    // tolerance for Newton - based on f val only
-  // do 2 newton steps -- of OK exit otherwise
+int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
+	    double *thcOut){
+  int MaxIterBalan = 30;     // max steps in Newton to balance interval
+  double tolBal; 
+  // do 2 newton steps -- if OK exit otherwise
   // continue to get root by solving eigv. pb
-  int j, it, mm, one = 1;
-  double fval = 0.0, d, *T, *g;
-  *thc = thcIn;
-  /*-------------------- Newton iteration */
+  int j, it;
+  double fval = 0.0, d;
+  double fa, fb, thN, thc;
+  tolBal = fabs(tha-thb)*1.e-13;
+  thc = 0.5*(tha+thb);
+  /*-------------------- check whether or not this will work */
+  fb = dif_eval(v, m, thb, jac);
+  fa = dif_eval(v, m, tha, jac);
+  //--------------------this will not work -exit + use higher deg.
+  if ((fa>0) || (fb<0))
+    return 1 ;
+  /*-------------------- Newton iteration to balance the interval*/
   for (it=0; it<=MaxIterBalan; it++) {
-    //-------------------- Balacing the interval
-    for (j=0; j<=m; j++) 
-      mu[j] = cos(j* (*thc))*jac[j];
-    mm = m+1;
-
-    fval = DDOT(&mm,mu,&one,v,&one);
-    // printf("     --1 thc %f fval %e \n",*thc,fval);
-    if (fabs(fval)<tolBal){
-      return(0) ;
-    } 
-    /*-------------------- do one newton step */
+    fval = dif_eval(v, m, thc, jac);
+    /*-------------------- do one newton step - d= derivative
+      thN = thetaNewton*/
     d = 0.0;
     for (j=1; j<=m; j++)
-      d += jac[j]*j*sin(j*(*thc))*v[j];
-    *thc += fval/d;
-    //--------------------value not good - exit immediatly
-    if (( (*thc) < thb) || ( (*thc) > tha)) {
-      break;
+      d += jac[j]*j*sin(j*(thc))*v[j];
+    thN = thc + fval/d;
+    /*-------------------- test for stopping */ 
+   if ((fabs(fval)<tolBal) || fabs(thc - thN)<DBL_EPSILON*abs(thc))
+         break;
+   /*-------------------- test for doing a form of bisection */
+    if (fval >0){ 
+      if((thN < thb) || (thN > tha)) 
+	thN = 0.5*(thc+tha);
+      thb = thc;
+      thc = thN;
+    } else {
+      if((thN < thb) || (thN > tha) ) 
+	thN = 0.5*(thc+thb);
+      tha = thc;
+      thc = thN;
     }
   }
-  //--------------------if acceptable exit. Otherwise get *thc 
-  //                    using sol. of eigenvalue problem  
-  mm = m+1;
-  /*-------------------- T must be zeroed out initially*/
-  Calloc(T, m*m, double);
-  Malloc(g, mm, double);
-  // I store T in a upper hess. form in order to use dhseqr.f 
-  //printf("entering non-newton\n");
-  //printf(" tha %f thc %f thb %f\n",tha,*thc,thb); 
-  for (j=0; j<=m; j++)
-    g[j] = v[j]*jac[j];
-  for (j=0; j<=m; j++)
-    g[j] /= g[m];
-  for (j=1; j<m; j++) {
-    T[j*m+j-1] = -1;
-    T[j*m-m+j] = -1;
-  } 
-  T[1] = -2;
-  for (j=0; j<m; j++) {
-    T[(m-1)*m+j] += g[j];
-  }   
-  /*-------------------- compute eigenvalues of T */
-  char jobz='E';/* want eigenvalues only */
-  char compz = 'N';/* no Schur vectors */
-  int info, ilo = 1, ihi = m, ldz = 1, lwork = m;
-  double *evr, *evi, *z=NULL, *work;
-  Malloc(evr, m, double);
-  Malloc(evi, m, double);
-  Malloc(work, lwork, double);
-  DHSEQR(&jobz, &compz, &m, &ilo, &ihi, T, &m, evr, evi, 
-         z, &ldz, work, &lwork,&info);
-  if (info != 0) {
-    fprintf(stdout, "DHSEQR error: %d\n", info);
-    return(1);
-  }
-  for (j=0; j<m; j++) 
-    evr[j]*= -0.5; 
-  //-------------------- root closest to thc
-  double target = cos(*thc);
-  for (j=0; j<m; j++)
-    evi[j] = fabs(evr[j]-target);
-
-  int index = indexofSmallestElement(evi, m);
-  double y = evr[index];
-  *thc = acos(y);
-  if (( (*thc) < thb) || ( (*thc) > tha)) 
-    *thc = thcIn;
-
+  /*-------------------- done - return mu and thethac */
   for(j=0; j<=m; j++)
-    mu[j] = cos(j*(*thc))*jac[j];
-  free(evr);
-  free(evi);
-  free(work);
-  free(g);
-  free(T);
+    mu[j] = cos(j*(thc))*jac[j];
+  *thcOut = thc;
   return 0;
 }
 
@@ -376,7 +356,7 @@ int rootchb(int m, double *v, double* jac, double thcIn, double tha,
 int find_pol(double *intv, polparams *pol) {
   double *mu, *v, *jac, t=0.0, itv[2],  vals[2];
   int max_deg=pol->max_deg, min_deg=pol->min_deg, damping=pol->damping;
-  double tha=0.0, thb=0.0, thc=0.0, thcIn=0.0;
+  double tha=0.0, thb=0.0, thc=0.0;
   double gam,  thresh;
   int m, j, nitv,  mbest; 
   /*-------------------- A few parameters to be set or reset */
@@ -432,10 +412,9 @@ int find_pol(double *intv, polparams *pol) {
     thc = thb;
     nitv   = 1;
     bb = 1;
-    gam = 1; // set center for b 
+    gam = 1;               // set center for b 
   } else {
     /*-------------------- middle interval */
-    thc = 0.5*(tha+thb); 
     itv[0] = aa;
     itv[1] = bb;
     nitv = 2;
@@ -445,12 +424,12 @@ int find_pol(double *intv, polparams *pol) {
     /*-------------------- end interval case done separately */
     chext(pol,aa,bb);
   } else {
-    /*-----------------------------------------------*/ 
-    min_deg = max(min_deg,2);
+    /*-------------------- give a starting degree - around 1/(half gap) */
+    min_deg = 2 + (int) 0.5/(bb-aa);
+    // min_deg = max(min_deg,2);
     thresh = pol->thresh_int;
-    thcIn = thc;
     //-------------------- this is a short-circuit for the 
-    // case of a forced degree 
+    //                     case of a forced degree 
     if (pol->deg > 0){
       thresh = -1;
       max_deg = pol->deg;
@@ -464,7 +443,10 @@ int find_pol(double *intv, polparams *pol) {
       //-------------------- update v: add one more entry
       v[m] = cos(m*thb)-cos(m*tha);
       //---------------------Balacing the interval + get new mu
-      rootchb(m, v, jac, thcIn, tha, thb, mu, &thc);
+      if (rootchb(m, v, jac, tha, thb, mu, &thc)) {
+      //-------------------- if m<0 degree is too low - skip
+	  continue;
+      }
       //----------------------New center 
       gam = cos(thc);
       //-------------------- for scaling
@@ -497,7 +479,6 @@ void free_pol(polparams *pol) {
  * @brief Computes y=P(A) y, where pn is a Cheb. polynomial expansion [this
  * does not call matvec - but does the sparse matrix vetor product internally]
  *
- * @param A Matrix A
  * @param pol Struct containing the paramenters and expansion coefficient of
  * the polynomail.
  * @param v input vector
@@ -508,13 +489,15 @@ void free_pol(polparams *pol) {
  * @param w Work vector of length 3*n [allocate before call]
  * @param v is untouched
  **/
-int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w) {
+int ChebAv(polparams *pol, double *v, double *y, double *w) {
   /* if user-provided matvec, OR, generalized e.v. prob,
    * use another version which calls matvec_genev routine */
-  if (evsldata.Amatvec.func || evsldata.hasB) {
-    int err = ChebAv0(A, pol, v, y, w);
+  if (evsldata.Amv || evsldata.ifGenEv) {
+    int err = ChebAv0(pol, v, y, w);
     return err;
   }
+  /*-------------------- use matrix A */
+  csrMat *A = evsldata.A;
   //-------------------- unpack A 
   int n = A->nrows;
   int  *ia = A->ia;
@@ -570,14 +553,13 @@ int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w) {
 }
 
 /**
- * @brief @b UNUSED Computes y=P(A) y, where pn is a Cheb. polynomial expansion [this
+ * @brief @b Computes y=P(A) y, where pn is a Cheb. polynomial expansion [this
  * does not call matvec - but does the sparse matrix vetor product internally]
  * 
  * This is unused but left here on purpose. It is a simpler but a bit slower
  * routine. This explicitly calls matvec, so it can be useful for implementing
  * user-specific matrix-vector multiplication.
  *
- * @param A Matrix A
  * @param pol Struct containing the paramenters and expansion coefficient of
  * the polynomail.
  * @param v input vector
@@ -588,55 +570,65 @@ int ChebAv(csrMat *A, polparams *pol, double *v, double *y, double *w) {
  * @param w Work vector of length 3*n [allocate before call]
  * @param v is untouched
  **/
-int ChebAv0(csrMat *A, polparams *pol, double *v, double *y, double *w) {
+int ChebAv0(polparams *pol, double *v, double *y, double *w) {
+  csrMat *A;
   int n;
-  if (evsldata.Amatvec.func) {
-    //-------------------- unpack n from ext_mv 
-    n = evsldata.Amatvec.n;
+  if (evsldata.Amv) {
+    /*-------------------- unpack n from ext_mv */
+    n = evsldata.Amv->n;
   } else {
-    //-------------------- unpack n from A  
+    A = evsldata.A;
+    /*-------------------- unpack n from A */
     n = A->nrows;
   }
-  //-------------------- unpack pol
+  /*-------------------- unpack pol */
   double *mu = pol->mu;
   double dd = pol->dd;
   double cc = pol->cc;
   int m = pol->deg;
-  //-------------------- pointers to v_[k-1],v_[k], v_[k+1]  from w
+  /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   double *vk   = w;
   double *vkp1 = w+n;
   double *vkm1 = vkp1+n;
-  //-------------------- 
-  int k, i; 
-  double t,  s, *tmp, t1= 1./dd, t2 = 2.0/dd; 
-  double zer = 0.0;
-  //-------------------- vk <- v; vkm1 <- zeros(n,1)
+  double *w2 = evsldata.ifGenEv ? vkm1 + n : NULL;
+  /*-------------------- */
+  int k, i;
+  double t, s, *tmp, t1= 1.0 / dd, t2 = 2.0 / dd; 
+  /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
   memcpy(vk, v, n*sizeof(double));
-  memset(vkm1,zer,n*sizeof(double));
+  memset(vkm1, 0, n*sizeof(double));
   /*-------------------- special case: k == 0 */
   s = mu[0];
-  for (i=0; i<n; i++) 
-    y[i] = s*vk[i]; 
-  //-------------------- degree loop. k IS the degree.     
+  for (i=0; i<n; i++) {
+    y[i] = s*vk[i];
+  }
+  /*-------------------- degree loop. k IS the degree */
   for (k=1; k<=m; k++) {
     /*-------------------- y = mu[k]*Vk + y */    
-    t = (k==1 ? t1:t2); 
-    /*-------------------- Vkp1 = A*Vk - cc*Vk; */    
+    t = k == 1 ? t1 : t2; 
+    /*-------------------- */    
     s = mu[k];
-    
-    matvec_genev(A, vk, vkp1);
+    if (evsldata.ifGenEv) {
+      /*-------------------- Vkp1 = A*B\Vk - cc*Vk */    
+      evsldata.Bsol->func(vk, w2, evsldata.Bsol->data);
+      matvec_A(w2, vkp1);
+    } else {
+      /*-------------------- Vkp1 = A*Vk - cc*Vk */    
+      matvec_A(vk, vkp1);
+    }
 
-    for (i=0; i<n; i++){
+    for (i=0; i<n; i++) {
       vkp1[i] = t*(vkp1[i]-cc*vk[i]) - vkm1[i];
-      //-------------------- for degree 2 and up: 
+      /*-------------------- for degree 2 and up: */
       y[i] += s*vkp1[i];
     }
-    //-------------------- next: rotate vectors via pointer exchange
+    /*-------------------- next: rotate vectors via pointer exchange */
     tmp = vkm1;
     vkm1 = vk;
     vk = vkp1;
     vkp1 = tmp;
   }
+
   return 0;
 }
 

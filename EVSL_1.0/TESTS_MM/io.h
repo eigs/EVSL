@@ -9,6 +9,8 @@
 #define MM1  3
 #define UNK  4
 
+#include "evsl.h"
+
 typedef struct _io_t {
     FILE *fout;                 /* output file handle              */
     char outfile[MAX_LINE];     /* output filename                 */
@@ -22,6 +24,10 @@ typedef struct _io_t {
     double a;                   /* [a, b]  interval of interest    */
     double b;
 } io_t;
+
+int get_matrix_info( FILE *fmat, io_t *pio );
+
+int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
 
 #endif
 
