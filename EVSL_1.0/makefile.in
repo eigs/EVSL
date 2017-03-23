@@ -11,8 +11,8 @@ AR = ar rv
 RANLIB = ranlib
 
 ## libraries: blas, lapack
-LIBLAPACK = -L//home/yuanzhe/Desktop/lapack-3.5.0 -llapack -lrefblas
+LIBLAPACK = -L/scratch/syphax/Rational_GEIG/lapack-3.5.0 -llapack -lrefblas
 
 ## SuiteSparse dir
 ## if empty, evsl will be compiled without rational filters
-SUITESPARSE_DIR = /home/yuanzhe/Desktop/SuiteSparse
+SUITESPARSE_DIR = /scratch/syphax/Rational_GEIG/SuiteSparse-4.5.3/SuiteSparse
