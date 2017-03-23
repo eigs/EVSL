@@ -44,12 +44,12 @@ int main(int argc, char *argv[]) {
   /*-------------------- default values */
   nx   = 41;
   ny   = 53;
-  nz   = 1;
+  nz   = 8;
   a    = 0.4;
   b    = 0.8;
   nslices = 4;
   //-----------------------------------------------------------------------
-  //-------------------- reset some default values from command line [Yuanzhe/]
+  //-------------------- reset some default values from command line
   /* user input from command line */
   flg = findarg("help", NA, NULL, argc, argv);
   if (flg) {
@@ -86,12 +86,16 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
   /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
   /*-------------------- define kpmdos parameters */
-  Mdeg = 40;
-  nvec = 100;
+  Mdeg = 300;
+  nvec = 60;
+  /*-------------------- start EVSL */
+  EVSLStart();
+  /*-------------------- set the left-hand side matrix A */
+  SetAMatrix(&Acsr);
+  /*-------------------- call kpmdos */
   mu = malloc((Mdeg+1)*sizeof(double));
-  //-------------------- call kpmdos 
   double t = cheblan_timer();
-  ierr = kpmdos(&Acsr, Mdeg, 1, nvec, xintv, mu, &ecount);
+  ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
   t = cheblan_timer() - t;
   if (ierr) {
     printf("kpmdos error %d\n", ierr);
@@ -147,7 +151,7 @@ int main(int argc, char *argv[]) {
     //                     parameters to determine the filter polynomial
     pol.damping = 0;
     //-------------------- use a stricter requirement for polynomial
-    pol.thresh_int = 0.25;
+    pol.thresh_int = 0.5;
     pol.thresh_ext = 0.15;
     pol.max_deg  = 300;
     // pol.deg = 20 //<< this will force this exact degree . not recommended
@@ -159,7 +163,7 @@ int main(int argc, char *argv[]) {
     fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",
             pol.deg,pol.bar, pol.gam);
     //-------------------- then call ChenLanNr
-    ierr = ChebLanTr(&Acsr, mlan, nev, xintv, max_its, tol, vinit,
+    ierr = ChebLanTr(mlan, nev, xintv, max_its, tol, vinit,
                      &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebLanTr error %d\n", ierr);
@@ -214,7 +218,8 @@ int main(int argc, char *argv[]) {
   free_csr(&Acsr);
   free(mu);
   fclose(fstats);
-
+  /*-------------------- finalize EVSL */
+  EVSLFinish();
   return 0;
 }
 

@@ -1,0 +1,59 @@
+This directory  contains drivers for testing  a few routines
+for computing eigenvalues of general sparse (symmetric real)
+matrices. These matrices are read  from a file in the matrix
+market format.  note: HB matrix format is not supported.
+
+For  the rational  filter driver  you will  need to  link to
+various modules  from the  SuiteSparse package. 
+
+MMPLanR.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter Lanczos with thick Restart
+    make MMPLanR.ex--> executable MMPLanR.ex
+
+MMPLanN.c :  
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter non-restarting Lanczos
+    make MMPLanN.ex--> executable MMPLanN.ex
+
+MMPSI.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter Subspace Iteration
+    make MMPSI.ex--> executable MMPSI.ex
+
+MMPLanR_omp.c : 
+    same as GenPLanR_omp.c but with openMP
+    parallelization across slices
+    make MMPLanR_omp.ex--> executable MMPLanR_omp.ex
+
+MMRLanR.c : 
+    driver for testing spectrum slicing -- with 
+    Rational Filter Lanczos with thick Restart
+    make MMRLanR.ex--> executable MMRLanR.ex
+
+MMRLanN.c : 
+    driver for testing spectrum slicing -- with 
+    Rational Filter non-restarting Lanczos 
+    make MMRLanN.ex--> executable MMRLanN.ex
+
+matfile : input file containing the path to the matrix to be read by Gen*.c
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+	  1                                                 %% number of matrices
+          MatrixFile  MatrixName  MatrixFormat  a  b  nslices
+          MatrixFormat: coordinate format (matrix market format)
+            MM0: matrix format indexing starts at 0 
+            MM1: matrix format indexing starts at 1
+          a, b : interval [a, b] of interest
+          nslices: number of slices for spectrum slicing
+          Example:
+          MATRICES/test.COO TestMat MM1 0.1 0.4 2
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+io.c    : functions - in particular for reading matrices in mm format
+mmio.c  : support functions for mm format [not all are needed] 
+
+The computed eigenvalues are saved in OUT/ folder. 
+ 
+Run:
+
+./MM*.ex 

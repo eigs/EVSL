@@ -7,10 +7,10 @@
 #include "blaslapack.h"
 #include "struct.h"
 #include "internal_proto.h"
+
 /**
  * @brief Chebyshev polynomial filtering Lanczos process [Thick restart version]
  *
- * @param A         Matrix of size n x n
  * @param lanm      Dimension of Krylov subspace [restart dimension]
  * @param nev       Estimate of number of eigenvalues in the interval --
  *         ideally nev == exact number or a little larger.  This is not used
@@ -25,20 +25,24 @@
  *         [intv[2], intv[3]] is the global interval of all eigenvalues \n
  *         it must contain all eigenvalues of A
  * 
- * @param maxit     max Num of outer Lanczos iterations (restarts) allowed -- 
+ * @param maxit  max Num of outer Lanczos iterations (restarts) allowed -- 
  *         Each restart may or use the full lanm lanczos steps or fewer.
  * 
  * @param tol       tolerance for convergence. stop when ||res||< tol
  * @param vinit     initial  vector for Lanczos -- [optional]
  * @param pol       a struct containing the parameters of the polynomial. This 
- *         is set up by a call to find_deg prior to calling chenlanNr 
+ *                  is set up by a call to find_deg prior to calling chenlanTr 
  *
  * @b Modifies:
- * @param[out]  nev2     Number of eigenvalues/vectors computed
- * @param[out] W         A set of eigenvectors  [n x nev2 matrix]
- * @param[out] vals      Associated eigenvalues [nev2 x 1 vector]
- * @param[out] resW      Associated residual norms [nev x 1 vector]
- * @param[out] fstats    File stream which stats are printed to
+ * @param[out] nev2     Number of eigenvalues/vectors computed
+ * @param[out] W        A set of eigenvectors  [n x nev2 matrix]
+ *                      of unit 2-norm for standard eig prob
+ *                      of unit B-norm for generalized eig prob
+ * @param[out] vals     Associated eigenvalues [nev2 x 1 vector]
+ * @param[out] resW     Associated residual norms [nev x 1 vector]
+ *                      2-norm for standard eig prob
+ *                      B-norm for generalized eig prob
+ * @param[out] fstats   File stream which stats are printed to
  *
  * @return Returns 0 on success (or if check_intv() is non-positive), -1 if
  * gamB is outside [-1, 1], and 2 if there are no eigenvalues found.
@@ -47,7 +51,7 @@
  * @warning memory allocation for W/vals/resW within this function 
  *
  **/
-int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit, 
+int ChebLanTr(int lanm, int nev, double *intv, int maxit, 
               double tol, double *vinit, polparams *pol, int *nev2, 
               double **vals, double **W, double **resW, FILE *fstats) {
   /*-------------------- for stats */
@@ -55,41 +59,44 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
   double tolP = tol;
   tall = cheblan_timer();
   int do_print = 1;
-  // handle case where fstats is NULL. Then no output. Needed for openMP.
-  if (fstats == NULL){
+  /* handle case where fstats is NULL. Then no output. Needed for openMP. */
+  if (fstats == NULL) {
     do_print = 0;
   }
   /* size of the matrix */
   int n;
-  /* if users provided their own matvec function, input matrix A will be ignored */
-  if (evsldata.Amatvec.func) {
-    n = evsldata.Amatvec.n;
+  /* if users provided their own matvec function, matrix A will be ignored */
+  if (evsldata.Amv) {
+    n = evsldata.Amv->n;
   } else {
-    n = A->nrows;
+    n = evsldata.A->nrows;
   }
   /*--------------------- adjust lanm and maxit */
   lanm = min(lanm, n);
   int lanm1=lanm+1;
-  // if use full lanczos, should not do more than n iterations
-  if (lanm == n) { maxit = min(maxit, n); }
+  /*  if use full lanczos, should not do more than n iterations */
+  if (lanm == n) {
+    maxit = min(maxit, n);
+  }
   /*-------------------- this is needed to increment the space when we
-    discover more than nev eigenvalues in interval */
-  double nevInc = 0.2;   // add 1  + 20% each time it is needed
+                         discover more than nev eigenvalues in interval */
+  double nevInc = 0.2;   /* add 1  + 20% each time it is needed */
   /*-------------------- if we have at least nev/ev_frac good candidate 
-    eigenvalues from p(A) == then we restart to lock them in */
+                         eigenvalues from p(A) == then we restart to lock them in */
   int evFrac = 2;
   /*--------------------   some constants frequently used */
-  //char cT='T';
+  /* char cT='T'; */
   char cN = 'N';
   int one = 1;
-  double done=1.0,dmone=-1.0,dzero=0.0;
-  /*--------------------   Ntest = when to start testing convergence */
+  double done=1.0, dmone=-1.0, dzero=0.0;
+  /*-------------------- Ntest = when to start testing convergence */
   int Ntest = min(lanm, nev+50);
   /*--------------------   how often to test */
   int cycle = 30; 
   int i, ll, count, last_count, jl, last_jl;
   /*-----------------------------------------------------------------------
-   -----------------------------------------------------------------------*/
+    -----------------------------------------------------------------------*/
+  /* check if the given interval is valid */
   if (check_intv(intv, fstats) < 0) {
     *nev2 = 0;
     *vals = NULL; *W = NULL; *resW = NULL;
@@ -98,9 +105,8 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
   double aa = intv[0];
   double bb = intv[1];
   /*-------------------- Assumption: polynomial pol computed before calling cheblanTr
-  pol.  approximates the delta function centered at 'gamB'
-  bar: a bar value to threshold Ritz values of p(A)
-  */
+                         pol.  approximates the delta function centered at 'gamB'
+                         bar: a bar value to threshold Ritz values of p(A) */
   int deg = pol->deg;
   double gamB=pol->gam, bar=pol->bar;
   /*-------------------- gamB must be within [-1, 1] */
@@ -109,21 +115,30 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
     return -1;
   }
   /*  save mu in file */ 
-  //save_vec(deg+1, mu, "OUT/mu.mtx");
+  /* save_vec(deg+1, mu, "OUT/mu.mtx"); */
   /*-----------------------------------------------------------------------* 
    * *thick restarted* Lanczos step 
    *-----------------------------------------------------------------------*/
-  if (do_print) 
+  if (do_print) {
     fprintf(fstats, " Cheb-LanTR, dim %d  cycle %d  \n",lanm, cycle);
-  /*   the min number of steps to be performed for each innter loop, 
-       must be >= 1 - if not, it means that the Krylov dim is too small */
+  }
+  /*--------------------- the min number of steps to be performed for 
+   *                      each innter loop, must be >= 1 - if not, 
+   *                      it means that the Krylov dim is too small */
   int min_inner_step = 5;
   /*-------------------- it = number of Lanczos steps */
   int it = 0;
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *T;
   Malloc(V, n*lanm1, double);
-  /*-------------------- T must be zeroed out initially*/
+  /*-------------------- for gen eig prob, storage for Z = B * V */
+  double *Z;
+  if (evsldata.ifGenEv) {
+    Malloc(Z, n*lanm1, double);
+  } else {
+    Z = V;
+  }
+  /*-------------------- T must be zeroed out initially */
   Calloc(T, lanm1*lanm1, double);
   /*-------------------- Lam, Y: the converged (locked) Ritz values/vectors 
                          res: related residual norms */
@@ -131,6 +146,11 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
   Malloc(Y, n*nev, double);
   Malloc(Lam, nev, double);
   Malloc(res, nev, double);
+  double *BY = NULL;
+  /*-------------------- for gen eig prob, storage for B*Y */
+  if (evsldata.ifGenEv) {
+    Malloc(BY, n*nev, double);
+  }
   /*-------------------- lock =  number of locked vectors */
   int lock = 0;
   /*-------------------- trlen = dim. of thick restart set */
@@ -138,25 +158,38 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
   /*-------------------- nmv counts  matvecs */
   int nmv = 0;
   /*-------------------- Ritz values and vectors of p(A) */
-  double *Rval, *Rvec, *resi;
+  double *Rval, *Rvec, *resi, *BRvec=NULL;
   Malloc(Rval, lanm, double);
   Malloc(resi, lanm, double);
   Malloc(Rvec, n*lanm, double);
+  if (evsldata.ifGenEv) {
+    Malloc(BRvec, n*lanm, double);
+  }
   /*-------------------- Eigen vectors of T */
   double *EvecT;
   Malloc(EvecT, lanm1*lanm1, double);
-  /*-------------------- s used by TR (spike of 1st block in Tm)*/
+  /*-------------------- s used by TR (the ``spike'' of 1st block in Tm)*/
   double *s;
   Malloc(s, lanm, double);
   /*-------------------- copy initial vector to V(:,1)   */
   DCOPY(&n, vinit, &one, V, &one);
-  /*--------------------  normalize it     */
-  double t = DDOT(&n, V, &one, V, &one);
-  t = 1.0 / sqrt(t);
+  /*-------------------- normalize it */
+  double t;
+  if (evsldata.ifGenEv) {
+    /* B norm */
+    matvec_B(V, Z);
+    t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
+    /* z = B*v */
+    DSCAL(&n, &t, Z, &one);
+  } else {
+    /* 2-norm */
+    t = 1.0 / DNRM2(&n, V, &one);
+  }
+  /* unit B-norm or 2-norm */
   DSCAL(&n, &t, V, &one);
   /*-------------------- alloc some work space */
   double *work;
-  int work_size = 3*n;
+  int work_size = evsldata.ifGenEv ? 4*n : 3*n;
   Malloc(work, work_size, double);
   /*-------------------- main (restarted Lan) outer loop */
   while (it < maxit) {
@@ -174,33 +207,42 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
       fprintf(fstats, "Krylov dim too small for this problem. Try a larger dim\n");
       exit(1);
     }
-    /*--------------------  thick restart special step */
+    /*-------------------- thick restart special step */
     if (trlen > 0) {
-      /*    a quick reference to V(:,k) */
+      /*------------------ a quick reference to V(:,k) */
       double *v = &V[k*n];
-      /*    next Lanczos vector */
-      double *w = v + n;
-      /*    w = p[(A-cc)/dd] * v     */
+      double *z = &Z[k*n];
+      /*------------------ next Lanczos vector */
+      double *vnew = v + n;
+      double *znew = z + n;
+      /*------------------ znew = p[(A-cc)/dd] * v */
       tm = cheblan_timer();
-      ChebAv(A, pol, v, w, work);
+      /*------------------ NOTE: z is used!!! [TODO: FIX ME] */
+      ChebAv(pol, z, znew, work);
       tmv += cheblan_timer() - tm;
       nmv += deg;
+      /*------------------ deflation */
       if (lock > 0) {
-        /* orthgonlize against locked vectors first, w = w - Y*Y'*w */
-        CGS_DGKS(n, lock, NGS_MAX, Y, w, NULL, work);
+        if (evsldata.ifGenEv) {
+          /* orthgonlize against locked vectors first, w = w - B*Y*Y'*w */
+          CGS_DGKS2(n, lock, NGS_MAX, BY, Y, znew, work);
+        } else {
+          /* orthgonlize against locked vectors first, w = w - Y*Y'*w */
+          CGS_DGKS(n, lock, NGS_MAX, Y, vnew, NULL, work);
+        }
       }
       /*-------------------- restart with 'trlen' Ritz values/vectors
-        T = diag(Rval(1:trlen)) */
+                             T = diag(Rval(1:trlen)) */
       for (i=0; i<trlen; i++) {
         T[i*lanm1+i] = Rval[i];
         wn += fabs(Rval[i]);
       }
-      /*   s(k) = V(:,k)'*w */
-      s[k] = DDOT(&n, v, &one, w, &one);
-      /*   w = w - V(:,1:k)*s(1:k) */
-      DGEMV(&cN, &n, &k1, &dmone, V, &n, s, &one, &done, w, &one);
+      /*--------------------- s(k) = V(:,k)'* znew */
+      s[k] = DDOT(&n, v, &one, znew, &one);
+      /*--------------------- znew = znew - Z(:,1:k)*s(1:k) */
+      DGEMV(&cN, &n, &k1, &dmone, Z, &n, s, &one, &done, znew, &one);
       /*-------------------- expand T matrix to k-by-k, arrow-head shape
-        T = [T, s(1:k-1)] then T = [T; s(1:k)'] */
+                             T = [T, s(1:k-1)] then T = [T; s(1:k)'] */
       for (i=0; i<k; i++) {
         T[trlen*lanm1+i] = s[i];
         T[i*lanm1+trlen] = s[i];
@@ -208,94 +250,149 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
       }
       T[trlen*lanm1+trlen] = s[k];
       wn += fabs(s[k]);
-      /*   beta = norm(w) */
-      beta = DDOT(&n, w, &one, w, &one);
-      beta = sqrt(beta);
-      /*   T(k+1,k) = beta;    then   T(k,k+1) = beta; */
+      if (evsldata.ifGenEv) {
+        /*-------------------- vnew = B \ znew */
+        evsldata.Bsol->func(znew, vnew, evsldata.Bsol->data);
+        /*-------------------- beta = (vnew, znew)^{1/2} */
+        beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+      } else {
+        /*-------------------- beta = norm(w) */
+        beta = DNRM2(&n, vnew, &one);
+      }
+      /*------------------- T(k+1,k) = beta; T(k,k+1) = beta; */
       T[k*lanm1+k] = beta;
       T[k1*lanm1+k] = beta;
       wn += 2.0 * beta;
       nwn += 3*k1;
       /*   beta ~ 0 */
       if (beta*nwn < orthTol*wn) {
-        rand_double(n, w);
-        beta = DDOT(&n, w, &one, w, &one);
-        beta = sqrt(beta);
+        rand_double(n, vnew);
+        if (evsldata.ifGenEv) {
+          /* orthgonlize against locked vectors first, v = v - Y*(B*Y)'*v */
+          CGS_DGKS2(n, lock, NGS_MAX, Y, BY, vnew, work);
+          /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
+          CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);          
+          matvec_B(vnew, znew);
+          beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+        } else {
+          /* orthgonlize against locked vectors first, w = w - Y*Y'*w */
+          CGS_DGKS(n, lock, NGS_MAX, Y, vnew, NULL, work);
+          /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+          /*   beta = norm(w) */
+          CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);          
+        }
       }
-      /*   w = w / beta */
+      /*------------------- w = w / beta */
       double ibeta = 1.0 / beta;
-      DSCAL(&n, &ibeta, w, &one);
-    } 
+      DSCAL(&n, &ibeta, vnew, &one);
+      if (evsldata.ifGenEv) {
+        DSCAL(&n, &ibeta, znew, &one);
+      }
+    } /* if (trlen > 0) */
     /*-------------------- Done with TR step. Rest of Lanczos step */
-    //-------------------- reset Ntest at each restart. 
+    /*-------------------- reset Ntest at each restart. */
     Ntest = max(20,nev-lock+10);
     last_count = 0;  last_jl = 0;
-    /*   regardless of trlen,  *(k+1)* is the current number of Lanczos 
-         vectors in V */
-    /*  pointer to the previous Lanczos vector */
-    double *vold = k > 0 ? V+(k-1)*n : NULL;
+    /*-------------------- regardless of trlen, *(k+1)* is the current 
+     *                     number of Lanczos vectors in V */
+    /*-------------------- pointer to the previous Lanczos vector */
+    double *zold = k > 0 ? Z+(k-1)*n : NULL;
     /*------------------------------------------------------*/
     /*------------------ Lanczos inner loop ----------------*/
     /*------------------------------------------------------*/
     while (k < lanm && it < maxit) {
       k++;
-      /*   a quick reference to V(:,k) */
+      /*---------------- a quick reference to V(:,k) */
       double *v = &V[(k-1)*n];
-      /*   next Lanczos vector */
-      double *w = v + n;
-      /*   w = p[(A-cc)/dd] * v */
+      double *z = &Z[(k-1)*n];
+      /*---------------- next Lanczos vector */
+      double *vnew = v + n;
+      double *znew = z + n;
+      /*------------------ znew = p[(A-cc)/dd] * v */
       tm = cheblan_timer();
-      ChebAv(A, pol, v, w, work);
+      /*------------------ NOTE: z is used!!! [TODO: FIX ME] */
+      ChebAv(pol, z, znew, work);
       tmv += cheblan_timer() - tm;
       nmv += deg;
       it++;
-      /*-------------------- orthgonalize vs locked ones first */
+      /*-------------------- deflation: orthgonalize vs locked ones first */
       if (lock > 0) {
-        /*--------------------   w = w - Y*Y'*w */
-        CGS_DGKS(n, lock, NGS_MAX, Y, w, NULL, work);
+        if (evsldata.ifGenEv) {
+          /* orthgonlize against locked vectors first, znew = znew - B*Y*Y'*znew */
+          CGS_DGKS2(n, lock, NGS_MAX, BY, Y, znew, work);
+        } else {
+          /*--------------------   vnew = vnew - Y*Y'*vnew */
+          CGS_DGKS(n, lock, NGS_MAX, Y, vnew, NULL, work);
+        }
       }
-      /*--------------------  w = w - beta*vold */
-      if (vold) {
+      /*-------------------- znew = znew - beta*zold */
+      if (zold) {
         double nbeta = -beta;
-        DAXPY(&n, &nbeta, vold, &one, w, &one);
+        DAXPY(&n, &nbeta, zold, &one, znew, &one);
       }
-      /*--------------------   alpha = w'*v */
-      double alpha = DDOT(&n, v, &one, w, &one);
-      /*--------------------   T(k,k) = alpha */
+      /*-------------------- alpha = znew'*v */
+      double alpha = DDOT(&n, v, &one, znew, &one);
+      /*-------------------- T(k,k) = alpha */
       T[(k-1)*lanm1+(k-1)] = alpha;
       wn += fabs(alpha);
-      /*--------------------   w = w - alpha*v */
+      /*-------------------- znew = znew - alpha*z */
       double nalpha = -alpha;
-      DAXPY(&n, &nalpha, v, &one, w, &one);
-      /*   FULL reortho to all previous Lan vectors */
-      /*   w = w - V(:,1:k)*V(:,1:k)'*w */
-      /*   beta = norm(w) */
-      CGS_DGKS(n, k, NGS_MAX, V, w, &beta, work);
-      /*--------------------  T(k,k+1) = T(k+1,k) = beta */
+      DAXPY(&n, &nalpha, z, &one, znew, &one);
+      /*-------------------- FULL reortho to all previous Lan vectors */
+      if (evsldata.ifGenEv) {
+        /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
+        CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);
+        /* vnew = B \ znew */
+        evsldata.Bsol->func(znew, vnew, evsldata.Bsol->data);
+        /*-------------------- beta = (vnew, znew)^{1/2} */
+        beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+      } else {
+        /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+        /*   beta = norm(w) */
+        CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
+      }
+      /*-------------------- T(k,k+1) = T(k+1,k) = beta */
       T[k*lanm1+(k-1)] = beta;
       T[(k-1)*lanm1+k] = beta;
       wn += 2.0 * beta;
       nwn += 3;
-      /*   vold = v */
-      vold = v;
-      /*-------------------- lucky breakdown  test */
+      /*-------------------- zold = z */
+      zold = z;
+      /*-------------------- lucky breakdown test */
       if (beta*nwn < orthTol*wn) {
         if (do_print) {
           fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", it, beta);
         }
-        rand_double(n, w);
-        beta = DNRM2(&n, w, &one);
-        //beta = DDOT(&n, w, &one, w, &one);  beta = sqrt(beta);
+        /* generate a new init vector*/
+        rand_double(n, vnew);
+        if (evsldata.ifGenEv) {
+          /* orthgonlize against locked vectors first, w = w - Y*(B*Y)'*w */
+          CGS_DGKS2(n, lock, NGS_MAX, Y, BY, vnew, work);
+          /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
+          CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);          
+          matvec_B(vnew, znew);
+          beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+        } else {
+          /* orthgonlize against locked vectors first, w = w - Y*Y'*w */
+          CGS_DGKS(n, lock, NGS_MAX, Y, vnew, NULL, work);
+          /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+          /*   beta = norm(w) */
+          CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);          
+        }
       }
-      /*--------------------   w = w / beta */
+      /*---------------------- vnew = vnew / beta */
       double ibeta = 1.0 / beta;
-      DSCAL(&n, &ibeta, w, &one);
-      /*-------------------- Restarting test */
+      DSCAL(&n, &ibeta, vnew, &one);
+      if (evsldata.ifGenEv) {
+        /*-------------------- znew = znew / beta */
+        DSCAL(&n, &ibeta, znew, &one);
+      }
+      /*---------------------- Restarting test */
       k1 = k-trlen-Ntest;
       if ( ((k1>=0) && (k1 % cycle == 0)) || (k == lanm) || it == maxit) {
-        /*--------------------   solve eigen-problem for T(1:k,1:k) */
-        /*                       vals in Rval, vecs in EvecT */
-        //printf("k %d, trlen %d, Ntest %d, its %d\n", k, trlen, Ntest, it);
+        /*-------------------- solve eigen-problem for T(1:k,1:k)
+                               vals in Rval, vecs in EvecT */
+        /* printf("k %d, trlen %d, Ntest %d, its %d\n", k, trlen, Ntest, it); */
         SymEigenSolver(k, T, lanm1, EvecT, lanm1, Rval);
         /*-------------------- max dim reached-break from the inner loop */
         if (k == lanm || it == maxit) {
@@ -303,12 +400,14 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
         }
         count = 0;
         /*-------------------- get residual norms and check acceptance of
-          Ritz values for p(A). */
-        //--------------------count e.vals in interval + those that convergeed
+                               Ritz values for p(A). */
+        /*-------------------- count e.vals in interval + those that convergeed */
         jl = 0;
         for (i=0; i<k; i++) {
           if (Rval[i]>= bar) {
             jl++;
+            /* for standard e.v prob, this is the 2-norm of A*y-lam*y 
+             * for gen e.v prob, this is the B-norm of B^{-1}*A*y-lam*y */
             r = fabs(beta*EvecT[i*lanm1+(k-1)]);
             resi[i] = r;
             if (r < tolP) {
@@ -316,13 +415,13 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
             }
           }
         }
-        //-------------------- testing (partial) convergence for restart
+        /*-------------------- testing (partial) convergence for restart */
         if (do_print) {
           fprintf(fstats,"  --> testing conv k %4d, it %4d, count %3d  jl %3d trlen %3d\n",
                   k, it, count, jl, trlen);
         }
         /*-------------------- enough good candidates 1st time -> break */
-        //if ((count*evFrac >= nev-lock) && (prtrlen==-1))
+        /* if ((count*evFrac >= nev-lock) && (prtrlen==-1)) */
         if (count*evFrac >= nev-lock) {
           break;
         }
@@ -332,9 +431,9 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
         }
         last_count = count;  
         last_jl = jl;
-      }   //                 if -- [Restarting test] block
+      } /* if [Restarting test] block */
       /*-------------------- end of inner (Lanczos) loop - Next: restart*/        
-    }     //                 while (k<mlan) loop
+    } /* while (k<mlan) loop */
 
     /*--------------------   TWO passes to select good candidates */
     /*                       Pass-1: based on if ``p(Ritzvalue) > bar'' */	    
@@ -342,7 +441,7 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
     for (i=0; i<k; i++) {
       /*--------------------   if this Ritz value is higher than ``bar'' */
       if (Rval[i] >= bar) {
-        // move good eigenvectors/vals to front
+        /* move good eigenvectors/vals to front */
         if (i != jl) {
           DCOPY(&k, EvecT+i*lanm1, &one, EvecT+jl*lanm1, &one);
           Rval[jl] = Rval[i];
@@ -351,54 +450,91 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
         jl++;
       }
     }
-    /*   Compute the Ritz vectors: Rvec(:,1:jl) = V(:,1:k) * EvecT(:,1:jl) */
-    DGEMM(&cN,&cN,&n,&jl,&k,&done,V,&n,EvecT,&lanm1,&dzero,Rvec,&n);
-    /*--------------------  Pass-2: check if Ritz vals of A are in [a,b] */
-    /*                      number of Ritz values in [a,b] */
+    /*---------------------- Compute the Ritz vectors: 
+     *                       Rvec(:,1:jl) = V(:,1:k) * EvecT(:,1:jl) */
+    DGEMM(&cN, &cN, &n, &jl, &k, &done, V, &n, EvecT, &lanm1, &dzero, Rvec, &n);
+    if (evsldata.ifGenEv) {
+      DGEMM(&cN, &cN, &n, &jl, &k, &done, Z, &n, EvecT, &lanm1, &dzero, BRvec, &n);
+    }
+    /*-------------------- Pass-2: check if Ritz vals of A are in [a,b] */
+    /*                     number of Ritz values in [a,b] */
     ll = 0;
-    /*-------------------- trlen = # Ritz vals that will  go to TR set */
+    /*-------------------- trlen = # Ritz vals that will go to TR set */
     prtrlen = trlen; 
     trlen = 0;
     for (i=0; i<jl; i++) {
       double *y = Rvec + i*n;
+      double *By = NULL;
+      if (evsldata.ifGenEv) {
+        By = BRvec + i*n;
+      }
       double *w = work;
-      /*--------------------   normalize just in case. */
-      t = DNRM2(&n, y, &one); 
-      // return  code 2 --> zero eigenvector found 
-      if (t == 0.0)
+      double *w2 = w + n;
+      /*------------------ normalize just in case. */
+      if (evsldata.ifGenEv) {
+        /* B-norm, w2 = B*y */
+        matvec_B(y, w2);
+        t = sqrt(DDOT(&n, y, &one, w2, &one));
+      } else {
+        /* 2-norm */
+        t = DNRM2(&n, y, &one);
+      }
+      /*-------------------- return code 2 --> zero eigenvector found */
+      if (t == 0.0) {
         return 2;
-      t = 1.0/t; 
+      }
+      /*-------------------- scal y */
+      t = 1.0 / t;
       DSCAL(&n, &t, y, &one);
-      /*--------------------   w = A*y */
-      //-- matvec
-      matvec_genev(A, y, w);
+      if (evsldata.ifGenEv) {
+        DSCAL(&n, &t, w2, &one);
+      }
+      /*-------------------- w = A*y */
+      matvec_A(y, w);
       nmv ++;
-      /*--------------------   Ritzval: t3 = (y'*w)/(y'*y) */
-      //-- Rayleigh quotient 
+      /*-------------------- Ritzval: t3 = (y'*w)/(y'*y) or
+       *                              t3 = (y'*w)/(y'*B*y) */
+      /*-------------------- Rayleigh quotient */
       double t3 = DDOT(&n, y, &one, w, &one);
       /*--------------------  if lambda (==t3) is in [a,b] */
       if (t3 >= aa - DBL_EPSILON && t3 <= bb + DBL_EPSILON) {
         ll++;
         /*-------------------- compute residual wrt A for this pair */
         double nt3 = -t3;
-        /*-------------------- w = w - t3*y */
-        DAXPY(&n, &nt3, y, &one, w, &one);
-        /*--------------------   res0 = norm(w) */
-        res0 = DNRM2(&n, w, &one); 
-        r = resi[i] ;
+        if (evsldata.ifGenEv) {
+          /* w = w - t3*w2, w2 = B*y,  (w=A*y-t3*B*y) */
+          DAXPY(&n, &nt3, w2, &one, w, &one);
+          /* res0 = B-norm of w */
+          matvec_B(w, w2);
+          res0 = sqrt(DDOT(&n, w, &one, w2, &one));
+        } else {
+          /*-------------------- w = w - t3*y, (w=A*y-t3*y) */
+          DAXPY(&n, &nt3, y, &one, w, &one);
+          /*-------------------- res0 = norm(w) */
+          res0 = DNRM2(&n, w, &one);
+        }
         /*-------------------- test res. of this Ritz pair against tol */
+        /* r = resi[i];*/
+        r = res0;
         if (r < tol) {
           //-------------------- check if need to realloc
           if (lock >= nev){
             nev += 1 + (int) (nev*nevInc);
-            if (do_print) 
+            if (do_print) {
               fprintf(fstats, "-- More eigval found: realloc space for %d evs\n", nev);
+            }
             Realloc(Y, nev*n, double);
+            if (evsldata.ifGenEv) {
+              Realloc(BY, nev*n, double);
+            }
             Realloc(Lam, nev, double);
             Realloc(res, nev, double);
           }
           /*--------------------   accept (t3, y) */
           DCOPY(&n, y, &one, Y+lock*n, &one);
+          if (evsldata.ifGenEv) {
+            DCOPY(&n, By, &one, BY+lock*n, &one);
+          }
           Lam[lock] = t3;
           res[lock] = res0;
           lock++;
@@ -406,6 +542,9 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
           /*-------------------- restart; move Ritz pair for TR to front */
           Rval[trlen] = Rval[i];
           DCOPY(&n, y, &one, V+trlen*n, &one);
+          if (evsldata.ifGenEv) {
+            DCOPY(&n, By, &one, Z+trlen*n, &one);
+          }
           /* special vector for TR that is the bottom row of 
            * eigenvectors of Tm */
           s[trlen] = beta * EvecT[i*lanm1+(k-1)];
@@ -422,9 +561,10 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
      *       this is a sort of confirmation that nothing is left. 
      *       another test may be added later to make it more rigorous.
      */       
-    if (do_print) 
+    if (do_print) {
       fprintf(fstats,"it %4d:  nMV %7d, k %3d, jl %3d, ll %3d, lock %3d, trlen %3d\n",
-          it, nmv, k, jl, ll, lock, trlen);
+              it, nmv, k, jl, ll, lock, trlen);
+    }
     /*-------------------- TESTs for stopping */
     if ((prtrlen == 0) && (ll==0)) {
       /*--------------------  It looks like: Nothing left to compute  */
@@ -443,21 +583,16 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
     }
     /*-------------------- prepare to restart.  First zero out all T */
     memset(T, 0, lanm1*lanm1*sizeof(double));
-    /* move starting vector vector V(:,k+1);  V(:,trlen+1) = V(:,k+1) */
+    /*-------------------- move starting vector vector V(:,k+1);  V(:,trlen+1) = V(:,k+1) */
     DCOPY(&n, V+k*n, &one, V+trlen*n, &one);
-  }      /* outer loop (it) */
+    if (evsldata.ifGenEv) {
+      DCOPY(&n, Z+k*n, &one, Z+trlen*n, &one);
+    }
+  } /* outer loop (it) */
 
   if (do_print) {
     fprintf(fstats, "     Number of evals found = %d\n", lock);
     fprintf(fstats, "--------------------------------------------------\n");
-  }
-
-  /* for generalized eigenvalue problem: L' \ Y */
-  if (evsldata.hasB) {
-    for (i=0; i<lock; i++) {
-      evsldata.LBT_solv(Y+i*n, work, evsldata.LB_func_data);
-      DCOPY(&n, work, &one, Y+i*n, &one);
-    }
   }
 
   /*-------------------- Done.  output : */
@@ -474,6 +609,11 @@ int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit,
   free(Rvec);
   free(s);
   free(work);
+  if (evsldata.ifGenEv) {
+    free(Z);
+    free(BY);
+    free(BRvec);
+  }
   /*-------------------- record stats */
   tall = cheblan_timer() - tall;
   /*-------------------- print stat */

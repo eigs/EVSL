@@ -1,0 +1,17 @@
+## SuiteSparse dir
+SUITESPARSE_DIR = /home/yuanzhe/Desktop/SuiteSparse
+LIB_METIS_5_1 = $(SUITESPARSE_DIR)/metis-5.1.0/build/Linux-x86_64/libmetis
+LIB_UMF = -L$(SUITESPARSE_DIR)/UMFPACK/Lib -lumfpack \
+          -L$(SUITESPARSE_DIR)/SuiteSparse_config -lsuitesparseconfig \
+          -L$(SUITESPARSE_DIR)/CHOLMOD/Lib -lcholmod \
+          -L$(SUITESPARSE_DIR)/AMD/Lib/ -lamd \
+	  -L$(SUITESPARSE_DIR)/COLAMD/Lib -lcolamd \
+          -L$(LIB_METIS_5_1) -lmetis \
+          -L$(SUITESPARSE_DIR)/CCOLAMD/Lib -lccolamd \
+	  -L$(SUITESPARSE_DIR)/CAMD/Lib -lcamd
+
+UMF_INC = -I$(SUITESPARSE_DIR)/UMFPACK/Include \
+	  -I$(SUITESPARSE_DIR)/AMD/Include \
+          -I$(SUITESPARSE_DIR)/SuiteSparse_config \
+          -I$(SUITESPARSE_DIR)/CHOLMOD/Include 
+

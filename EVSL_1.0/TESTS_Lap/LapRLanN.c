@@ -5,6 +5,7 @@
 #include <complex.h>
 #include "evsl.h"
 #include "io.h"
+#include "evsl_suitesparse.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -91,12 +92,16 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
   /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
   /*-------------------- define kpmdos parameters */
-  Mdeg = 100;
+  Mdeg = 300;
   nvec = 60;
-  mu = malloc((Mdeg+1)*sizeof(double));
+  /*-------------------- start EVSL */
+  EVSLStart();
+  /*-------------------- set the left-hand side matrix A */
+  SetAMatrix(&Acsr);
   //-------------------- call kpmdos 
+  mu = malloc((Mdeg+1)*sizeof(double));
   double t = cheblan_timer();
-  ierr = kpmdos(&Acsr, Mdeg, 1, nvec, xintv, mu, &ecount);
+  ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
   t = cheblan_timer() - t;
   if (ierr) {
     printf("kpmdos error %d\n", ierr);
@@ -148,14 +153,18 @@ int main(int argc, char *argv[]) {
     rat.beta = beta;
     // now determine rational filter
     find_ratf(intv, &rat);
-    // use the default solver function from UMFPACK
-    set_ratf_solfunc(&rat, &Acsr, NULL, NULL);
+    /*------------ use the solver function from UMFPACK */
+    void **solshiftdata = (void **) malloc(rat.num*sizeof(void *));
+    /*------------ factoring the shifted matrices and store the factors */
+    SetupASIGMABSolSuiteSparse(&Acsr, NULL, rat.num, rat.zk, solshiftdata);
+    /*------------ give the data to rat */
+    SetASigmaBSol(&rat, NULL, ASIGMABSolSuiteSparse, solshiftdata);
     //-------------------- approximate number of eigenvalues wanted
     nev = ev_int+2;
     //-------------------- maximal Lanczos iterations   
     max_its = max(4*nev,100);  max_its = min(max_its, n);
     //-------------------- RationalLanNr
-    ierr = RatLanNr(&Acsr, intv, &rat, max_its, tol, vinit, &nev2, &lam, 
+    ierr = RatLanNr(intv, max_its, tol, vinit, &rat, &nev2, &lam, 
                     &Y, &res, fstats);
     if (ierr) {
       printf("RatLanNr error %d\n", ierr);
@@ -201,6 +210,8 @@ int main(int argc, char *argv[]) {
     if (res) free(res);
     free(ind);
     free(lam_ex);
+    FreeASIGMABSolSuiteSparse(rat.num, solshiftdata);
+    free(solshiftdata);
     free_rat(&rat);
   } //for (sl=0; sl<nslices; sl++)
   //-------------------- free other allocated space 
@@ -210,7 +221,8 @@ int main(int argc, char *argv[]) {
   free_csr(&Acsr);
   free(mu);
   fclose(fstats);
-  
+  /*-------------------- finalize EVSL */
+  EVSLFinish();
   return 0;
 }
 

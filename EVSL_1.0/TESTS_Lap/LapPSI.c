@@ -6,6 +6,7 @@
 #include "io.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
 int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv);
 int lapgen(int nx, int ny, int nz, cooMat *Acoo);
 int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
@@ -88,16 +89,18 @@ int main(int argc, char *argv[]) {
   ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
   /* step 0: short Lanczos run to get bounds */
   fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
-
   /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
   /*-------------------- define kpmdos parameters */
-  Mdeg = 40;
-  nvec = 100;
-  mu = malloc((Mdeg+1)*sizeof(double));
-
+  Mdeg = 300;
+  nvec = 60;
+  /*-------------------- start EVSL */
+  EVSLStart();
+   /*-------------------- set the left-hand side matrix A */
+   SetAMatrix(&Acsr);         
   //-------------------- call kpmdos
+  mu = malloc((Mdeg+1)*sizeof(double));
   double t = cheblan_timer();
-  ierr = kpmdos(&Acsr, Mdeg, 1, nvec, xintv, mu, &ecount);
+  ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
   t = cheblan_timer() - t;
   if (ierr) {
     printf("kpmdos error %d\n", ierr);
@@ -166,7 +169,7 @@ int main(int argc, char *argv[]) {
     V0 = (double *) malloc(n*nev*sizeof(double));
     rand_double(n*nev, V0);
 
-    ierr = ChebSI(&Acsr, nev, xintv, max_its, tol, V0, &pol, &nevOut, 
+    ierr = ChebSI(nev, xintv, max_its, tol, V0, &pol, &nevOut, 
                   &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebSI error %d\n", ierr);
@@ -208,11 +211,6 @@ int main(int argc, char *argv[]) {
         break;
       } 
     }
-    /* print stat */
-    //fprintf(fstats, "------This slice consumed: \n");
-    //fprintf(fstats, "Matvecs :        %d\n", stats.nmv);
-    //fprintf(fstats, "total  time :    %.2f\n", stats.total_t);
-    //fprintf(fstats, "matvec time :    %.2f\n", stats.mv_t);
     //-------------------- free allocated space withing this scope
     if (lam)  free(lam);
     if (Y) free(Y);
@@ -228,7 +226,8 @@ int main(int argc, char *argv[]) {
   free_csr(&Acsr);
   free(mu);
   fclose(fstats);
-
+  /*-------------------- finalize EVSL */
+  EVSLFinish();
   return 0;
 }
 

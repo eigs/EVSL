@@ -12,7 +12,3 @@ RANLIB = ranlib
 
 ## libraries: blas, lapack
 LIBLAPACK = -llapack -lblas
-
-## SuiteSparse dir
-## if empty, evsl will be compiled without rational filters
-SUITESPARSE_DIR =

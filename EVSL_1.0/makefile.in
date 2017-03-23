@@ -10,9 +10,9 @@ LINK = gcc
 AR = ar rv
 RANLIB = ranlib
 
-## libraries: blas, lapack. 
-LIBLAPACK = -L/home/ruipeng/workspace/lapack-3.7.0 -llapack -lrefblas
+## libraries: blas, lapack
+LIBLAPACK = -L//home/yuanzhe/Desktop/lapack-3.5.0 -llapack -lrefblas
 
 ## SuiteSparse dir
 ## if empty, evsl will be compiled without rational filters
-SUITESPARSE_DIR = /home/ruipeng/workspace/SuiteSparse
+SUITESPARSE_DIR = /home/yuanzhe/Desktop/SuiteSparse
