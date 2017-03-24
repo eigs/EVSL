@@ -1,20 +1,19 @@
 # Compilers (only C is needed)
-CC = gcc
+CC = icc
+#CC = gcc
 OBJ_TIME = timing.o 
 ## 
 LIB0 = -lgfortran -lrt -lm 
 ## Linker 
-LINK = gcc
+#LINK = gcc
+LINK = icc
 
 # ar 
 AR = ar rv
 RANLIB = ranlib
 
 ## libraries: blas, lapack
+#LIBLAPACK = -L/scratch/syphax/Rational_GEIG/lapack-3.5.0 -llapack -lrefblas
+LIBLAPACK = -L/home/ruipeng/workspace/lapack-3.7.0 -llapack -lrefblas
 
-LIBLAPACK = -L/scratch/syphax/Rational_GEIG/lapack-3.5.0 -llapack -lrefblas
-
-## SuiteSparse dir
-## if empty, evsl will be compiled without rational filters
-SUITESPARSE_DIR = /scratch/syphax/Rational_GEIG/SuiteSparse-4.5.3/SuiteSparse
 
