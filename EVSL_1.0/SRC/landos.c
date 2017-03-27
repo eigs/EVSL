@@ -5,7 +5,8 @@
 #include "blaslapack.h"
 #include "struct.h"
 #include "internal_proto.h"
-#include "vector.h"
+#include "string.h" //for memset
+//#include "vector.h"
 
 
 /**----------------------------------------------------------------------
@@ -31,6 +32,7 @@
 int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos) {
     double *alp, *bet, nbet, nalp, t, *V;
     double *v;
+    int one=1, n;
     n = A->nrows;
     Malloc(alp, msteps, double);
     Malloc(bet, msteps, double);
@@ -90,7 +92,6 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
             t = 1.0 / bet[j];
             DSCAL(&n, &t, &V[(j+1)*n], &one);
         }
-        double bottomBeta = bet[msteps-1];
         double *S, *ritzVal;
         Malloc(S, msteps*msteps, double);
         Malloc(ritzVal, msteps, double);
@@ -105,17 +106,17 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
             int M = min(msteps, 30);
             double H = (lM - lm)/(M-1);
             double sigma = H / sqrt(8 * log(kappa));
-            sigma2 = 2 * simga^2;
+            sigma2 = 2 * sigma * sigma;
             //If gaussian small than tol ignore point.
             double tol = 1e-04;
             width = sigma * sqrt(-2 * log(tol));
-            linspace(lm,LM,1,xdos);//xdos = linspace(lm,lM, npts);
+            linspace(lm,lM,1,xdos);//xdos = linspace(lm,lM, npts);
             memset(y,0,npts*sizeof(y[0])); //y = zeros(size(xdos));
         }
 
         //Generate DOS from small gaussians centered at the ritz values
         for(int i = 0; i < msteps; i++) {
-            double t =  ritzVal(i);
+            double t =  ritzVal[i];
             //Todo ind = find(abs(xdos - t) < width);
             int* ind;
             int numind = 0;
