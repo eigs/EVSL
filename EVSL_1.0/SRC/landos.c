@@ -50,7 +50,8 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
     //Calloc(ydos, npts, double);
     Calloc(y, npts, double);
 
-    for(int m = 0; m <nvec; m++) {
+    for(int m = 0; m <nvec; m++) 
+    {
         rand_double(n, v); // w = randn(size(A,1),1);
 
         t = DDOT(&n, v, &one, v, &one);
@@ -94,10 +95,18 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
         }
         double *S, *ritzVal;
         Malloc(S, msteps*msteps, double);
+        //Note that S is a matrix compressed into a single array.
         Malloc(ritzVal, msteps, double);
         //-------------------- diagonalize tridiagonal matrix    
         SymmTridEig(ritzVal, S, msteps, alp, bet);
         //theta = ritzVal = sorted eigenvalues
+        double *gamma2;
+        Malloc(gamma2, msteps, double);
+        for(int i = 0; i < msteps; i++) {
+            gamma2[i] = S[i] * S[i];
+        }
+        //Gamme^2 is now elementwise square of smallest eginvector
+
 
         if(m == 0) {  //On first iteration, set sigma2, width, xdos and y for future loops
             double lm = ritzVal[0]; //lm = theta(1)
@@ -134,20 +143,23 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
             }
             //ind now is = find(abs(xdos - t) < width);
 
-            //for(int j = 0; j < numind; j++) {
-            //y[ind] = y[ind] + gamma2[i] * exp((-(xdos[ind] - t) * (xdos[ind] - t)) / sigma2);
+            //This replaces y(ind) = y(ind) +
+            //gamma2(i)*exp(-(xdos(ind)-t).^2/sigma2);
+            for(int j = 0; j < numind; j++) {
+                y[ind[j]] = y[ind[j]] + gamma2[i] * exp(-((xdos[ind[j]] - t) * (xdos[ind[j]] - t)) / sigma2);
+            }
 
-            //}
-        }
-
-        double sum = 0;
-        for(int i = 0; i < npts; i++) {
-            sum += ydos[i];
-        }
-        for(int i = 0; i < npts; i++) {
-            ydos[i] /= (sum * (xdos[1] - xdos[0]));
         }
     }
-    //TODO ydos = y(:);
-    //TODO ydos = ydos / (sum(ydos)*(xdos(2)-xdos(1)));
+
+    double sum = 0;
+    memcpy(&ydos, &y, sizeof(y[0]) * npts);
+
+    for(int i = 0; i < npts; i++) {
+        sum += ydos[i];
+    }
+    for(int i = 0; i < npts; i++) {
+        ydos[i] /= (sum * (xdos[1] - xdos[0]));
+    }
+    return 0;
 }
