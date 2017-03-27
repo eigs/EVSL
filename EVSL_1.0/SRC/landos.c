@@ -30,34 +30,35 @@
  *----------------------------------------------------------------------*/   
 
 int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos) {
-    double *alp, *bet, nbet, nalp, t, *V;
-    double *v;
+    //Allocations from lanbounds.c
+    double *alp, *bet, nbet, nalp, t, *V; 
     int one=1, n;
-    n = A->nrows;
-    Malloc(alp, msteps, double);
+
+    n = A->nrows; 
+    Malloc(alp, msteps, double); 
     Malloc(bet, msteps, double);
     Malloc(V, (msteps+1)*n, double);
 
 
     //Variables that persist through iterations
+    double *v; //Vector for current iteration
     Malloc(v, n, double);
-    double sigma2;
-    double width;
-    double* y;
-    //double* ydos;
-    //double* xdos;
-    //Calloc(xdos, npts, double);
-    //Calloc(ydos, npts, double);
+    double sigma2; //A dos curve parameter
+    double width; //A dos curve parameter
+    double* y; //Stores y values
     Calloc(y, npts, double);
 
     for(int m = 0; m <nvec; m++) 
     {
         rand_double(n, v); // w = randn(size(A,1),1);
+        //---------------------------------------
+        // Start of bulk of lanbound.c code
+        //---------------------------------------
 
         t = DDOT(&n, v, &one, v, &one);
         t = 1.0 / sqrt(t); //t is now the number required to normalize vector.
         DSCAL(&n, &t, v, &one);
-        DCOPY(&n, v, &one, V, &one); //v = w/norm(w);
+        DCOPY(&n, v, &one, V, &one); //v = w/norm(w); Might be able to use DNRM2 instead.
         double wn = 0.0; 
         /*-------------------- main Lanczos loop */
         int j;
@@ -97,21 +98,29 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
         Malloc(S, msteps*msteps, double);
         //Note that S is a matrix compressed into a single array.
         Malloc(ritzVal, msteps, double);
-        //-------------------- diagonalize tridiagonal matrix    
+        //-------------------- diagonalize tridiagonal matrix
         SymmTridEig(ritzVal, S, msteps, alp, bet);
-        //theta = ritzVal = sorted eigenvalues
+        //---------------------------------------
+        // End of bulk of lanbound.c code
+        //---------------------------------------
+
+
+
+        //theta = ritzVal = sorted eigenvalues IN ASCENDING ORDER
         double *gamma2;
         Malloc(gamma2, msteps, double);
         for(int i = 0; i < msteps; i++) {
-            gamma2[i] = S[i] * S[i];
+            gamma2[i] = S[i] * S[i]; 
         }
-        //Gamme^2 is now elementwise square of smallest eginvector
+        //Gamma^2 is now elementwise square of smallest eginvector
 
 
+        //dos curve parameters
         if(m == 0) {  //On first iteration, set sigma2, width, xdos and y for future loops
             double lm = ritzVal[0]; //lm = theta(1)
             double lM = ritzVal[msteps-1]; //lM = theta(k)
-            double kappa = 1.25; 
+            double kappa = 1.25;
+
             int M = min(msteps, 30);
             double H = (lM - lm)/(M-1);
             double sigma = H / sqrt(8 * log(kappa));
@@ -119,16 +128,17 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
             //If gaussian small than tol ignore point.
             double tol = 1e-04;
             width = sigma * sqrt(-2 * log(tol));
-            linspace(lm,lM,1,xdos);//xdos = linspace(lm,lM, npts);
+            linspace(lm,lM,one,xdos);//xdos = linspace(lm,lM, npts);
             memset(y,0,npts*sizeof(y[0])); //y = zeros(size(xdos));
         }
 
         //Generate DOS from small gaussians centered at the ritz values
-        for(int i = 0; i < msteps; i++) {
+        for(int i = 0; i < msteps; i++) { //As msteps is width of ritzVal -> we get msteps eigenvectors
             double t =  ritzVal[i];
             //Todo ind = find(abs(xdos - t) < width);
             int* ind;
             int numind = 0;
+
             for(int j = 0; j < npts; j++) {  //Calculate number of elements matching pattern
                 if(abs(xdos[j] - t) < width) {
                     numind++;
@@ -148,8 +158,12 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
             for(int j = 0; j < numind; j++) {
                 y[ind[j]] = y[ind[j]] + gamma2[i] * exp(-((xdos[ind[j]] - t) * (xdos[ind[j]] - t)) / sigma2);
             }
+            free(ind);
 
         }
+        free(gamma2);
+        free(S);
+        free(ritzVal);
     }
 
     double sum = 0;
@@ -161,5 +175,14 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
     for(int i = 0; i < npts; i++) {
         ydos[i] /= (sum * (xdos[1] - xdos[0]));
     }
+  free(alp);
+  free(bet);
+  free(V);
+  //free(S);
+  //free(ritzVal);
+
+  free(v);
+  free(y);
+
     return 0;
 }
