@@ -103,4 +103,8 @@ void sort_double(int n, double *v, int *ind);
 //
 void linspace(double a, double b, int num, double *arr);
 
+/*- - - - - - - - - - landos.c */
+//Computes the density of states (DOS, or spectral density)
+int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos);
+
 #endif

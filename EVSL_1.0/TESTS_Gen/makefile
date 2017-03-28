@@ -34,7 +34,8 @@ OBJS_PR_OMP = GenPLanR_omp.o io.o mmio.o
 OBJS_PN = GenPLanN.o io.o mmio.o
 # Object files for subspace iteration
 OBJS_PSI = GenPSI.o io.o mmio.o 
-
+# Object files for LanDos
+OBJS_LANDOS = LanDos.o io.o mmio.o 
 LIB = -L.. -llancheb 
 
 ALLEXE = GenPLanR.ex GenPLanN.ex GenPSI.ex GenPLanR_omp.ex
@@ -48,7 +49,7 @@ endif
 LIB_EXT += $(LIBLAPACK) $(LIB0)
 
 # Rules
-default: GenPLanN.ex 
+default: GenPLanN.ex  LanDos.ex
 
 %.o : %.c
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
@@ -74,6 +75,9 @@ GenRLanR.ex: $(OBJS_RR)
 
 GenRLanN.ex: $(OBJS_RN) 
 	$(LINK) -o GenRLanN.ex $(OBJS_RN) $(LIB) $(LIB_EXT)
+
+LanDos.ex: $(OBJS_LANDOS) 
+	$(LINK) -o LanDos.ex $(OBJS_LANDOS) $(LIB) $(LIB_EXT)
 
 all: $(ALLEXE)
 
