@@ -11,6 +11,8 @@
 
 /**----------------------------------------------------------------------
  *
+ *    Computes the density of states (DOS, or spectral density) 
+ *
  *    @param[in] *A    matrix A
  *    @param[in] nvec]  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
@@ -128,7 +130,7 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
             //If gaussian small than tol ignore point.
             double tol = 1e-04;
             width = sigma * sqrt(-2 * log(tol));
-            linspace(lm,lM,one,xdos);//xdos = linspace(lm,lM, npts);
+            linspace(lm,lM,npts,xdos);//xdos = linspace(lm,lM, npts);
             memset(y,0,npts*sizeof(y[0])); //y = zeros(size(xdos));
         }
 
@@ -174,6 +176,14 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
     }
     for(int i = 0; i < npts; i++) {
         ydos[i] /= (sum * (xdos[1] - xdos[0]));
+    }
+
+    for(int i = 0; i < npts; i++) {
+        printf("%f\t", xdos[i]);
+    }
+    printf("\n");
+    for(int i = 0; i < npts; i++) {
+        printf("%f\t", ydos[i]);
     }
   free(alp);
   free(bet);
