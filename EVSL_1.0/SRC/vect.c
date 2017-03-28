@@ -12,6 +12,34 @@ void rand_double(int n, double *v) {
   }
 }
 
+/*
+ * Generates a normally distributed random vector of length n
+ *
+ * Uses the Box-Muller transformation
+ * @param[out] v Vector to be populated
+ * @param[in] n Number of elements to generate (should be the length of v)
+ * */
+void randn_double(int n, double *v) {
+    const double two_pi = 2.0 * 3.1415926535;
+        for(int i = 0; i < n; i++) {
+            static double Z0;
+            static double Z1;
+            static int regen = 0;//A boolean
+            regen = !regen;
+            if(!regen)
+            {
+                v[i] = Z1;
+            }
+
+            double U1 = rand() * (1.0 / RAND_MAX);
+            double U2 = rand() * (1.0 / RAND_MAX);
+
+            Z0 = sqrt(-2.0 * log(U1)) * cos(two_pi  * U2);
+            Z1 = sqrt(-2.0 * log(U1)) * sin(two_pi  * U2);
+            v[i] = Z0;
+            }
+}
+
 void vecset(int n, double t, double *v) {
   int i;
   for (i=0; i<n; i++) 

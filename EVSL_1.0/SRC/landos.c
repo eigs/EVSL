@@ -52,7 +52,7 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
 
     for(int m = 0; m <nvec; m++) 
     {
-        rand_double(n, v); // w = randn(size(A,1),1);
+        randn_double(n, v); // w = randn(size(A,1),1);
         //---------------------------------------
         // Start of bulk of lanbound.c code
         //---------------------------------------
