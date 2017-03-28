@@ -169,8 +169,7 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
     }
 
     double sum = 0;
-    memcpy(&ydos, &y, sizeof(y[0]) * npts);
-
+    memcpy(ydos, y, sizeof(double) * npts);
     for(int i = 0; i < npts; i++) {
         sum += ydos[i];
     }
@@ -178,14 +177,15 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
         ydos[i] /= (sum * (xdos[1] - xdos[0]));
     }
 
-  free(alp);
-  free(bet);
-  free(V);
-  //free(S);
-  //free(ritzVal);
 
-  free(v);
-  free(y);
+    free(alp);
+    free(bet);
+    free(V);
+    //free(S);
+    //free(ritzVal);
+
+    free(v);
+    free(y);
 
     return 0;
 }

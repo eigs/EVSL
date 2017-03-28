@@ -50,21 +50,25 @@ int main () {
     readDiagMat("testmat.dat", &cooMat);
     cooMat_to_csrMat(0, &cooMat, &csrMat);
     free_coo(&cooMat);
-    const int msteps = 500;
-    const int npts = 5;
+    const int msteps = 50;
+    const int npts = 100;
     const int nvec = 500;
-    double* xdos = (double*) malloc(sizeof(double) * npts);
-    double* ydos = (double*) malloc(sizeof(double) * npts);
+
+    double* xdos = (double*) calloc(npts,sizeof(double));
+    double* ydos = (double*) calloc(npts,sizeof(double));
+
     
 
     int ret = LanDos(&csrMat, nvec, msteps, npts, xdos, ydos);
 
+    printf("xdos:\n");
     for(int i = 0; i < npts; i++) {
-        printf("%f\t", xdos[i]);
+        printf("%lf\t", xdos[i]);
     }
     printf("\n");
+    printf("ydos:\n");
     for(int i = 0; i < npts; i++) {
-        printf("%f\t", ydos[i]);
+        printf("%lf\t", ydos[i]);
     }
     free(xdos);
     free(ydos);
