@@ -41,6 +41,7 @@ int readDiagMat(const char* filename, cooMat* mat) {
         mat->jc[i]=i;
         fscanf(ifp, "%lf", &mat->vv[i]);
     }
+    fclose(ifp);
     return 0;
 }
 int main () { 
@@ -57,6 +58,20 @@ int main () {
     
 
     int ret = LanDos(&csrMat, nvec, msteps, npts, xdos, ydos);
+
+    //for(int i = 0; i < npts; i++) {
+    //    printf("%f\t", xdos[i]);
+    //}
+    //printf("\n");
+    //for(int i = 0; i < npts; i++) {
+    //    printf("%f\t", ydos[i]);
+    //}
+    free(xdos);
+    free(ydos);
+    free_csr(&csrMat);
+
+
+
 
   return 0;
 }

@@ -178,13 +178,6 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
         ydos[i] /= (sum * (xdos[1] - xdos[0]));
     }
 
-    for(int i = 0; i < npts; i++) {
-        printf("%f\t", xdos[i]);
-    }
-    printf("\n");
-    for(int i = 0; i < npts; i++) {
-        printf("%f\t", ydos[i]);
-    }
   free(alp);
   free(bet);
   free(V);
