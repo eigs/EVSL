@@ -34,7 +34,8 @@
 int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos) {
     //Allocations from lanbounds.c
     double *alp, *bet, nbet, nalp, t, *V; 
-    int one=1, n;
+    int one=1;
+    int n;
 
     n = A->nrows; 
     Malloc(alp, msteps, double); 
@@ -125,16 +126,16 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
 
         //dos curve parameters
         if(m == 0) {  //On first iteration, set sigma2, width, xdos and y for future loops
-            double lm = ritzVal[0]; //lm = theta(1)
-            double lM = ritzVal[msteps-1]; //lM = theta(k)
-            double kappa = 1.25;
+            const double lm = ritzVal[0]; //lm = theta(1)
+            const double lM = ritzVal[msteps-1]; //lM = theta(k)
+            const double kappa = 1.25;
 
-            int M = min(msteps, 30);
-            double H = (lM - lm)/(M-1);
-            double sigma = H / sqrt(8 * log(kappa));
+            const int M = min(msteps, 30);
+            const double H = (lM - lm)/(M-1);
+            const double sigma = H / sqrt(8 * log(kappa));
             sigma2 = 2 * sigma * sigma;
             //If gaussian small than tol ignore point.
-            double tol = 1e-04;
+            const double tol = 1e-04;
             width = sigma * sqrt(-2 * log(tol));
             linspace(lm,lM,npts,xdos);//xdos = linspace(lm,lM, npts);
             memset(y,0,npts*sizeof(y[0])); //y = zeros(size(xdos));
@@ -142,8 +143,7 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
 
         //Generate DOS from small gaussians centered at the ritz values
         for(int i = 0; i < msteps; i++) { //As msteps is width of ritzVal -> we get msteps eigenvectors
-            double t =  ritzVal[i];
-            //Todo ind = find(abs(xdos - t) < width);
+            const double t =  ritzVal[i];
             int* ind;
             int numind = 0;
 
