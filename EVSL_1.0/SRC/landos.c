@@ -14,7 +14,7 @@
  *    Computes the density of states (DOS, or spectral density) 
  *
  *    @param[in] *A    matrix A
- *    @param[in] nvec]  number of sample vectors used
+ *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] npts number of sample points used ofr the curve
  *
@@ -24,10 +24,6 @@
  *    @param[out] ydos Length-npts long vector, y-coordinate points for
  *    plotting the DOS. Must be preallocated.
  *
- *
- *    @warning
- *    WARNING COMPLETELY NONFUNCTIONAL AT THIS POINt
- *    CURRENTLY BEING CONSTRUCTED
  *
  *----------------------------------------------------------------------*/   
 
