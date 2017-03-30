@@ -14,7 +14,7 @@ INCLUDES = -I../INC -ISRC
 # Object files
 OBJS = 	vect.o cheblanTr.o cheblanNr.o ratlanTr.o ratlanNr.o ratfilter.o \
 	misc_la.o lanbounds.o chebpoly.o spslice.o dumps.o \
-	chebsi.o spmat.o evsl.o
+	chebsi.o spmat.o evsl.o landos.o
 
 ifneq ($(SUITESPARSE_DIR),)
   OBJS += suitesparse.o

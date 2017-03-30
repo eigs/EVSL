@@ -96,12 +96,16 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
             t = 1.0 / bet[j];
             DSCAL(&n, &t, &V[(j+1)*n], &one);
         }
+
         double *S, *ritzVal;
         Malloc(S, msteps*msteps, double);
         //Note that S is a matrix compressed into a single array.
         Malloc(ritzVal, msteps, double);
         //-------------------- diagonalize tridiagonal matrix
         SymmTridEig(ritzVal, S, msteps, alp, bet);
+        //S = -eigvec
+        //ritzVal = diags of D
+
         //---------------------------------------
         // End of bulk of lanbound.c code
         //---------------------------------------
@@ -112,8 +116,10 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos
         double *gamma2;
         Malloc(gamma2, msteps, double);
         for(int i = 0; i < msteps; i++) {
-            gamma2[i] = S[i] * S[i]; 
+            gamma2[i] = S[i*msteps] * S[i*msteps];  //Note the difference due to row/column major order
         }
+        printf("\n");
+
         //Gamma^2 is now elementwise square of smallest eginvector
 
 
