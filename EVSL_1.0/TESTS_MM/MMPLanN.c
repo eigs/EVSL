@@ -192,6 +192,7 @@ int main () {
       pol.thresh_ext = 0.15;   // [higher deg] polynomial
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);
+      //save_vec(pol.deg+1, pol.mu, "OUT/mu.txt");
       fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
       //-------------------- Call ChebLanNr        
       ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nevOut, &lam, &Y, 

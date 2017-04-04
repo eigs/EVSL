@@ -16,7 +16,9 @@ evslData evsldata;
 int EVSLStart() {
   evsldata.ifGenEv = 0;
   evsldata.A = NULL;
+  evsldata.ifOwnA = 0;
   evsldata.B = NULL;
+  evsldata.ifOwnB = 0;
   evsldata.Amv = NULL;
   evsldata.Bmv = NULL;
   evsldata.Bsol = NULL;
@@ -29,6 +31,14 @@ int EVSLStart() {
  *
  * */
 int EVSLFinish() {
+  if (evsldata.ifOwnA) {
+    free_csr(evsldata.A);
+    free(evsldata.A);
+  }
+  if (evsldata.ifOwnB) {
+    free_csr(evsldata.B);
+    free(evsldata.B);
+  }
   if (evsldata.Amv) {
     free(evsldata.Amv);
   }

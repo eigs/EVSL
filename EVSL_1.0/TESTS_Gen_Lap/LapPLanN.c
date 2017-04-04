@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   vinit = (double *) malloc(n*sizeof(double));
   rand_double(n, vinit);
   ierr = LanBounds(60, vinit, &lmin, &lmax);
-  fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n",
+  fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n",
           lmin, lmax);
   /*-------------------- interval and eig bounds */
   xintv[0] = a;

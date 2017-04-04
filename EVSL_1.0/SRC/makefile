@@ -10,12 +10,13 @@ INCLUDES = -I../INC -ISRC
 # Object files
 OBJS = 	evsl.o dumps.o cheblanNr.o cheblanTr.o chebpoly.o lanbounds.o misc_la.o \
 	ratfilter.o ratlanNr.o ratlanTr.o spmat.o spslice.o vect.o chebsi.o     \
+	../FORTRAN/evsl_f90.o
 
 ### OBJ_TIME = defined in makefile.in 
 ##mactime.o  
 ##timing.o
 
-LIB = ../liblancheb.a
+LIB = ../libevsl.a
 
 # Rules
 default: $(LIB)

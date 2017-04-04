@@ -358,7 +358,11 @@ int find_pol(double *intv, polparams *pol) {
   int max_deg=pol->max_deg, min_deg=pol->min_deg, damping=pol->damping;
   double tha=0.0, thb=0.0, thc=0.0;
   double gam,  thresh;
-  int m, j, nitv,  mbest; 
+  int m, j, nitv, mbest;
+  //-------------------- intervals related
+  if (check_intv(intv, stdout) < 0) {
+    return -1;
+  }
   /*-------------------- A few parameters to be set or reset */
   Malloc(mu, max_deg+1, double);
   pol->mu = mu;
@@ -367,11 +371,6 @@ int find_pol(double *intv, polparams *pol) {
   /*-------------------- A parameter for interval check */
   // double IntTol = 2*DBL_EPSILON; // If b*IntTol>1 accept [a b] extreme
   double IntTol = 0.0005;
-  //-------------------- intervals related
-  if (check_intv(intv, stdout) < 0) {
-    return -1;
-  }
-
   double aa, bb;
   aa = max(intv[0], intv[2]);  bb = min(intv[1], intv[3]);
   if (intv[0] < intv[2] || intv[1] > intv[3]) {
@@ -427,6 +426,7 @@ int find_pol(double *intv, polparams *pol) {
     /*-------------------- give a starting degree - around 1/(half gap) */
     min_deg = 2 + (int) 0.5/(bb-aa);
     // min_deg = max(min_deg,2);
+    // min_deg = 2;
     thresh = pol->thresh_int;
     //-------------------- this is a short-circuit for the 
     //                     case of a forced degree 
@@ -454,6 +454,7 @@ int find_pol(double *intv, polparams *pol) {
       chebxPltd(m, mu, nitv, itv, vals);
       //-------------------- test for acceptance of this pol. 
       if (vals[0] <= t*thresh && vals[1] <= t*thresh) {
+        //printf("mindeg=%d, m = %d, val %e %e, t %e, thresh %e\n", min_deg, m, vals[0], vals[1], t, thresh);
         m++;
         break;
       }

@@ -13,7 +13,7 @@ OBJS_PN = LapPLanN.o io.o lapl.o ../EXTERNAL/evsl_suitesparse.o
 OBJS_RN = LapRLanN.o io.o lapl.o ../EXTERNAL/evsl_suitesparse.o
 OBJS_RR = LapRLanR.o io.o lapl.o ../EXTERNAL/evsl_suitesparse.o
 
-LIB = -L../ -llancheb
+LIB = -L../ -levsl
 
 ALLEXE += LapPLanR.ex LapPLanN.ex LapRLanN.ex LapRLanR.ex
 LIB_EXT = $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)

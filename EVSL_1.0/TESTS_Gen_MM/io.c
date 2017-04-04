@@ -25,7 +25,7 @@ int get_matrix_info( FILE *fmat, io_t *pio ){
   int count, n_intv;
   double a, b;
   /*-------------------- READ LINE */
-  if (6 !=  fscanf(fmat,"%s %s %s %s %s %s %s %s\n",path1, path2, MatNam1, MatNam2, Fmt, ca, cb, cn_intv) ) {
+  if (8 !=  fscanf(fmat,"%s %s %s %s %s %s %s %s\n",path1, path2, MatNam1, MatNam2, Fmt, ca, cb, cn_intv) ) {
     printf("warning: fscanf may not be successfully done\n");
   }
   /*-------------------- file pathname for stiffness and mass matrices*/

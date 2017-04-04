@@ -10,10 +10,11 @@ INCLUDES = -I../INC -I../EXTERNAL $(UMF_INC)
 # Object files
 OBJS_RN = MMRLanN.o io.o mmio.o ../EXTERNAL/evsl_suitesparse.o
 OBJS_RR = MMRLanR.o io.o mmio.o ../EXTERNAL/evsl_suitesparse.o
+OBJS_PR = MMPLanR.o io.o mmio.o ../EXTERNAL/evsl_suitesparse.o
 
-LIB = -L../ -llancheb
+LIB = -L../ -levsl
 
-ALLEXE += MMRLanR.ex MMRLanN.ex 
+ALLEXE += MMRLanR.ex MMRLanN.ex MMPLanR.ex
 LIB_EXT = $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)
 
 # Rules
@@ -30,6 +31,8 @@ MMRLanN.ex: $(OBJS_RN)
 MMRLanR.ex: $(OBJS_RR)
 	$(LINK) -o MMRLanR.ex $(OBJS_RR) $(LIB) $(LIB_EXT)
 
+MMPLanR.ex: $(OBJS_PR)
+	$(LINK) -o MMPLanR.ex $(OBJS_PR) $(LIB) $(LIB_EXT)
 
 all: $(ALLEXE)
 

@@ -15,7 +15,7 @@ OBJS_RR  = LapRLanR.o io.o lapl.o ../EXTERNAL/evsl_suitesparse.o
 OBJS_PSI = LapPSI.o io.o lapl.o
 OBJS_PN_MatFree = LapPLanN_MatFree.o io.o lapl.o
 
-LIB = -L../ -llancheb 
+LIB = -L../ -levsl
 
 ALLEXE = LapPLanR.ex LapPLanN.ex LapPLanN_MatFree.ex LapRLanN.ex \
 	 LapRLanR.ex LapPSI.ex

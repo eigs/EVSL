@@ -1,3 +1,7 @@
+Apr 4, 2017. RL
+add some Fortran 90 interface [works well with Jia's Fortran code]
+minor bug fixes
+
 Mar 22, 2017. YX
 Change kmpdos for generalized eigenvalue problems
 Modify the lucky breakdown in Lanczos algorithms

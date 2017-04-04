@@ -417,16 +417,20 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         }
         /*-------------------- testing (partial) convergence for restart */
         if (do_print) {
-          fprintf(fstats,"  --> testing conv k %4d, it %4d, count %3d  jl %3d trlen %3d\n",
+          fprintf(fstats,"  --> inner: testing conv k %4d, it %4d, count %3d  jl %3d trlen %3d\n",
                   k, it, count, jl, trlen);
         }
         /*-------------------- enough good candidates 1st time -> break */
         /* if ((count*evFrac >= nev-lock) && (prtrlen==-1)) */
+        /*
         if (count*evFrac >= nev-lock) {
+          fprintf(fstats, "count * evFrac >= nev-lock: %d * %d >= %d - %d\n", count, evFrac, nev, lock);
           break;
         }
+        */
         /*-------------------- count & jl unchanged since last test --> break */
         if ((count<=last_count) && (jl<=last_jl)) {
+          fprintf(fstats, "count <= last_count && jl <= last_jl: %d <= %d && %d <= %d\n", count, last_count, jl, last_jl);
           break;
         }
         last_count = count;  

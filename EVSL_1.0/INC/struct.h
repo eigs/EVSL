@@ -153,7 +153,9 @@ typedef struct _LTSolType {
 typedef struct _evsldata {
   int ifGenEv;              /**< if it is a generalized eigenvalue problem */
   csrMat *A;                /**< pointer to the A matrix */
+  int ifOwnA;               /**< if evsl owns A */
   csrMat *B;                /**< pointer to the B matrix */
+  int ifOwnB;               /**< if evsl owns B */
   externalMatvec *Amv;      /**< external matvec routine and the associated data for A */
   externalMatvec *Bmv;      /**< external matvec routine and the associated data for B */
   BSolType *Bsol;           /**< external function and data for B solve */
