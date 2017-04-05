@@ -118,6 +118,10 @@ void evsl_cheblantr_f90_(int *mlan, int *nev, double *xintv, int *max_its,
   ierr = ChebLanTr(*mlan, *nev, xintv, *max_its, *tol, vinit,
                    pol, &nev2, &lam, &Y, &res, fstats);
 
+  if (ierr) {
+    printf("ChebLanTr error %d\n", ierr);
+  }
+
   free(vinit);
   if (res) {
     free(res);
@@ -146,6 +150,10 @@ void evsl_cheblannr_f90_(double *xintv, int *max_its, double *tol, size_t *polf9
 
   ierr = ChebLanNr(xintv, *max_its, *tol, vinit,
                    pol, &nev2, &lam, &Y, &res, fstats);
+
+  if (ierr) {
+    printf("ChebLanNr error %d\n", ierr);
+  }
 
   free(vinit);
   if (res) {

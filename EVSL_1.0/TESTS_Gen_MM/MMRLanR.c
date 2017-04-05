@@ -20,7 +20,7 @@ int main() {
    * read in matrix format -- using
    * Thick-Restarted Lanczos with rational filtering.
    *-------------------------------------------------------------*/
-  int n=0, nnz =0, i, j, npts, nslices, nvec, Mdeg, nev, 
+  int n=0, i, j, npts, nslices, nvec, Mdeg, nev, 
       mlan, max_its, ev_int, sl, ierr, totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
@@ -92,11 +92,11 @@ int main() {
     counts = malloc(nslices*sizeof(int));             
     sli = malloc( (nslices+1)*sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
-    if (io.Fmt > HB){
+    if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo); 
       if (ierr == 0) {
         fprintf(fstats,"matrix read successfully\n");
-        nnz = Acoo.nnz; 
+        //nnz = Acoo.nnz; 
         n = Acoo.nrows;
         //printf("size of A is %d\n", n);
         //printf("nnz of  A is %d\n", nnz);
@@ -108,8 +108,11 @@ int main() {
       ierr = read_coo_MM(io.Fname2, 1, 0, &Bcoo); 
       if (ierr == 0) {
         fprintf(fstats,"matrix read successfully\n");
-        nnz = Bcoo.nnz; 
-        n = Bcoo.nrows;
+        if (Bcoo.nrows != n) {
+          return 1;
+        }
+        //nnz = Bcoo.nnz; 
+        //n = Bcoo.nrows;
         //printf("size of B is %d\n", n);
         //printf("nnz of  B is %d\n", nnz);
       }

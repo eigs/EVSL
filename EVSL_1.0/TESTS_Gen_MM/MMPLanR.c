@@ -20,7 +20,7 @@ int main() {
    * read in matrix format -- using
    * Thick-Restarted Lanczos with polynomial filtering.
    *-------------------------------------------------------------*/
-  int n=0, nnz =0, i, j, npts, nslices, nvec, Mdeg, nev, 
+  int n=0, i, j, npts, nslices, nvec, Mdeg, nev, 
       mlan, max_its, ev_int, sl, ierr, totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
@@ -93,7 +93,7 @@ int main() {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo); 
       if (ierr == 0) {
         fprintf(fstats,"matrix read successfully\n");
-        nnz = Acoo.nnz; 
+        //nnz = Acoo.nnz; 
         n = Acoo.nrows;
         //printf("size of A is %d\n", n);
         //printf("nnz of  A is %d\n", nnz);
@@ -105,8 +105,11 @@ int main() {
       ierr = read_coo_MM(io.Fname2, 1, 0, &Bcoo); 
       if (ierr == 0) {
         fprintf(fstats,"matrix read successfully\n");
-        nnz = Bcoo.nnz; 
-        n = Bcoo.nrows;
+        if (Bcoo.nrows != n) {
+          return 1;
+        }
+        //nnz = Bcoo.nnz; 
+        //n = Bcoo.nrows;
         //printf("size of B is %d\n", n);
         //printf("nnz of  B is %d\n", nnz);
       }
@@ -184,7 +187,7 @@ int main() {
       //-------------------- 
       a = sli[sl];
       b = sli[sl+1];
-      printf(" subinterval: [%.4e , %.4e]\n", a, b); 
+      printf(" subinterval: [%.15e , %.15e]\n", a, b); 
       xintv[0] = a;
       xintv[1] = b;
       xintv[2] = lmin;
@@ -193,26 +196,23 @@ int main() {
       set_pol_def(&pol);
       // can change default values here e.g.
       pol.damping = 0;
-      pol.thresh_int = 0.1;
-      pol.thresh_ext = 0.01;
-      pol.max_deg  = 300;
+      pol.thresh_int = 0.25;
+      pol.thresh_ext = 0.25;
+      //pol.max_deg  = 300;
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);
       fprintf(fstats, " polynomial deg %d, bar %.15e gam %.15e\n",
               pol.deg,pol.bar, pol.gam);
-      save_vec(pol.deg+1, pol.mu, "OUT/mu.txt");
-
-      exit(0);
-
+      //save_vec(pol.deg+1, pol.mu, "OUT/mu.txt");
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int+2;
       //-------------------- Dimension of Krylov subspace and maximal iterations
-      mlan = max(8*nev,100);  mlan = min(mlan, n);  max_its = 3*mlan;
+      mlan = max(4*nev,100);  mlan = min(mlan, n);  max_its = 3*mlan;
       //-------------------- RationalLanNr
       ierr = ChebLanTr(mlan, nev, xintv, max_its, tol, vinit, 
                        &pol, &nev2, &lam, &Y, &res, fstats);
       if (ierr) {
-	printf("ChebLanNr error %d\n", ierr);
+	printf("ChebLanTr error %d\n", ierr);
 	return 1;
       }
 

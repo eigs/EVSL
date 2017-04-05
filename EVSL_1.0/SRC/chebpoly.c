@@ -445,7 +445,9 @@ int find_pol(double *intv, polparams *pol) {
       //---------------------Balacing the interval + get new mu
       if (rootchb(m, v, jac, tha, thb, mu, &thc)) {
       //-------------------- if m<0 degree is too low - skip
-	  continue;
+        //printf("rootchb == 1, m = %d, [%.15e, %.15e], tha %e thb %e\n", 
+        //       m, aa, bb, tha, thb);
+        continue;
       }
       //----------------------New center 
       gam = cos(thc);
@@ -453,8 +455,9 @@ int find_pol(double *intv, polparams *pol) {
       chebxPltd(m, mu, 1, &gam, &t);
       chebxPltd(m, mu, nitv, itv, vals);
       //-------------------- test for acceptance of this pol. 
+      //printf("mindeg=%d, m = %d, val %e %e, t %e, thresh %e\n", 
+      //       min_deg, m, vals[0], vals[1], t, thresh);
       if (vals[0] <= t*thresh && vals[1] <= t*thresh) {
-        //printf("mindeg=%d, m = %d, val %e %e, t %e, thresh %e\n", min_deg, m, vals[0], vals[1], t, thresh);
         m++;
         break;
       }

@@ -92,7 +92,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   /*-------------------- Ntest = when to start testing convergence */
   int Ntest = min(lanm, nev+50);
   /*--------------------   how often to test */
-  int cycle = 30; 
+  int cycle = 50; 
   int i, ll, count, last_count, jl, last_jl;
   /*-----------------------------------------------------------------------
     -----------------------------------------------------------------------*/
@@ -417,7 +417,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         }
         /*-------------------- testing (partial) convergence for restart */
         if (do_print) {
-          fprintf(fstats,"  --> inner: testing conv k %4d, it %4d, count %3d  jl %3d trlen %3d\n",
+          fprintf(fstats,"inner: testing conv k %4d, it %4d, count %3d  jl %3d trlen %3d\n",
                   k, it, count, jl, trlen);
         }
         /*-------------------- enough good candidates 1st time -> break */
@@ -430,8 +430,8 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         */
         /*-------------------- count & jl unchanged since last test --> break */
         if ((count<=last_count) && (jl<=last_jl)) {
-          fprintf(fstats, "count <= last_count && jl <= last_jl: %d <= %d && %d <= %d\n", count, last_count, jl, last_jl);
-          break;
+          fprintf(fstats, "inner: count <= last_count && jl <= last_jl: %d <= %d && %d <= %d\n", count, last_count, jl, last_jl);
+          //break;
         }
         last_count = count;  
         last_jl = jl;
