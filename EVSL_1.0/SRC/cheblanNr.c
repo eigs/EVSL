@@ -130,8 +130,17 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   int nev, nconv = 0;
   /*-------------------- nmv counts  matvecs */
   int nmv = 0;
-  /*-------------------- copy initial vector to V(:,1) */
-  DCOPY(&n, vinit, &one, V, &one);
+  /*-------------------- u  is just a pointer. wk == work space */
+  double *u, *wk, *w2;
+  int wk_size = evsldata.ifGenEv ? 4*n : 3*n;
+  Malloc(wk, wk_size, double);
+  w2 = wk + n;  
+  /*-------------------- compute w = p[(A-cc)/dd] * v */
+  tm = cheblan_timer();
+  /*------------------  Filter the initial vector*/
+  ChebAv(pol, vinit, V, wk);
+  tmv += cheblan_timer() - tm;
+  nmv += deg;  
   /*--------------------  normalize it */
   double t, nt, res0;
   if (evsldata.ifGenEv) {
@@ -139,17 +148,13 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     matvec_B(V, Z);
     t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
     DSCAL(&n, &t, Z, &one);
+    nmv++;
   } else {
     /* 2-norm */
     t = 1.0 / DNRM2(&n, V, &one); // add a test here.
   }
   /* unit B-norm or 2-norm */
   DSCAL(&n, &t, V, &one);
-  /*-------------------- u  is just a pointer. wk == work space */
-  double *u, *wk, *w2;
-  int wk_size = evsldata.ifGenEv ? 4*n : 3*n;
-  Malloc(wk, wk_size, double);
-  w2 = wk + n;
   /*-------------------- for ortho test */
   double wn = 0.0;
   int nwn = 0;
@@ -206,8 +211,6 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       /*   beta = norm(vnew) */
       CGS_DGKS(n, k+1, NGS_MAX, V, vnew, &beta, wk);
     }
-    /*-------------------- T(k+1,k) = alpha */
-    eT[k] = beta;
     wn += 2.0 * beta;
     nwn += 3;
     /*-------------------- lucky breakdown test */
@@ -216,23 +219,38 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
         fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", k, beta);
       }
       /*------------------ generate a new init vector */
-      rand_double(n, vnew);
+      rand_double(n, vinit);
+      /*------------------  Filter the initial vector*/
+      tm = cheblan_timer();
+      ChebAv(pol, vinit, vnew, wk);
+      tmv += cheblan_timer() - tm;
+      nmv += deg;  
       if (evsldata.ifGenEv) {
       /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
         CGS_DGKS2(n, k+1, NGS_MAX, V, Z, vnew, wk);        
         matvec_B(vnew, znew);
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+        t = 1.0/beta;
+        DSCAL(&n, &t, vnew, &one);
+        DSCAL(&n, &t, znew, &one);
+        beta = 0.0;
       } else {
-        CGS_DGKS(n, k+1, NGS_MAX, V, vnew, &beta, wk);      
+        CGS_DGKS(n, k+1, NGS_MAX, V, vnew, &beta, wk);
+        t = 1.0/beta;
+        DSCAL(&n, &t, vnew, &one);
+        beta = 0.0;      
+      }
+    } else {
+         /*-------------------- vnew = vnew / beta */
+        t = 1.0 / beta;
+        DSCAL(&n, &t, vnew, &one);
+        if (evsldata.ifGenEv) {
+        /*-------------------- znew = znew / beta */
+        DSCAL(&n, &t, znew, &one);
       }
     }
-    /*-------------------- vnew = vnew / beta */
-    t = 1.0 / beta;
-    DSCAL(&n, &t, vnew, &one);
-    if (evsldata.ifGenEv) {
-      /*-------------------- znew = znew / beta */
-      DSCAL(&n, &t, znew, &one);
-    }
+    /*-------------------- T(k+1,k) = alpha */
+    eT[k] = beta;
     /*---------------------- test for Ritz vectors */
     if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 ) {
       continue;
