@@ -25,7 +25,7 @@
  *          criterion  based   on  the  convergence  of   the  restricted
  *          trace. i.e.,  the sum of the  eigenvalues of T_k that  are in
  *          the desired interval. This test  is rather simple since these
- *          eigenvalues are between `bar' and  1.0.  We want the relative
+ *          eigenvalues are above `bar'.  We want the relative
  *          error on  this restricted  trace to be  less than  tol.  Note
  *          that the test  performed on filtered matrix only  - *but* the
  *          actual residual norm associated with the original matrix A is
@@ -36,7 +36,7 @@
  * 
  *  @warning RatLanNr() Modifies the following variables:
  *
- *  @param[out] rat      A struct containing the polynomial
+ *  @param[out] rat      A struct containing the rational filter
  *  @param[out] nevOut   Number of eigenvalues/vectors computed
  *  @param[out] Wo       A set of eigenvectors  [n x nevOut matrix]
  *  @param[out] lamo     Associated eigenvalues [nevOut x 1 vector]
@@ -76,7 +76,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   }
   maxit = min(n, maxit);
   /*-------------------- Rational filter with pole at ((a+b)/2,(b-a)/2) with 
-                         multiplicity pow, bar value equals 1/2        */
+    multiplicity pow, bar value equals 1/2        */
   /*-------------------- a, b, used for testing only at end */
   double bar = 0.5;
   if (check_intv(intv, fstats) < 0) {
@@ -113,14 +113,27 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   Malloc(EvalT, maxit, double);       // eigenvalues of tridia. matrix  T
   Malloc(EvecT, maxit*maxit, double); // Eigen vectors of T
   /*-------------------- nev = current number of converged e-pairs 
-                         nconv = converged eigenpairs from looking at Tk alone */
+    nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
   /*-------------------- nmv counts  matvecs */
   int nmv = 0;
   /*-------------------- nsv counts  solves */
   int nsv = 0;
+  /*-------------------- u  is just a pointer. wk == work space */
+  double *u, *wk, *w2;
+  int wk_size = evsldata.ifGenEv ? 6*n : 4*n;
+  Malloc(wk, wk_size, double);
+  w2 = wk + n;
   /*-------------------- copy initial vector to Z(:,1) */
-  DCOPY(&n, vinit, &one, Z, &one);
+  /* Filter the initial vector */
+  tm = cheblan_timer();
+  RatFiltApply(n, rat, vinit, V, wk);
+  tmv += cheblan_timer() - tm;
+  nsv += deg;
+  if(evsldata.ifGenEv){
+    DCOPY(&n, V, &one, Z, &one);
+    nmv += (deg-1);
+  }
   /*--------------------  normalize it */
   double t, nt, res0;
   if (evsldata.ifGenEv) {
@@ -133,13 +146,8 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     /* 2-norm */
     t = 1.0 / DNRM2(&n, V, &one); // add a test here.
   }
-  /* unit B-norm or 2-norm */
+  /* unit B^{-1}-norm or 2-norm */
   DSCAL(&n, &t, V, &one);
-  /*-------------------- u  is just a pointer. wk == work space */
-  double *u, *wk, *w2;
-  int wk_size = evsldata.ifGenEv ? 6*n : 4*n;
-  Malloc(wk, wk_size, double);
-  w2 = wk + n;
   /*-------------------- for ortho test */
   double wn = 0.0;
   int nwn = 0;
@@ -200,43 +208,60 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       /* beta = norm(vnew) */
       CGS_DGKS(n, k+1, NGS_MAX, V, vnew, &beta, wk);
     }
-    /*-------------------- T(k+1,k) = beta */
-    eT[k] = beta;
     wn += 2.0 * beta;
     nwn += 3;
     /*-------------------- lucky breakdown test */
-    if (beta*nwn < orthTol*wn) {
+    if (beta*nwn< orthTol*wn) {
       if (do_print) {
         fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", k, beta);
       }
       /*------------------ generate a new init vector in znew */
-      rand_double(n, znew);
+      rand_double(n, vinit);
+      /* Filter the initial vector */
+      tm = cheblan_timer();
+      RatFiltApply(n, rat, vinit, znew, wk);
+      tmv += cheblan_timer() - tm;
+      nmv += (deg-1);      
       if (evsldata.ifGenEv) {
-      /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
+	/* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k+1, NGS_MAX, Z, V, znew, wk);
-      /* -------------- NOTE: B-matvec */
+	/* -------------- NOTE: B-matvec */
         matvec_B(znew, vnew);
         nmv ++;
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+	/*-------------------- vnew = vnew / beta */
+        t = 1.0 / beta;
+        DSCAL(&n, &t, vnew, &one);
+	/*-------------------- znew = znew / beta */
+        DSCAL(&n, &t, znew, &one);
+        beta = 0.0;
+        nsv += deg;        
       } else {
-      /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
-      /* beta = norm(vnew) */
+	/* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+	/* beta = norm(vnew) */
         CGS_DGKS(n, k+1, NGS_MAX, V, vnew, &beta, wk);
+	/*-------------------- vnew = vnew / beta */
+        t = 1.0 / beta;
+        DSCAL(&n, &t, vnew, &one);
+        beta = 0.0;
       }
+    } else {
+      /*-------------------- vnew = vnew / beta */
+      t = 1.0 / beta;
+      DSCAL(&n, &t, vnew, &one);
+      if (evsldata.ifGenEv) {
+	/*-------------------- znew = znew / beta */
+	DSCAL(&n, &t, znew, &one);
+      }    
     }
-    /*-------------------- vnew = vnew / beta */
-    t = 1.0 / beta;
-    DSCAL(&n, &t, vnew, &one);
-    if (evsldata.ifGenEv) {
-      /*-------------------- znew = znew / beta */
-      DSCAL(&n, &t, znew, &one);
-    }
+    /*-------------------- T(k+1,k) = beta */
+    eT[k] = beta;
     /*---------------------- test for Ritz vectors */
     if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 ) {
       continue;
     }
     /*---------------------- diagonalize  T(1:k,1:k)       
-                             vals in EvalT, vecs in EvecT  */
+      vals in EvalT, vecs in EvecT  */
     kdim = k+1;
 #if 1
     /*-------------------- THIS uses dsetv */
@@ -250,8 +275,8 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- restricted trace: used for convergence test */
     tr1 = 0;  
     /*-------------------- get residual norms and check acceptance of Ritz 
-     *                     values for p(A). nconv records number of 
-     *                     eigenvalues whose residual for p(A) is smaller 
+     *                     values for r(A). nconv records number of 
+     *                     eigenvalues whose residual for r(A) is smaller 
      *                     than tol. */
     nconv = 0;
     for (i=0; i<count; i++) {
@@ -270,7 +295,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
               k, nsv, nconv,tr1);
     }
     /* -------------------- simple test because all eigenvalues
-                            are between gamB and ~1. */
+       are between gamB and ~1. */
     if (fabs(tr1-tr0) < tol*fabs(tr1)) {
       break;
     }
@@ -290,9 +315,9 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     y = &EvecT[i*kdim];
     /*-------------------- make sure to normalize */
     /*
-    t = DNRM2(&kdim, y, &one);
-    t = 1.0 / t;
-    DSCAL(&kdim, &t, y, &one);
+      t = DNRM2(&kdim, y, &one);
+      t = 1.0 / t;
+      DSCAL(&kdim, &t, y, &one);
     */
     /*-------------------- residual norm for transformed Pb. */
     resi = beta*fabs(y[kdim-1]);
@@ -328,7 +353,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- w = A*u */
     matvec_A(u, wk);
     /*-------------------- Ritz val: t = (u'*w)/(u'*u)
-                                     t = (u'*w)/(u'*B*u) */
+      t = (u'*w)/(u'*B*u) */
     t = DDOT(&n, wk, &one, u, &one);
     /*-------------------- if lambda (==t) is in [a,b] */
     if (t < aa - DBL_EPSILON || t > bb + DBL_EPSILON) {
