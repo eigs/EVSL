@@ -8,6 +8,10 @@
 #include "blaslapack.h"
 #include "struct.h"
 #include "internal_proto.h"
+/**
+ * if filter the initial vector
+ */ 
+#define FILTER_VINIT 1
 
 /**-----------------------------------------------------------------------
  *  @brief Rational filtering Lanczos process [NON-restarted version]
@@ -119,20 +123,25 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- nsv counts  solves */
   int nsv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
-  double *u, *wk, *w2;
+  double *u, *wk, *w2, *vrand = NULL;
   int wk_size = evsldata.ifGenEv ? 6*n : 4*n;
   Malloc(wk, wk_size, double);
   w2 = wk + n;
   /*-------------------- copy initial vector to Z(:,1) */
+#if FILTER_VINIT
   /* Filter the initial vector */
   tm = cheblan_timer();
   RatFiltApply(n, rat, vinit, V, wk);
   tmv += cheblan_timer() - tm;
   nsv += deg;
+  Malloc(vrand, n, double);
   if(evsldata.ifGenEv){
     DCOPY(&n, V, &one, Z, &one);
     nmv += (deg-1);
   }
+#else
+  DCOPY(&n, vinit, &one, Z, &one);
+#endif  
   /*--------------------  normalize it */
   double t, nt, res0;
   if (evsldata.ifGenEv) {
@@ -214,13 +223,17 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       if (do_print) {
         fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", k, beta);
       }
+# if FILTER_VINIT      
       /*------------------ generate a new init vector in znew */
-      rand_double(n, vinit);
+      rand_double(n, vrand);
       /* Filter the initial vector */
       tm = cheblan_timer();
-      RatFiltApply(n, rat, vinit, znew, wk);
+      RatFiltApply(n, rat, vrand, znew, wk);
       tmv += cheblan_timer() - tm;
-      nmv += (deg-1);      
+      nmv += (deg-1);
+#else 
+      rand_double(n, znew);
+#endif            
       if (evsldata.ifGenEv) {
 	/* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k+1, NGS_MAX, Z, V, znew, wk);
@@ -383,6 +396,9 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   free(EvalT);
   free(EvecT);
   free(wk);
+  if (vrand) {
+    free(vrand);
+  }
   if (evsldata.ifGenEv) {
     free(Z);
   }
