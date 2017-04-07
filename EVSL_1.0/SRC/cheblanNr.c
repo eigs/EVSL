@@ -292,10 +292,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       flami = EvalT[i];
       if (flami + DBL_EPSILON >= bar) {
         tr1+= flami;
-        /*---------------- the last row of EvecT: EvecT[i*kdim+kdim-1] */
-        if (beta*fabs(EvecT[(i+1)*kdim-1]) < tol) {
-          nconv++;
-        }
+        nconv++;
       }
     }
 
@@ -328,11 +325,6 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     t = 1.0 / t;
     DSCAL(&kdim, &t, y, &one);
     */
-    /*-------------------- residual norm for transformed Pb. */
-    resi = beta*fabs(y[kdim-1]);
-    if (resi > tol) {
-      continue;
-    }
     /*-------------------- compute Ritz vectors */
     u = &Rvec[nev*n];
     DGEMV(&cN, &n, &kdim, &done, V, &n, y, &one, &dzero, u, &one);
@@ -371,9 +363,8 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     if (evsldata.ifGenEv) {
       /*-------------------- w = w - t*B*u */
       DAXPY(&n, &nt, w2, &one, wk, &one);
-      /*-------------------- B norm */
-      matvec_B(wk, w2);
-      res0 = sqrt(DDOT(&n, wk, &one, w2, &one));
+      /*-------------------- res0 = norm(w) */
+      res0 = DNRM2(&n, wk, &one); 
     } else {
       /*-------------------- w = w - t*u */
       DAXPY(&n, &nt, u, &one, wk, &one);
@@ -381,9 +372,11 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       res0 = DNRM2(&n, wk, &one); 
     }
     /*--------------------   accept (t, y) */
-    Lam[nev] = t;
-    res[nev] = res0;
-    nev++;
+    if (res0 < tol) {
+      Lam[nev] = t;
+      res[nev] = res0;
+      nev++;
+    }
   }
 
   /*-------------------- Done.  output : */
