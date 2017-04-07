@@ -7,6 +7,10 @@
 #include "blaslapack.h"
 #include "struct.h"
 #include "internal_proto.h"
+/**
+ * if filter the initial vector
+ */ 
+#define FILTER_VINIT 1
 
 /**-----------------------------------------------------------------------
  *  @brief Chebyshev polynomial filtering Lanczos process [NON-restarted version]
@@ -131,16 +135,22 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- nmv counts  matvecs */
   int nmv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
-  double *u, *wk, *w2;
+  double *u, *wk, *w2, *vrand=NULL;
   int wk_size = evsldata.ifGenEv ? 4*n : 3*n;
   Malloc(wk, wk_size, double);
-  w2 = wk + n;  
+  w2 = wk + n;
+#if FILTER_VINIT
   /*-------------------- compute w = p[(A-cc)/dd] * v */
   tm = cheblan_timer();
   /*------------------  Filter the initial vector*/
   ChebAv(pol, vinit, V, wk);
   tmv += cheblan_timer() - tm;
   nmv += deg;  
+  Malloc(vrand, n, double);
+#else
+  /*-------------------- copy initial vector to V(:,1) */
+  DCOPY(&n, vinit, &one, V, &one);
+#endif
   /*--------------------  normalize it */
   double t, nt, res0;
   if (evsldata.ifGenEv) {
@@ -218,33 +228,37 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       if (do_print) {
         fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", k, beta);
       }
+#if FILTER_VINIT
       /*------------------ generate a new init vector */
-      rand_double(n, vinit);
+      rand_double(n, vrand);
       /*------------------  Filter the initial vector*/
       tm = cheblan_timer();
-      ChebAv(pol, vinit, vnew, wk);
+      ChebAv(pol, vrand, vnew, wk);
       tmv += cheblan_timer() - tm;
-      nmv += deg;  
+      nmv += deg;
+#else
+      rand_double(n, vnew);
+#endif
       if (evsldata.ifGenEv) {
       /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
         CGS_DGKS2(n, k+1, NGS_MAX, V, Z, vnew, wk);        
         matvec_B(vnew, znew);
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
-        t = 1.0/beta;
+        t = 1.0 / beta;
         DSCAL(&n, &t, vnew, &one);
         DSCAL(&n, &t, znew, &one);
         beta = 0.0;
       } else {
         CGS_DGKS(n, k+1, NGS_MAX, V, vnew, &beta, wk);
-        t = 1.0/beta;
+        t = 1.0 / beta;
         DSCAL(&n, &t, vnew, &one);
         beta = 0.0;      
       }
     } else {
-         /*-------------------- vnew = vnew / beta */
-        t = 1.0 / beta;
-        DSCAL(&n, &t, vnew, &one);
-        if (evsldata.ifGenEv) {
+      /*-------------------- vnew = vnew / beta */
+      t = 1.0 / beta;
+      DSCAL(&n, &t, vnew, &one);
+      if (evsldata.ifGenEv) {
         /*-------------------- znew = znew / beta */
         DSCAL(&n, &t, znew, &one);
       }
@@ -384,6 +398,9 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   free(EvalT);
   free(EvecT);
   free(wk);
+  if (vrand) {
+    free(vrand);
+  }
   if (evsldata.ifGenEv) {
     free(Z);
   }

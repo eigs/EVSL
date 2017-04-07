@@ -179,8 +179,8 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   double *work, *vrand=NULL;
   int work_size = evsldata.ifGenEv ? 4*n : 3*n;
   Malloc(work, work_size, double);  
-  tm = cheblan_timer();
 #if FILTER_VINIT
+  tm = cheblan_timer();
   /*------------------  Filter the initial vector*/
   ChebAv(pol, vinit, V, work);
   tmv += cheblan_timer() - tm;
