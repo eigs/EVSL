@@ -10,7 +10,7 @@
 #include "internal_proto.h"
 
 /**
- * @brief RatLanTR polynomial filtering Lanczos process [Thick restart version]
+ * @brief RatLanTR  filtering Lanczos process [Thick restart version]
  *
  * @param lanm      Dimension of Krylov subspace [restart dimension]
  * @param nev       Estimate of number of eigenvalues in the interval --
@@ -44,8 +44,7 @@
  *                      B-norm for generalized eig prob
  * @param[out] fstats   File stream which stats are printed to
  *
- * @return Returns 0 on success (or if check_intv() is non-positive), -1 if
- * gamB is outside [-1, 1], and 2 if there are no eigenvalues found.
+ * @return Returns 0 on success (or if check_intv() is non-positive), and 2 if there are no eigenvalues found.
  *
  *
  * @warning memory allocation for W/vals/resW within this function 
@@ -166,8 +165,19 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   /*-------------------- s used by TR (the ``spike'' of 1st block in Tm)*/
   double *s;
   Malloc(s, lanm, double);
+  /*-------------------- alloc some work space */
+  double *work;
+  int work_size = evsldata.ifGenEv ? 6*n : 4*n;
+  Malloc(work, work_size, double);  
+  tm = cheblan_timer();  
+  RatFiltApply(n, rat, vinit, V, work);
+  tmv += cheblan_timer() - tm;
+  nsv += deg;          
   /*-------------------- copy initial vector to Z(:,1)   */
-  DCOPY(&n, vinit, &one, Z, &one);
+  if(evsldata.ifGenEv){
+    DCOPY(&n, V, &one, Z, &one);
+    nsv += deg;
+  }  
   /*-------------------- normalize it */
   double t;
   if (evsldata.ifGenEv) {
@@ -181,19 +191,15 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     /* 2-norm */
     t = 1.0 / DNRM2(&n, V, &one);
   }
-  /* unit B-norm or 2-norm */
+  /* unit B^{-1}-norm or 2-norm */
   DSCAL(&n, &t, V, &one);
-  /*-------------------- alloc some work space */
-  double *work;
-  int work_size = evsldata.ifGenEv ? 6*n : 4*n;
-  Malloc(work, work_size, double);
   /*-------------------- main (restarted Lan) outer loop */
   while (it < maxit) {
     /*-------------------- for ortho test */
     double wn = 0.0;
     int nwn = 0;
     /*  beta */
-    double beta = 0.0, r, res0;
+    double beta = 0.0, r, res0; 
     /*  start with V(:,k) */
     int k = trlen;
     int k1 = k+1;
@@ -258,36 +264,54 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
         /*-------------------- beta = norm(w) */
         beta = DNRM2(&n, vnew, &one);
       }
-      /*------------------- T(k+1,k) = beta; T(k,k+1) = beta; */
-      T[k*lanm1+k1] = beta;
-      T[k1*lanm1+k] = beta;
       wn += 2.0 * beta;
       nwn += 3*k1;
       /*   beta ~ 0 */
       if (beta*nwn < orthTol*wn) {
-        rand_double(n, znew);    
+        if (do_print) {
+          fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", k, beta);
+        }      
+	/*------------------ generate a new init vector in znew */        
+        rand_double(n, vinit);    
+	/* Filter the initial vector */
+        tm = cheblan_timer();
+        RatFiltApply(n, rat, vinit, znew, work);
+        tmv += cheblan_timer() - tm;
+        nmv += (deg-1);            
         if (evsldata.ifGenEv) {
-          /* orthogonalize against locked vectors first, w = w - B*Y*Y'*w */
+	  /* orthgonlize against locked vectors first, w = w - B*Y*Y'*w */
           CGS_DGKS2(n, lock, NGS_MAX, Q, Y, znew, work);
-          /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
+	  /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
           CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);    
           matvec_B(znew, vnew);
           nmv++;
+          nsv += deg;        
           beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+          double ibeta = 1.0/beta;
+          DSCAL(&n, &ibeta, vnew, &one);          
+          DSCAL(&n, &ibeta, znew, &one);
+          beta = 0.0;         
         } else {
-          /* orthogonalize against locked vectors first, w = w - Y*Y'*w */
+	  /* orthgonlize against locked vectors first, w = w - Y*Y'*w */
           CGS_DGKS(n, lock, NGS_MAX, Y, vnew, NULL, work);
-          /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
-          /*   beta = norm(w) */
+	  /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+	  /*   beta = norm(w) */
           CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
+          double ibeta = 1.0/beta;
+          DSCAL(&n, &ibeta, vnew, &one);
+          beta = 0.0;
         }
+      } else {
+	/*------------------- w = w / beta */
+	double ibeta = 1.0 / beta;
+	DSCAL(&n, &ibeta, vnew, &one);
+	if (evsldata.ifGenEv) {
+	  DSCAL(&n, &ibeta, znew, &one);
+	}
       }
-      /*------------------- w = w / beta */
-      double ibeta = 1.0 / beta;
-      DSCAL(&n, &ibeta, vnew, &one);
-      if (evsldata.ifGenEv) {
-        DSCAL(&n, &ibeta, znew, &one);
-      }
+      /*------------------- T(k+1,k) = beta; T(k,k+1) = beta; */
+      T[k*lanm1+k1] = beta;
+      T[k1*lanm1+k] = beta;
     } /* if (trlen > 0) */
     /*-------------------- Done with TR step. Rest of Lanczos step */
     /*-------------------- reset Ntest at each restart. */
@@ -354,9 +378,6 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
         /*   beta = norm(w) */
         CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
       }
-      /*-------------------- T(k,k+1) = T(k+1,k) = beta */
-      T[k*lanm1+(k-1)] = beta;
-      T[(k-1)*lanm1+k] = beta;
       wn += 2.0 * beta;
       nwn += 3;
       /*-------------------- zold = z */
@@ -367,30 +388,47 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
           fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", it, beta);
         }
         /* generate a new init vector*/
-        rand_double(n, znew);
+        rand_double(n, vinit);
+	/* Filter the initial vector */
+        tm = cheblan_timer();
+        RatFiltApply(n, rat, vinit, znew, work);
+        tmv += cheblan_timer() - tm;
+        nmv += (deg-1);           
         if (evsldata.ifGenEv) {
-        /* orthgonlize against locked vectors first, w = w - B*Y*Y'*w */
+	  /* orthgonlize against locked vectors first, w = w - B*Y*Y'*w */
           CGS_DGKS2(n, lock, NGS_MAX, Q, Y, znew, work);
-        /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
+	  /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
           CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);    
           matvec_B(znew, vnew);
           nmv++;
           beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+          nsv += deg;
+          double ibeta = 1.0/beta;
+          DSCAL(&n, &ibeta, vnew, &one);          
+          DSCAL(&n, &ibeta, znew, &one);
+          beta = 0.0;            
         } else {
-        /* orthgonlize against locked vectors first, w = w - Y*Y'*w */
+	  /* orthgonlize against locked vectors first, w = w - Y*Y'*w */
           CGS_DGKS(n, lock, NGS_MAX, Y, vnew, NULL, work);
-        /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
-        /*   beta = norm(w) */
+	  /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+	  /*   beta = norm(w) */
           CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
+          double ibeta = 1.0/beta;
+          DSCAL(&n, &ibeta, vnew, &one);
+          beta = 0.0;
         }
+      } else {  
+	/*---------------------- vnew = vnew / beta */
+	double ibeta = 1.0 / beta;
+	DSCAL(&n, &ibeta, vnew, &one);
+	if (evsldata.ifGenEv) {
+	  /*-------------------- znew = znew / beta */
+	  DSCAL(&n, &ibeta, znew, &one);
+	}
       }
-      /*---------------------- vnew = vnew / beta */
-      double ibeta = 1.0 / beta;
-      DSCAL(&n, &ibeta, vnew, &one);
-      if (evsldata.ifGenEv) {
-        /*-------------------- znew = znew / beta */
-        DSCAL(&n, &ibeta, znew, &one);
-      }
+      /*-------------------- T(k,k+1) = T(k+1,k) = beta */
+      T[k*lanm1+(k-1)] = beta;
+      T[(k-1)*lanm1+k] = beta;
       /*---------------------- Restarting test */
       k1 = k-trlen-Ntest;
       if ( ((k1>=0) && (k1 % cycle == 0)) || (k == lanm) || it == maxit) {
