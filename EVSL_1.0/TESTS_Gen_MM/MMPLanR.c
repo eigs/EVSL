@@ -45,7 +45,7 @@ int main() {
   /*-------------------- Bsol */
   BSolDataSuiteSparse Bsol;
   /*-------------------- stopping tol */
-  tol = 1e-6;
+  tol = 1e-12;
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
@@ -136,12 +136,12 @@ int main() {
     SetBSol(BSolSuiteSparse, (void *) &Bsol);
     SetLTSol(LTSolSuiteSparse);
     /*-------------------- for generalized eigenvalue problem */
-    SetGenEig();
+    //SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
     //-------------------- initial vector  
     vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);
-    ierr = LanBounds(60, vinit, &lmin, &lmax);
+    ierr = LanBounds(200, vinit, &lmin, &lmax);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n", 
 	    lmin, lmax);
     /*-------------------- interval and eig bounds */
@@ -195,7 +195,7 @@ int main() {
       //-------------------- set up default parameters for pol.
       set_pol_def(&pol);
       // can change default values here e.g.
-      pol.damping = 0;
+      pol.damping = 2;
       pol.thresh_int = 0.25;
       pol.thresh_ext = 0.25;
       //pol.max_deg  = 300;

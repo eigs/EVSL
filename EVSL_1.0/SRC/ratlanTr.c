@@ -193,7 +193,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     double wn = 0.0;
     int nwn = 0;
     /*  beta */
-    double beta = 0.0, r, res0; 
+    double beta = 0.0, r, res0;
     /*  start with V(:,k) */
     int k = trlen;
     int k1 = k+1;
@@ -259,7 +259,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
         beta = DNRM2(&n, vnew, &one);
       }
       /*------------------- T(k+1,k) = beta; T(k,k+1) = beta; */
-      T[k*lanm1+k] = beta;
+      T[k*lanm1+k1] = beta;
       T[k1*lanm1+k] = beta;
       wn += 2.0 * beta;
       nwn += 3*k1;
@@ -267,18 +267,18 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       if (beta*nwn < orthTol*wn) {
         rand_double(n, znew);    
         if (evsldata.ifGenEv) {
-        /* orthgonlize against locked vectors first, w = w - B*Y*Y'*w */
+          /* orthogonalize against locked vectors first, w = w - B*Y*Y'*w */
           CGS_DGKS2(n, lock, NGS_MAX, Q, Y, znew, work);
-        /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
+          /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
           CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);    
           matvec_B(znew, vnew);
           nmv++;
           beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
         } else {
-        /* orthgonlize against locked vectors first, w = w - Y*Y'*w */
+          /* orthogonalize against locked vectors first, w = w - Y*Y'*w */
           CGS_DGKS(n, lock, NGS_MAX, Y, vnew, NULL, work);
-        /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
-        /*   beta = norm(w) */
+          /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+          /*   beta = norm(w) */
           CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
         }
       }
