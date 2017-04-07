@@ -403,7 +403,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
           nmv++;
           beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
           nsv += deg;
-          double ibeta = 1.0/beta;
+          double ibeta = 1.0 / beta;
           DSCAL(&n, &ibeta, vnew, &one);          
           DSCAL(&n, &ibeta, znew, &one);
           beta = 0.0;            
@@ -413,7 +413,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
 	  /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
 	  /*   beta = norm(w) */
           CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
-          double ibeta = 1.0/beta;
+          double ibeta = 1.0 / beta;
           DSCAL(&n, &ibeta, vnew, &one);
           beta = 0.0;
         }

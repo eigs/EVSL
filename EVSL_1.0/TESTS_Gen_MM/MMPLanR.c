@@ -45,7 +45,7 @@ int main() {
   /*-------------------- Bsol */
   BSolDataSuiteSparse Bsol;
   /*-------------------- stopping tol */
-  tol = 1e-12;
+  tol = 1e-8;
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
@@ -136,7 +136,7 @@ int main() {
     SetBSol(BSolSuiteSparse, (void *) &Bsol);
     SetLTSol(LTSolSuiteSparse);
     /*-------------------- for generalized eigenvalue problem */
-    //SetGenEig();
+    SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
     //-------------------- initial vector  
     vinit = (double *) malloc(n*sizeof(double));
@@ -196,8 +196,8 @@ int main() {
       set_pol_def(&pol);
       // can change default values here e.g.
       pol.damping = 2;
-      pol.thresh_int = 0.25;
-      pol.thresh_ext = 0.25;
+      pol.thresh_int = 0.5;
+      pol.thresh_ext = 0.5;
       //pol.max_deg  = 300;
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);
