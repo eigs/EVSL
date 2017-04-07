@@ -12,7 +12,6 @@
 /**-----------------------------------------------------------------------
  *  @brief Rational filtering Lanczos process [NON-restarted version]
  *
- *  @param solshift  structure for solving the shifted system, see struct.h
  *  @param intv   an array of length 4 
  *          [intv[0], intv[1]] is the interval of desired eigenvalues
  *          [intv[2], intv[3]] is the global interval of all eigenvalues
@@ -158,7 +157,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   double *zold, *z, *znew;
   double *v, *vnew;
   /*--------------------  Lanczos recurrence coefficients */
-  double alpha, nalpha, beta=0.0, nbeta, resi;
+  double alpha, nalpha, beta=0.0, nbeta;
   int count = 0;
   // ---------------- main Lanczos loop 
   for (k=0; k<maxit; k++) {
@@ -283,10 +282,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       flami = EvalT[i];
       if (flami + DBL_EPSILON >= bar) {
         tr1+= flami;
-        /*---------------- the last row of EvecT: EvecT[i*kdim+kdim-1] */
-        if (beta*fabs(EvecT[(i+1)*kdim-1]) < tol) {
-          nconv++;
-        }
+        nconv++;
       }
     }
 
@@ -319,11 +315,6 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       t = 1.0 / t;
       DSCAL(&kdim, &t, y, &one);
     */
-    /*-------------------- residual norm for transformed Pb. */
-    resi = beta*fabs(y[kdim-1]);
-    if (resi > tol) {
-      continue;
-    }
     /*-------------------- compute Ritz vectors 
      *                     NOTE: use Z for gen e.v */
     u = &Rvec[nev*n];
@@ -364,10 +355,8 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     if (evsldata.ifGenEv) {
       /*-------------------- w = w - t*B*u */
       DAXPY(&n, &nt, w2, &one, wk, &one);
-      /*-------------------- B norm of res */
-      matvec_B(wk, w2);
-      nmv ++;
-      res0 = sqrt(DDOT(&n, wk, &one, w2, &one));
+      /*-------------------- 2 norm of res */
+      res0 = DNRM2(&n, wk, &one);
     } else {
       /*-------------------- w = w - t*u */
       DAXPY(&n, &nt, u, &one, wk, &one);
@@ -375,9 +364,11 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       res0 = DNRM2(&n, wk, &one); 
     }
     /*--------------------   accept (t, y) */
-    Lam[nev] = t;
-    res[nev] = res0;
-    nev++;
+    if (res0 < tol) {
+       Lam[nev] = t;
+       res[nev] = res0;
+       nev++;
+    }    
   }
 
   /*-------------------- Done.  output : */
