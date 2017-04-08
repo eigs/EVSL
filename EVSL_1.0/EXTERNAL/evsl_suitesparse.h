@@ -26,5 +26,15 @@ void FreeASIGMABSolSuiteSparse(int num, void **data);
 
 void LTSolSuiteSparse(double *v, double *w, void *data);
 
+#ifdef CHOLMOD_USE_LONG
+
+#define CHOLMOD(name) cholmod_l_ ## name
+
+#else
+
+#define CHOLMOD(name) cholmod_ ## name
+
+#endif
+
 #endif
 

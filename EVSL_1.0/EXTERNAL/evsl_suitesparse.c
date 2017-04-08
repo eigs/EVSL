@@ -189,16 +189,30 @@ cholmod_sparse* csrMat_to_cholmod_sparse(csrMat *A, int stype) {
   return B;
 }
 
-/** @brief convert an array to cholmod dense (no copying)
+/** @brief wrap an array in cholmod dense (no copying)
  *
  * */
-cholmod_dense* arr_to_cholmod_dense(int m, int n, double *A, int lda) {
+void arr_to_cholmod_dense(int m, int n, double *A, cholmod_dense *B) {
+  B->nrow = m;
+  B->ncol = n;
+  B->nzmax = m*n;
+  B->d = m;
+  B->x = A;
+  B->z = NULL;
+  B->xtype = CHOLMOD_REAL;
+  B->dtype = CHOLMOD_DOUBLE;
+}
+
+/** @brief convert an array to cholmod dense (no copying)
+ *         alloc a cholmod_dense struct
+ * */
+cholmod_dense* arr_to_cholmod_dense_alloc(int m, int n, double *A) {
   cholmod_dense *B = NULL;
   Malloc(B, 1, cholmod_dense);
   B->nrow = m;
   B->ncol = n;
   B->nzmax = m*n;
-  B->d = lda;
+  B->d = m;
   B->x = A;
   B->z = NULL;
   B->xtype = CHOLMOD_REAL;
@@ -207,26 +221,32 @@ cholmod_dense* arr_to_cholmod_dense(int m, int n, double *A, int lda) {
   return B;
 }
 
-/** @brief Solver function of B (XXX) need to optimize
+
+/** global variables for cholmod solve */
+cholmod_dense cholmod_X, cholmod_B, *cholmod_Y=NULL, *cholmod_E=NULL,
+              *cholmod_W=NULL;
+
+/** @brief Solver function of B
  *
  * */
 void BSolSuiteSparse(double *b, double *x, void *data) {
   int n;
 
   BSolDataSuiteSparse *Bsol_data = (BSolDataSuiteSparse *) data;
-  cholmod_dense *cholmod_x, *cholmod_b;
   cholmod_factor *LB;
   cholmod_common *cc;
 
   LB = Bsol_data->LB;
   cc = &Bsol_data->cm;
   n = LB->n;
-  cholmod_b = arr_to_cholmod_dense(n, 1, b, n);
-  cholmod_x = cholmod_solve(CHOLMOD_A, LB, cholmod_b, cc);
-  memcpy(x, cholmod_x->x, n*sizeof(double));
 
-  free(cholmod_b);
-  cholmod_free_dense(&cholmod_x, cc);
+  cholmod_X.x = x;
+  cholmod_B.x = b;
+
+  /* XXX is this always safe for cholmod_x ? */
+  cholmod_dense *cholmod_Xp = &cholmod_X; 
+  cholmod_solve2(CHOLMOD_A, LB, &cholmod_B, NULL, 
+                 &cholmod_Xp, NULL, &cholmod_Y, &cholmod_E, cc);
 }
 
 /** @brief Setup the B-sol by computing the Cholesky factorization of B
@@ -239,7 +259,11 @@ int SetupBSolSuiteSparse(csrMat *B, BSolDataSuiteSparse *Bsol_data) {
   cholmod_factor *LB;
 
   /* start CHOLMOD */
-  cholmod_start(cc);
+  CHOLMOD(start)(cc);
+
+  //printf("cc->itype %d\n", cc->itype);
+  //if (cc->itype == CHOLMOD_LONG) 
+  //exit(0);
   
   /* force to have LL factor */
   cc->final_asis = 0;
@@ -251,8 +275,13 @@ int SetupBSolSuiteSparse(csrMat *B, BSolDataSuiteSparse *Bsol_data) {
   cholmod_check_common(cc);
   cholmod_check_sparse(Bcholmod, cc);
   /* symbolic and numeric fact */
+  //printf("start analysis\n");
   LB = cholmod_analyze(Bcholmod, cc);
+  cholmod_check_common(cc);
+  printf("cc status %d\n", cc->status);
+  //printf("start factorization\n");
   cholmod_factorize(Bcholmod, LB, cc);
+  //printf("done factorization\n");
   /* check the factor */
   cholmod_check_factor(LB, cc);
   /* save the struct to global variable */
@@ -262,6 +291,11 @@ int SetupBSolSuiteSparse(csrMat *B, BSolDataSuiteSparse *Bsol_data) {
   /* free the matrix wrapper */
   free(Bcholmod);
 
+  /* space for solve */
+  int n = B->nrows;
+  arr_to_cholmod_dense(n, 1, NULL, &cholmod_X);
+  arr_to_cholmod_dense(n, 1, NULL, &cholmod_B);
+
   return 0;
 }
 
@@ -269,33 +303,37 @@ int FreeBSolSuiteSparseData(BSolDataSuiteSparse *data) {
   cholmod_common *cc = &data->cm;
   /* free the factor */
   cholmod_free_factor(&data->LB, cc);
+  /* free workspace for solve2 */ 
+  cholmod_free_dense(&cholmod_Y, cc);
+  cholmod_free_dense(&cholmod_E, cc);
+  cholmod_free_dense(&cholmod_W, cc);
   /* finish cholmod */
   cholmod_finish(cc);
   return 0;
 }
 
 /** @brief Solver function of L^{T} 
- *  w = L^{-T}v
+ *  x = L^{-T}*b
  * */
-void LTSolSuiteSparse(double *v, double *w, void *data) {
+void LTSolSuiteSparse(double *b, double *x, void *data) {
   int n;
 
   BSolDataSuiteSparse *Bsol_data = (BSolDataSuiteSparse *) data;
-  cholmod_dense *cholmod_w, *cholmod_w2, *cholmod_b;
   cholmod_factor *LB;
   cholmod_common *cc;
 
   LB = Bsol_data->LB;
   cc = &Bsol_data->cm;
   n = LB->n;
-  cholmod_b = arr_to_cholmod_dense(n, 1, v, n);
-  cholmod_w = cholmod_solve(5, LB, cholmod_b, cc);
-  cholmod_w2 = cholmod_solve(8, LB, cholmod_w, cc); 
-  memcpy(w, cholmod_w2->x, n*sizeof(double));
-  free(cholmod_b);
-  cholmod_free_dense(&cholmod_w, cc);
-  cholmod_free_dense(&cholmod_w2, cc);
+  
+  /* XXX are these always safe ? */
+  cholmod_B.x = b;
+  cholmod_solve2(CHOLMOD_Lt, LB, &cholmod_B, NULL, 
+                 &cholmod_W, NULL, &cholmod_Y, &cholmod_E, cc);
+  
+  cholmod_X.x = x;
+  cholmod_dense *cholmod_Xp = &cholmod_X;
+  cholmod_solve2(CHOLMOD_Pt, LB, cholmod_W, NULL, 
+                 &cholmod_Xp, NULL, &cholmod_Y, &cholmod_E, cc);
 }
-
-
 
