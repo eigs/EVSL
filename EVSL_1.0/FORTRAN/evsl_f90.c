@@ -43,6 +43,8 @@ void evsl_setb_coo_f90_(int *n, int *nnz, int *ir, int *jc, double *vv) {
   cooMat_to_csrMat(1, &coo, csr);
   evsldata.B = csr;
   evsldata.ifOwnB = 1;
+  //savemat(csr, "B.mtx");
+  //exit(0);
 }
 
 void evsl_set_geneig_f90_() {

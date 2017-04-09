@@ -17,3 +17,5 @@ UMF_INC = -I$(SUITESPARSE_DIR)/UMFPACK/Include \
           -I$(SUITESPARSE_DIR)/SuiteSparse_config \
           -I$(SUITESPARSE_DIR)/CHOLMOD/Include 
 
+#if use long int version of cholmod
+FLAGS += -DCHOLMOD_USE_LONG
