@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",
             pol.deg,pol.bar, pol.gam);
-    //-------------------- then call ChenLanNr
+    //-------------------- then call ChenLanTr
     ierr = ChebLanTr(mlan, nev, xintv, max_its, tol, vinit,
                      &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {

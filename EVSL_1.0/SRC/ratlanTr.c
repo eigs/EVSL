@@ -60,7 +60,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
              double **vals, double **W, double **resW, FILE *fstats) {
   /*-------------------- for stats */
   double tm, tall=0.0, tmv=0.0;
-  double tolP = tol;
+  //double tolP = tol;
   double tr, last_tr;
   tall = cheblan_timer();
   int do_print = 1;
@@ -88,7 +88,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   double nevInc = 0.2;   /* add 1  + 20% each time it is needed */
   /*-------------------- if we have at least nev/ev_frac good candidate 
                          eigenvalues from p(A) == then we restart to lock them in */
-  int evFrac = 2;
+  //int evFrac = 2;
   /*--------------------   some constants frequently used */
   /* char cT='T'; */
   char cN = 'N';
@@ -98,7 +98,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   int Ntest = min(lanm, nev+50);
   /*--------------------   how often to test */
   int cycle = 30; 
-  int i, ll, count, last_count, jl, last_jl;
+  int i, ll, /*count, last_count,*/ jl, last_jl;
   /*-----------------------------------------------------------------------
     -----------------------------------------------------------------------*/
   /* check if the given interval is valid */
@@ -333,7 +333,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     /*-------------------- Done with TR step. Rest of Lanczos step */
     /*-------------------- reset Ntest at each restart. */
     Ntest = max(20,nev-lock+10);
-    last_count = 0;  last_jl = 0; last_tr = 0.0;
+    /*last_count = 0;*/  last_jl = 0; last_tr = 0.0;
     /*-------------------- regardless of trlen, *(k+1)* is the current 
      *                     number of Lanczos vectors in V */
     /*-------------------- pointer to the previous Lanczos vector */

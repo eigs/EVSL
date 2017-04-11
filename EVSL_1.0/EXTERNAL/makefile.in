@@ -1,6 +1,7 @@
 ## SuiteSparse dir
 
-SUITESPARSE_DIR = /home/ruipeng/workspace/SuiteSparse
+SUITESPARSE_DIR = /home/li50/workspace/SuiteSparse-4.5.3
+#SUITESPARSE_DIR = /home/ruipeng/workspace/SuiteSparse
 #SUITESPARSE_DIR = /scratch/syphax/Rational_GEIG/SuiteSparse-4.5.3/SuiteSparse
 LIB_METIS_5_1 = $(SUITESPARSE_DIR)/metis-5.1.0/build/Linux-x86_64/libmetis
 LIB_UMF = -L$(SUITESPARSE_DIR)/UMFPACK/Lib -lumfpack \

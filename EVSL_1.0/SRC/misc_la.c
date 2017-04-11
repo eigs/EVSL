@@ -20,7 +20,8 @@
  *  @param[out] eigVal The output vector of length n containing all eigenvalues
  *          in ascending order 
  *  @param[out] eigVec The output n-by-n matrix with columns as eigenvectors,
- *          in the order as elements in eigVal 
+ *          in the order as elements in eigVal. If NULL, then no eigenvector
+ *          will be computed
  *  @return The flag returned by the
  *  LAPACK routine DSTEV() (if double  is double) or stev_() (if double
  *  is float)
@@ -28,7 +29,8 @@
 
 int SymmTridEig(double *eigVal, double *eigVec, int n, 
                 const double *diag, const double *sdiag) {
-  char jobz = 'V';  // compute eigenvalues and eigenvectors
+  // compute eigenvalues and eigenvectors or eigvalues only
+  char jobz = eigVec ? 'V' : 'N'; 
   int nn = n;
   int ldz = n;
   int info;  // output flag
@@ -40,12 +42,19 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
   memcpy(bet, sdiag, (n-1)*sizeof(double));
   // allocate storage for computation
   double *sv = eigVec;
-  double *work;
-  Malloc(work, 2*n-2, double);
+  double *work = NULL;
+  if (jobz == 'V') {
+    Malloc(work, 2*n-2, double);
+  }
   DSTEV(&jobz, &nn, alp, bet, sv, &ldz, work, &info);
   // free memory
   free(bet);
-  free(work);
+  if (work) {
+    free(work);
+  }
+  if (info) {
+    printf("DSTEV ERROR: INFO %d\n", info);
+  }
   // return info
   return info;
 }

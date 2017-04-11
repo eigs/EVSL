@@ -114,7 +114,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   Malloc(Lam, maxit, double);         // holds computed Ritz values
   Malloc(res, maxit, double);         // residual norms (w.r.t. ro(A))
   Malloc(EvalT, maxit, double);       // eigenvalues of tridia. matrix  T
-  Malloc(EvecT, maxit*maxit, double); // Eigen vectors of T
+  //Malloc(EvecT, maxit*maxit, double); // Eigen vectors of T
   /*-------------------- nev = current number of converged e-pairs 
     nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
@@ -276,8 +276,8 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       vals in EvalT, vecs in EvecT  */
     kdim = k+1;
 #if 1
-    /*-------------------- THIS uses dsetv */
-    SymmTridEig(EvalT, EvecT, kdim, dT, eT);
+    /*-------------------- THIS uses dsetv, do not need eig vector */    
+    SymmTridEig(EvalT, NULL, kdim, dT, eT);
     count = kdim;
 #else
     /*-------------------- THIS uses dstemr */
@@ -311,6 +311,10 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     tr0 = tr1;
   } /* end of the main loop */
 
+  /*-------------------- compute eig vals and vector */    
+  Malloc(EvecT, kdim*kdim, double); // Eigen vectors of T
+  SymmTridEig(EvalT, EvecT, kdim, dT, eT);
+  
   /*-------------------- done == compute Ritz vectors */
   Malloc(Rvec, nconv*n, double);       // holds computed Ritz vectors
 
