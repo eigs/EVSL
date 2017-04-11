@@ -4,11 +4,11 @@
 #include "struct.h"
 #include "internal_proto.h"
 
-/**-------------------------------------------------*
+/**
  * @brief convert csr to csc
  * Assume input csr is 0-based index
  * output csc 0/1 index specified by OUTINDEX      *
- * ------------------------------------------------*/
+ */
 void csrcsc(int OUTINDEX, int nrow, int ncol, int job,
     double *a, int *ja, int *ia,
     double *ao, int *jao, int *iao) {
@@ -43,11 +43,11 @@ void csrcsc(int OUTINDEX, int nrow, int ncol, int job,
   iao[0] = OUTINDEX;
 }
 
-/**-------------------------------------------*
+/**
  * @brief  Sort each row of a csr by increasing column 
  * order
  * By double transposition
- *-------------------------------------------*/
+ */
 void sortrow(csrMat *A) {
   /*-------------------------------------------*/
   int nrows = A->nrows;
@@ -68,6 +68,9 @@ void sortrow(csrMat *A) {
   free(ib);
 }
 
+/** 
+ * @brief  memory allocation for csr matrix
+ */
 void csr_resize(int nrow, int ncol, int nnz, csrMat *csr) {
   csr->nrows = nrow;
   csr->ncols = ncol;
@@ -76,21 +79,27 @@ void csr_resize(int nrow, int ncol, int nnz, csrMat *csr) {
   Malloc(csr->a, nnz, double);
 }
 
+/**
+ * @brief  memory deallocation for csr matrix
+ */
 void free_csr(csrMat *csr) {
   free(csr->ia);
   free(csr->ja);
   free(csr->a);
 }
 
+/** 
+ * @brief  memory deallocation for coo matrix
+ */
 void free_coo(cooMat *coo) {
   free(coo->ir);
   free(coo->jc);
   free(coo->vv);
 }
 
-/*---------------------------------------------------------
+/** 
  * @brief convert coo to csr
- *---------------------------------------------------------*/
+ */
 int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
   int nnz = coo->nnz;
   //printf("@@@@ coo2csr, nnz %d\n", nnz);
@@ -126,23 +135,33 @@ int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
 }
 
 
-double dcsr1nrm(csrMat *A){
-  // computes the 1-norm of A 
-  double ta = 0.0, t = 0.0;
-  int nrows =A->nrows,  one = 1, i, k, k1, len;
+#if 0
+/**-------------------------------------------*
+ * @brief  compute the inf-norm of a csr matrix
+ *-------------------------------------------*/
+double dcsrinfnrm(csrMat *A){
+  // computes the inf-norm of A: max abs row sum
+  double ta = 0.0;
+  int nrows =A->nrows, i, j;
   int *ia = A->ia;
   double *aa = A->a;
-  k = ia[0];
-  for (i=0; i<nrows;i++){
-    k1 = ia[i+1];
-    len = k1-k;
-    t = DASUM(&len,&aa[k],&one);
+  /* for each row */
+  for (i=0; i<nrows; i++) {
+    /* abs row sum */
+    double t = 0.0;
+    for (j=ia[i]; j<ia[i+1]; j++) {
+      t += fabs(aa[j]);
+    }
+    /* take max */
     ta = max(ta,t);
-    k = k1;
   }
   return (ta);
 }
+#endif
 
+/**
+ * @brief csr matrix matvec
+ */
 void dcsrmv(char trans, int nrow, int ncol, double *a, 
     int *ia, int *ja, double *x, double *y) {
   int  len, jj=nrow;
@@ -185,7 +204,8 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
     }
   }
 }
-/*
+
+/**
 * @brief matvec for a CSR matrix, y = A * x or y = A' * x
 */
 int matvec(char trans, csrMat *A, double *x, double *y) {
@@ -193,10 +213,11 @@ int matvec(char trans, csrMat *A, double *x, double *y) {
   return 0;
 }
 
-/*
+/**
 * @brief y = A * x
-* This is the matvec function for the matrix A
-* When matvec function is set, A will be ignored so it can be NULL
+* This is the matvec function for the matrix A in evsldata
+* if matvec routine evsl.Amv is set, use it
+* if not, use matrix evsl.A
 */
 int matvec_A(double *x, double *y) {
   csrMat *A;
@@ -215,10 +236,11 @@ int matvec_A(double *x, double *y) {
   /*return 1;*/
 }
 
-/*
+/**
 * @brief y = B * x
-* This is the matvec function for the matrix B
-* When matvec function is set, B will be ignored so it can be NULL
+* This is the matvec function for the matrix B in evsldata
+* if matvec routine evsl.Bmv is set, use it
+* if not, use matrix evsl.B
 */
 int matvec_B(double *x, double *y) {
   csrMat *B;
@@ -237,7 +259,9 @@ int matvec_B(double *x, double *y) {
   /*return 1;*/
 }
 
-/* @brief check if a triangular matrix has all nonzero diag entries
+#if 0
+/** 
+ * @brief check if a triangular matrix has all nonzero diag entries
  * @warning: A must have been `sortrow' already */
 int check_tri_full_diag(char type, csrMat *A) {
   int i,j;
@@ -259,9 +283,11 @@ int check_tri_full_diag(char type, csrMat *A) {
   }
   return 0;
 }
+#endif
 
-/* inline function used by matadd below
- * insert an element pointed by j of A (times t) to locattion k in C */
+/** @brief inline function used by matadd
+ * insert an element pointed by j of A (times t) to location k in C 
+ * */
 inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k, 
                           int *j, int *map) {
   if (*k > C->ia[i] && C->ja[(*k)-1] == A->ja[*j]) {
@@ -284,8 +310,21 @@ inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k,
   (*j) ++;
 }
 
-/* C = alp * A + bet * B 
- * Note: A and B MUST be sorted, C will be sorted */
+/** @brief matrix addition C = alp * A + bet * B
+ * @param[in] alp
+ * @param[in] bet
+ * @param[in] A
+ * @param[in] B
+ * @param[out] C
+ * @warning the nz pattern of C will be union of those of A and B.
+ * no cancellation will be considered
+ * @warning A and B MUST be sorted, on output C will be sorted
+ * @param[out] mapA (of size nnzA or null), mapB (of size nnzB or null)
+ * if not null, on output mapA contains the location of each nonzero of A
+ * in the CSR matrix C, i.e. mapA[i] is the position of the corresponding
+ * entry in C.ja and C.a for entry in A.ja[i] and A.a[i]
+ * @param[out] mapB the same as mapA
+ * */
 int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
            int *mapA, int *mapB) {
   int nnzA, nnzB, i, jA, jB, k;
@@ -335,7 +374,7 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
   return 0;
 }
 
-/* return an identity matrix of dimension n */
+/** @brief return an identity matrix of dimension n */
 int speye(int n, csrMat *A) {
   int i;
   csr_resize(n, n, n, A);
@@ -346,3 +385,4 @@ int speye(int n, csrMat *A) {
   A->ia[n] = n;
   return 0;
 }
+

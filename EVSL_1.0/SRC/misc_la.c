@@ -195,7 +195,8 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
 }
 
 /**
- * @brief Classical GS reortho. No test. just do i_max times 
+ * @brief Classical GS reortho. No test. just do i_max times
+ * used in generalized ev problems
  **/
 void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q, 
                double *v, double *w) {
