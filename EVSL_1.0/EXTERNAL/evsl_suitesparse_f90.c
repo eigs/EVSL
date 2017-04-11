@@ -22,3 +22,26 @@ void free_bsol_suitesparse_f90_(size_t *Bsolf90) {
   FreeBSolSuiteSparseData(Bsol);
   free(Bsol);
 }
+
+void setup_asigmabsol_suitesparse_f90_(size_t *ratf90, size_t *solshiftf90) {
+  ratparams *rat = (ratparams *) (*ratf90);
+  
+  void **solshiftdata = (void **) malloc(rat->num*sizeof(void *));
+  SetupASIGMABSolSuiteSparse(evsldata.A, evsldata.B, rat->num, rat->zk, 
+                             solshiftdata);
+  *solshiftf90 = (size_t) solshiftdata;
+}
+
+void evsl_setasigmabsol_f90_(size_t *ratf90, size_t *solshiftf90) {
+  ratparams *rat = (ratparams *) (*ratf90);
+  void **solshiftdata = (void **) (*solshiftf90);
+  SetASigmaBSol(rat, NULL, ASIGMABSolSuiteSparse, solshiftdata);
+}
+
+void free_asigmabsol_suitesparse_f90_(size_t *ratf90, size_t *solshiftf90) {
+  ratparams *rat = (ratparams *) (*ratf90);
+  void **solshiftdata = (void **) (*solshiftf90);
+  FreeASIGMABSolSuiteSparse(rat->num, solshiftdata);
+  free(solshiftdata);
+}
+

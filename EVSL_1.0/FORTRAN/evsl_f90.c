@@ -189,3 +189,61 @@ void evsl_copy_result_f90_(double *val, double *vec) {
   evsl_eigvec_computed = NULL;
 }
 
+void evsl_setamv_f90_(int *n, void *func, void *data) {
+  SetAMatvec(*n, (MVFunc) func, data);
+}
+
+void evsl_find_rat_f90_(double *intv, size_t *ratf90) {
+  int pow = 2;
+  int num = 1;
+  double beta = 0.01;
+  ratparams *rat;
+  Malloc(rat, 1, ratparams);
+  set_ratf_def(rat);
+  rat->pw = pow;
+  rat->num = num;
+  rat->beta = beta;
+  find_ratf(intv, rat);
+
+  *ratf90 = (size_t) rat;
+}
+
+void evsl_ratlannr_f90_(double *xintv, int *max_its, double *tol, size_t *ratf90) {
+  int n, nev2, ierr;
+  double *lam, *Y, *res;
+  FILE *fstats = stdout;
+  double *vinit;
+ 
+  if (evsldata.Amv) {
+    n = evsldata.Amv->n;
+  } else {
+    n = evsldata.A->nrows;
+  }
+  Malloc(vinit, n, double);
+  rand_double(n, vinit);
+
+  ratparams *rat = (ratparams *) (*ratf90);
+
+  ierr = RatLanNr(xintv, *max_its, *tol, vinit,
+                  rat, &nev2, &lam, &Y, &res, fstats);
+
+  if (ierr) {
+    printf("RatLanNr error %d\n", ierr);
+  }
+
+  free(vinit);
+  if (res) {
+    free(res);
+  }
+  evsl_nev_computed = nev2;
+  evsl_n = n;
+  evsl_eigval_computed = lam;
+  evsl_eigvec_computed = Y;
+}
+
+void evsl_free_rat_f90_(size_t *ratf90) {
+  ratparams *rat = (ratparams *) (*ratf90);
+  free_rat(rat);
+  free(rat);
+}
+
