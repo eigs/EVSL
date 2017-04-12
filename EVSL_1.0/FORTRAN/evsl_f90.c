@@ -4,8 +4,6 @@
 #include "struct.h"
 #include "internal_proto.h"
 
-#define EVSLFORT(name) name ## _f90_
-
 /** global variables that hold results from EVSL
  * evsl_copy_result_f90 will copy results from these vars and reset them
  * */

@@ -28,6 +28,9 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
+/* Fortran naming */
+#define EVSLFORT(name) name ## _f90_
+
 /* max number of Gram–Schmidt process in orthogonalization */
 #define NGS_MAX 2
 
