@@ -153,9 +153,12 @@ typedef struct _LTSolType {
 typedef struct _evsldata {
   int ifGenEv;              /**< if it is a generalized eigenvalue problem */
   csrMat *A;                /**< pointer to the A matrix */
-  int ifOwnA;               /**< if evsl owns A */
+  int ifOwnA;               /**< if evsl owns A
+                                 0: does not own the csr (no free after done) 
+                                 1: owns csr and data inside (deep free after done)
+                                 2: owns csr but not data (shallow free)*/
   csrMat *B;                /**< pointer to the B matrix */
-  int ifOwnB;               /**< if evsl owns B */
+  int ifOwnB;               /**< the same meaning as A */
   externalMatvec *Amv;      /**< external matvec routine and the associated data for A */
   externalMatvec *Bmv;      /**< external matvec routine and the associated data for B */
   BSolType *Bsol;           /**< external function and data for B solve */

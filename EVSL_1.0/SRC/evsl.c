@@ -31,14 +31,19 @@ int EVSLStart() {
  *
  * */
 int EVSLFinish() {
-  if (evsldata.ifOwnA) {
+  if (1 == evsldata.ifOwnA) {
     free_csr(evsldata.A);
+  }
+  if (evsldata.ifOwnA) {
     free(evsldata.A);
   }
-  if (evsldata.ifOwnB) {
+  if (1 == evsldata.ifOwnB) {
     free_csr(evsldata.B);
+  }
+  if (evsldata.ifOwnB) {
     free(evsldata.B);
   }
+
   if (evsldata.Amv) {
     free(evsldata.Amv);
   }
