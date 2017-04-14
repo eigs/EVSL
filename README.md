@@ -167,7 +167,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   be the  solution (complex vector),  and `data` contains  all the
   data  needed  for  the  solver.    
 
-  If all `func[i]` are the same, one can set `func==NULL' and set `allf` to the function
+  If all `func[i]` are the same, one can set `func==NULL` and set `allf` to the function
 
   Once `SetASigmaBSol` is done, rational filtering Lanczos methods 
   should be ready to use.
