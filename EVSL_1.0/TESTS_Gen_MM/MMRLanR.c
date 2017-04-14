@@ -137,7 +137,7 @@ int main() {
     SetupBSolSuiteSparse(&Bcsr, &Bsol);
     /*-------------------- set the solver for B and LT */
     SetBSol(BSolSuiteSparse, (void *) &Bsol);
-    SetLTSol(LTSolSuiteSparse);
+    SetLTSol(LTSolSuiteSparse, (void *) &Bsol);
     /*-------------------- for generalized eigenvalue problem */
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */

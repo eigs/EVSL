@@ -15,7 +15,7 @@ void EVSLFORT(setup_bsol_suitesparse)(uintptr_t *Bsolf90) {
   SetupBSolSuiteSparse(evsldata.B, Bsol);
   
   SetBSol(BSolSuiteSparse, (void *) Bsol);
-  SetLTSol(LTSolSuiteSparse);
+  SetLTSol(LTSolSuiteSparse, (void *) Bsol);
   
   *Bsolf90 = (uintptr_t) Bsol;
 }

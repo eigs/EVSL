@@ -194,11 +194,12 @@ int SetASigmaBSol(ratparams *rat, SolFuncC *func, SolFuncC allf, void **data) {
 /**
  * @brief Set the solve routine for LT
  * */
-int SetLTSol(SolFuncR func) {
+int SetLTSol(SolFuncR func, void *data) {
   if (!evsldata.LTsol) {
     Calloc(evsldata.LTsol, 1, LTSolType);
   }
   evsldata.LTsol->func = func;
+  evsldata.LTsol->data = data;
   return 0;
 }
 
