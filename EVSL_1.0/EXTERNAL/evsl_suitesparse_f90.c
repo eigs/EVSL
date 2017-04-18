@@ -7,17 +7,22 @@
 #include "internal_proto.h"
 #include "evsl_suitesparse.h"
 
-/** @brief Fortran interface for SetBSol and SetLTSol 
- * @warning Will use evsldata.B, so must be used after setting B */
-void EVSLFORT(setup_bsol_suitesparse)(uintptr_t *Bsolf90) {
+/** @brief Fortran interface for SetupBSolSuiteSparse
+ * @warning Will use evsldata.B, so must be used after setting B 
+ * @param[out] Bsolfuncf90: func pointer of Bsol
+ * @param[out] LTsolfuncf90: func pointer of LTsol
+ * @param[out] Bsoldata90: data pointer of Bsol and LTsol
+ */
+void EVSLFORT(setup_bsol_suitesparse)(uintptr_t *Bsolfuncf90,
+                                      uintptr_t *LTsolfuncf90,
+                                      uintptr_t *Bsoldataf90) {
   BSolDataSuiteSparse *Bsol;
   Malloc(Bsol, 1, BSolDataSuiteSparse);
   SetupBSolSuiteSparse(evsldata.B, Bsol);
-  
-  SetBSol(BSolSuiteSparse, (void *) Bsol);
-  SetLTSol(LTSolSuiteSparse, (void *) Bsol);
-  
-  *Bsolf90 = (uintptr_t) Bsol;
+  /* cast pointer for output */
+  *Bsolfuncf90 = (uintptr_t) BSolSuiteSparse;
+  *LTsolfuncf90 = (uintptr_t) LTSolSuiteSparse; 
+  *Bsoldataf90 = (uintptr_t) Bsol;
 }
 
 /** @brief Fortran interface for FreeBSolSuiteSparseData */
@@ -42,7 +47,7 @@ void EVSLFORT(setup_asigmabsol_suitesparse)(uintptr_t *ratf90,
   void **solshiftdata = (void **) malloc(rat->num*sizeof(void *));
   SetupASIGMABSolSuiteSparse(evsldata.A, evsldata.B, rat->num, rat->zk, 
                              solshiftdata);
-  /* cast pointer in output */
+  /* cast pointer for output */
   *solshiftf90 = (uintptr_t) solshiftdata;
 }
 
