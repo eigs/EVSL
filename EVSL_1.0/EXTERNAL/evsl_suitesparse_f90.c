@@ -16,8 +16,8 @@ void EVSLFORT(setup_bsol_suitesparse)(uintptr_t *Bsoldataf90) {
   BSolDataSuiteSparse *Bsol;
   Malloc(Bsol, 1, BSolDataSuiteSparse);
   SetupBSolSuiteSparse(evsldata.B, Bsol);
-  SetBSol(BSolSuiteSparse, (void *) &Bsol);
-  SetLTSol(LTSolSuiteSparse, (void *) &Bsol); 
+  SetBSol(BSolSuiteSparse, (void *) Bsol);
+  SetLTSol(LTSolSuiteSparse, (void *) Bsol); 
   /* cast pointer for output */
   *Bsoldataf90 = (uintptr_t) Bsol;
 }
