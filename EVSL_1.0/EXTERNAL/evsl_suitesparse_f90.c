@@ -47,7 +47,7 @@ void EVSLFORT(setup_asigmabsol_suitesparse)(uintptr_t *ratf90,
 }
 
 /** @brief Fortran interface for SetASigmaBSol
- * @param[in/out] ratf90: pointer of rational filter
+ * @param ratf90: pointer of rational filter [in/out] 
  * @param[out] solshiftf90: pointer of solshift array
  */
 void EVSLFORT(evsl_setasigmabsol)(uintptr_t *ratf90, 
@@ -60,8 +60,8 @@ void EVSLFORT(evsl_setasigmabsol)(uintptr_t *ratf90,
 }
 
 /** @brief Fortran interface for FreeASIGMABSolSuiteSparse
- * @param[in/out] ratf90: pointer of rational filter
- * @param[in/out] solshiftf90: pointer of solshift array
+ * @param ratf90: pointer of rational filter [in/out] 
+ * @param solshiftf90: pointer of solshift array [in/out] 
  */
 void EVSLFORT(free_asigmabsol_suitesparse)(uintptr_t *ratf90, 
                                            uintptr_t *solshiftf90) {

@@ -5,6 +5,10 @@
 #include <assert.h>
 #include <math.h>
 
+/*! \file define.h
+    \brief defs in EVSL
+*/
+
 #define PI M_PI 
 //3.14159265358979323846
 #define orthTol 1e-14
@@ -25,13 +29,24 @@
   CHKERR((base) == NULL && nmem > 0); \
 }
 
+/*!
+  \def max(x,y)
+  Computes the maximum of \a x and \a y.
+*/
 #define max(a, b) ((a) > (b) ? (a) : (b))
+
+/*!
+  \def min(x,y)
+  Computes the minimum of \a x and \a y.
+*/
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-/* Fortran naming */
+/*! Fortran interface naming convention
+ */
 #define EVSLFORT(name) name ## _f90_
 
-/* max number of Gram–Schmidt process in orthogonalization */
+/*! max number of Gram–Schmidt process in orthogonalization
+ */
 #define NGS_MAX 2
 
 #endif
