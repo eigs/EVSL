@@ -470,6 +470,7 @@ int find_pol(double *intv, polparams *pol) {
     pol->gam = gam;
     pol->deg = mbest;
   }
+  //save_vec(pol->deg+1, mu, "OUT/mu.mtx");
   free(v);
   free(jac);
   return 0;

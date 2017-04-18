@@ -7,21 +7,18 @@
 #include "internal_proto.h"
 #include "evsl_suitesparse.h"
 
-/** @brief Fortran interface for SetupBSolSuiteSparse
+/** @brief Fortran interface for SetupBSolSuiteSparse and
+ * also SetBsol and SetLTSol
  * @warning Will use evsldata.B, so must be used after setting B 
- * @param[out] Bsolfuncf90: func pointer of Bsol
- * @param[out] LTsolfuncf90: func pointer of LTsol
- * @param[out] Bsoldata90: data pointer of Bsol and LTsol
+ * @param[out] Bsoldata90: data pointer for Bsol and LTsol
  */
-void EVSLFORT(setup_bsol_suitesparse)(uintptr_t *Bsolfuncf90,
-                                      uintptr_t *LTsolfuncf90,
-                                      uintptr_t *Bsoldataf90) {
+void EVSLFORT(setup_bsol_suitesparse)(uintptr_t *Bsoldataf90) {
   BSolDataSuiteSparse *Bsol;
   Malloc(Bsol, 1, BSolDataSuiteSparse);
   SetupBSolSuiteSparse(evsldata.B, Bsol);
+  SetBSol(BSolSuiteSparse, (void *) &Bsol);
+  SetLTSol(LTSolSuiteSparse, (void *) &Bsol); 
   /* cast pointer for output */
-  *Bsolfuncf90 = (uintptr_t) BSolSuiteSparse;
-  *LTsolfuncf90 = (uintptr_t) LTSolSuiteSparse; 
   *Bsoldataf90 = (uintptr_t) Bsol;
 }
 

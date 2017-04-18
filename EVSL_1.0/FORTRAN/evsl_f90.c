@@ -85,25 +85,19 @@ void EVSLFORT(evsl_setbmv)(int *n, void *func, void *data) {
 }
 
 /** @brief Fortran interface for SetBSol
- * @param[in] Bsolfunc90: func pointer of Bsol
- * @param[in] Bsoldata90: data pointer of Bsol
+ * @param[in] func: func pointer of Bsol
+ * @param[in] data: data pointer of Bsol
  */
-void EVSLFORT(evsl_setbsol)(uintptr_t *Bsolfuncf90, 
-                            uintptr_t *Bsoldataf90) {
-  /* cast pointers */
-  SolFuncR Bsolfunc = (SolFuncR) (*Bsolfuncf90);
-  void *Bsoldata = (void *) (*Bsoldataf90);
-
-  SetBSol(Bsolfunc, Bsoldata);
+void EVSLFORT(evsl_setbsol)(void *func, void *data) {
+  SetBSol((SolFuncR) func, data);
 }
 
-void EVSLFORT(evsl_setltsol)(uintptr_t *LTsolfuncf90, 
-                             uintptr_t *LTsoldataf90) {
-  /* cast pointers */
-  SolFuncR LTsolfunc = (SolFuncR) (*LTsolfuncf90);
-  void *LTsoldata = (void *) (*LTsoldataf90);
-
-  SetLTSol(LTsolfunc, (void *) LTsoldata);
+/** @brief Fortran interface for SetLTSol
+ * @param[in] func: func pointer of LTsol
+ * @param[in] data: data pointer of LTsol
+ */
+void EVSLFORT(evsl_setltsol)(void *func, void *data) {
+  SetLTSol((SolFuncR) func, data);
 }
 
 /** @brief Fortran interface for SetGenEig */

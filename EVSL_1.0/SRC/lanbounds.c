@@ -108,24 +108,24 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   Malloc(ritzVal, msteps, double);
   /*-------------------- diagonalize tridiagonal matrix */
   SymmTridEig(ritzVal, S, msteps, alp, bet);
-  if (1) {
-    *lmin = ritzVal[0]        - fabs(bottomBeta * S[msteps-1]);
-    *lmax = ritzVal[msteps-1] + fabs(bottomBeta * S[msteps*msteps-1]);
-  } else {
-    /*-------------------- 'safe' bounds */
-    double amin, amax,  x;
-    amax = -INFINITY;
-    amin =  INFINITY;
-    for (j=0; j<msteps; j++){
-      t = fabs(bottomBeta * S[(j+1)*msteps-1]);
-      x = ritzVal[j]-t; 
-      if (x<amin) amin = x; 
-      x = ritzVal[j]+t; 
-      if (x>amax) amax = x; 
-    }
-    *lmin = amin; 
-    *lmax = amax; 
+#if 1
+  *lmin = ritzVal[0]        - fabs(bottomBeta * S[msteps-1]);
+  *lmax = ritzVal[msteps-1] + fabs(bottomBeta * S[msteps*msteps-1]);
+#else
+  /*-------------------- 'safe' bounds */
+  double amin, amax,  x;
+  amax = -INFINITY;
+  amin =  INFINITY;
+  for (j=0; j<msteps; j++) {
+    t = fabs(bottomBeta * S[(j+1)*msteps-1]);
+    x = ritzVal[j]-t; 
+    if (x<amin) amin = x; 
+    x = ritzVal[j]+t; 
+    if (x>amax) amax = x; 
   }
+  *lmin = amin; 
+  *lmax = amax; 
+#endif
   /*-------------------- done */
   free(alp);
   free(bet);
