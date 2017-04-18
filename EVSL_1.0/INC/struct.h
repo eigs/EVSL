@@ -143,6 +143,7 @@ typedef struct _BSolType {
  */
 typedef struct _LTSolType {
   SolFuncR func;       /**< function pointer */
+  void *data;          /**< data */
 } LTSolType;
 
 

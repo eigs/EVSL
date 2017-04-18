@@ -79,7 +79,7 @@ int UnsetBMatvec();
 int SetAMatrix(csrMat *A);
 int SetBMatrix(csrMat *B);
 int SetBSol(SolFuncR func, void *data);
-int SetLTSol(SolFuncR func);
+int SetLTSol(SolFuncR func, void *data);
 int SetASigmaBSol(ratparams *rat, SolFuncC *func, SolFuncC allf, void **data);
 int SetStdEig();
 int SetGenEig();

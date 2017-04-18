@@ -75,6 +75,37 @@ void EVSLFORT(evsl_setamv)(int *n, void *func, void *data) {
   SetAMatvec(*n, (MVFunc) func, data);
 }
 
+/** @brief Fortran interface for SetBMatvec 
+ * @param[in] n : size of B
+ * @param[in] func : function pointer 
+ * @param[in] data : associated data
+ */
+void EVSLFORT(evsl_setbmv)(int *n, void *func, void *data) {
+  SetBMatvec(*n, (MVFunc) func, data);
+}
+
+/** @brief Fortran interface for SetBSol
+ * @param[in] Bsolfunc90: func pointer of Bsol
+ * @param[in] Bsoldata90: data pointer of Bsol
+ */
+void EVSLFORT(evsl_setbsol)(uintptr_t *Bsolfuncf90, 
+                            uintptr_t *Bsoldataf90) {
+  /* cast pointers */
+  SolFuncR Bsolfunc = (SolFuncR) (*Bsolfuncf90);
+  void *Bsoldata = (void *) (*Bsoldataf90);
+
+  SetBSol(Bsolfunc, Bsoldata);
+}
+
+void EVSLFORT(evsl_setltsol)(uintptr_t *LTsolfuncf90, 
+                             uintptr_t *LTsoldataf90) {
+  /* cast pointers */
+  SolFuncR LTsolfunc = (SolFuncR) (*LTsolfuncf90);
+  void *LTsoldata = (void *) (*LTsoldataf90);
+
+  SetLTSol(LTsolfunc, (void *) LTsoldata);
+}
+
 /** @brief Fortran interface for SetGenEig */
 void EVSLFORT(evsl_set_geneig)() {
   SetGenEig();
