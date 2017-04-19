@@ -138,7 +138,7 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
  *- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) {
   /* compute eigenvalues/vectors of A that n x n, symmetric
-   * eigenvalues saved in lam
+   * eigenvalues saved in lam: the eigenvalues in ascending order
    * eigenvectors saved in Q */
   char jobz='V';/* want eigenvectors */
   char uplo='U';/* use upper triangular part of the matrix */
