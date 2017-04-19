@@ -35,6 +35,10 @@ int ChebSI(int nev, double *intv, int maxit, double tol,
 /*- - - - - - - - - lanbounds.c */
 int LanBounds(int msteps, double *v, double *lmin, double *lmax);
 
+/*- - - - - - - - - lanTrbounds.c */
+int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
+                int bndtype,
+                double *lammin, double *lammax, FILE *fstats);
 
 /*- - - - - - - - - ratfilter.c */
 //

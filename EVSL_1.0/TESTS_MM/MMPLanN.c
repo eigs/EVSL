@@ -120,7 +120,7 @@ int main () {
     vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);
     /*-------------------- get lambda_min lambda_max estimates */
-    ierr = LanBounds(60, vinit, &lmin, &lmax);
+    ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bounds for A: [%.15e, %.15e]\n", lmin, lmax);
     /*-------------------- define [a b] now so we can get estimates now    
                            on number of eigenvalues in [a b] from kpmdos */

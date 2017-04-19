@@ -137,7 +137,7 @@ int main () {
     vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);
     /*-------------------- get lambda_min lambda_max estimates */
-    ierr = LanBounds(60, vinit, &lmin, &lmax); 
+    ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
     //    lmin = lmin-0.1; lmax = lmax+0.1;
     fprintf(fstats, "Step 0: Eigenvalue bounds for A: [%.15e, %.15e]\n", lmin, lmax);
     fprintf(fstats," --> interval: a  %9.3e  b %9.3e \n",a, b);

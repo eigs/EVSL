@@ -144,7 +144,7 @@ int main() {
     //-------------------- initial vector  
     vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);
-    ierr = LanBounds(60, vinit, &lmin, &lmax);
+    ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n", 
 	    lmin, lmax);
     /*-------------------- interval and eig bounds */

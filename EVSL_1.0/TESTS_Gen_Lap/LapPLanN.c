@@ -15,7 +15,7 @@ int lapgen(int nx, int ny, int nz, cooMat *Acoo);
 int main(int argc, char *argv[]) {
   /*------------------------------------------------------------
     generates a laplacean matrix on an nx x ny x nz mesh and
-    matrix B on an (nx x ny) x nz x 1 mesh,
+    matrix B on an (nx x ny x nz) x 1 mesh,
     and computes all eigenvalues of A x = lambda B x
     in a given interval [a  b]
     The default set values are
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- output the problem settings */
   fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
   fprintf(fstats, "Laplacian A : %d x %d x %d, n = %d\n", nx, ny, nz, n);
-  fprintf(fstats, "Laplacian B : %d x %d, n = %d\n", nx*ny,  nz, n);
+  fprintf(fstats, "Laplacian B : %d x %d, n = %d\n", nx*ny*nz, 1, n);
   fprintf(fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
   /*-------------------- generate 1D/3D Laplacian matrix 
    *                     saved in coo format */
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- initial vector */
   vinit = (double *) malloc(n*sizeof(double));
   rand_double(n, vinit);
-  ierr = LanBounds(60, vinit, &lmin, &lmax);
+  ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
   fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n",
           lmin, lmax);
   /*-------------------- interval and eig bounds */

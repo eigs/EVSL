@@ -588,7 +588,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           /* res0 = 2-norm of w */
           res0 = DNRM2(&n, w, &one);
           /* res0 = B-norm of w */
-          matvec_B(w, w2);
+          //matvec_B(w, w2);
           //resB0 = sqrt(DDOT(&n, w, &one, w2, &one));
         } else {
           /*-------------------- w = w - t3*y, (w=A*y-t3*y) */
