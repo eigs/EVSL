@@ -18,19 +18,19 @@
  *    @param[in] n_int Number of desired sub-intervals
  *    @param[in] npts number of integration points (length of xi)
  *
- *    @param[out] si Length-npts long vector, y-coordinate points for
+ *    @param[out] sli Length-npts long vector, y-coordinate points for
  *    plotting the DOS. Must be preallocated.
  *
  *
  *----------------------------------------------------------------------*/   
 
-int spslicer2(double* xi, double* yi, int n_int, int npts, double* si) {
+int spslicer2(double* xi, double* yi, int n_int, int npts, double* sli) {
   //Assume yi has already been integrated
   double want = (yi[npts-1] - yi[0])/n_int;
   int k = 0;
-  t = yi[0];
-  ls = 0;
-  sli[ls] = ki[k];
+  double t = yi[0];
+  int ls = 0;
+  sli[ls] = xi[k];
   for(k = 1; k < npts; k++) {
     if(yi[k]-t >= want) {
       ls = ls+1;
