@@ -25,7 +25,7 @@
 
 int simspon(double* xi, double* yi, int npts, double* si) {
   int tmp = ((npts-1)/2);
-  int m = tmp>0?floor(tmp):ceil(tmp);
+  int m = tmp>0?floor(tmp):ceil(tmp); // fix
   int tc = 0;
   si[0] = 0;
 
@@ -35,9 +35,10 @@ int simspon(double* xi, double* yi, int npts, double* si) {
     tc = tc + ti;
     si[i+1] = tc;
   }
-  for(int i=2; i < npts; i+=2) {
+  for(int i=1; i < npts; i+=2) {
     ti = (xi[i]-xi[i-1]) * (yi[i] + yi[i-1])/2.0;
     si[i] = si[i-1]+ti;
   }
+  return 0;
 }
 

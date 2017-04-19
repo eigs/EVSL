@@ -24,11 +24,11 @@
  *
  *----------------------------------------------------------------------*/   
 
-int spslicer2(double* xi, double* yi, int npts, double* si) {
+int spslicer2(double* xi, double* yi, int n_int, int npts, double* si) {
   //Assume yi has already been integrated
-  double want = (yi[npts] - yi[0])/n_int;
+  double want = (yi[npts-1] - yi[0])/n_int;
   int k = 0;
-  t = pi[0];
+  t = yi[0];
   ls = 0;
   sli[ls] = ki[k];
   for(k = 1; k < npts; k++) {
@@ -38,5 +38,7 @@ int spslicer2(double* xi, double* yi, int npts, double* si) {
       t = yi[k];
     }
   }
-  sli[n_int+1] = xi[npts-1];
+  sli[n_int] = xi[npts-1];
 
+  return 0;
+}
