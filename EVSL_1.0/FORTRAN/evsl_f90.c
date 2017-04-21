@@ -66,6 +66,43 @@ void EVSLFORT(evsl_setb_coo)(int *n, int *nnz, int *ir, int *jc, double *vv) {
   evsldata.ifOwnB = 1;
 }
 
+/** @brief Fortran interface to set matrix A as a CSR matrix
+ * The matrix pieces come in from Fortran already in CSR format
+ * EVSL will handle the deallocation of the CSR struct but not the individual arrays
+ * @param[in] n   : size of A
+ * @param[in] ia, ja, a :: CSR triplets
+ */
+void EVSLFORT(evsl_seta_csr)(int * n, int * ia, int * ja, double * a){
+    csrMat *csr;
+    Malloc(csr, 1, csrMat);
+    csr->nrows = *n;
+    csr->ncols = *n;
+    csr->ia = ia;
+    csr->ja = ja;
+    csr->a = a;
+    evsldata.A = csr;
+    /* evsl does not own this this csr and will not free it when done*/
+    evsldata.ifOwnA = 2;
+}
+
+/** @brief Fortran interface to set matrix B as a CSR matrix
+ * The matrix pieces come in from Fortran already in CSR format
+ * EVSL will handle the deallocation of the CSR struct but not the individual arrays
+ * @param[in] n   : size of B
+ * @param[in] ia, ja, a :: CSR triplets
+ */
+void EVSLFORT(evsl_setb_csr)(int * n, int * ia, int * ja, double * a){
+    csrMat *csr;
+    Malloc(csr, 1, csrMat);
+    csr->nrows = *n;
+    csr->ncols = *n;
+    csr->ia = ia;
+    csr->ja = ja;
+    csr->a = a;
+    evsldata.B = csr;
+    /* evsl does not own this this csr and will not free it when done*/
+    evsldata.ifOwnB = 2;
+}
 /** @brief Fortran interface for SetAMatvec 
  * @param[in] n : size of A
  * @param[in] func : function pointer 
