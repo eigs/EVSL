@@ -16,6 +16,9 @@
  *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] npts number of sample points used ofr the curve
+ *    @param[in] *intv Stores the two intervals of interest \\
+ *      intv[0:1] = [lambda_min, lambda_max]\\
+ *      intv[2:3] = [a b] = interval where DOS is to be computed
  *
  *    @param[out] xdos Length-npts long vector, x-coordinate points for
  *    plotting the DOS. Must be preallocated.
@@ -34,6 +37,11 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double *xdos,
   int n;
 
   n = A->nrows;
+  // Variables that persist through iterations
+  double *v;  // Vector for current iteration
+  Malloc(v, n, double);
+  double *y;  // Stores y values
+  Calloc(y, npts, double);
   const double lm = intv[0];
   const double lM = intv[1];
   const double tolBdwn = 1.e-13 * (abs(lM) + abs(lm));
@@ -43,24 +51,16 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double *xdos,
   const int M = min(msteps, 30);
   const double H = (lM - lm) / (M - 1);
   const double sigma = H / sqrt(8 * log(kappa));
-  sigma2 = 2 * sigma * sigma;
+  double sigma2 = 2 * sigma * sigma;
   // If gaussian small than tol ignore point.
   const double tol = 1e-08;
-  width = sigma * sqrt(-2 * log(tol));
+  double width = sigma * sqrt(-2 * log(tol));
   linspace(aa, bb, npts, xdos);       // xdos = linspace(lm,lM, npts);
   memset(y, 0, npts * sizeof(y[0]));  // y = zeros(size(xdos));
 
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);
   Malloc(V, (msteps + 1) * n, double);
-
-  // Variables that persist through iterations
-  double *v;  // Vector for current iteration
-  Malloc(v, n, double);
-  double sigma2;  // A dos curve parameter
-  double width;   // A dos curve parameter
-  double *y;      // Stores y values
-  Calloc(y, npts, double);
 
   for (int m = 0; m < nvec; m++) {
     randn_double(n, v);  // w = randn(size(A,1),1);
@@ -174,14 +174,19 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double *xdos,
     free(ritzVal);
   }
 
-  double sum = 0;
-  memcpy(ydos, y, sizeof(double) * npts);
-  for (int i = 0; i < npts; i++) {
-    sum += ydos[i];
-  }
-  for (int i = 0; i < npts; i++) {
-    ydos[i] /= (sum * (xdos[1] - xdos[0]));
-  }
+  double scaling = 1.0 / (nvec * sqrt(sigma2 * PI));
+
+  DSCAL(&n, &scaling, ydos, &one);
+  // for (int i = 0; i < npts; i++) {
+  //  ydos[i] *= scaling;
+  //}
+
+  double *si;
+  Malloc(si, npts, double);
+  simpson(xdos, ydos, npts, si);
+
+  double neig;
+  neig = si[npts] * n;
 
   free(alp);
   free(bet);
