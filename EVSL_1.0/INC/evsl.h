@@ -9,14 +9,14 @@
 #include "struct.h"
 
 /*- - - - - - - - - cheblanNr.c */
-int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit, 
-              polparams *pol, int *nevOut,  double **lamo, double **Wo, 
+int ChebLanNr(csrMat *A, double *intv, int maxit, double tol, double *vinit,
+              polparams *pol, int *nevOut, double **lamo, double **Wo,
               double **reso, FILE *fstats);
 
 /*- - - - - - - - - cheblanTr.c */
-int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit, 
-              double tol, double *vinit, polparams *pol, int *nev2, 
-              double **vals, double **W, double **resW, FILE *fstats);
+int ChebLanTr(csrMat *A, int lanm, int nev, double *intv, int maxit, double tol,
+              double *vinit, polparams *pol, int *nev2, double **vals,
+              double **W, double **resW, FILE *fstats);
 
 /*- - - - - - - - - chebpoly.c */
 //
@@ -27,14 +27,12 @@ int find_pol(double *intv, polparams *pol);
 void free_pol(polparams *pol);
 
 /*- - - - - - - - - chebsi.c */
-int ChebSI(csrMat *A, int nev, double *intv, int maxit, double tol, 
-           double *vinit, polparams *pol, int *nevo, double **lamo, 
-           double **Yo, double **reso, FILE *fstats);
-
+int ChebSI(csrMat *A, int nev, double *intv, int maxit, double tol,
+           double *vinit, polparams *pol, int *nevo, double **lamo, double **Yo,
+           double **reso, FILE *fstats);
 
 /*- - - - - - - - - lanbounds.c */
 int LanBounds(csrMat *A, int msteps, double *v, double *lmin, double *lmax);
-
 
 /*- - - - - - - - - ratfilter.c */
 //
@@ -48,15 +46,14 @@ void free_rat(ratparams *rat);
 
 /*- - - - - - - - - ratlanNr.c */
 //
-int RatLanNr(csrMat *A, double *intv, ratparams *, int maxit, double tol, 
-             double *vinit, int *nevOut, double **lamo, double **Wo, 
+int RatLanNr(csrMat *A, double *intv, ratparams *, int maxit, double tol,
+             double *vinit, int *nevOut, double **lamo, double **Wo,
              double **reso, FILE *fstats);
-
 
 /*- - - - - - - - - ratlanTr.c */
 //
-int RatLanTr(csrMat *A, int lanm, int nev, double *intv, ratparams*, int maxit, 
-             double tol, double *vinit, int *nev2, double **lamo, double **Yo, 
+int RatLanTr(csrMat *A, int lanm, int nev, double *intv, ratparams *, int maxit,
+             double tol, double *vinit, int *nev2, double **lamo, double **Yo,
              double **reso, FILE *fstats);
 
 /*- - - - - - - - - spmat.c */
@@ -85,15 +82,15 @@ void EVSLFinish();
 
 /*- - - - - - - - - spslicer.c */
 //
-int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int,  int npts);
+int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int,
+             int npts);
 //
-int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *ab, double *mu, 
+int kpmdos(csrMat *A, int Mdeg, int damping, int nvec, double *ab, double *mu,
            double *ecnt);
 
 /*- - - - - - - - - timing.c */
 //
 double cheblan_timer();
-
 
 /*- - - - - - - - - vect.c */
 // generate a random vector
@@ -104,7 +101,8 @@ void sort_double(int n, double *v, int *ind);
 void linspace(double a, double b, int num, double *arr);
 
 /*- - - - - - - - - - landos.c */
-//Computes the density of states (DOS, or spectral density)
-int LanDos(csrMat *A, int nvec, int msteps, int npts, double* xdos, double* ydos);
+// Computes the density of states (DOS, or spectral density)
+int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
+           double *ydos, const int *const intv);
 
 #endif

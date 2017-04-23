@@ -29,8 +29,8 @@
  *
  *----------------------------------------------------------------------*/
 
-int LanDos(csrMat *A, int nvec, int msteps, int npts, double *xdos,
-           double *ydos, int *intv) {
+int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
+           double *ydos, const int *const intv) {
   // Allocations from lanbounds.c
   double *alp, *bet, nbet, nalp, t, *V;
   int one = 1;
