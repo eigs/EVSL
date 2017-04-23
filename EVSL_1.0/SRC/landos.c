@@ -3,10 +3,11 @@
 #include <stdlib.h>
 #include "blaslapack.h"
 #include "def.h"
+#include "evsl.h"
 #include "internal_proto.h"
 #include "string.h"  //for memset
 #include "struct.h"
-//#include "vector.h"
+//#include "vect.h"
 
 /**----------------------------------------------------------------------
  *

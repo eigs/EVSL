@@ -95,6 +95,8 @@ double cheblan_timer();
 /*- - - - - - - - - vect.c */
 // generate a random vector
 void rand_double(int n, double *v);
+// generate a normally distributed random vector
+void randn_double(int n, double *v);
 // sort a vector
 void sort_double(int n, double *v, int *ind);
 //
@@ -104,5 +106,11 @@ void linspace(double a, double b, int num, double *arr);
 // Computes the density of states (DOS, or spectral density)
 int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
            double *ydos, const int *const intv);
+
+/*- - - - - - - - - - simpson.c */
+void simspon(double *xi, double *yi, int npts, double *si);
+
+/*- - - - - - - - - - spslicer2.c */
+void spslicer2(double *xi, double *yi, int n_int, int npts, double *sli);
 
 #endif
