@@ -27,13 +27,29 @@
  *----------------------------------------------------------------------*/
 
 int LanDos(csrMat *A, int nvec, int msteps, int npts, double *xdos,
-           double *ydos) {
+           double *ydos, int *intv) {
   // Allocations from lanbounds.c
   double *alp, *bet, nbet, nalp, t, *V;
   int one = 1;
   int n;
 
   n = A->nrows;
+  const double lm = intv[0];
+  const double lM = intv[1];
+  const double tolBdwn = 1.e-13 * (abs(lM) + abs(lm));
+  const double aa = max(intv[0], intv[2]);
+  const double bb = max(intv[1], intv[3]);
+  const double kappa = 1.25;
+  const int M = min(msteps, 30);
+  const double H = (lM - lm) / (M - 1);
+  const double sigma = H / sqrt(8 * log(kappa));
+  sigma2 = 2 * sigma * sigma;
+  // If gaussian small than tol ignore point.
+  const double tol = 1e-08;
+  width = sigma * sqrt(-2 * log(tol));
+  linspace(aa, bb, npts, xdos);       // xdos = linspace(lm,lM, npts);
+  memset(y, 0, npts * sizeof(y[0]));  // y = zeros(size(xdos));
+
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);
   Malloc(V, (msteps + 1) * n, double);
@@ -120,22 +136,6 @@ int LanDos(csrMat *A, int nvec, int msteps, int npts, double *xdos,
     // Gamma^2 is now elementwise square of smallest eginvector
 
     // dos curve parameters
-    if (m == 0) {  // On first iteration, set sigma2, width, xdos and y for
-                   // future loops
-      const double lm = ritzVal[0];           // lm = theta(1)
-      const double lM = ritzVal[msteps - 1];  // lM = theta(k)
-      const double kappa = 1.25;
-
-      const int M = min(msteps, 30);
-      const double H = (lM - lm) / (M - 1);
-      const double sigma = H / sqrt(8 * log(kappa));
-      sigma2 = 2 * sigma * sigma;
-      // If gaussian small than tol ignore point.
-      const double tol = 1e-04;
-      width = sigma * sqrt(-2 * log(tol));
-      linspace(lm, lM, npts, xdos);       // xdos = linspace(lm,lM, npts);
-      memset(y, 0, npts * sizeof(y[0]));  // y = zeros(size(xdos));
-    }
 
     // Generate DOS from small gaussians centered at the ritz values
     for (int i = 0; i < msteps;
