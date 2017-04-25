@@ -22,7 +22,7 @@
  *
  *----------------------------------------------------------------------*/
 
-void simspon(double* xi, double* yi, int npts, double* si) {
+void simpson(double* xi, double* yi, int npts, double* si) {
   int tmp = ((npts - 1) / 2);
   int m = tmp > 0 ? floor(tmp) : ceil(tmp);  // fix
   int tc = 0;

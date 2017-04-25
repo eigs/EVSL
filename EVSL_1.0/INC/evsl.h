@@ -105,10 +105,10 @@ void linspace(double a, double b, int num, double *arr);
 /*- - - - - - - - - - landos.c */
 // Computes the density of states (DOS, or spectral density)
 int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
-           double *ydos, const int *const intv);
+           double *ydos, const double *const intv);
 
 /*- - - - - - - - - - simpson.c */
-void simspon(double *xi, double *yi, int npts, double *si);
+void simpson(double *xi, double *yi, int npts, double *si);
 
 /*- - - - - - - - - - spslicer2.c */
 void spslicer2(double *xi, double *yi, int n_int, int npts, double *sli);
