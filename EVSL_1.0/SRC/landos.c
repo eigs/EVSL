@@ -75,7 +75,11 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
   Malloc(V, (msteps + 1) * n, double);
 
   for (int m = 0; m < nvec; m++) {
-    randn_double(n, v);  // w = randn(size(A,1),1);
+    // randn_double(n, v);  // w = randn(size(A,1),1);
+    for (int i = 0; i < n; i++) {
+      v[i] = 1;
+    }
+
     //---------------------------------------
     // Start of bulk of lanbound.c code
     //---------------------------------------
@@ -170,7 +174,6 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
       printf("%f,", gamma2[i]);
     }
     printf("\n Fin \n");
-    exit(-1);
 
     // Gamma^2 is now elementwise square of smallest eginvector
 
@@ -197,6 +200,11 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
           ind[numPlaced++] = j;
         }
       }
+      printf("ind");
+      for (int i = 0; i < msteps; i++) {
+        printf("%i,", ind[i]);
+      }
+      printf("\n Fin \n");
       // ind now is = find(abs(xdos - t) < width);
 
       // This replaces y(ind) = y(ind) +
@@ -215,14 +223,28 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
 
   double scaling = 1.0 / (nvec * sqrt(sigma2 * PI));
 
-  DSCAL(&npts, &scaling, ydos, &one);
+  // y = y * scaling
+  DSCAL(&npts, &scaling, y, &one);
+  DCOPY(&npts, y, &one, ydos,
+        &one);  // v = w/norm(w); Might be able to use DNRM2 instead.
   // for (int i = 0; i < npts; i++) {
   //  ydos[i] *= scaling;
   //}
 
+  printf("ydos");
+  for (int i = 0; i < npts; i++) {
+    printf("%f,", ydos[i]);
+  }
+  printf("\n Fin \n");
   double *si;
-  Malloc(si, npts, double);
+  Calloc(si, npts, double);
   simpson(xdos, ydos, npts, si);
+  printf("sp");
+  for (int i = 0; i < npts; i++) {
+    printf("%f,", si[i]);
+  }
+  printf("\n Fin \n");
+  exit(-1);
 
   double neig;
   neig = si[npts] * n;
