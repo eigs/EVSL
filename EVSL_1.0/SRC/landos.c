@@ -66,10 +66,12 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
   Malloc(V, (msteps + 1) * n, double);
 
   for (int m = 0; m < nvec; m++) {
-    // randn_double(n, v);  // w = randn(size(A,1),1);
-    for (int i = 0; i < n; i++) {
-      v[i] = 1;
-    }
+    randn_double(n, v);  // w = randn(size(A,1),1);
+
+    // Produce predictable vectors for testing
+    // for (int i = 0; i < n; i++) {
+    //  v[i] = 1;
+    //}
 
     //---------------------------------------
     // Start of bulk of lanbound.c code
