@@ -70,8 +70,8 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
 
     // Produce predictable vectors for testing
     // for (int i = 0; i < n; i++) {
-    //  v[i] = 1;
-    //}
+    //   v[i] = 1;
+    // }
 
     //---------------------------------------
     // Start of bulk of lanbound.c code
@@ -113,10 +113,26 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
         msteps = j + 1;
         break;
       }
-      wn += 2.0 * bet[j];
-      bet[j] = sqrt(bet[j]);
-      t = 1.0 / bet[j];
-      DSCAL(&n, &t, &V[(j + 1) * n], &one);
+      if (bet[j] > tolBdwn) {  // If it's not zero, continue as normal
+        wn += 2.0 * bet[j];
+        bet[j] = sqrt(bet[j]);
+        t = 1.0 / bet[j];
+        DSCAL(&n, &t, &V[(j + 1) * n], &one);
+      } else {  // Otherwise generate a new vector and redo the previous
+                // calculations on it
+        randn_double(n, v);  // w = randn(size(A,1),1);
+        for (i = 0; i <= j; i++) {
+          t = DDOT(&n, &V[(j + 1) * n], &one, &V[i * n], &one);
+          double mt = -t;
+          DAXPY(&n, &mt, &V[i * n], &one, &V[(j + 1) * n], &one);
+        }
+        bet[j] = DDOT(&n, &V[(j + 1) * n], &one, &V[(j + 1) * n], &one);
+        wn += 2.0 * bet[j];
+        bet[j] = sqrt(bet[j]);
+        t = 1.0 / bet[j];
+        DSCAL(&n, &t, &V[(j + 1) * n], &one);
+        bet[j] = 0;
+      }
     }
 
     double *S, *ritzVal;
