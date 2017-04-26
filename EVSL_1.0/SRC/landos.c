@@ -58,8 +58,7 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
   // If gaussian small than tol ignore point.
   const double tol = 1e-08;
   double width = sigma * sqrt(-2 * log(tol));
-  linspace(aa, bb, npts, xdos);       // xdos = linspace(lm,lM, npts);
-  memset(y, 0, npts * sizeof(y[0]));  // y = zeros(size(xdos));
+  linspace(aa, bb, npts, xdos);  // xdos = linspace(lm,lM, npts);
 
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);
