@@ -44,12 +44,31 @@ int readDiagMat(const char* filename, cooMat* mat) {
   fclose(ifp);
   return 0;
 }
+
+/*
+ * Tests lados.c, simposon.c and spslicer2.c.
+ * The following variable are the outputs. The noted values are the values
+ * when the randn_double in landos is replaced with a vector of ones.
+ *
+ *
+ * xdos = [5, 5.015075, 5.030151, 5.045226 ... 7.964925, 8.000000 ]
+ * ydos = [0, 0.062025, 0.062213, 0.062406 ... 0.100559, 0.100404 ]
+ * si   = [0, 0.000936, 0.001876, 0.002818 ... 0.254688, 0.256203 ]
+ * sli  = [5, 5.949749, 6.716593, 6.718593 ]
+ * neig = 153.721918
+ *
+ *
+ */
 int main() {
   cooMat cooMat;
   csrMat csrMat;
+
+  // Read in a test matrix
   readDiagMat("testmat.dat", &cooMat);
   cooMat_to_csrMat(0, &cooMat, &csrMat);
   free_coo(&cooMat);
+
+  // Define some constants to test with
   const int msteps = 30;
   const int npts = 200;
   const int nvec = 100;
@@ -58,23 +77,47 @@ int main() {
   double* xdos = (double*)calloc(npts, sizeof(double));
   double* ydos = (double*)calloc(npts, sizeof(double));
 
-  int ret = LanDos(&csrMat, nvec, msteps, npts, xdos, ydos, intv);
+  double neig;
+  int ret = LanDos(&csrMat, nvec, msteps, npts, xdos, ydos, &neig, intv);
 
-  printf("xdos:\n");
-  for (int i = 0; i < npts; i++) {
-    printf("%lf\t", xdos[i]);
-  }
-  printf("\n");
-  printf("ydos:\n");
-  for (int i = 0; i < npts; i++) {
-    printf("%lf\t", ydos[i]);
-  }
+  double* si = (double*)calloc(npts, sizeof(double));
+  simpson(xdos, ydos, npts, si);
+
+  const int n_int = 4;
+  double* sli = (double*)calloc(n_int, sizeof(double));
+  spslicer2(xdos, si, n_int, npts, sli);
+
+  // Write to an output file
   FILE* ofp = fopen("myydos.txt", "w");
   for (int i = 0; i < npts; i++) {
     fprintf(ofp, "%lf\n", ydos[i]);
   }
-  double* si = (double*)calloc(npts, sizeof(double));
-  simpson(xdos, ydos, npts, si);
+  fclose(ofp);
+
+  ofp = fopen("myxdos.txt", "w");
+  for (int i = 0; i < npts; i++) {
+    fprintf(ofp, "%lf\n", xdos[i]);
+  }
+  fclose(ofp);
+
+  ofp = fopen("mysi.txt", "w");
+  for (int i = 0; i < npts; i++) {
+    fprintf(ofp, "%lf\n", si[i]);
+  }
+  fclose(ofp);
+
+  ofp = fopen("mysli.txt", "w");
+  for (int i = 0; i < n_int; i++) {
+    fprintf(ofp, "%lf\n", sli[i]);
+  }
+  fclose(ofp);
+
+  ofp = fopen("myneig.txt", "w");
+  fprintf(ofp, "%lf", neig);
+  fclose(ofp);
+
+  free(si);
+  free(sli);
   free(xdos);
   free(ydos);
   free_csr(&csrMat);

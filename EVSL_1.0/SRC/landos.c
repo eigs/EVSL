@@ -27,11 +27,13 @@
  *    @param[out] ydos Length-npts long vector, y-coordinate points for
  *    plotting the DOS. Must be preallocated.
  *
+ *    @param[out] neig
+ *
  *
  *----------------------------------------------------------------------*/
 
 int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
-           double *ydos, const double *const intv) {
+           double *ydos, double *neig, const double *const intv) {
   // Allocations from lanbounds.c
   double *alp, *bet, nbet, nalp, t, *V;
   int one = 1;
@@ -56,19 +58,8 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
   // If gaussian small than tol ignore point.
   const double tol = 1e-08;
   double width = sigma * sqrt(-2 * log(tol));
-  printf("Npts: %i \n", npts);
-  printf("aa: %f \n", aa);
-  printf("bb: %f \n", bb);
-  printf("lm: %f \n", lm);
-  printf("lM: %f \n", lM);
-  printf("H: %f \n", H);
-  printf("Sigma2: %f \n", sigma2);
   linspace(aa, bb, npts, xdos);       // xdos = linspace(lm,lM, npts);
   memset(y, 0, npts * sizeof(y[0]));  // y = zeros(size(xdos));
-  printf("\nxdos\n");
-  for (int i = 0; i < npts; i++) {
-    printf("%f,", xdos[i]);
-  }
 
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);
@@ -90,10 +81,6 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
     DCOPY(&n, v, &one, V,
           &one);  // v = w/norm(w); Might be able to use DNRM2 instead.
     double wn = 0.0;
-    printf("\nv:\n");
-    for (int i = 0; i < n; i++) {
-      printf("%f,", v[i]);
-    }
     /*-------------------- main Lanczos loop */
     int j;
     for (j = 0; j < msteps; j++) {
@@ -130,14 +117,6 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
       DSCAL(&n, &t, &V[(j + 1) * n], &one);
     }
 
-    printf("\nAlpha\n");
-    for (int i = 0; i < msteps; i++) {
-      printf("%f,", alp[i]);
-    }
-    printf("\nBeta\n");
-    for (int i = 0; i < msteps; i++) {
-      printf("%f,", bet[i]);
-    }
     double *S, *ritzVal;
     Malloc(S, msteps * msteps, double);
     // Note that S is a matrix compressed into a single array.
@@ -152,16 +131,6 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
     //---------------------------------------
 
     // theta = ritzVal = sorted eigenvalues IN ASCENDING ORDER
-    printf("\nRitzVal\n");
-    for (int i = 0; i < msteps; i++) {
-      printf("%f,", ritzVal[i]);
-    }
-    printf("\n Fin \n");
-    printf("\nS\n");
-    for (int i = 0; i < msteps; i++) {
-      printf("%f,", S[i]);
-    }
-    printf("\n Fin \n");
     double *gamma2;
     Malloc(gamma2, msteps, double);
     for (int i = 0; i < msteps; i++) {
@@ -169,11 +138,6 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
           S[i * msteps] *
           S[i * msteps];  // Note the difference due to row/column major order
     }
-    printf("Gamma2");
-    for (int i = 0; i < msteps; i++) {
-      printf("%f,", gamma2[i]);
-    }
-    printf("\n Fin \n");
 
     // Gamma^2 is now elementwise square of smallest eginvector
 
@@ -200,11 +164,6 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
           ind[numPlaced++] = j;
         }
       }
-      printf("ind");
-      for (int i = 0; i < msteps; i++) {
-        printf("%i,", ind[i]);
-      }
-      printf("\n Fin \n");
       // ind now is = find(abs(xdos - t) < width);
 
       // This replaces y(ind) = y(ind) +
@@ -223,37 +182,19 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
 
   double scaling = 1.0 / (nvec * sqrt(sigma2 * PI));
 
-  // y = y * scaling
+  // y = ydos * scaling
   DSCAL(&npts, &scaling, y, &one);
-  DCOPY(&npts, y, &one, ydos,
-        &one);  // v = w/norm(w); Might be able to use DNRM2 instead.
-  // for (int i = 0; i < npts; i++) {
-  //  ydos[i] *= scaling;
-  //}
-
-  printf("ydos");
-  for (int i = 0; i < npts; i++) {
-    printf("%f,", ydos[i]);
-  }
-  printf("\n Fin \n");
+  DCOPY(&npts, y, &one, ydos, &one);
   double *si;
   Calloc(si, npts, double);
   simpson(xdos, ydos, npts, si);
-  printf("sp");
-  for (int i = 0; i < npts; i++) {
-    printf("%f,", si[i]);
-  }
-  printf("\n Fin \n");
-  exit(-1);
 
-  double neig;
-  neig = si[npts] * n;
+  *neig = si[npts - 1] * n;
 
+  free(si);
   free(alp);
   free(bet);
   free(V);
-  // free(S);
-  // free(ritzVal);
 
   free(v);
   free(y);
