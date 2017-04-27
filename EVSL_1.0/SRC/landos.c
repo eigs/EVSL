@@ -32,14 +32,14 @@
  *
  *----------------------------------------------------------------------*/
 
-int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
+int LanDos(const int nvec, int msteps, const int npts, double *xdos,
            double *ydos, double *neig, const double *const intv) {
   // Allocations from lanbounds.c
   double *alp, *bet, nbet, nalp, t, *V;
   int one = 1;
   int n;
 
-  n = A->nrows;
+  n = evsldata.A->nrows;
   // Variables that persist through iterations
   double *v;  // Vector for current iteration
   Malloc(v, n, double);
@@ -86,7 +86,7 @@ int LanDos(csrMat *A, const int nvec, int msteps, const int npts, double *xdos,
     int j;
     for (j = 0; j < msteps; j++) {
       // w = A*v
-      matvec_genev(A, &V[j * n], &V[(j + 1) * n]);
+      matvec_A(&V[j * n], &V[(j + 1) * n]);
       // w = w - bet * vold
       if (j) {
         nbet = -bet[j - 1];

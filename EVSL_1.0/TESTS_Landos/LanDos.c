@@ -4,8 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "evsl.h"
-#include "io.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -78,7 +79,9 @@ int main() {
   double* ydos = (double*)calloc(npts, sizeof(double));
 
   double neig;
-  int ret = LanDos(&csrMat, nvec, msteps, npts, xdos, ydos, &neig, intv);
+
+  SetAMatrix(&csrMat);
+  int ret = LanDos(nvec, msteps, npts, xdos, ydos, &neig, intv);
 
   double* si = (double*)calloc(npts, sizeof(double));
   simpson(xdos, ydos, npts, si);
@@ -87,32 +90,39 @@ int main() {
   double* sli = (double*)calloc(n_int, sizeof(double));
   spslicer2(xdos, si, n_int, npts, sli);
 
+  //Make OUT dir if it does'nt exist
+  struct stat st = {0};
+  if (stat("OUT", &st) == -1) {
+	  mkdir("OUT", 0700);
+  }
+
   // Write to an output file
-  FILE* ofp = fopen("myydos.txt", "w");
+  FILE* ofp = fopen("OUT/myydos.txt", "w");
   for (int i = 0; i < npts; i++) {
     fprintf(ofp, "%lf\n", ydos[i]);
   }
   fclose(ofp);
 
-  ofp = fopen("myxdos.txt", "w");
+
+  ofp = fopen("OUT/myxdos.txt", "w");
   for (int i = 0; i < npts; i++) {
     fprintf(ofp, "%lf\n", xdos[i]);
   }
   fclose(ofp);
 
-  ofp = fopen("mysi.txt", "w");
+  ofp = fopen("OUT/mysi.txt", "w");
   for (int i = 0; i < npts; i++) {
     fprintf(ofp, "%lf\n", si[i]);
   }
   fclose(ofp);
 
-  ofp = fopen("mysli.txt", "w");
+  ofp = fopen("OUT/mysli.txt", "w");
   for (int i = 0; i < n_int; i++) {
     fprintf(ofp, "%lf\n", sli[i]);
   }
   fclose(ofp);
 
-  ofp = fopen("myneig.txt", "w");
+  ofp = fopen("OUT/myneig.txt", "w");
   fprintf(ofp, "%lf", neig);
   fclose(ofp);
 
