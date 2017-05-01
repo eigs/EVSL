@@ -1,7 +1,7 @@
 This directory  contains drivers for testing  a few routines
 for computing eigenvalues of general sparse (symmetric real)
 matrices. These matrices are read  from a file in the matrix
-market format.  note: HB matrix format is not supported.
+market format.  Note:  The HB matrix format is not supported.
 
 For  the rational  filter driver  you will  need to  link to
 various modules  from the  SuiteSparse package. 

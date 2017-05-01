@@ -1,17 +1,17 @@
 .SUFFIXES : .f .c .o
 
-include ../makefile.in
-include ../EXTERNAL/makefile.in
+include ../../makefile.in
+include ../../EXTERNAL/makefile.in
 
 # Common flags
 FLAGS = -DUNIX -O3 -g -Wall 
 
-INCLUDES = -I../INC -I../EXTERNAL $(UMF_INC)
+INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
 
 # Object files for rational filter restart lanczos
-OBJS_RR = MMRLanR.o io.o mmio.o ../EXTERNAL/evsl_suitesparse.o
+OBJS_RR = MMRLanR.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
 # Object files for rational filter Non-restart lanczos
-OBJS_RN = MMRLanN.o io.o mmio.o ../EXTERNAL/evsl_suitesparse.o
+OBJS_RN = MMRLanN.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
 # Object files for polynomial filter restart lanczos
 OBJS_PR = MMPLanR.o io.o mmio.o 
 # Object files for polynomial filter restart lanczos (omp)
@@ -35,7 +35,7 @@ default: MMPLanN.ex
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
 # Special rules for omp code
 MMPLanR_omp.o : MMPLanR_omp.c
-	$(CC) $(FLAGS) -I ../INC -fopenmp -o $@ -c $<
+	$(CC) $(FLAGS) -I ../../INC -fopenmp -o $@ -c $<
 
 # Exe
 MMPLanR.ex: $(OBJS_PR)
@@ -49,7 +49,7 @@ MMPSI.ex: $(OBJS_PSI)
 
 MMPLanR_omp.ex: $(OBJS_PR_OMP)
 	$(LINK) -o MMPLanR_omp.ex $(OBJS_PR_OMP) $(LIB) $(LIB_EXT) -fopenmp
-	
+
 MMRLanR.ex: $(OBJS_RR) 
 	$(LINK) -o MMRLanR.ex $(OBJS_RR) $(LIB) $(LIB_EXT) 
 

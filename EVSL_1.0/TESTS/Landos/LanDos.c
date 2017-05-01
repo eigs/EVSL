@@ -19,7 +19,7 @@
  * of elements/width/height of matrix, and the rest of the lines contain the
  * values. */
 int readDiagMat(const char* filename, cooMat* mat) {
-  int width;
+  int width, i; 
   FILE* ifp = fopen(filename, "r");
   if (ifp == NULL) {
     fprintf(stderr, "Can't open input file \n");
@@ -37,7 +37,7 @@ int readDiagMat(const char* filename, cooMat* mat) {
   double* vv = (double*)malloc(sizeof(double) * width);
   mat->vv = vv;
 
-  for (int i = 0; i < width; i++) {
+  for (i = 0; i < width; i++) {
     mat->ir[i] = i;
     mat->jc[i] = i;
     fscanf(ifp, "%lf", &mat->vv[i]);
@@ -47,7 +47,7 @@ int readDiagMat(const char* filename, cooMat* mat) {
 }
 
 /*
- * Tests lados.c, simposon.c and spslicer2.c.
+ * Tests landos.c, simposon.c and spslicer2.c.
  * The following variable are the outputs. The noted values are the values
  * when the randn_double in landos is replaced with a vector of ones.
  *
@@ -74,14 +74,18 @@ int main() {
   const int npts = 200;
   const int nvec = 100;
   const double intv[4] = {-2.448170338612495, 11.868902203167497, 5, 8};
+  
+  int i;
 
   double* xdos = (double*)calloc(npts, sizeof(double));
   double* ydos = (double*)calloc(npts, sizeof(double));
 
-  double neig;
+  double neig;  
+  int ret;
 
   SetAMatrix(&csrMat);
-  int ret = LanDos(nvec, msteps, npts, xdos, ydos, &neig, intv);
+  ret = LanDos(nvec, msteps, npts, xdos, ydos, &neig, intv);
+  fprintf(stdout, " ret %d \n",ret) ;
 
   double* si = (double*)calloc(npts, sizeof(double));
   simpson(xdos, ydos, npts, si);
@@ -98,26 +102,26 @@ int main() {
 
   // Write to an output file
   FILE* ofp = fopen("OUT/myydos.txt", "w");
-  for (int i = 0; i < npts; i++) {
+  for (i = 0; i < npts; i++) {
     fprintf(ofp, "%lf\n", ydos[i]);
   }
   fclose(ofp);
 
 
   ofp = fopen("OUT/myxdos.txt", "w");
-  for (int i = 0; i < npts; i++) {
+  for (i = 0; i < npts; i++) {
     fprintf(ofp, "%lf\n", xdos[i]);
   }
   fclose(ofp);
 
   ofp = fopen("OUT/mysi.txt", "w");
-  for (int i = 0; i < npts; i++) {
+  for (i = 0; i < npts; i++) {
     fprintf(ofp, "%lf\n", si[i]);
   }
   fclose(ofp);
 
   ofp = fopen("OUT/mysli.txt", "w");
-  for (int i = 0; i < n_int; i++) {
+  for (i = 0; i < n_int; i++) {
     fprintf(ofp, "%lf\n", sli[i]);
   }
   fclose(ofp);

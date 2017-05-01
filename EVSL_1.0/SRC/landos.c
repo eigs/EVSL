@@ -32,7 +32,7 @@
  *
  *----------------------------------------------------------------------*/
 
-int LanDos(const int nvec, int msteps, const int npts, double *xdos,
+int LanDos(const int nvec, int msteps, int npts, double *xdos,
            double *ydos, double *neig, const double *const intv) {
   // Allocations from lanbounds.c
   double *alp, *bet, nbet, nalp, t, *V;

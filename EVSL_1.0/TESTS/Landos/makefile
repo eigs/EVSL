@@ -1,16 +1,17 @@
 .SUFFIXES : .c .o
 
-include ../makefile.in
-include ../EXTERNAL/makefile.in
+include ../../makefile.in
+####  include ../../EXTERNAL/makefile.in
 
 FLAGS = -DUNIX -O3 -g -Wall 
 
-INCLUDES = -I../INC -I../EXTERNAL $(UMF_INC)
+###INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
+INCLUDES = -I../../INC 
 
 # Object files
-OBJS_LD = LanDos.o  ../EXTERNAL/evsl_suitesparse.o
+OBJS_LD = LanDos.o  
 
-LIB = -L../ -levsl
+LIB = -L../../ -levsl
 
 ALLEXE += LanDos.ex
 LIB_EXT = $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)

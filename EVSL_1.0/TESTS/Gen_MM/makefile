@@ -1,18 +1,18 @@
 .SUFFIXES : .c .o
 
-include ../makefile.in
-include ../EXTERNAL/makefile.in
+include ../../makefile.in
+include ../../EXTERNAL/makefile.in
 
 FLAGS = -DUNIX -O3 -g -Wall 
 
-INCLUDES = -I../INC -I../EXTERNAL $(UMF_INC)
+INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
 
 # Object files
-OBJS_RN = MMRLanN.o io.o mmio.o ../EXTERNAL/evsl_suitesparse.o
-OBJS_RR = MMRLanR.o io.o mmio.o ../EXTERNAL/evsl_suitesparse.o
-OBJS_PR = MMPLanR.o io.o mmio.o ../EXTERNAL/evsl_suitesparse.o
+OBJS_RN = MMRLanN.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
+OBJS_RR = MMRLanR.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
+OBJS_PR = MMPLanR.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
 
-LIB = -L../ -levsl
+LIB = -L../../ -levsl
 
 ALLEXE += MMRLanR.ex MMRLanN.ex MMPLanR.ex
 LIB_EXT = $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)

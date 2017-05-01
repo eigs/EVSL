@@ -1,5 +1,5 @@
 These  drivers  are for  testing  a  few methods  on  simple
-Laplacean matrix pair (A, B).  
+(artificial) Laplacean matrix pair (A, B).  
 
 LapPLanR.c : 
     driver for testing spectrum slicing -- with 
@@ -21,7 +21,9 @@ LapRLanN.c :
     Rational Filter non-restart Lanczos 
     make LapRLanN.ex --> executable LapRLanN.ex
 
-To compute all the eigenvalues of a Laplacian pair (A, B) located inside [1.5, 2.5], where A is discretized on an N1*N2*N3 grid and B is discretized on an (N1*N2*N3)*1*1 grid with four slices:
+To compute  all the  eigenvalues of  a Laplacian  pair (A,  B) located
+inside [1.5, 2.5], where A is discretized on an N1*N2*N3 grid and B is
+discretized on an (N1*N2*N3)*1*1 grid with four slices:
 
 ./Lap*.ex 
 
