@@ -8,8 +8,8 @@ FLAGS = -DUNIX -O3 -g -Wall
 INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
 
 # Object files
-OBJS_PN  = LapPLanN.o io.o lapl.o
-OBJS_PR  = LapPLanR.o io.o lapl.o
+OBJS_PN  = LapPLanN.o io.o lapl.o 
+OBJS_PR  = LapPLanR.o io.o lapl.o 
 OBJS_RN  = LapRLanN.o io.o lapl.o ../../EXTERNAL/evsl_suitesparse.o
 OBJS_RR  = LapRLanR.o io.o lapl.o ../../EXTERNAL/evsl_suitesparse.o
 OBJS_PSI = LapPSI.o io.o lapl.o

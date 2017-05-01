@@ -117,8 +117,8 @@ void linspace(double a, double b, int num, double *arr);
 int LanDos(const int nvec, int msteps, const int npts, double *xdos,
            double *ydos, double *neig, const double *const intv);
 
-/*- - - - - - - - - - simpson.c */
-void simpson(double *xi, double *yi, int npts, double *si);
+/*- - - - - - - - - - simpson2.c */
+void simpson2(double *xi, double *yi, int npts);
 
 /*- - - - - - - - - - spslicer2.c */
 void spslicer2(double *xi, double *yi, int n_int, int npts, double *sli);

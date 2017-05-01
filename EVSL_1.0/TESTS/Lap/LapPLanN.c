@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
-  double *vinit;
+  double *vinit, *xdos, *ydos;
   polparams pol;
   FILE *fstats = NULL;
   if (!(fstats = fopen("OUT/LapPLanN.out","w"))) {
@@ -84,32 +84,46 @@ int main(int argc, char *argv[]) {
   ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
   /*-------------------- step 0: get eigenvalue bounds */
   fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
-  /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
-  /*-------------------- define kpmdos parameters */
-  Mdeg = 300;
-  nvec = 60;
+  /*-------------------- call landos to get the DOS for dividing the spectrum*/
+  /*-------------------- define landos parameters */
+  Mdeg = 50;
+  nvec = 80;
   /*-------------------- start EVSL */
   EVSLStart();
-  /*-------------------- set the left-hand side matrix A */
+  /*-------------------- set  matrix A */
   SetAMatrix(&Acsr);
-  /*-------------------- call kpmdos */
+  /*-------------------- call LanDos */
   mu = (double *) malloc((Mdeg+1)*sizeof(double));
   double t = cheblan_timer();
-  ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
-  t = cheblan_timer() - t;
-  if (ierr) {
-    printf("kpmdos error %d\n", ierr);
-    return 1;
+  //-------------------- number of points - determines fine-ness of slices
+  npts = 50*nslices;
+  xdos = (double *) malloc((npts)*sizeof(double));
+  ydos = (double *) malloc((npts)*sizeof(double));
+
+  fprintf(stdout," %d %d \n",npts,nslices);
+  LanDos(nvec, Mdeg, npts, xdos, ydos, &ecount, xintv);
+  fprintf(stdout," %f \n",ecount);
+
+   for (j=0; j<npts;j++) {
+    printf(" %10.4f %10.4f \n",xdos[j],ydos[j]);
   }
-  fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
+  
+  t = cheblan_timer() - t;
+
+  fprintf(fstats, " Time to build DOS (Landos) was : %10.2f  \n",t);
   fprintf(fstats, " estimated eig count in interval: %.15e \n",ecount);
   //-------------------- call splicer to slice the spectrum
-  npts = 10 * ecount; 
+  
   sli = malloc((nslices+1)*sizeof(double));
 
   fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",
           Mdeg, nvec, npts);
-  ierr = spslicer(sli, mu, Mdeg, xintv, nslices,  npts);
+
+  spslicer2(xdos, ydos, nslices,  npts, sli);
+
+  free (xdos);
+  free (ydos);
+
   if (ierr) {
     printf("spslicer error %d\n", ierr);
     return 1;
@@ -159,7 +173,7 @@ int main(int argc, char *argv[]) {
     //                   pol.thresh_ext and plot.thresh_int
     //-------------------- Now determine polymomial to use
     find_pol(xintv, &pol);       
-
+    
     fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
     //-------------------- then call ChenLanNr
     ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res, fstats);

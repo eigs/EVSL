@@ -27,7 +27,7 @@
  *    @param[out] ydos Length-npts long vector, y-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] neig
+ *    @param[out] neig == estimated number of eigenvalues 
  *
  *
  *----------------------------------------------------------------------*/
@@ -188,16 +188,13 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos,
   // y = ydos * scaling
   DSCAL(&npts, &scaling, y, &one);
   DCOPY(&npts, y, &one, ydos, &one);
-  double *si;
-  Calloc(si, npts, double);
-  simpson(xdos, ydos, npts, si);
+  simpson2(xdos, y, npts);
 
-  *neig = si[npts - 1] * n;
+  *neig = y[npts - 1] * n;
   free(gamma2);
   free(S);
   free(ritzVal);
   
-  free(si);
   free(alp);
   free(bet);
   free(V);
