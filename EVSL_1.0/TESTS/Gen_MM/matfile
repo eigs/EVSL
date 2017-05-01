@@ -1,0 +1,27 @@
+1
+../MATRICES/A.mtx ../MATRICES/B.mtx stiff1 mass1 MM1  28.617629  1746.952 2
+../MATRICES/A5.mtx ../MATRICES/B5.mtx stiff5 mass5 MM1  28.617629  1000.952 3
+../MATRICES/stiff0065536.mtx ../MATRICES/mass0065536.mtx stiff0065536 mass0065536 MM1  0.3  0.6 1
+MATRICES/benzene.mtx benzene MM1 20 23 2
+MATRICES/C60.mtx C60 MM1 0 0.3 1
+/home/rli/workspace/Ge99H100.mtx GeMat MM1
+/scratch/syphax/yxi/Parsec/Ge99H100.mtx GeMat MM1 
+./MATRICES/test.COO TestMat MM1
+./MATRICES/TestMat.COO TestMat MM1
+ /scratch/syphax/INTERNS/Oleary/SpectSlicing/ITSOL_2/Connor/MATRICES/test.COO symetric MM1
+ /scratch/syphax/MATRICES3/Florida/circuit_3.mtx circuit3_not_symmetric MM1
+ /scratch/syphax/INTERNS/Oleary/SpectSlicing/ITSOL_2/Connor/MATRICES/test2.COO matlab_matrix2 MM1
+ /scratch/syphax/MATRICES3/Florida/circuit_3.mtx circuit3 MM1
+ /project/scicom/scicom00/DATA/HB/SHERMAN5 SHERMAN5 HB
+ /project/scicom/scicom00/DATA/HB/PORES1 PORES1 HB 
+ ./MATRICES/SHERMAN5 SHERMAN5 HB
+ /scratch/syphax/MATRICES3/MatrixMarket/cry10000.rua cry10000 HB 
+
+'MATRICES/SHERMAN5' 'SHERMAN5'
+
+first line is the number of matrices to be tested  [called numat in drivers] 
+then  the path to the stiffness matrix, name of the stiffness matrix, the path to the mass matrix,
+name to the mass matrix, datatype of the input matrix, left endpoint of the target interval, right endpoint
+of the target interval, the number of slices wanted to use
+
+Repeat for as many matrices as indicated by numat

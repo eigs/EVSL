@@ -1,0 +1,40 @@
+These  drivers  are for testing a few methods on simple
+Laplacean matrices.   
+
+LapPLanR.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter Lanczos with thick Restart
+    make LapPLanR.ex --> executable LapPLanR.ex
+
+LapPLanN.c :   
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter non-restarting Lanczos 
+    make LapPLanN.ex --> executable LapPLanN.ex
+
+LapPSI.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter Subspace Iteration
+    make LapPSI.ex --> executable LapPSI.ex
+
+LapRLanR.c :  
+    driver for testing spectrum slicing -- with 
+    Rational Filter Lanczos with thick Restart
+    make LapRLanR.ex --> executable LapRLanR.ex
+
+LapRLanN.c :  
+    driver for testing spectrum slicing -- with 
+    Rational Filter non-restart Lanczos 
+    make LapRLanN.ex --> executable LapRLanN.ex
+
+LapPLanN_MatFree.c :  
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter non-restart Lanczos
+    [This example is to illustrate the use of Matrix-free solvers]
+    make LapPLanN_MatFree.ex --> executable LapPLanN_MatFree.ex
+
+To compute all the eigenvalues of a Laplacian discretized on
+an N1*N2*N3  grid, located in  the interval [D1, D2]  with K
+slices:
+
+./Lap*.ex -nx N1 -ny N2 -nz N3 -a D1 -b D2 -nslices K
+

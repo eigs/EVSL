@@ -1,0 +1,10 @@
+1
+../MATRICES/A.mtx stiff1 MM1  0.1 0.3 5  
+../MATRICES/A.mtx stiff1 MM1  0.1 0.1387 1  
+../MATRICES/A.mtx stiff1 MM1  28.617629  1746.952 2
+
+first line is the number of matrices to be tested  [called numat in drivers] 
+then  the path to the matrix, the path to the matrix, datatype of the input matrix, left endpoint of the target interval, right endpoint
+of the target interval, the number of slices wanted to use
+
+Repeat for as many matrices as indicated by numat
