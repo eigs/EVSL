@@ -21,7 +21,8 @@ void rand_double(int n, double *v) {
  * */
 void randn_double(int n, double *v) {
     const double two_pi = 2.0 * 3.1415926535;
-        for(int i = 0; i < n; i++) {
+    int i;
+    for(i = 0; i < n; i++) {
             static double Z0;
             static double Z1;
             static int regen = 0;//A boolean

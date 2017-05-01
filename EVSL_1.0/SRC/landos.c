@@ -55,7 +55,8 @@ int LanDos(const int nvec, int msteps, const int npts, double *xdos,
   const double H = (lM - lm) / (M - 1);
   const double sigma = H / sqrt(8 * log(kappa));
   double sigma2 = 2 * sigma * sigma;
-  // If gaussian small than tol ignore point.
+  int m;
+// If gaussian small than tol ignore point.
   const double tol = 1e-08;
   double width = sigma * sqrt(-2 * log(tol));
   linspace(aa, bb, npts, xdos);  // xdos = linspace(lm,lM, npts);
@@ -63,8 +64,8 @@ int LanDos(const int nvec, int msteps, const int npts, double *xdos,
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);
   Malloc(V, (msteps + 1) * n, double);
-
-  for (int m = 0; m < nvec; m++) {
+  
+  for (m = 0; m < nvec; m++) {
     randn_double(n, v);  // w = randn(size(A,1),1);
 
     // Produce predictable vectors for testing
@@ -83,7 +84,7 @@ int LanDos(const int nvec, int msteps, const int npts, double *xdos,
           &one);  // v = w/norm(w); Might be able to use DNRM2 instead.
     double wn = 0.0;
     /*-------------------- main Lanczos loop */
-    int j;
+    int i, j;
     for (j = 0; j < msteps; j++) {
       // w = A*v
       matvec_A(&V[j * n], &V[(j + 1) * n]);
@@ -150,7 +151,7 @@ int LanDos(const int nvec, int msteps, const int npts, double *xdos,
     // theta = ritzVal = sorted eigenvalues IN ASCENDING ORDER
     double *gamma2;
     Malloc(gamma2, msteps, double);
-    for (int i = 0; i < msteps; i++) {
+    for (i = 0; i < msteps; i++) {
       gamma2[i] =
           S[i * msteps] *
           S[i * msteps];  // Note the difference due to row/column major order
@@ -161,13 +162,13 @@ int LanDos(const int nvec, int msteps, const int npts, double *xdos,
     // dos curve parameters
 
     // Generate DOS from small gaussians centered at the ritz values
-    for (int i = 0; i < msteps;
+    for (i = 0; i < msteps;
          i++) {  // As msteps is width of ritzVal -> we get msteps eigenvectors
       const double t = ritzVal[i];
       int *ind;
       int numind = 0;
 
-      for (int j = 0; j < npts;
+      for (j = 0; j < npts;
            j++) {  // Calculate number of elements matching pattern
         if (abs(xdos[j] - t) < width) {
           numind++;
@@ -175,7 +176,7 @@ int LanDos(const int nvec, int msteps, const int npts, double *xdos,
       }
       Calloc(ind, numind, int);
       int numPlaced = 0;
-      for (int j = 0; j < npts;
+      for (j = 0; j < npts;
            j++) {  // Place the elements matching said pattern
         if (abs(xdos[j] - t) < width) {
           ind[numPlaced++] = j;
@@ -185,7 +186,7 @@ int LanDos(const int nvec, int msteps, const int npts, double *xdos,
 
       // This replaces y(ind) = y(ind) +
       // gamma2(i)*exp(-(xdos(ind)-t).^2/sigma2);
-      for (int j = 0; j < numind; j++) {
+      for (j = 0; j < numind; j++) {
         y[ind[j]] = y[ind[j]] +
                     gamma2[i] * exp(-((xdos[ind[j]] - t) * (xdos[ind[j]] - t)) /
                                     sigma2);
