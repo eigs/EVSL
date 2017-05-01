@@ -21,7 +21,7 @@ OBJS_PN = MMPLanN.o io.o mmio.o
 # Object files for polynomial filter Non-restart lanczos
 OBJS_PSI = MMPSI.o io.o mmio.o
 
-LIB = -L.. -levsl
+LIB = -L ../../ -levsl
 
 ALLEXE = MMPLanR.ex MMPLanN.ex MMPLanR_omp.ex \
 	 MMRLanR.ex MMRLanN.ex MMPSI.ex
