@@ -1,3 +1,15 @@
+
+
+May 1st	YS
+ tested	and added the landos.c (dos from lanczos alg.) coded by	Luke.
+ added:	simpson2.c, spslice2.c
+ Also the driver TESTS/Lap/LapPLlanN.ex	now uses landos	for slicing.
+
+May 1st YS
+ put all the test drivers under TESTS with 4 different directories. 
+ [Lap, MM, Lap_Gen, Lap_MM] A directory for testing density of states will 
+ be added later [it is in there now with a trivial problem] 
+
 Apr 19, 2017. RL
 LanTrbounds.c
 
