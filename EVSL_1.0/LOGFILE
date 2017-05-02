@@ -1,3 +1,9 @@
+
+May 1st YS
+ tested and added the landos.c (dos from lanczos alg.) coded by Luke.
+ added: simpson2.c, spslice2.c 
+ Also the driver TESTS/Lap/LapPLlanN.ex now uses landos for slicing. 
+
 Apr 19, 2017. RL
 LanTrbounds.c
 
