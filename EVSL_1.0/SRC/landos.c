@@ -7,8 +7,6 @@
 #include "internal_proto.h"
 #include "string.h"  //for memset
 #include "struct.h"
-//#include "vect.h"
-
 /**----------------------------------------------------------------------
  *
  *    Computes the density of states (DOS, or spectral density)
@@ -37,21 +35,21 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos,
   //--------------------
   double *alp, *bet, nbet, nalp, t, *V;
   int one = 1;
-  int n;
+  int n, m, i, j;
   
   n = evsldata.A->nrows;
   //-------------------- Variables that persist through iterations
-  double *v;            // Vector for current iteration
+  double *v, *y;            // v=Vector for current iteration; y Stores y values
+  int *ind;
   Malloc(v, n, double);
-  double *y;            // Stores y values
   Calloc(y, npts, double);
+  Malloc(ind,npts, int);
   /*-------------------- for tridiag. eigenvalue problem + lanczos 
                          quadrature */
-  double *S, *ritzVal;
-  double *gamma2;
-  Malloc(gamma2, msteps, double);
-  Malloc(S, msteps * msteps, double);
+  double *S, *ritzVal, *gamma2;
   // S will contain a matrix compressed into a single array.
+  Malloc(S, msteps * msteps, double);
+  Malloc(gamma2, msteps, double);
   Malloc(ritzVal, msteps, double);
   const double lm = intv[0];
   const double lM = intv[1];
@@ -63,10 +61,9 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos,
   const double H = (lM - lm) / (M - 1);
   const double sigma = H / sqrt(8 * log(kappa));
   double sigma2 = 2 * sigma * sigma;
-  int m;
 //-------------------- If gaussian small than tol ignore point.
   const double tol = 1e-08;
-  double width = sigma * sqrt(-2 * log(tol));
+  double width = sigma * sqrt(-2.0 * log(tol));
   linspace(aa, bb, npts, xdos);  // xdos = linspace(lm,lM, npts);
 
   Malloc(alp, msteps, double);
@@ -84,7 +81,6 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos,
     DCOPY(&n, v, &one, V, &one);  
     double wn = 0.0;
     /*-------------------- main Lanczos loop */
-    int i, j;
     for (j = 0; j < msteps; j++) {
       // w = A*v
       matvec_A(&V[j * n], &V[(j + 1) * n]);
@@ -138,7 +134,6 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos,
     SymmTridEig(ritzVal, S, msteps, alp, bet);
     // S = -eigvec
     // ritzVal = diags of D
-
     //---------------------------------------
     // End of bulk of lanbound.c code
     //---------------------------------------
@@ -151,40 +146,24 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos,
     }
     //-------------------- dos curve parameters
     // Generate DOS from small gaussians centered at the ritz values
-    for (i = 0; i < msteps;   i++) {
+    for (i = 0; i < msteps;  i++) {
       // As msteps is width of ritzVal -> we get msteps eigenvectors
       const double t = ritzVal[i];
-      int *ind;
-      int numind = 0;
-
-      for (j = 0; j < npts;
-           j++) {  // Calculate number of elements matching pattern
-        if (abs(xdos[j] - t) < width) {
-          numind++;
-        }
-      }
-      Calloc(ind, numind, int);
       int numPlaced = 0;
-      // Place the elements matching said pattern
+      //-------------------- Place elements close to t in ind
       for (j = 0; j < npts;  j++) {  
-        if (abs(xdos[j] - t) < width) {
+        if (abs(xdos[j] - t) < width) 
           ind[numPlaced++] = j;
-        }
       }
-      // ind now is = find(abs(xdos - t) < width);
-      // This replaces y(ind) = y(ind) +
-      // gamma2(i)*exp(-(xdos(ind)-t).^2/sigma2);
-      for (j = 0; j < numind; j++) {
-        y[ind[j]] = y[ind[j]] +
-                    gamma2[i] * exp(-((xdos[ind[j]] - t) * (xdos[ind[j]] - t)) /
-                                    sigma2);
-      }
-      free(ind);
-    }
-  }
+      
+      for (j = 0; j < numPlaced; j++) 
+        y[ind[j]] += gamma2[i]*exp(-((xdos[ind[j]]-t)*(xdos[ind[j]]-t))/ sigma2);
 
+     }
+    //-------------------- end vector loop
+  } 
+  
   double scaling = 1.0 / (nvec * sqrt(sigma2 * PI));
-
   // y = ydos * scaling
   DSCAL(&npts, &scaling, y, &one);
   DCOPY(&npts, y, &one, ydos, &one);
@@ -201,6 +180,7 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos,
 
   free(v);
   free(y);
+  free(ind);
 
   return 0;
 }

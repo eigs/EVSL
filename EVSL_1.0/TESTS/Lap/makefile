@@ -6,7 +6,7 @@ include ../../EXTERNAL/makefile.in
 FLAGS = -DUNIX -O3 -g -Wall 
 
 ## NOTE: for polynomial filtering methods set "UMF_INC = " (blank)
-## and makefile.in
+## and "LIB_UMF =   " (blank) here or in EXTERNAL/makefile.in
 
 INCLUDES = -I ../../INC -I ../../EXTERNAL $(UMF_INC)
 

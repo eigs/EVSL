@@ -9,9 +9,11 @@ FLAGS = -DUNIX -O3 -g -Wall
 INCLUDES = -I../../INC 
 
 # Object files
-OBJS_LD = LanDos.o  
+OBJS_LD = LanDos.o exDOS.o
 
 LIB = -L../../ -levsl
+
+LIB_UMF = 
 
 ALLEXE += LanDos.ex
 LIB_EXT = $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)
@@ -26,7 +28,6 @@ default: LanDos.ex
 
 LanDos.ex: $(OBJS_LD)
 	$(LINK) -o LanDos.ex $(OBJS_LD) $(LIB) $(LIB_EXT)
-
 
 all: $(ALLEXE)
 

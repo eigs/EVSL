@@ -86,8 +86,8 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
   /*-------------------- call landos to get the DOS for dividing the spectrum*/
   /*-------------------- define landos parameters */
-  Mdeg = 50;
-  nvec = 80;
+  Mdeg = 60;
+  nvec = 100;
   /*-------------------- start EVSL */
   EVSLStart();
   /*-------------------- set  matrix A */
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
   mu = (double *) malloc((Mdeg+1)*sizeof(double));
   double t = cheblan_timer();
   //-------------------- number of points - determines fine-ness of slices
-  npts = 50*nslices;
+  npts = 100*nslices;
   xdos = (double *) malloc((npts)*sizeof(double));
   ydos = (double *) malloc((npts)*sizeof(double));
 
@@ -104,9 +104,8 @@ int main(int argc, char *argv[]) {
   LanDos(nvec, Mdeg, npts, xdos, ydos, &ecount, xintv);
   fprintf(stdout," %f \n",ecount);
 
-   for (j=0; j<npts;j++) {
-    printf(" %10.4f %10.4f \n",xdos[j],ydos[j]);
-  }
+  //for (j=0; j<npts;j++) {
+  //  printf(" %10.4f %10.4f \n",xdos[j],ydos[j]);}
   
   t = cheblan_timer() - t;
 
@@ -118,11 +117,10 @@ int main(int argc, char *argv[]) {
 
   fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",
           Mdeg, nvec, npts);
-
   spslicer2(xdos, ydos, nslices,  npts, sli);
-
   free (xdos);
   free (ydos);
+  //-------------------- slicing done 
 
   if (ierr) {
     printf("spslicer error %d\n", ierr);
