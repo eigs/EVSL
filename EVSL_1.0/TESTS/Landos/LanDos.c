@@ -50,36 +50,34 @@ int readDiagMat(const char* filename, cooMat* mat) {
 }
 
 /*
- * Tests landos.c -- onlu 
- * The following variable are the outputs. The noted values are the values
- * when the randn_double in landos is replaced with a vector of ones.
- *
- *
- *
+ *-----------------------------------------------------------------------
+ * Tests landos.c -- Only the  following variable are the outputs. The
+ * noted  values are  the values  when the  randn_double in  landos is
+ * replaced with a vector of ones.
+ *-----------------------------------------------------------------------
  */
 int main() {
   cooMat cooMat;
   csrMat csrMat;
-  // Read in a test matrix
+  //-------------------- Read in a test matrix
   readDiagMat("testmat.dat", &cooMat);
   cooMat_to_csrMat(0, &cooMat, &csrMat);
  
-  // Define some constants to test with
+  //-------------------- Define some constants to test with
   const int msteps = 30;
   const int npts = 200;
   const int nvec = 100;
   double intv[4] = {-2.448170338612495, 11.868902203167497, 5, 8};
+  //-------------------- reset to whole interval
   intv[2] = intv[0];
   intv[3] = intv[1];
-  int i;
-
+  int i, ret;
+  double neig;
+  //-------------------- exact histogram and computed DOS
   double* xHist = (double*)calloc(npts, sizeof(double));
   double* yHist = (double*)calloc(npts, sizeof(double));
   double* xdos = (double*)calloc(npts, sizeof(double));
   double* ydos = (double*)calloc(npts, sizeof(double));
-
-  double neig;  
-  int ret;
 
   SetAMatrix(&csrMat);
   ret = LanDos(nvec, msteps, npts, xdos, ydos, &neig, intv);
@@ -89,35 +87,32 @@ int main() {
   free_coo(&cooMat);
   fprintf(stdout, " exDOS ret %d \n",ret) ;
 
-  //Make OUT dir if it does'nt exist
+  //--------------------Make OUT dir if it does'nt exist
   struct stat st = {0};
   if (stat("OUT", &st) == -1) {
 	  mkdir("OUT", 0700);
   }
 
-  // Write to an output file
+  //-------------------- Write to  output files
   FILE* ofp = fopen("OUT/myydos.txt", "w");
   for (i = 0; i < npts; i++) 
     fprintf(ofp," %10.4f  %10.4f\n",xdos[i],ydos[i]);
   fclose(ofp);
 
-
-  // Write to an output file
+  //-------------------- save exact DOS 
   ofp = fopen("OUT/Exydos.txt", "w");
   for (i = 0; i < npts; i++) 
     fprintf(ofp," %10.4f  %10.4f\n",xHist[i],yHist[i]);
   fclose(ofp);
-
+  //-------------------- invoke gnuplot for plotting ...
   system("gnuplot < tester.gnuplot");
+  //-------------------- and gv for visualizing /
   system("gv tester.eps");
-  
-
+  //-------------------- done 
   free(xHist);
   free(yHist);
   free(xdos);
   free(ydos);
-
   free_csr(&csrMat);
-
   return 0;
 }
