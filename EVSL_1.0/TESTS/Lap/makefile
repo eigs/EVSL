@@ -8,11 +8,15 @@ FLAGS = -DUNIX -O3 -g -Wall
 ## NOTE: for polynomial filtering methods set "UMF_INC = " (blank)
 ## and "LIB_UMF =   " (blank) here or in EXTERNAL/makefile.in
 
-INCLUDES = -I ../../INC -I ../../EXTERNAL $(UMF_INC)
+#UMF_INC =
+
+#LIB_UMF =
+
+INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
 
 # Object files
-OBJS_PN  = LapPLanN.o io.o lapl.o 
-OBJS_PR  = LapPLanR.o io.o lapl.o 
+OBJS_PN  = LapPLanN.o io.o lapl.o
+OBJS_PR  = LapPLanR.o io.o lapl.o
 OBJS_RN  = LapRLanN.o io.o lapl.o ../../EXTERNAL/evsl_suitesparse.o
 OBJS_RR  = LapRLanR.o io.o lapl.o ../../EXTERNAL/evsl_suitesparse.o
 OBJS_PSI = LapPSI.o io.o lapl.o
@@ -34,16 +38,16 @@ default: LapPLanN.ex
 # Exe
 ## polynomial
 LapPLanR.ex: $(OBJS_PR)
-	$(LINK) -o LapPLanR.ex $(OBJS_PR) $(LIBLAPACK) $(LIB) $(LIB0) 
+	$(LINK) -o LapPLanR.ex $(OBJS_PR) $(LIB) $(LIB_EXT)
 
 LapPLanN.ex: $(OBJS_PN)
-	$(LINK) -o LapPLanN.ex $(OBJS_PN) $(LIBLAPACK) $(LIB) $(LIB0)
+	$(LINK) -o LapPLanN.ex $(OBJS_PN) $(LIB) $(LIB_EXT)
 
 LapPSI.ex: $(OBJS_PSI)
-	$(LINK) -o LapPSI.ex $(OBJS_PSI) $(LIBLAPACK) $(LIB) $(LIB0)
+	$(LINK) -o LapPSI.ex $(OBJS_PSI) $(LIB) $(LIB_EXT)
 
 LapPLanN_MatFree.ex: $(OBJS_PN_MatFree)
-	$(LINK) -o LapPLanN_MatFree.ex $(OBJS_PN_MatFree) $(LIBLAPACK) $(LIB) $(LIB0)
+	$(LINK) -o LapPLanN_MatFree.ex $(OBJS_PN_MatFree) $(LIB) $(LIB_EXT)
 
 ## rational
 LapRLanR.ex: $(OBJS_RR)
