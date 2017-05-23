@@ -372,6 +372,44 @@ void EVSLFORT(evsl_ratlannr)(double *xintv, int *max_its, double *tol,
   evsl_eigvec_computed = Y;
 }
 
+/** @brief Fortran interface for RatLanNr
+ *  the results will be saved in the internal variables
+ */
+void EVSLFORT(evsl_ratlantr)(int * lanm, int * nev, double *xintv, 
+        int *max_its, double *tol, uintptr_t *ratf90) {
+  int n, nev2, ierr;
+  double *lam, *Y, *res;
+  FILE *fstats = stdout;
+  double *vinit;
+ 
+  if (evsldata.Amv) {
+    n = evsldata.Amv->n;
+  } else {
+    n = evsldata.A->nrows;
+  }
+  Malloc(vinit, n, double);
+  rand_double(n, vinit);
+
+  /* cast pointer */
+  ratparams *rat = (ratparams *) (*ratf90);
+
+  ierr = RatLanTr(*lanm, *nev, xintv, *max_its, *tol, vinit,
+                  rat, &nev2, &lam, &Y, &res, fstats);
+
+  if (ierr) {
+    printf("RatLanNr error %d\n", ierr);
+  }
+
+  free(vinit);
+  if (res) {
+    free(res);
+  }
+  /* save pointers to the global variables */
+  evsl_nev_computed = nev2;
+  evsl_n = n;
+  evsl_eigval_computed = lam;
+  evsl_eigvec_computed = Y;
+}
 
 /** @brief Get the number of last computed eigenvalues 
  */
