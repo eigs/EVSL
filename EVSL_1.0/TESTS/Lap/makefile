@@ -38,16 +38,16 @@ default: LapPLanN.ex
 # Exe
 ## polynomial
 LapPLanR.ex: $(OBJS_PR)
-	$(LINK) -o LapPLanR.ex $(OBJS_PR) $(LIB) $(LIB_EXT)
+	$(LINK) -o LapPLanR.ex $(OBJS_PR) $(LIB) $(LIBLAPACK) $(LIB0)
 
 LapPLanN.ex: $(OBJS_PN)
-	$(LINK) -o LapPLanN.ex $(OBJS_PN) $(LIB) $(LIB_EXT)
+	$(LINK) -o LapPLanN.ex $(OBJS_PN) $(LIB) $(LIBLAPACK) $(LIB0)
 
 LapPSI.ex: $(OBJS_PSI)
 	$(LINK) -o LapPSI.ex $(OBJS_PSI) $(LIB) $(LIB_EXT)
 
 LapPLanN_MatFree.ex: $(OBJS_PN_MatFree)
-	$(LINK) -o LapPLanN_MatFree.ex $(OBJS_PN_MatFree) $(LIB) $(LIB_EXT)
+	$(LINK) -o LapPLanN_MatFree.ex $(OBJS_PN_MatFree) $(LIB) $(LIBLAPACK) $(LIB0)
 
 ## rational
 LapRLanR.ex: $(OBJS_RR)
