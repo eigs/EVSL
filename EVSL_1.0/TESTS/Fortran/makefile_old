@@ -1,0 +1,33 @@
+FC = gfortran
+FFLAGS = -g
+
+# The path to the library built from SPARSKIT
+SPARSKIT_PATH = /scratch/syphax/bookey/SPARSKIT2
+
+# The path to the EVSL library
+EVSL_PATH = ../
+
+LIBLAPACK = -llapack -lblas
+
+default: LapPLanN.out
+
+all: LapPLanN.out LapPLanN_MatFree.out LapRLanN.out
+
+LapPLanN.out: LapPLanN.f90 functns.o
+	$(FC) $(FFLAGS) LapPLanN.f90 functns.o -L$(SPARSKIT_PATH) -lskit -L$(EVSL_PATH) -levsl $(LIBLAPACK) -o LapPLanN.out
+
+LapPLanN_MatFree.out: LapPLanN_MatFree.f90 functns.o csr_module.o csrmatrix.mod
+	$(FC) $(FFLAGS) LapPLanN_MatFree.f90 functns.o csr_module.o -L$(SPARSKIT_PATH) -lskit -L$(EVSL_PATH) -levsl $(LIBLAPACK) -o LapPLanN_MatFree.out
+
+# Rational Filtering
+LapRLanN.out: LapRLanN.f90 functns.o
+	$(FC) $(FFLAGS) LapRLanN.f90 functns.o -L$(SPARSKIT_PATH) -lskit -L$(EVSL_PATH) -levsl $(LIBLAPACK) -o LapRLanN.out
+
+# This file is filled with functions needed for SPARSKIT
+functns.o: functns.f90
+	$(FC) $(FFLAGS) -c functns.f90
+
+csr_module.o csrmatrix.mod: csr_module.f90
+	$(FC) $(FFLAGS) -c csr_module.f90
+clean:
+	rm *.o *.mod *.out
