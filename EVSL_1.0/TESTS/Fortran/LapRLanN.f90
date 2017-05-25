@@ -2,9 +2,24 @@ program driver
 
     implicit none
 
-    !TODO Do declarations
+    ! Variable declarations
+    ! n -The number of rows in the matrix
+    ! nx, ny, nz - The dimensino of the mesh to generate the laplacean from
+    ! nslices - The number of slices to divide the spectrum into
+    ! Mdeg - Degree for kpmdos
+    ! nvec- Number of sample vectors
+    ! ev_int - Number of Eigenvalues per slice
+    ! mlan - Dimension of krylov subspace
+    ! nev - Approximate number of eigenvalues wanted
     integer :: n, nx, ny, nz, nslices, meshdim, Mdeg, nvec, ev_int, mlan, nev
-    double precision :: a, b, lmax, lmin, tol, thresh_int, thresh_ext
+
+    ! Find the eigenvalues in the interval [a, b]
+    ! a - lower bound of the interval
+    ! b - upper bound of the interval
+    ! lmax - largest eigenvalue
+    ! lmin - smallest eigenvalue
+    double precision :: a, b, lmax, lmin, tol
+    ! sli - The spectrum slices
     double precision, dimension(:), pointer :: sli
     double precision, dimension(4) :: xintv
 
@@ -73,7 +88,7 @@ program driver
         endif
     enddo
 
-    ! Initialize more important variables
+    ! Initialize eigenvalue bounds set by hand
     lmin = 0.0D0
     if(nz == 1) then
         lmax = 8.0D0
@@ -132,47 +147,29 @@ program driver
     deallocate(jat)
     deallocate(iat)
 
-    ! DEBUG: Check the matrix
-    if(n <= 30 .and. .true.) then
-        write(*,*) n
-        write(*,*) 'Row map'
-        do i = 1, n+1
-            write(*,*) ia(i)
-        enddo
-        write(*,*) 'Col ind'
-        do i = 1, n*7
-            write(*,*) ja(i)
-        enddo
-        do i = 1, n
-            s = ia(i)+1
-            e = ia(i+1)-1+1
-            do j = s, e
-                write(*,*) '(', i, ' ', ja(j), ') = ', vals(j)
-            enddo
-        enddo
-    endif
-
     ! This section of the code will run the EVSL code.
     ! This file is not utilizing the matrix free format and we'll pass
     ! a CSR matrix in
+
+    ! Initialize the EVSL global data
     call evsl_start_f90()
     
+    ! Set the A matrix in EVSL global data to point to the arrays built here
     call evsl_seta_csr_f90(n, ia, ja, vals)
     
     ! kmpdos in EVSL for the DOS for dividing the spectrum
+    ! Set up necessary variables for kpmdos
     Mdeg = 300;
     nvec = 60;
     allocate(sli(nslices+1))
-    
+    ! Call EVSL kpmdos and spslicer
     call evsl_kpm_spslicer_f90(Mdeg, nvec, xintv, nslices, sli, ev_int)
     
-    ! For each slice call ChebLanr
+    ! For each slice call RatLanr
     do i = 1, nslices
         ! Prepare parameters for this slice
         xintv(1) = sli(i)
         xintv(2) = sli(i+1)
-        thresh_int = .5
-        thresh_ext = .15
 
         ! Call EVSL to create our rational filter
         call evsl_find_rat_f90(xintv, rat)
