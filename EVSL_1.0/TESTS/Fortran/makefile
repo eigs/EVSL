@@ -7,16 +7,16 @@ FLAGS = -DUNIX -O3 -g
 INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
 
 # Object files
-OBJS_PN = LapPLanN.o functns.o
-OBJS_PR = LapPLanR.o functns.o
-OBJS_PN_MatFree = LapPLanN_MatFree.o functns.o csr_module.o
-OBJS_RN = LapRLanN.o functns.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_suitesparse_f90.o
-OBJS_RR = LapRLanR.o functns.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_suitesparse_f90.o
+OBJS_PN = LapPLanN.o functns.o genmat.o
+OBJS_PR = LapPLanR.o functns.o genmat.o
+OBJS_PN_MatFree = LapPLanN_MatFree.o functns.o genmat.o csr_module.o
+OBJS_RN = LapRLanN.o functns.o genmat.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_suitesparse_f90.o
+OBJS_RR = LapRLanR.o functns.o genmat.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_suitesparse_f90.o
 
 # The path to the library built from SPARSKIT
-SPARSKIT_PATH = /scratch/syphax/bookey/SPARSKIT2
+# SPARSKIT_PATH = /scratch/syphax/bookey/SPARSKIT2
 
-LIB = -L../../ -levsl -L$(SPARSKIT_PATH) -lskit $(LIBLAPACK)
+LIB = -L../../ -levsl $(LIBLAPACK) #-L$(SPARSKIT_PATH) -lskit 
 
 ALLEXE = LapPLanN.ex LapPLanR.ex LapPLanN_MatFree.ex LapRLanN.ex LapRLanR.ex
 
@@ -46,6 +46,9 @@ functns.o: functns.f90
 csr_module.o: csr_module.f90
 	$(FC) $(FLAGS) -o $@ -c $<
 
+genmat.o: genmat.f
+	$(FC) $(FLAGS) -o $@ -c $<
+
 # Exe
 # Polynomial
 LapPLanN.ex: $(OBJS_PN)
@@ -58,12 +61,12 @@ LapPLanN_MatFree.ex: $(OBJS_PN_MatFree)
 	$(LINK) -o LapPLanN_MatFree.ex $(OBJS_PN_MatFree) $(LIB) $(LIB0)
 
 LapRLanN.ex: $(OBJS_RN)
-	$(LINK) -o LapRLanN.ex $(OBJS_RN) $(LIB) $(LIB_EXT)
+	$(LINK) -o LapRLanN.ex $(OBJS_RN) $(LIB_EXT) $(LIB)
 
 LapRLanR.ex: $(OBJS_RR)
-	$(LINK) -o LapRLanR.ex $(OBJS_RR) $(LIB) $(LIB_EXT)
+	$(LINK) -o LapRLanR.ex $(OBJS_RR) $(LIB_EXT) $(LIB)
 
 all: $(ALLEXE)
 
 clean:
-	rm *.o *.mod *.ex
+	rm -f *.o *.mod *.ex
