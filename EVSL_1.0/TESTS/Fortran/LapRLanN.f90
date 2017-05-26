@@ -11,7 +11,7 @@ program driver
     ! ev_int - Number of Eigenvalues per slice
     ! mlan - Dimension of krylov subspace
     ! nev - Approximate number of eigenvalues wanted
-    integer :: n, nx, ny, nz, nslices, meshdim, Mdeg, nvec, ev_int, mlan, nev
+    integer :: n, nx, ny, nz, nslices, Mdeg, nvec, ev_int, mlan, nev
 
     ! Find the eigenvalues in the interval [a, b]
     ! a - lower bound of the interval
@@ -105,13 +105,10 @@ program driver
     ! We change the grid size to account for the boundaries that
     ! SPARSKIT uses but not used by the LapGen tests in EVSL
     nx = nx+2
-    meshdim = 1
     if(ny > 1) then
         ny = ny+2
-        meshdim = meshdim+1
         if(nz > 1) then
             nz = nz+2
-            meshdim = meshdim+1
         endif
     endif
     n = nx*ny*nz
@@ -165,7 +162,7 @@ program driver
     ! Call EVSL kpmdos and spslicer
     call evsl_kpm_spslicer_f90(Mdeg, nvec, xintv, nslices, sli, ev_int)
     
-    ! For each slice call RatLanr
+    ! For each slice call RatLanNr
     do i = 1, nslices
         ! Prepare parameters for this slice
         xintv(1) = sli(i)
