@@ -2,9 +2,26 @@ program driver
 
     implicit none
 
-    !TODO Do declarations
-    integer :: n, nx, ny, nz, nslices, meshdim, Mdeg, nvec, ev_int, mlan, nev, max_it
+    ! Variable declarations
+    ! n - The number of rows in the matrix
+    ! nx, ny, nz - The dimension of the mesh to generate the laplacean from
+    ! nslices - The number of slices to divide the spectrum into
+    ! Mdeg - Polynomial degree
+    ! nvec - Number of sample vectors
+    ! ev_int - Number of eigenvalues per slice
+    ! mlan - Dimension of krylov subspace
+    ! nev - Approximate number of eigenvalues wanted
+    ! max_it - Maximum number of iterations before a restart occurs
+    integer :: n, nx, ny, nz, nslices, Mdeg, nvec, ev_int, mlan, nev, max_it
+
+    ! Find the eigenvalues in the interval [a, b]
+    ! a - lower bound of the interval
+    ! b - upper bound of the interval
+    ! lmax - largest eigenvalue
+    ! lmin - smallest eigenvalue
+    ! thresh_int, thresh_ext - Polynomial variables
     double precision :: a, b, lmax, lmin, tol, thresh_int, thresh_ext
+    ! sli - The spectrum slices
     double precision, dimension(:), pointer :: sli
     double precision, dimension(4) :: xintv
 
@@ -73,7 +90,7 @@ program driver
         endif
     enddo
 
-    ! Initialize more important variables
+    ! Initialize eigenvalue bounds set by hand
     lmin = 0.0D0
     if(nz == 1) then
         lmax = 8.0D0
@@ -90,13 +107,10 @@ program driver
     ! We change the grid size to account for the boundaries that
     ! SPARSKIT uses but not used by the LapGen tests in EVSL
     nx = nx+2
-    meshdim = 1
     if(ny > 1) then
         ny = ny+2
-        meshdim = meshdim+1
         if(nz > 1) then
             nz = nz+2
-            meshdim = meshdim+1
         endif
     endif
     n = nx*ny*nz
@@ -122,44 +136,27 @@ program driver
     deallocate(rhs)
     deallocate(iau)
 
-    ! DEBUG: Check the matrix
-    if(n <= 30 .and. .false.) then
-        write(*,*) n
-        write(*,*) 'Row map'
-        do i = 1, n+1
-            write(*,*) ia(i)
-        enddo
-        write(*,*) 'Col ind'
-        do i = 1, n*7
-            write(*,*) ja(i)
-        enddo
-        do i = 1, n
-            s = ia(i)
-            e = ia(i+1)-1
-            do j = s, e
-                write(*,*) '(', i, ' ', ja(j), ') = ', vals(j)
-            enddo
-        enddo
-    endif
-
     ! This section of the code will run the EVSL code.
     ! This file is not utilizing the matrix free format and we'll pass
     ! a CSR matrix in
+
+    ! Initialize the EVSL global data
     call EVSL_START_F90()
     
-    ! Get a CSR struct from EVSL
+    ! Set the A matrix in EVSL global data to point to the arrays built here
     call EVSL_ARR2CSR_F90(n, ia, ja, vals, csr)
     
     call EVSL_SETA_CSR_F90(csr)
     
     ! kmpdos in EVSL for the DOS for dividing the spectrum
+    ! Set up necessary variabls for kpmdos
     Mdeg = 300;
     nvec = 60;
     allocate(sli(nslices+1))
-    
+    ! Call EVSL kpmdos and spslicer
     call EVSL_KPM_SPSLICER_F90(Mdeg, nvec, xintv, nslices, sli, ev_int)
     
-    ! For each slice call ChebLanr
+    ! For each slice call ChebLatr
     do i = 1, nslices
         ! Prepare parameters for this slice
         xintv(1) = sli(i)
