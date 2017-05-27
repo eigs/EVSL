@@ -23,11 +23,12 @@ typedef struct _cooMat {
  * 3-array variant: ia,ja,a, nnz == ia[nrows]
  */ 
 typedef struct _csrMat {
-  int nrows,   /**< number of rows */
+  int owndata, /**< if owns (ia, ja, a) */
+      nrows,   /**< number of rows */
       ncols,   /**< number of columns */
-      *ia,     /**<  row pointers (of size nrows+1) */
-      *ja;     /**<  column indices (of size nnz) */
-  double *a;   /**<  numeric values (of size nnz) */
+      *ia,     /**< row pointers (of size nrows+1) */
+      *ja;     /**< column indices (of size nnz) */
+  double *a;   /**< numeric values (of size nnz) */
 } csrMat;
 
 /*!
@@ -88,10 +89,10 @@ typedef void (*MVFunc)(double *x, double *y, void *data);
  * @brief user-provided function and data for solving (A - SIGMA*B) x = b
  *
  */
-typedef struct _ASIGMABSolType {
+typedef struct _EVSLASIGMABSol {
   SolFuncC func;       /**< function pointer */
   void *data;          /**< data */
-} ASIGMABSolType;
+} EVSLASIGMABSol;
 
 /*!
  * @brief  parameters for rational filter
@@ -113,7 +114,7 @@ typedef struct _ratparams {
   /** The following are output - i.e., set by find_ratf */
   complex double *omega; /**< weights allocation done by find_ratf */
   complex double *zk;    /**< locations of poles done by find_ratf */
-  ASIGMABSolType *ASIGBsol; /**< function and data for A-\sigma B solve 
+  EVSLASIGMABSol *ASIGBsol; /**< function and data for A-\sigma B solve 
                                  arrays of length ratparams.num */
 } ratparams;
 
@@ -122,29 +123,28 @@ typedef struct _ratparams {
  * @brief user-provided Mat-Vec function and data for y = A * x or y = B * x
  *
  */
-typedef struct _externalMatvec {
-  int n;               /**< size of the matrix */
+typedef struct _EVSLMatvec {
   MVFunc func;         /**< function pointer */
   void *data;          /**< data */
-} externalMatvec;
+} EVSLMatvec;
 
 /*!
  * @brief user-provided function and data for solving B x = b
  *
  */
-typedef struct _BSolType {
+typedef struct _EVSLBSol {
   SolFuncR func;       /**< function pointer */
   void *data;          /**< data */
-} BSolType;
+} EVSLBSol;
 
 /*!
  * @brief user-provided function for solving L^{T} x = b
  *
  */
-typedef struct _LTSolType {
+typedef struct _EVSLLTSol {
   SolFuncR func;       /**< function pointer */
   void *data;          /**< data */
-} LTSolType;
+} EVSLLTSol;
 
 
 /*!
@@ -152,18 +152,12 @@ typedef struct _LTSolType {
  *
  */
 typedef struct _evsldata {
+  int n;                    /**< size of the problem [i.e., size(A), size(B)] */
   int ifGenEv;              /**< if it is a generalized eigenvalue problem */
-  csrMat *A;                /**< pointer to the A matrix */
-  int ifOwnA;               /**< if evsl owns A
-                                 0: does not own the csr (no free after done) 
-                                 1: owns csr and data inside (deep free after done)
-                                 2: owns csr but not data (shallow free)*/
-  csrMat *B;                /**< pointer to the B matrix */
-  int ifOwnB;               /**< the same meaning as A */
-  externalMatvec *Amv;      /**< external matvec routine and the associated data for A */
-  externalMatvec *Bmv;      /**< external matvec routine and the associated data for B */
-  BSolType *Bsol;           /**< external function and data for B solve */
-  LTSolType *LTsol;         /**< external function and data for LT solve */
+  EVSLMatvec *Amv;          /**< matvec routine and the associated data for A */
+  EVSLMatvec *Bmv;          /**< matvec routine and the associated data for B */
+  EVSLBSol *Bsol;           /**< function and data for B solve */
+  EVSLLTSol *LTsol;         /**< function and data for LT solve */
 } evslData;
 
 

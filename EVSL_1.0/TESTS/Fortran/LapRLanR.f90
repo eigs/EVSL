@@ -14,10 +14,10 @@ program driver
     integer, dimension(:), pointer :: ia, iat
     integer, dimension(:), pointer :: ja, jat
 
-    integer*8 :: rat, asigbss
+    integer*8 :: rat, asigbss, csr, dummy
 
     ! Loop varialbe declarations
-    integer :: i, j, k
+    integer :: i, j, k, zero
 
     ! DEBUG Variables
     integer :: s, e
@@ -36,6 +36,7 @@ program driver
     ! The user can pass the phrase help to get the program to
     ! print a usage statement then terminate
 
+    zero = 0
     !Set default values
     nx = 16
     ny = 16
@@ -155,16 +156,19 @@ program driver
     ! This section of the code will run the EVSL code.
     ! This file is not utilizing the matrix free format and we'll pass
     ! a CSR matrix in
-    call evsl_start_f90()
+    call EVSL_START_F90()
     
-    call evsl_seta_csr_f90(n, ia, ja, vals)
+    ! Get a CSR struct from EVSL
+    call EVSL_ARR2CSR_F90(n, ia, ja, vals, csr)
+    
+    call EVSL_SETA_CSR_F90(csr)
     
     ! kmpdos in EVSL for the DOS for dividing the spectrum
     Mdeg = 300;
     nvec = 60;
     allocate(sli(nslices+1))
     
-    call evsl_kpm_spslicer_f90(Mdeg, nvec, xintv, nslices, sli, ev_int)
+    call EVSL_KPM_SPSLICER_F90(Mdeg, nvec, xintv, nslices, sli, ev_int)
     
     ! For each slice call ChebLanr
     do i = 1, nslices
@@ -175,11 +179,13 @@ program driver
         thresh_ext = .15
 
         ! Call EVSL to create our rational filter
-        call evsl_find_rat_f90(xintv, rat)
+        call EVSL_FIND_RAT_F90(xintv, rat)
 
+        ! Get the factorizations of A-\sigma*B
+        ! matrix B is not present
+        call SETUP_ASIGMABSOL_SUITESPARSE_F90(csr, zero, dummy, rat, asigbss)
         ! Set the solver function to use Suitesparse
-        call setup_asigmabsol_suitesparse_f90(rat, asigbss)
-        call evsl_setasigmabsol_f90(rat, asigbss)
+        call SET_ASIGMABSOL_SUITESPARSE_F90(rat, asigbss)
 
         ! Necessary paramters
         nev = ev_int + 2
@@ -187,31 +193,34 @@ program driver
         max_its = 3*mlan
         
         ! Call the EVSL ratlannr function to find the eigenvalues in the slice
-        call evsl_ratlantr_f90(mlan, nev, xintv, max_its, tol, rat)
+        call EVSL_RATLANTR_F90(mlan, nev, xintv, max_its, tol, rat)
         
         ! Extract the number of eigenvalues found from the EVSL global data
-        call evsl_get_nev_f90(nev)
+        call EVSL_GET_NEV_F90(nev)
         
         ! Allocate storage for the eigenvalue and vectors found from cheblannr
         allocate(eigval(nev))
         allocate(eigvec(nev*size(ia))) ! number of eigen values * number of rows
         
         ! Extract the arrays of eigenvalues and eigenvectors from the EVSL global data
-        call evsl_copy_result_f90(eigval, eigvec)
+        call EVSL_COPY_RESULT_F90(eigval, eigvec)
         write(*,*) nev, ' Eigs in this slice'
         
         ! Here you can do something with the eigenvalues that were found
         ! The eigenvalues are stored in eigval and eigenvectors are in eigvec
 
         ! Be sure to deallocate the rational filter as well as the solve data
-        call evsl_free_rat_f90(rat)
-        call free_asigmabsol_suitesparse_f90(rat, asigbss)
+        call FREE_ASIGMABSOL_SUITESPARSE_F90(rat, asigbss)
+        ! this must be done after FREE_ASIGMABSOL_SUITESPARSE_F90
+        call EVSL_FREE_RAT_F90(rat)
         deallocate(eigval)
         deallocate(eigvec)
     enddo
     deallocate(sli)
     
-    call evsl_finish_f90()
+    call EVSL_FREE_CSR_F90(csr)
+    
+    call EVSL_FINISH_F90()
 
     ! Necessary Cleanup
     deallocate(vals)

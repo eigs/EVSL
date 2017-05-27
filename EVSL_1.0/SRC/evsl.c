@@ -14,11 +14,8 @@ evslData evsldata;
  *
  * */
 int EVSLStart() {
+  evsldata.n = 0;
   evsldata.ifGenEv = 0;
-  evsldata.A = NULL;
-  evsldata.ifOwnA = 0;
-  evsldata.B = NULL;
-  evsldata.ifOwnB = 0;
   evsldata.Amv = NULL;
   evsldata.Bmv = NULL;
   evsldata.Bsol = NULL;
@@ -31,19 +28,6 @@ int EVSLStart() {
  *
  * */
 int EVSLFinish() {
-  if (1 == evsldata.ifOwnA) {
-    free_csr(evsldata.A);
-  }
-  if (evsldata.ifOwnA) {
-    free(evsldata.A);
-  }
-  if (1 == evsldata.ifOwnB) {
-    free_csr(evsldata.B);
-  }
-  if (evsldata.ifOwnB) {
-    free(evsldata.B);
-  }
-
   if (evsldata.Amv) {
     free(evsldata.Amv);
   }
@@ -64,8 +48,13 @@ int EVSLFinish() {
  * 
  * */
 int SetAMatrix(csrMat *A) {
-  evsldata.A = A;
-  
+  evsldata.n = A->ncols;
+  if (!evsldata.Amv) {
+    Calloc(evsldata.Amv, 1, EVSLMatvec);
+  }
+  evsldata.Amv->func = matvec_csr;
+  evsldata.Amv->data = (void *) A;
+   
   return 0;
 }
 
@@ -74,7 +63,12 @@ int SetAMatrix(csrMat *A) {
  * 
  * */
 int SetBMatrix(csrMat *B) {
-  evsldata.B = B;
+  evsldata.n = B->ncols;
+  if (!evsldata.Bmv) {
+    Calloc(evsldata.Bmv, 1, EVSLMatvec);
+  }
+  evsldata.Bmv->func = matvec_csr;
+  evsldata.Bmv->data = (void *) B;
 
   return 0;
 }
@@ -86,13 +80,13 @@ int SetBMatrix(csrMat *B) {
  * is provided
  * */
 int SetAMatvec(int n, MVFunc func, void *data) {
+  evsldata.n = n;
   if (!evsldata.Amv) {
-    Calloc(evsldata.Amv, 1, externalMatvec);
+    Calloc(evsldata.Amv, 1, EVSLMatvec);
   }
-  evsldata.Amv->n = n;
   evsldata.Amv->func = func;
   evsldata.Amv->data = data;
-  
+
   return 0;
 }
 
@@ -103,47 +97,23 @@ int SetAMatvec(int n, MVFunc func, void *data) {
  * is provided
  * */
 int SetBMatvec(int n, MVFunc func, void *data) {
+  evsldata.n = n;
   if (!evsldata.Bmv) {
-    Calloc(evsldata.Bmv, 1, externalMatvec);
+    Calloc(evsldata.Bmv, 1, EVSLMatvec);
   }
-  evsldata.Bmv->n = n;
   evsldata.Bmv->func = func;
   evsldata.Bmv->data = data;
-  
+
   return 0;
 }
 
-
-/**
- * @brief Unset the matvec routine and the associated data for A
- * */
-int UnsetAMatvec() {
-  if (evsldata.Amv) {
-    free(evsldata.Amv);
-  }
-  evsldata.Amv = NULL;
-  
-  return 0;
-}
-
-/**
- * @brief Unset the matvec routine and the associated data for B
- * */
-int UnsetBMatvec() {
-  if (evsldata.Bmv) {
-    free(evsldata.Bmv);
-  }
-  evsldata.Bmv = NULL;
-  
-  return 0;
-}
 
 /**
  * @brief Set the solve routine and the associated data for B
  * */
 int SetBSol(SolFuncR func, void *data) {
   if (!evsldata.Bsol) {
-    Calloc(evsldata.Bsol, 1, BSolType);
+    Calloc(evsldata.Bsol, 1, EVSLBSol);
   }
 
   evsldata.Bsol->func = func;
@@ -180,7 +150,7 @@ int SetGenEig() {
 int SetASigmaBSol(ratparams *rat, SolFuncC *func, SolFuncC allf, void **data) {
   int i,num;
   num = rat->num;
-  Calloc(rat->ASIGBsol, num, ASIGMABSolType);
+  Calloc(rat->ASIGBsol, num, EVSLASIGMABSol);
 
   for (i=0; i<num; i++) {
     rat->ASIGBsol[i].func = func ? func[i] : allf;
@@ -196,7 +166,7 @@ int SetASigmaBSol(ratparams *rat, SolFuncC *func, SolFuncC allf, void **data) {
  * */
 int SetLTSol(SolFuncR func, void *data) {
   if (!evsldata.LTsol) {
-    Calloc(evsldata.LTsol, 1, LTSolType);
+    Calloc(evsldata.LTsol, 1, EVSLLTSol);
   }
   evsldata.LTsol->func = func;
   evsldata.LTsol->data = data;

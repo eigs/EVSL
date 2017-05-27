@@ -481,88 +481,9 @@ void free_pol(polparams *pol) {
 }
 
 /**
- * @brief Computes y=P(A) y, where pn is a Cheb. polynomial expansion [this
- * does not call matvec - but does the sparse matrix vetor product internally]
- *
- * @param pol Struct containing the paramenters and expansion coefficient of
- * the polynomail.
- * @param v input vector
- *
- * @param[out] y p(A)v
- *
- * @b Workspace
- * @param w Work vector of length 3*n [allocate before call]
- * @param v is untouched
- **/
-int ChebAv(polparams *pol, double *v, double *y, double *w) {
-  /* if user-provided matvec, OR, generalized e.v. prob,
-   * use another version which calls matvec_genev routine */
-  if (evsldata.Amv || evsldata.ifGenEv) {
-    int err = ChebAv0(pol, v, y, w);
-    return err;
-  }
-  /*-------------------- use matrix A */
-  csrMat *A = evsldata.A;
-  //-------------------- unpack A 
-  int n = A->nrows;
-  int  *ia = A->ia;
-  int  *ja = A->ja;
-  double  *a = A->a;
-  //-------------------- unpack pol
-  double *mu = pol->mu;
-  double dd = pol->dd;
-  double cc = pol->cc;
-  int m = pol->deg;
-  double zer = 0.0;
-  //-------------------- pointers to v_[k-1],v_[k], v_[k+1]  from w
-  double *vk   = w;
-  double *vkp1 = w+n;
-  double *vkm1 = vkp1+n;
-  //-------------------- 
-  int k, i, j;
-  double r, s, t, *tmp;
-
-  double t1 = 1.0 / dd, t2 = 2.0 / dd;
-  //-------------------- vk <- v; vkm1 <- zeros(n,1)
-  memcpy(vk, v, n*sizeof(double));
-  memset(vkm1,zer,n*sizeof(double));
-  /*-------------------- special case: k == 0 */
-  s = mu[0];
-  for (i=0; i<n; i++) {
-    y[i] = s*vk[i];
-  }
-  //-------------------- degree loop. k IS the degree.  
-  for (k=1; k<=m; k++) {
-    /*-------------------- y = mu[k]*Vk + y */
-    t = (k==1 ? t1 : t2);
-    /*-------------------- Vkp1 = A*Vk - cc*Vk; */
-    s = mu[k]; 
-    for (i=0; i<n; i++) {
-      r = -cc*vk[i];
-      for (j=ia[i]; j<ia[i+1]; j++) {
-        r += vk[ja[j]]*a[j];
-      }
-      //-------------------- t* ( A*Vk - cc*Vk) - vkm1
-      r = r*t - vkm1[i];
-      //-------------------- save v_{k+1} and update y
-      vkp1[i] = r;
-      y[i] += s*r;
-    }
-    //-------------------- next step: rotate vectors via pointer exchange
-    tmp = vkm1;
-    vkm1 = vk;
-    vk = vkp1;
-    vkp1 = tmp;
-  }
-  return 0;
-}
-
-/**
- * @brief @b Computes y=P(A) y, where pn is a Cheb. polynomial expansion [this
- * does not call matvec - but does the sparse matrix vetor product internally]
+ * @brief @b Computes y=P(A) y, where pn is a Cheb. polynomial expansion 
  * 
- * This is unused but left here on purpose. It is a simpler but a bit slower
- * routine. This explicitly calls matvec, so it can be useful for implementing
+ * This explicitly calls matvec, so it can be useful for implementing
  * user-specific matrix-vector multiplication.
  *
  * @param pol Struct containing the paramenters and expansion coefficient of
@@ -575,17 +496,8 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
  * @param w Work vector of length 3*n [allocate before call]
  * @param v is untouched
  **/
-int ChebAv0(polparams *pol, double *v, double *y, double *w) {
-  csrMat *A;
-  int n;
-  if (evsldata.Amv) {
-    /*-------------------- unpack n from ext_mv */
-    n = evsldata.Amv->n;
-  } else {
-    A = evsldata.A;
-    /*-------------------- unpack n from A */
-    n = A->nrows;
-  }
+int ChebAv(polparams *pol, double *v, double *y, double *w) {
+  int n = evsldata.n;
   /*-------------------- unpack pol */
   double *mu = pol->mu;
   double dd = pol->dd;

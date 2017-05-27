@@ -18,12 +18,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   double *alp, *bet, nbet, nalp, t, *V, *Z;
   int j, one=1, n;
 
-  /* if users provided their own matvec function, matrix A will be ignored */
-  if (evsldata.Amv) {
-    n = evsldata.Amv->n;
-  } else {
-    n = evsldata.A->nrows;
-  }
+  n = evsldata.n;
   msteps = min(n, msteps);
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);

@@ -37,7 +37,7 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos,
   int one = 1;
   int n, m, i, j;
   
-  n = evsldata.A->nrows;
+  n = evsldata.n;
   //-------------------- Variables that persist through iterations
   double *v, *y;            // v=Vector for current iteration; y Stores y values
   int *ind;

@@ -461,7 +461,7 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
   /*------------------ loop through each pole */
   for (kk=0; kk<num; kk++) {
     /*---------------- solver for A-s[kk]*B */
-    ASIGMABSolType *sol = &rat->ASIGBsol[kk];
+    EVSLASIGMABSol *sol = &rat->ASIGBsol[kk];
     /*---------------- make sure xr, xz are zero */
     for (ii=0; ii<n; ii++){
       xr[ii] = xz[ii] = 0.0;

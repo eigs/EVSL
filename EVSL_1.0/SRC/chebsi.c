@@ -45,13 +45,7 @@ int ChebSI(int nev, double *intv, int maxit,
   tall = cheblan_timer();
   //    int max_deg = pol->max_deg,   min_deg = pol->min_deg;
   /*-------------------   size of A */
-  int n;
-  /* if users provided their own matvec function, input matrix A will be ignored */
-  if (evsldata.Amv) {
-    n = evsldata.Amv->n;
-  } else {
-    n = evsldata.A->nrows;
-  }
+  int n = evsldata.n;
   /*--------------------   some constants frequently used */
   char cT = 'T';
   char cN = 'N';

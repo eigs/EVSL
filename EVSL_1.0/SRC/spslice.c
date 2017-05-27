@@ -28,14 +28,7 @@
 int kpmdos(int Mdeg, int damping, int nvec, double *intv,
     double *mu, double *ecnt) {
   /*-------------------- initialize variables */
-  int n;
-  csrMat *A;
-  if (evsldata.Amv) {
-    n = evsldata.Amv->n;
-  } else {
-    A = evsldata.A;
-    n = A->nrows;
-  }
+  int n = evsldata.n;
   double *vkp1, *v, *vkm1, *vk, *jac;
   double *w = NULL;
   /*-------------------- workspace for generalized eigenvalue prob */

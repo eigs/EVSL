@@ -70,13 +70,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   /*--------------------   how often to test */
   int cycle = 20; 
   /* size of the matrix */
-  int n;
-  /* if users provided their own matvec function, matrix A will be ignored */
-  if (evsldata.Amv) {
-    n = evsldata.Amv->n;
-  } else {
-    n = evsldata.A->nrows;
-  }
+  int n = evsldata.n;
   maxit = min(n, maxit);
   /*-------------------- Rational filter with pole at ((a+b)/2,(b-a)/2) with 
     multiplicity pow, bar value equals 1/2        */

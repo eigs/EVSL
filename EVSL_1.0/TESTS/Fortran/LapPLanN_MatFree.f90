@@ -156,17 +156,17 @@ program driver
     ! This section of the code will run the EVSL code.
     ! This file is not utilizing the matrix free format and we'll pass
     ! a CSR matrix in
-    call evsl_start_f90()
+    call EVSL_START_F90()
     
-    !call evsl_seta_csr_f90(n, ia, ja, vals)
-    call evsl_setamv_f90(mat%nrows, csrmatvec, mat)
+    ! Set matvec routine of A
+    call EVSL_SETAMV_F90(mat%nrows, csrmatvec, mat)
     
     ! kmpdos in EVSL for the DOS for dividing the spectrum
     Mdeg = 300;
     nvec = 60;
     allocate(sli(nslices+1))
     
-    call evsl_kpm_spslicer_f90(Mdeg, nvec, xintv, nslices, sli, ev_int)
+    call EVSL_KPM_SPSLICER_F90(Mdeg, nvec, xintv, nslices, sli, ev_int)
     
     ! For each slice call ChebLanr
     do i = 1, nslices
@@ -177,7 +177,7 @@ program driver
         thresh_ext = .15
 
         ! Call the EVSL function to create the polynomial
-        call evsl_find_pol_f90(xintv, thresh_int, thresh_ext, pol)
+        call EVSL_FIND_POL_F90(xintv, thresh_int, thresh_ext, pol)
         
         ! Necessary paramters
         nev = ev_int + 2
@@ -185,30 +185,30 @@ program driver
         mlan = min(mlan, n)
         
         ! Call the EVSL cheblannr function to find the eigenvalues in the slice
-        call evsl_cheblannr_f90(xintv, mlan, tol, pol)
+        call EVSL_CHEBLANNR_F90(xintv, mlan, tol, pol)
         
         ! Extract the number of eigenvalues found from the EVSL global data
-        call evsl_get_nev_f90(nev)
+        call EVSL_GET_NEV_F90(nev)
         
         ! Allocate storage for the eigenvalue and vectors found from cheblannr
         allocate(eigval(nev))
         allocate(eigvec(nev*size(ia))) ! number of eigen values * number of rows
         
         ! Extract the arrays of eigenvalues and eigenvectors from the EVSL global data
-        call evsl_copy_result_f90(eigval, eigvec)
+        call EVSL_COPY_RESULT_F90(eigval, eigvec)
         write(*,*) nev, ' Eigs in this slice'
         
         ! Here you can do something with the eigenvalues that were found
         ! The eigenvalues are stored in eigval and eigenvectors are in eigvec
 
         ! Be sure to deallocate the polynomial stored by EVSL
-        call evsl_free_pol_f90(pol)
+        call EVSL_FREE_POL_F90(pol)
         deallocate(eigval)
         deallocate(eigvec)
     enddo
     deallocate(sli)
     
-    call evsl_finish_f90()
+    call EVSL_FINISH_F90()
 
     ! Necessary Cleanup
     deallocate(vals)

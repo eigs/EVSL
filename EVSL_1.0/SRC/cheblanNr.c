@@ -74,13 +74,8 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   /*--------------------   how often to test */
   int cycle = 20; 
   /* size of the matrix */
-  int n;
-  /* if users provided their own matvec function, matrix A will be ignored */
-  if (evsldata.Amv) {
-    n = evsldata.Amv->n;
-  } else {
-    n = evsldata.A->nrows;
-  }
+  int n = evsldata.n;
+  /* max num of its */
   maxit = min(n, maxit);
   /*-------------------- polynomial filter  approximates the delta
                          function centered at 'gamB'. 

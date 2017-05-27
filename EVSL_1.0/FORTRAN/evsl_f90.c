@@ -20,14 +20,15 @@ void EVSLFORT(evsl_finish)() {
   EVSLFinish();
 }
 
-/** @brief Fortran interface to set matrix A as a COO matrix
- * The matrix will be converted to CSR and given to EVSL 
- * EVSL will take care of deallocation of the CSR matrix
+/** @brief Fortran interface to convert a COO matrix to CSR 
+ * the pointer of CSR will be returned 
  * @param[in] *n   : size of A
  * @param[in] *nnz : nnz of A
  * @param[in] *ir, *jc, *vv : COO triplets
+ * @param[out] csrf90 : CSR pointer
  */ 
-void EVSLFORT(evsl_seta_coo)(int *n, int *nnz, int *ir, int *jc, double *vv) {
+void EVSLFORT(evsl_coo2csr)(int *n, int *nnz, int *ir, int *jc, 
+                            double *vv, uintptr_t *csrf90) {
   cooMat coo;
   coo.nrows = *n;
   coo.ncols = *n;
@@ -38,71 +39,56 @@ void EVSLFORT(evsl_seta_coo)(int *n, int *nnz, int *ir, int *jc, double *vv) {
   csrMat *csr;
   Malloc(csr, 1, csrMat);
   cooMat_to_csrMat(1, &coo, csr);
-  evsldata.A = csr;
-  /* evsl owns this csr and will free it after done */
-  evsldata.ifOwnA = 1;
+  *csrf90 = (uintptr_t) csr;
 }
 
-/** @brief Fortran interface to set matrix B as a COO matrix
- * The matrix will be converted to CSR and given to EVSL 
- * EVSL will take care of deallocation of the CSR matrix
- * @param[in] n   : size of B
- * @param[in] nnz : nnz of B
- * @param[in] ir, jc, vv : COO triplets
+/** @brief Fortran interface to return a CSR struct from (ia,ja,a) 
+ * the pointer of CSR will be returned
+ * @warning : no memory allocation inside the CSR
+ * @param[in] *n   : size of A
+ * @param[in] *nnz : nnz of A
+ * @param[in] *ia, *ja, *a : CSR array
+ * @param[out] csrf90 : CSR pointer
  */ 
-void EVSLFORT(evsl_setb_coo)(int *n, int *nnz, int *ir, int *jc, double *vv) {
-  cooMat coo;
-  coo.nrows = *n;
-  coo.ncols = *n;
-  coo.nnz = *nnz;
-  coo.ir = ir;
-  coo.jc = jc;
-  coo.vv = vv;
+void EVSLFORT(evsl_arr2csr)(int *n, int *ia, int *ja, 
+                            double *a, uintptr_t *csrf90) {
   csrMat *csr;
   Malloc(csr, 1, csrMat);
-  cooMat_to_csrMat(1, &coo, csr);
-  evsldata.B = csr;
-  /* evsl owns this csr and will free it after done */
-  evsldata.ifOwnB = 1;
+  /* does not own the data */
+  csr->owndata = 0;
+  csr->nrows = *n;
+  csr->ncols = *n;
+  csr->ia = ia;
+  csr->ja = ja;
+  csr->a = a;
+  *csrf90 = (uintptr_t) csr;
 }
 
-/** @brief Fortran interface to set matrix A as a CSR matrix
- * The matrix pieces come in from Fortran already in CSR format
- * EVSL will handle the deallocation of the CSR struct but not the individual arrays
- * @param[in] n   : size of A
- * @param[in] ia, ja, a :: CSR triplets
+/** @brief Fortran interface to free a CSR matrix
+ * @param[in] csr : CSR pointer 
  */
-void EVSLFORT(evsl_seta_csr)(int * n, int * ia, int * ja, double * a){
-    csrMat *csr;
-    Malloc(csr, 1, csrMat);
-    csr->nrows = *n;
-    csr->ncols = *n;
-    csr->ia = ia;
-    csr->ja = ja;
-    csr->a = a;
-    evsldata.A = csr;
-    /* evsl does not own this this csr and will not free it when done*/
-    evsldata.ifOwnA = 2;
+void EVSLFORT(evsl_free_csr)(uintptr_t *csrf90) {
+  csrMat *csr = (csrMat *) (*csrf90);
+  free_csr(csr);
+  free(csr);
 }
 
-/** @brief Fortran interface to set matrix B as a CSR matrix
- * The matrix pieces come in from Fortran already in CSR format
- * EVSL will handle the deallocation of the CSR struct but not the individual arrays
- * @param[in] n   : size of B
- * @param[in] ia, ja, a :: CSR triplets
+/** @brief Fortran interface to set matrix A from a CSR matrix
+ * @param[in] Af90 : CSR pointer of A
  */
-void EVSLFORT(evsl_setb_csr)(int * n, int * ia, int * ja, double * a){
-    csrMat *csr;
-    Malloc(csr, 1, csrMat);
-    csr->nrows = *n;
-    csr->ncols = *n;
-    csr->ia = ia;
-    csr->ja = ja;
-    csr->a = a;
-    evsldata.B = csr;
-    /* evsl does not own this this csr and will not free it when done*/
-    evsldata.ifOwnB = 2;
+void EVSLFORT(evsl_seta_csr)(uintptr_t *Af90) {
+  csrMat *A = (csrMat *) (*Af90);
+  SetAMatrix(A);
 }
+
+/** @brief Fortran interface to set matrix B from a CSR matrix
+ * @param[in] Bf90 : CSR pointer of B
+ */
+void EVSLFORT(evsl_setb_csr)(uintptr_t *Bf90) {
+  csrMat *B = (csrMat *) (*Bf90);
+  SetBMatrix(B);
+}
+
 /** @brief Fortran interface for SetAMatvec 
  * @param[in] n : size of A
  * @param[in] func : function pointer 
@@ -148,13 +134,8 @@ void EVSLFORT(evsl_set_geneig)() {
  * @param[out] lmax: upper bound
  * */
 void EVSLFORT(evsl_lanbounds)(int *nsteps, double *lmin, double *lmax) {
-  int n;
+  int n = evsldata.n;
   double *vinit;
-  if (evsldata.Amv) {
-    n = evsldata.Amv->n;
-  } else {
-    n = evsldata.A->nrows;
-  }
   Malloc(vinit, n, double);
   rand_double(n, vinit);
   LanTrbounds(50, *nsteps, 1e-10, vinit, 1, lmin, lmax, NULL);
@@ -265,11 +246,7 @@ void EVSLFORT(evsl_cheblantr)(int *mlan, int *nev, double *xintv, int *max_its,
   FILE *fstats = stdout;
   double *vinit;
  
-  if (evsldata.Amv) {
-    n = evsldata.Amv->n;
-  } else {
-    n = evsldata.A->nrows;
-  }
+  n = evsldata.n;
   Malloc(vinit, n, double);
   rand_double(n, vinit);
 
@@ -304,11 +281,7 @@ void EVSLFORT(evsl_cheblannr)(double *xintv, int *max_its, double *tol,
   FILE *fstats = stdout;
   double *vinit;
  
-  if (evsldata.Amv) {
-    n = evsldata.Amv->n;
-  } else {
-    n = evsldata.A->nrows;
-  }
+  n = evsldata.n;
   Malloc(vinit, n, double);
   rand_double(n, vinit);
 
@@ -343,11 +316,7 @@ void EVSLFORT(evsl_ratlannr)(double *xintv, int *max_its, double *tol,
   FILE *fstats = stdout;
   double *vinit;
  
-  if (evsldata.Amv) {
-    n = evsldata.Amv->n;
-  } else {
-    n = evsldata.A->nrows;
-  }
+  n = evsldata.n;
   Malloc(vinit, n, double);
   rand_double(n, vinit);
 
@@ -382,11 +351,7 @@ void EVSLFORT(evsl_ratlantr)(int * lanm, int * nev, double *xintv,
   FILE *fstats = stdout;
   double *vinit;
  
-  if (evsldata.Amv) {
-    n = evsldata.Amv->n;
-  } else {
-    n = evsldata.A->nrows;
-  }
+  n = evsldata.n;
   Malloc(vinit, n, double);
   rand_double(n, vinit);
 

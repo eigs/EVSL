@@ -72,6 +72,7 @@ void sortrow(csrMat *A) {
  * @brief  memory allocation for csr matrix
  */
 void csr_resize(int nrow, int ncol, int nnz, csrMat *csr) {
+  csr->owndata = 1;
   csr->nrows = nrow;
   csr->ncols = ncol;
   Malloc(csr->ia, nrow+1, int);
@@ -83,6 +84,10 @@ void csr_resize(int nrow, int ncol, int nnz, csrMat *csr) {
  * @brief  memory deallocation for csr matrix
  */
 void free_csr(csrMat *csr) {
+  /* if it does not own the data, do nothing */
+  if (!csr->owndata) {
+    return;
+  }
   free(csr->ia);
   free(csr->ja);
   free(csr->a);
@@ -103,8 +108,9 @@ void free_coo(cooMat *coo) {
 int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
   int nnz = coo->nnz;
   //printf("@@@@ coo2csr, nnz %d\n", nnz);
+  /* allocate memory */
   csr_resize(coo->nrows, coo->ncols, nnz, csr);
-
+  /* fill (ia, ja, a) */
   int i;
   for (i=0; i<coo->nrows+1; i++) {
     csr->ia[i] = 0;
@@ -129,7 +135,7 @@ int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
     csr->ia[i] = csr->ia[i-1];
   }
   csr->ia[0] = 0;
-
+  /* sort rows ? */
   sortrow(csr);
   return 0;
 }
@@ -160,7 +166,7 @@ double dcsrinfnrm(csrMat *A){
 #endif
 
 /**
- * @brief csr matrix matvec
+ * @brief csr matrix matvec or transpose matvec, (ia, ja, a) form
  */
 void dcsrmv(char trans, int nrow, int ncol, double *a, 
     int *ia, int *ja, double *x, double *y) {
@@ -206,90 +212,25 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
 }
 
 /**
-* @brief matvec for a CSR matrix, y = A * x or y = A' * x
+* @brief matvec for a CSR matrix, y = A*x. 
+* void *data points to csrMat, 
+* compatible form with EVSLMatvec (see struct.h)
 */
-int matvec(char trans, csrMat *A, double *x, double *y) {
-  dcsrmv(trans, A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
-  return 0;
+void matvec_csr(double *x, double *y, void *data) {
+  csrMat *A = (csrMat *) data;
+  dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
 }
 
-/**
-* @brief y = A * x
-* This is the matvec function for the matrix A in evsldata
-* if matvec routine evsl.Amv is set, use it
-* if not, use matrix evsl.A
-*/
-int matvec_A(double *x, double *y) {
-  csrMat *A;
-  /* if an external matvec routine is set, A will be ignored */
-  if (evsldata.Amv) {
-    (evsldata.Amv->func)(x, y, evsldata.Amv->data);
-    return 0;
-  }
-  A = evsldata.A;
-  if (A) {
-    dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
-    return 0;
-  }
-  fprintf(stdout, "error: matrix A or Amatvec is not set!\n");
-  exit(1);
-  /*return 1;*/
-}
-
-/**
-* @brief y = B * x
-* This is the matvec function for the matrix B in evsldata
-* if matvec routine evsl.Bmv is set, use it
-* if not, use matrix evsl.B
-*/
-int matvec_B(double *x, double *y) {
-  csrMat *B;
-  /* if an external matvec routine is set, B will be ignored */
-  if (evsldata.Bmv) {
-    (evsldata.Bmv->func)(x, y, evsldata.Bmv->data);
-    return 0;
-  }
-  B = evsldata.B;
-  if (B) {
-    dcsrmv('N', B->nrows, B->ncols, B->a, B->ia, B->ja, x, y);
-    return 0;
-  }
-  fprintf(stdout, "error: matrix B or Bmatvec is not set!\n");
-  exit(1);
-  /*return 1;*/
-}
-
-#if 0
-/** 
- * @brief check if a triangular matrix has all nonzero diag entries
- * @warning: A must have been `sortrow' already */
-int check_tri_full_diag(char type, csrMat *A) {
-  int i,j;
-  for (i=0; i<A->nrows; i++) {
-    /* if row i is empty, error */
-    if (A->ia[i] == A->ia[i+1]) {
-      return 2;
-    }
-    /* j is the location of the diag entry of row i 
-     * !!! A is assumed to be sorted !!! */   
-    if (type == 'U' || type == 'u') {
-      j = A->ia[i];
-    } else {
-      j = A->ia[i+1]-1;
-    }
-    if (A->ja[j] != i) {
-      return 1;
-    }
-  }
-  return 0;
-}
-#endif
 
 /** @brief inline function used by matadd
- * insert an element pointed by j of A (times t) to location k in C 
+ * insert an element pointed by j of A (times t) to location k in C (row i)
  * */
 inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k, 
                           int *j, int *map) {
+  /* if this entry already exists in C: 
+   * checking if it is the first entry of this row
+   * and if column indices match 
+   * NOTE that pointer j or k will be modified */
   if (*k > C->ia[i] && C->ja[(*k)-1] == A->ja[*j]) {
     if (map) {
       /* j maps to k-1 in C */
@@ -318,7 +259,7 @@ inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k,
  * @param[out] C
  * @warning the nz pattern of C will be union of those of A and B.
  * no cancellation will be considered
- * @warning A and B MUST be sorted, on output C will be sorted
+ * @warning A and B MUST be sorted, on output C will be sorted as well
  * @param[out] mapA (of size nnzA or null), mapB (of size nnzB or null)
  * if not null, on output mapA contains the location of each nonzero of A
  * in the CSR matrix C, i.e. mapA[i] is the position of the corresponding

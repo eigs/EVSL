@@ -70,13 +70,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     do_print = 0;
   }
   /* size of the matrix */
-  int n;
-  /* if users provided their own matvec function, matrix A will be ignored */
-  if (evsldata.Amv) {
-    n = evsldata.Amv->n;
-  } else {
-    n = evsldata.A->nrows;
-  }
+  int n = evsldata.n;
   /*--------------------- adjust lanm and maxit */
   lanm = min(lanm, n);
   int lanm1=lanm+1;

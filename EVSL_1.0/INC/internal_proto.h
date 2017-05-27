@@ -17,8 +17,6 @@ int dampcf(int m, int damping, double *jac);
 int chebxPltd(int m, double *mu, int n, double *xi, double *yi);
 //
 int ChebAv(polparams *pol, double *v, double *y, double *w);
-
-int ChebAv0(polparams *pol, double *v, double *y, double *w);
 //
 void chext(polparams *pol, double aIn, double bIn);
 
@@ -67,43 +65,48 @@ int scaleweigthts(int n, double a, double b, complex double *zk, int* pow, compl
 void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w3);
 
 /*- - - - - - - - - spmat.c */
-// matvec: y = A * x
-int matvec_A(double *x, double *y);
-// matvec: y = B * x
-int matvec_B(double *x, double *y);
+void matvec_csr(double *x, double *y, void *data);
 
 // memory allocation/reallocation for a CSR matrix
 void csr_resize(int nrow, int ncol, int nnz, csrMat *csr);
 //
 void sortrow(csrMat *A);
 //
-int check_tri_full_diag(char type, csrMat *A);
+//int check_tri_full_diag(char type, csrMat *A);
 //
-int tri_sol_upper(char trans, csrMat *R, double *b, double *x);
+//int tri_sol_upper(char trans, csrMat *R, double *b, double *x);
 //
 int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
            int *mapA, int *mapB);
 /* sparse identity */
 int speye(int n, csrMat *A);
 
-/*- - - - - - - - - suitesparse.c */
-#ifdef EVSL_WITH_SUITESPARSE
-int set_ratf_solfunc_default(csrMat *A, csrMat *B, ratparams *rat);
-void free_rat_default_sol(ratparams *rat);
-int set_default_LBdata(csrMat *B);
-void free_default_LBdata();
-void default_Bsol(double *b, double *x, void *data);
-int set_Bsol_default(csrMat *B);
-#endif
-
 /*- - - - - - - - - timing.c */
 int time_seeder();
-
 
 /*- - - - - - - - - vect.c */
 void vecset(int n, double t, double *v); 
 void vec_perm(int n, int *p, double *x, double *y);
 void vec_iperm(int n, int *p, double *x, double *y);
+
+/*------------------- inline functions */
+/**
+* @brief y = A * x
+* This is the matvec function for the matrix A in evsldata
+*/
+static inline void matvec_A(double *x, double *y) {
+  CHKERR(!evsldata.Amv);
+  evsldata.Amv->func(x, y, evsldata.Amv->data);
+}
+
+/**
+* @brief y = B * x
+* This is the matvec function for the matrix B in evsldata
+*/
+static inline void matvec_B(double *x, double *y) {
+  CHKERR(!evsldata.Bmv);
+  evsldata.Bmv->func(x, y, evsldata.Bmv->data);
+}
 
 /*- - - - - - - - - - check if an interval is valid */
 static inline int check_intv(double *intv, FILE *fstats) {

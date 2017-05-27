@@ -13,10 +13,7 @@ OBJS_PN_MatFree = LapPLanN_MatFree.o functns.o genmat.o csr_module.o
 OBJS_RN = LapRLanN.o functns.o genmat.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_suitesparse_f90.o
 OBJS_RR = LapRLanR.o functns.o genmat.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_suitesparse_f90.o
 
-# The path to the library built from SPARSKIT
-# SPARSKIT_PATH = /scratch/syphax/bookey/SPARSKIT2
-
-LIB = -L../../ -levsl $(LIBLAPACK) #-L$(SPARSKIT_PATH) -lskit 
+LIB = -L../../ -levsl $(LIBLAPACK)
 
 ALLEXE = LapPLanN.ex LapPLanR.ex LapPLanN_MatFree.ex LapRLanN.ex LapRLanR.ex
 
