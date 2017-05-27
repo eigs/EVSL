@@ -108,6 +108,15 @@ static inline void matvec_B(double *x, double *y) {
   evsldata.Bmv->func(x, y, evsldata.Bmv->data);
 }
 
+/**
+* @brief y = B \ x
+* This is the solve function for the matrix B in evsldata
+*/
+static inline void solve_B(double *x, double *y) {
+  CHKERR(!evsldata.Bsol);
+  evsldata.Bmv->func(x, y, evsldata.Bsol->data);
+}
+
 /*- - - - - - - - - - check if an interval is valid */
 static inline int check_intv(double *intv, FILE *fstats) {
   /* intv[4]: ( intv[0], intv[1] ) is the inteval of interest

@@ -260,7 +260,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       wn += fabs(s[k1]);
       if (evsldata.ifGenEv) {
         /*-------------------- vnew = B \ znew */
-        evsldata.Bsol->func(znew, vnew, evsldata.Bsol->data);
+        solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
       } else {
@@ -368,7 +368,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);
         /* vnew = B \ znew */
-        evsldata.Bsol->func(znew, vnew, evsldata.Bsol->data);
+        solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
       } else {

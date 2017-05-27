@@ -527,7 +527,7 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
     s = mu[k];
     if (evsldata.ifGenEv) {
       /*-------------------- Vkp1 = A*B\Vk - cc*Vk */    
-      evsldata.Bsol->func(vk, w2, evsldata.Bsol->data);
+      solve_B(vk, w2);
       matvec_A(w2, vkp1);
     } else {
       /*-------------------- Vkp1 = A*Vk - cc*Vk */    

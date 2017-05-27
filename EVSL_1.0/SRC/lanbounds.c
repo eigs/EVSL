@@ -76,7 +76,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
     }
     if (evsldata.ifGenEv) {
       /* vnew = B \ znew */
-      evsldata.Bsol->func(&Z[(j+1)*n], &V[(j+1)*n], evsldata.Bsol->data);
+      solve_B(&Z[(j+1)*n], &V[(j+1)*n]);
     }
     /* beta = (vnew, znew) */
     /* beta = (vnew, vnew) */

@@ -100,7 +100,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
       if (evsldata.ifGenEv) {
         /* v_{k+1} := B \ A * v_k (partial result) */
         matvec_A(vk, w);
-        evsldata.Bsol->func(w, vkp1, evsldata.Bsol->data);
+        solve_B(w, vkp1);
       } else {
         matvec_A(vk, vkp1);
       }

@@ -208,7 +208,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
       CGS_DGKS2(n, k+1, NGS_MAX, Z, V, znew, wk);
       /* vnew = B \ znew */
-      evsldata.Bsol->func(znew, vnew, evsldata.Bsol->data);
+      solve_B(znew, vnew);
       /*-------------------- beta = (vnew, znew)^{1/2} */
       beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
     } else {

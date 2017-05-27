@@ -157,7 +157,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
       wn += fabs(s[k1]);
       if (evsldata.ifGenEv) {
         /*-------------------- vnew = B \ znew */
-        evsldata.Bsol->func(znew, vnew, evsldata.Bsol->data);
+        solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
       } else {
@@ -235,7 +235,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);
         /* vnew = B \ znew */
-        evsldata.Bsol->func(znew, vnew, evsldata.Bsol->data);
+        solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
       } else {
@@ -340,7 +340,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
       if (evsldata.ifGenEv) {
         matvec_B(y, w2);
         DAXPY(&n, &nt, w2, &one, w1, &one);
-        evsldata.Bsol->func(w1, w2, evsldata.Bsol->data);
+        solve_B(w1, w2);
         rr[i] = sqrt(DDOT(&n, w1, &one, w2, &one));
       } else {
         DAXPY(&n, &nt, y, &one, w1, &one);
