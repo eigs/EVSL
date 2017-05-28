@@ -42,7 +42,9 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - chebsi.c      :  Polynomial Filtered Subspace iteration
    - dumps.c       :  Miscellaneous functions for I/O and for debugging 
    - evsl.c        :  Set EVSL solver options and data
-   - lanbounds.c   :  Lanczos alg. to give a bound of spectrum
+   - lanbounds.c   :  Lanczos alg. to give bounds of spectrum
+   - landos.c      :  Lanczos based DOS algorithm 
+   - lanTrbound.c  :  A more robust alg. to give bounds of spectrum based on TR Lanczos
    - mactime.c     :  Timer for mac iOS
    - misc_la.c     :  Miscellaneous linear algebra functions
    - ratfilter.c   :  Computing and applying rational filters
@@ -55,7 +57,9 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
 * libevsl.a  : library
 
-* TESTS_Gen_Lap : test drivers for generalized eigenvalue problems with Laplacians
+* TESTS/Fortran : Fortran test drivers
+
+* TESTS/Gen_Lap : test drivers for generalized eigenvalue problems with Laplacians
    - LapPLanN.c : Polynomial filtering Lanczos
    - LapPLanR.c : Polynomial filtering T-R Lanczos
    - LapRLanN.c : Rational filtering Lanczos
@@ -63,13 +67,13 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - lapl.c     : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
    - io.c       : parse command-line input parameters
 
-* TESTS_Gen_MM  : test drivers for generalized eigenvalue problems with general matrices read from files
+* TESTS/Gen_MM  : test drivers for generalized eigenvalue problems with general matrices read from files
    - MMPLanR.c  : Polynomial filtering T-R Lanczos
    - MMRLanN.c  : Rational filtering non-restart Lanczos
    - MMRLanR.c  : Rational filtering T-R Lanczos
    - mmio.c     : IO routines for the matrix market format
 
-* TEST_Lap      : test drivers for standard eigenvalue problems with Laplacian matrices
+* TEST/Lap      : test drivers for standard eigenvalue problems with Laplacian matrices
    - LapPLanN.c         : Polynomial filtering non-restart Lanczos
    - LapPLanN_MatFree.c : "matrix-free" version: not forming matrix but passing mat-vec function
    - LapPLanR.c         : Polynomial filtering T-R Lanczos
@@ -77,7 +81,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - LapRLanN.c         : Rational filtering non-restart Lanczos
    - LapRLanR.c         : Rational filtering T-R Lanczos
 
-* TESTS_MM         : general matrices in sparse format read from files
+* TESTS/MM         : general matrices in sparse format read from files
    - MMPLanN.c     : Polynomial filtering non-restart Lanczos
    - MMPLanR.c     : Polynomial filtering T-R Lanczos
    - MMPLanR_omp.c : Polynomial filtering T-R Lanczos (parallelized with OMP for slices)
@@ -186,12 +190,17 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   function, one can pack all data  needed by this function into a struct
   and pass the  pointer of this struct  to EVSL (after cast  it to `(void
   *)`). This  function needs to  be passed to EVSL  as well, so  EVSL can
-  call  this  function  to  perform  all matvecs.  Note  that  when  the
-  user-input  matvec  function  is  set,  the CSR  matrix  will  not  be
-  referenced even if it  is provided (so it is safe to give `NULL` for the
-  matrix input in this case).
+  call  this  function  to  perform  all matvecs.    The user can also
+  provide CSR  matrices to EVSL, in which case EVSL will use its internal 
+  MATVEC routine. This can be set by
+  ```
+  SetAMatrix(csrMat *A)
+  SetBMatrix(csrMat *B)
+  ```
+  for matrices A and B
 
-  In  TEST_LAP,  an example  of  matvec  functions for  2D/3D  Laplacian
+  
+  In  TESTS/LAP,  an example  of  matvec  functions for  2D/3D  Laplacian
   matrices is  provided, where the  matrix is not explicitly  formed but
   5pt/7pt stencil is used instead. In  this example, a struct for matvec
   is first defined:
@@ -227,13 +236,6 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   Users should first create a function  wrapper of the above type for an
   external matvec routine. Then, following  the steps in the example, it
   will be straightforward to use it in EVSL.
-  
-  Call function
-  ```
-  UnsetAMatvec() and
-  UnsetBMatvec()
-  ```
-  to unset the Mat-vec functions
   
 -----------------------------------------------------------------------
 ###  GENERALIZED EIGENVALUE PROBLEM
