@@ -112,6 +112,8 @@ void sort_double(int n, double *v, int *ind);
 //
 void linspace(double a, double b, int num, double *arr);
 
+int apfun1(const double c, const double h, const double* xi, double (*ffun)(double), const int npts, double* yi);
+
 /*- - - - - - - - - - landos.c */
 // Computes the density of states (DOS, or spectral density)
 int LanDos(const int nvec, int msteps, const int npts, double *xdos,
@@ -122,5 +124,8 @@ void simpson2(double *xi, double *yi, int npts);
 
 /*- - - - - - - - - - spslicer2.c */
 void spslicer2(double *xi, double *yi, int n_int, int npts, double *sli);
+
+/*- - - - - - - - - - lsPol1.c */
+int lsPol1(const double *const intv, const int maxDeg, double (*ffun)(double), const double npts, double* mu, double c, double h);
 
 #endif
