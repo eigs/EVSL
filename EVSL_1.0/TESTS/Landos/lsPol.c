@@ -35,6 +35,8 @@ int main() {
     intv[1] = 14;
     intv[4] = 0.54793803;
     intv[5] = 2.5;
+    intv[0] = 0.54793803;
+    intv[1] = 2.5;
     double tau = 1.0e-04;
     lsPol1(intv, mdeg, fsqrt, tau, mu, c, h);
 
