@@ -109,7 +109,7 @@ int lsPol1(const double *const intv, const int maxDeg, double (*ffun)(double), c
         tt = max; //infinity norm of a vector should just be it's max element
         // printf("tt: %f \n", tt);
         if ( tt < tol) {
-            deg[0] = k;
+            deg[0] = k+1;
             break;
         }
     }

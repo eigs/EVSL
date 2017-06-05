@@ -13,8 +13,12 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-double fsqrt(double a) { 
+double fsqrt(const double a) { 
     return sqrt(1/a);
+}
+
+double rec(const double a) {
+    return 1/a;
 }
 
 /*
@@ -40,6 +44,15 @@ int main() {
     intv[1] = 2.5;
     double tau = 1.0e-04;
     lsPol1(intv, mdeg, fsqrt, tau, mu, c, h, deg);
+    int i = 0;
+    for(i = 0; i < deg[0]; i++) {
+	printf("mu: %f \n", mu[i]);
+    }
+    lsPol1(intv, mdeg, rec, tau, mu, c, h, deg);
+    printf("next\n");
+    for(i = 0; i < deg[0]; i++) {
+	printf("mu: %f \n", mu[i]);
+    }
     free(mu);
     free(deg);
     free(intv);
