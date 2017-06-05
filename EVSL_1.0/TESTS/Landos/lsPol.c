@@ -30,6 +30,7 @@ int main() {
     double c;
     double h;
     double *intv = (double *) malloc(sizeof(double) * 7);
+    int *deg = (int*) malloc(sizeof(int) * 1);
     
     intv[0] = -2.7395e-13;
     intv[1] = 14;
@@ -38,7 +39,10 @@ int main() {
     intv[0] = 0.54793803;
     intv[1] = 2.5;
     double tau = 1.0e-04;
-    lsPol1(intv, mdeg, fsqrt, tau, mu, c, h);
+    lsPol1(intv, mdeg, fsqrt, tau, mu, c, h, deg);
+    free(mu);
+    free(deg);
+    free(intv);
 
     return 0;
 }
