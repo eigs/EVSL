@@ -127,5 +127,6 @@ void spslicer2(double *xi, double *yi, int n_int, int npts, double *sli);
 
 /*- - - - - - - - - - lsPol1.c */
 int lsPol1(const double *const intv, const int maxDeg, double (*ffun)(double), const double npts, double* mu, double c, double h, int* deg);
+int lsPol2(const double *const intv, const int maxDeg, double (*ffun)(double), const double npts, polparams* pol);
 
 #endif

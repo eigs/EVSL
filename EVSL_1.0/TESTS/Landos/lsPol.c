@@ -36,7 +36,7 @@ int main() {
   intv[5] = 2.5;
   intv[0] = 0.54793803;
   intv[1] = 2.5;
-  cdouble tau = 1.0e-04;
+  const double tau = 1.0e-04;
   lsPol1(intv, mdeg, fsqrt, tau, mu, c, h, deg);
   int i = 0;
   for (i = 0; i < deg[0]; i++) {
@@ -47,6 +47,22 @@ int main() {
   for (i = 0; i < deg[0]; i++) {
     printf("mu: %f \n", mu[i]);
   }
+  polparams pol;
+  //Test v2
+  pol.mu  = (double *)malloc(sizeof(double) * mdeg);
+  pol.cc = 5;
+  printf("num: %f \n", pol.cc);
+  printf("Next:! \n");
+  lsPol2(intv, mdeg, fsqrt, tau, &pol);
+  for (i = 0; i < pol.deg; i++) {
+    printf("mu: %f \n", pol.mu[i]);
+  }
+  lsPol2(intv, mdeg, rec, tau, &pol);
+  printf("next\n");
+  for (i = 0; i < pol.deg; i++) {
+    printf("mu: %f \n", pol.mu[i]);
+  }
+  free(pol.mu);
   free(mu);
   free(deg);
   free(intv);
