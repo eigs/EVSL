@@ -101,16 +101,13 @@ int lsPol1(const double* const intv, const int maxDeg, double (*ffun)(double),
     // printf("mu[%i]: %f \n",k, mu[k]);
     chebxPltd(k, mu, ptsNrm, xi, ya);
     // printf("ya: %f \n", ya);
-    double max = -DBL_MAX;
+    double nrm = 0;
     for (i = 0; i < ptsNrm; i++) {
       na = (ya[i] - yx[i]) / yx[i];
-      if (na > max) {
-        max = na;
-      }
+      nrm += fabs(na);
     }
-    tt = max;  // infinity norm of a vector should just be it's max element
     // printf("tt: %f \n", tt);
-    if (tt < tol) {
+    if (nrm < tol) {
       deg[0] = k + 1;
       break;
     }
