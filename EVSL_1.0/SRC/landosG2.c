@@ -34,7 +34,81 @@ double fsqrt(const double a) { return sqrt(1 / a); }
 
 double rec(const double a) { return 1 / a; }
 
-void ones(int n, double* v) { int i = 0; for(i = 0; i < n; i++) { v[i] = 0; }}
+void ones(int n, double* v) { int i = 0; for(i = 0; i < n; i++) { v[i] = 1; }}
+
+
+/**
+ * @brief @b Computes y=P(A) y, where pn is a Cheb. polynomial expansion 
+ * 
+ * This explicitly calls matvec, so it can be useful for implementing
+ * user-specific matrix-vector multiplication.
+ *
+ * @param pol Struct containing the paramenters and expansion coefficient of
+ * the polynomail.
+ * @param v input vector
+ *
+ * @param[out] y p(A)v
+ *
+ * @b Workspace
+ * @param w Work vector of length 3*n [allocate before call]
+ * @param v is untouched
+ **/
+int pnav(polparams *pol, double *v, double *y, double *w) {//Really just ChebAv
+  int n = evsldata.n;
+  /*-------------------- unpack pol */
+  double *mu = pol->mu;
+  double dd = pol->dd;
+  double cc = pol->cc;
+  int m = pol->deg;
+  /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
+  double *vk   = w;
+  double *vkp1 = w+n;
+  double *vkm1 = vkp1+n;
+  double *w2 = evsldata.ifGenEv ? vkm1 + n : NULL;
+  /*-------------------- */
+  int k, i;
+  double t, s, *tmp, t1= 1.0 / dd, t2 = 2.0 / dd; 
+  /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
+  memcpy(vk, v, n*sizeof(double));
+  memset(vkm1, 0, n*sizeof(double));
+  /*-------------------- special case: k == 0 */
+  s = mu[0];
+  for (i=0; i<n; i++) {
+    y[i] = s*vk[i];
+  }
+  /*-------------------- degree loop. k IS the degree */
+  for (k=1; k<=m; k++) {
+    /*-------------------- y = mu[k]*Vk + y */    
+    t = k == 1 ? t1 : t2; 
+    /*-------------------- */    
+    s = mu[k];
+    if (evsldata.ifGenEv) {
+      /*-------------------- Vkp1 = A*B\Vk - cc*Vk */    
+      solve_B(vk, w2);
+      matvec_A(w2, vkp1);
+    } else {
+      /*-------------------- Vkp1 = A*Vk - cc*Vk */    
+      matvec_B(vk, vkp1);
+    }
+
+    for (i=0; i<n; i++) {
+      vkp1[i] = t*(vkp1[i]-cc*vk[i]) - vkm1[i];
+      /*-------------------- for degree 2 and up: */
+      y[i] += s*vkp1[i];
+    }
+    /*-------------------- next: rotate vectors via pointer exchange */
+    tmp = vkm1;
+    vkm1 = vk;
+    vk = vkp1;
+    vkp1 = tmp;
+  }
+
+  return 0;
+}
+
+
+
+
 
 int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos, double *ydos,
            double *neig, const double *const intv, const double tau) {
@@ -44,6 +118,7 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   int n, m, i, j;
 
   n = evsldata.n;
+  printf("n: %i\n", n);
 
   polparams pol_sqr;
   polparams pol_sol;
@@ -122,7 +197,7 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
 
 
   //-------------------- Variables that persist through iterations
-  double *v, *y, *z;  // v=Vector for current iteration; y Stores y values
+  double *v, *y, *z, *vtmp;  // v=Vector for current iteration; y Stores y values
   int *ind;
   Malloc(v, n, double);
   Malloc(z, n, double);
@@ -161,17 +236,27 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   //-------------------- Lanczos loop for this vector
   for (m = 0; m < nvec; m++) {
     ones(n, v);  // w = randn(size(A,1),1);
+    printf("n: %i \n", n);
+    printf("v: \n");
+    for(i = 0; i < n; i++) {
+      printf("%f \n", v[i]);
+    }
     if(degB) {
-      ChebAv(&pol_sqr, v, v, ww); //v = pnav(B, cm, hm mu_sqr, randn(n,1));
+      Malloc(vtmp, n, double);
+      pnav(&pol_sqr, v, vtmp, ww); //v = pnav(B, cm, hm mu_sqr, randn(n,1));
+      v = vtmp;
+      free(v);
     }
     else {
       fprintf(stderr, "LanDos has not yet implemented non-positive degB\n");
       exit(-1);
     }
+    //Accurate to here
     for (j = 0; j < msteps; j++) {
-      // w = A*v
+      // z = B*v
       matvec_B(&Z[j * n], &Z[(j+1) * n]); //z = B * v;
     }
+
 
     //--------------------Start of bulk of lanbound.c code
     t = DDOT(&n, z, &one, v, &one); // t =z' * v;
