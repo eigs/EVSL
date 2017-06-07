@@ -53,13 +53,19 @@ void ones(int n, double* v) { int i = 0; for(i = 0; i < n; i++) { v[i] = 1; }}
  * @param w Work vector of length 3*n [allocate before call]
  * @param v is untouched
  **/
-int pnav(polparams *pol, double *v, double *y, double *w) {//Really just ChebAv
+int pnav(polparams *pol, double *v, double *y, double *w, evslData data) {//Really just ChebAv
+  printf("eln: %i", evsldata.n);
   int n = evsldata.n;
+  printf("N: %i \n", n);
   /*-------------------- unpack pol */
   double *mu = pol->mu;
   double dd = pol->dd;
   double cc = pol->cc;
   int m = pol->deg;
+  printf("mu[0]: %f", mu[0]);
+  printf("dd: %f", dd);
+  printf("cc: %f", cc);
+  printf("m: %i", m);
   /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   double *vk   = w;
   double *vkp1 = w+n;
@@ -73,9 +79,12 @@ int pnav(polparams *pol, double *v, double *y, double *w) {//Really just ChebAv
   memset(vkm1, 0, n*sizeof(double));
   /*-------------------- special case: k == 0 */
   s = mu[0];
+  printf("s: %f \n", s);
+  printf("vk0: %f \n", vk[0]);
   for (i=0; i<n; i++) {
     y[i] = s*vk[i];
   }
+  printf("y0: %f \n", y[0]);
   /*-------------------- degree loop. k IS the degree */
   for (k=1; k<=m; k++) {
     /*-------------------- y = mu[k]*Vk + y */    
@@ -89,7 +98,10 @@ int pnav(polparams *pol, double *v, double *y, double *w) {//Really just ChebAv
     } else {
       /*-------------------- Vkp1 = A*Vk - cc*Vk */    
       matvec_B(vk, vkp1);
+    printf("vk0: %f \n", vk[0]);
+    printf("vkp0: %f \n", vkp1[0]);
     }
+    printf("N: %i \n", n);
 
     for (i=0; i<n; i++) {
       vkp1[i] = t*(vkp1[i]-cc*vk[i]) - vkm1[i];
@@ -116,16 +128,14 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   double *alp, *bet, nbet, nalp, t, *V, *Z;
   int one = 1;
   int n, m, i, j;
-
-  n = evsldata.n;
-  printf("n: %i\n", n);
-
-  polparams pol_sqr;
-  polparams pol_sol;
-
   const int mdeg = 200;
 
+  n = evsldata.n;
+
+  polparams pol_sqr;
   Malloc(pol_sqr.mu, mdeg, double);
+
+  polparams pol_sol;
   Malloc(pol_sol.mu, mdeg, double);
 
 
@@ -138,65 +148,12 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
 	  lsPol2(&intv[4], mdeg, fsqrt, tau, &pol_sqr);
 	  lsPol2(&intv[4], mdeg, rec, tau, &pol_sol);
   }
+
+
   double lm = INFINITY;
   double lM = -INFINITY;
-//  double* z;
-//  Malloc(z, npts, double);
-//
-//  double* H;
-//  Malloc(H, (mdeg+1)*(msteps+1), double);
-//
-//  double* z0;
-//  Malloc(z0, n, double);
-//
-//  int vi;
-//  for (vi = 0; vi < nvec; vi++) {
-//      //H = zeros(k+1, k+1);
-//      if(degB) {
-//          ChebAv(pol, v);
-//      else {
-//          printf("LanDos with nonzero degB not yet implemented!");
-//          exit(-1);
-//      }
-//      matvec_A(v, z);
-//      double cumu;
-//      for (i = 0; i < n; i++) {
-//          cumu = v[i] * z[i];
-//      }
-//      double t = sqrt(cumu);
-//      DSCAL(v, t);
-//      DSCAL(z, t);
-//      //V(:, 1) = v; //save
-//      //Z(:, 1) = z; //v = B/z
-//      double bet = 0;
-//
-//
-//    for (j = 0; j < msteps; j++) {
-//      // w = A*v
-//      matvec_A(&V[j * n], &V[(j + 1) * n]);
-//      // w = w - bet * vold
-//      if (j) {
-//        nbet = -bet[j - 1];
-//        DAXPY(&n, &nbet, &V[(j - 1) * n], &one, &V[(j + 1) * n], &one);
-//      }
-//      /*-------------------- alp = w' * v */
-//      alp[j] = DDOT(&n, &V[(j + 1) * n], &one, &V[j * n], &one);
-//      wn += alp[j] * alp[j];
-//
-//      if (degB) {
-//          v = ChebAv(pol, w);
-//        else {
-//            printf("LanDos with degB == 0 is not yet implemented! \n");
-//            exit(-1);
-//        }
-//
-//    ///...
-
-
-
-
-
   //-------------------- Variables that persist through iterations
+  //
   double *v, *y, *z, *vtmp;  // v=Vector for current iteration; y Stores y values
   int *ind;
   Malloc(v, n, double);
@@ -206,6 +163,7 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   /*-------------------- for tridiag. eigenvalue problem + lanczos
                          quadrature */
   double *S, *ritzVal, *gamma2;
+
   // S will contain a matrix compressed into a single array.
   Malloc(S, msteps * msteps, double);
   Malloc(gamma2, msteps, double);
@@ -233,33 +191,34 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   Malloc(bet, msteps, double);
   Malloc(V, (msteps + 1) * n, double);
   Malloc(Z, (msteps + 1) * n, double);
+  Calloc(vtmp, n, double);
   //-------------------- Lanczos loop for this vector
+  //Memory errors
   for (m = 0; m < nvec; m++) {
     ones(n, v);  // w = randn(size(A,1),1);
-    printf("n: %i \n", n);
     printf("v: \n");
-    for(i = 0; i < n; i++) {
+    for(i = 0; i < 5; i++) {
       printf("%f \n", v[i]);
     }
+    printf("n: %i \n", n);
+    printf("evsl.n: %i \n", evsldata.n);
     if(degB) {
-      Malloc(vtmp, n, double);
-      pnav(&pol_sqr, v, vtmp, ww); //v = pnav(B, cm, hm mu_sqr, randn(n,1));
-      v = vtmp;
-      free(v);
+      pnav(&pol_sqr, v, vtmp, ww, evsldata); //v = pnav(B, cm, hm mu_sqr, randn(n,1));
+      //ChebAv(&pol_sqr, v, vtmp, ww); //v = pnav(B, cm, hm mu_sqr, randn(n,1));
+      printf("vtmp1: %f \n", vtmp[0]);
+      memcpy(v, vtmp, n * sizeof(double));
     }
     else {
       fprintf(stderr, "LanDos has not yet implemented non-positive degB\n");
       exit(-1);
     }
-    //Accurate to here
-    for (j = 0; j < msteps; j++) {
-      // z = B*v
-      matvec_B(&Z[j * n], &Z[(j+1) * n]); //z = B * v;
-    }
+    // z = B*v
+    matvec_B(v,z);
 
 
     //--------------------Start of bulk of lanbound.c code
     t = DDOT(&n, z, &one, v, &one); // t =z' * v;
+    printf("t: %f \n", t);
     //-------------------- normalize vector
     //                     v = can also  use DNRM2 instead.
     t = 1.0 / sqrt(t); 
@@ -267,6 +226,10 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
     DSCAL(&n, &t, z, &one); // z = z / t
     DCOPY(&n, v, &one, V, &one); // V(:, 1 ) = v;
     DCOPY(&n, z, &one, Z, &one); // V(:, 1 ) = v;
+    printf("V[0]: %f \n", V[0]);
+    printf("Z[0]: %f \n", Z[0]);
+    printf("V[n]: %f \n", V[n-1]);
+    printf("Z[n]: %f \n", Z[n-1]);
     double wn = 0.0;
     /*-------------------- main Lanczos loop */
     for (j = 0; j < msteps; j++) {
@@ -283,13 +246,41 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
       //-------------------- w = w - alp * v
       nalp = -alp[j];
       DAXPY(&n, &nalp, &V[j * n], &one, &V[(j + 1) * n], &one);
+    printf("V[0]: %f \n", V[0]);
+    printf("Z[0]: %f \n", Z[0]);
+    printf("V[n]: %f \n", V[n-1]);
+    printf("Z[n]: %f \n", Z[n-1]);
+    printf("nalp: %f \n", nalp);
+    printf("V[%i]: %f \n", (j+1)*n,V[(j+1)*n]);
+    printf("Z[%i]: %f \n", (j+1)*n,Z[(j+1)*n]);
+    printf("wn: %f \n", wn);
       //-------------------- full reortho
       for (i = 0; i <= j; i++) {
         t = DDOT(&n, &V[(j + 1) * n], &one, &V[i * n], &one);
         double mt = -t;
-        DAXPY(&n, &mt, &V[i * n], &one, &V[(j + 1) * n], &one);
+        DAXPY(&n, &mt, &Z[i * n], &one, &Z[(j + 1) * n], &one);
       }
+    printf("Z[%i]: %f \n", (j+1)*n,Z[(j+1)*n]);
+      if(degB) {
+        pnav(&pol_sol,&V[(j+1) * n] , v, ww, evsldata); //v = pnav(B, cm, hm mu_sqr, randn(n,1));
+        memcpy(&V[(j+1) * n], vtmp, n * sizeof(double));
+      }
+      else {
+        fprintf(stderr, "LanDos does not yet support degB <= 0");
+        exit(-1);
+      }
+    printf("V[0]: %f \n", V[0]);
+    printf("Z[0]: %f \n", Z[0]);
+    printf("V[n]: %f \n", V[n-1]);
+    printf("Z[n]: %f \n", Z[n-1]);
+    printf("nalp: %f \n", nalp);
+    printf("V[%i]: %f \n", (j+1)*n,V[(j+1)*n]);
+    printf("Z[%i]: %f \n", (j+1)*n,Z[(j+1)*n]);
+    printf("wn: %f \n", wn);
+
       bet[j] = DDOT(&n, &V[(j + 1) * n], &one, &V[(j + 1) * n], &one);
+      printf("Bet[j]: %f", bet[j]);
+      exit(-1);
       if (bet[j] * (j + 1) < orthTol * wn) {
         fprintf(stdout, "lanbounds: lucky break, j=%d, beta=%e, break\n", j,
                 bet[j]);
