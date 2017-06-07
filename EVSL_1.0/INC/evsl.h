@@ -118,6 +118,8 @@ int apfun1(const double c, const double h, const double* xi, double (*ffun)(doub
 // Computes the density of states (DOS, or spectral density)
 int LanDos(const int nvec, int msteps, const int npts, double *xdos,
            double *ydos, double *neig, const double *const intv);
+int LanDosG2(const int nvec, int msteps, const int degB, const int npts, double *xdos,
+           double *ydos, double *neig, const double *const intv, const double tau);
 
 /*- - - - - - - - - - simpson2.c */
 void simpson2(double *xi, double *yi, int npts);
