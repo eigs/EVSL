@@ -481,7 +481,7 @@ void free_pol(polparams *pol) {
 }
 
 /**
- * @brief @b Computes y=P(A) y, where pn is a Cheb. polynomial expansion 
+ * @brief @b Computes y=P(A) v, where pn is a Cheb. polynomial expansion 
  * 
  * This explicitly calls matvec, so it can be useful for implementing
  * user-specific matrix-vector multiplication.
