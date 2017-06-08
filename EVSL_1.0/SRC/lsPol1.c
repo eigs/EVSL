@@ -38,7 +38,6 @@ int lsPol1(const double* const intv, const int maxDeg, double (*ffun)(double),
   //------------------------- Number of points for Gauss-Chebyshev
   // integration
   const int npts = maxDeg * 4;
-  const double theta = PI / npts;
 
   double* theti;
   Malloc(theti, npts, double);
@@ -76,7 +75,6 @@ int lsPol1(const double* const intv, const int maxDeg, double (*ffun)(double),
   Malloc(yi, npts, double);
   double* ya;
   Malloc(ya, npts, double);
-  double tt;
   double na;
 
   int k = 0;
@@ -114,6 +112,7 @@ int lsPol1(const double* const intv, const int maxDeg, double (*ffun)(double),
   free(yx);
   free(theti);
   free(gi);
+  return 0;
 }
 
 /**----------------------------------------------------------------------
@@ -144,7 +143,6 @@ int lsPol2(const double* const intv, const int maxDeg, double (*ffun)(double),
   //------------------------- Number of points for Gauss-Chebyshev
   // integration
   const int npts = maxDeg * 4;
-  const double theta = PI / npts;
 
   double* theti;
   Malloc(theti, npts, double);
@@ -223,4 +221,5 @@ int lsPol2(const double* const intv, const int maxDeg, double (*ffun)(double),
   free(yx);
   free(theti);
   free(gi);
+  return 0;
 }

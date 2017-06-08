@@ -185,6 +185,8 @@ int main() {
   
   ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv) ; 
   free_coo(&cooMat);
+  free_coo(&Acoo);
+  free_coo(&Bcoo);
   fprintf(stdout, " exDOS ret %d \n",ret) ;
 
   //--------------------Make OUT dir if it does'nt exist
@@ -214,5 +216,7 @@ int main() {
   free(xdos);
   free(ydos);
   free_csr(&csrMat);
+  free_csr(&Acsr);
+  free_csr(&Bcsr);
   return 0;
 }

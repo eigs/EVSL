@@ -337,6 +337,7 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   *neig = y[npts - 1] * n;
   free(gamma2);
   /*-------------------- free arrays */
+  free(vinit);
   free(V);
   free(dT);
   free(eT);
@@ -345,6 +346,8 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   free(wk);
   free(y);
   free(ind);
+  free(pol_sqr.mu);
+  free(pol_sol.mu);
   if (vrand) {
     free(vrand);
   }
