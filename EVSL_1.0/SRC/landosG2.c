@@ -9,7 +9,6 @@
 #include "string.h"  //for memset
 #include "struct.h"
 
-#define USE_RAND_NUM 0
 /**----------------------------------------------------------------------
  *
  *    Computes the density of states (DOS, or spectral density)
@@ -144,7 +143,6 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
 #endif
   /*--------------------   frequently used constants  */
   int one = 1;
-  double done=1.0;
   /* size of the matrix */
   maxit = min(n, maxit);
   double *gamma2;
@@ -152,7 +150,7 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   /*-----------------------------------------------------------------------* 
    * *Non-restarted* Lanczos iteration 
    *-----------------------------------------------------------------------
-   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
+   -------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
   Malloc(V, n*(maxit+1), double);
   if (evsldata.ifGenEv) {
@@ -184,18 +182,11 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   /*-------------------- nmv counts  matvecs */
   int nmv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
-  double *u, *wk, *vrand = NULL;
+  double *wk, *vrand = NULL;
   int wk_size = evsldata.ifGenEv ? 6*n : 4*n;
   Malloc(wk, wk_size, double);
   for (m = 0; m < nvec; m++) {
-#if USE_RAND_NUM
-    printf("Using rand numbers \n");
     randn_double(n,vinit);
-#else
-    randn_double(n,vinit);
-    printf("Using predetermined numbers \n");
-    printf("vinit[0]: %f \n", vinit[0]);
-#endif
     /*-------------------- copy initial vector to Z(:,1) */
     /* Filter the initial vector */
     tm = cheblan_timer();
