@@ -10,29 +10,6 @@
 #include "struct.h"
 
 #define USE_RAND_NUM 0
-/**----------------------------------------------------------------------
- *
- *    Computes the density of states (DOS, or spectral density)
- *
- *    @param[in] *A  -- used through calls to matvec_A
- *    @param[in] nvec  number of sample vectors used
- *    @param[in] msteps number of Lanczos steps
- *    @param[in] npts number of sample points used for the DOS curve
- *    @param[in] *intv Stores the two intervals of interest \\
- *      intv[0:1] = [lambda_min, lambda_max]\\
- *      intv[2:3] = [a b] = interval where DOS is to be computed
- *
- *    @param[out] xdos Length-npts long vector, x-coordinate points for
- *    plotting the DOS. Must be preallocated before calling LanDos
- *
- *    @param[out] ydos Length-npts long vector, y-coordinate points for
- *    plotting the DOS. Must be preallocated before calling LanDos
- *
- *    @param[out] neig == estimated number of eigenvalues
- *
- *
- *----------------------------------------------------------------------*/
-
 double fsqrt(const double a) { return sqrt(1 / a); }
 
 double rec(const double a) { return 1 / a; }
@@ -43,11 +20,14 @@ void ones(int n, double* v) { int i = 0; for(i = 0; i < n; i++) { v[i] = 1; }}
 /**
  * @brief @b Computes y=P(A) y, where pn is a Cheb. polynomial expansion 
  * 
- * This explicitly calls matvec, so it can be useful for implementing
+ * This explicitly calls matvec_B, so it can be useful for implementing
  * user-specific matrix-vector multiplication.
  *
- * @param pol Struct containing the paramenters and expansion coefficient of
- * the polynomail.
+ * @param mu Vector containing Chebyshev Coefficients
+ * @param cc 
+ * @param dd 
+ * @param v input vector
+ * @param v input vector
  * @param v input vector
  *
  * @param[out] y p(A)v
@@ -116,6 +96,35 @@ int pnav(double* mu, const int m, const double cc, const double dd, double *v, d
 
 
 
+
+
+/**----------------------------------------------------------------------
+ *
+ *    Computes the density of states (DOS, or spectral density)
+ *
+ *    @param[in] *A  -- used through calls to matvec_A
+ *    @param[in] nvec  number of sample vectors used
+ *    @param[in] msteps number of Lanczos steps
+ *    @param[in] degB  degree used to approximate B
+ *    @param[in] npts number of sample points used for he DOS curve
+ *    @param[in] *intv Stores the  intervals of interest \\
+ *    intv[3:4] = [a b] = interval where DOS is to be computed \\
+ *    intv[5:6] = [lambda_min(B), lambda_max(B)] 
+ *    Used only if polynomial
+ *    approximation is used instead of Cholesky
+ *
+ *    @param[in] tau Tolerance used for the  approximation
+ *
+ *    @param[out] xdos Length-npts long vector, x-coordinate points for
+ *    plotting the DOS. Must be preallocated before calling LanDos
+ *
+ *    @param[out] ydos Length-npts long vector, y-coordinate points for
+ *    plotting the DOS. Must be preallocated before calling LanDos
+ *
+ *    @param[out] neig == estimated number of eigenvalues
+ *
+ *
+ *----------------------------------------------------------------------*/
 
 
 int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos, double *ydos,
