@@ -110,11 +110,17 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
 
   polparams pol_sqr;
   polparams pol_sol;
+  set_pol_def(&pol_sqr);
+  set_pol_def(&pol_sol);
 
   double tall;
+  double* mu_sqr;
+  double* mu_sol;
+  mu_sqr = (double*) malloc(mdeg * sizeof(double));
+  mu_sol = (double*) malloc(mdeg * sizeof(double));
+  pol_sqr.mu = mu_sqr;
+  pol_sol.mu = mu_sol;
 
-  Malloc(pol_sqr.mu, mdeg, double);
-  Malloc(pol_sol.mu, mdeg, double);
   double* vinit;
   Malloc(vinit, n, double);
 
@@ -346,8 +352,8 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   free(wk);
   free(y);
   free(ind);
-  free(pol_sqr.mu);
-  free(pol_sol.mu);
+  free_pol(&pol_sqr);
+  free_pol(&pol_sol);
   if (vrand) {
     free(vrand);
   }
