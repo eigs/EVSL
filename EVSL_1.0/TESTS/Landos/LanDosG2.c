@@ -67,16 +67,9 @@ int main() {
   const int nvec = 50;
   const double tau = 1e-4;
   double intv[6] = {-2.739543872224533e-13, 0.0325, -2.739543872224533e-13, 0.0325, 0.5479, 2.5000};
-  int n=0, i, j,  nslices, Mdeg, nev, 
-      mlan, max_its, ev_int, sl, ierr, totcnt;
-  /* find the eigenvalues of A in the interval [a,b] */
-  double a, b, lmax, lmin, ecount, tol, *sli, *mu;
-  double xintv[4];
-  double *alleigs; 
-  int *counts; // #ev computed in each slice  
-  /* initial vector: random */
-  double *vinit;
-  polparams pol;
+  int n=0, i,  nslices, ierr ;
+  double a, b;
+
   cooMat Acoo, Bcoo, cooMat;
   csrMat Acsr, Bcsr, csrMat;
 
@@ -85,9 +78,6 @@ int main() {
   io_t io;
   int numat, mat;
   char line[MAX_LINE];
-  /*-------------------- Bsol */
-  /*-------------------- stopping tol */
-  tol = 1e-8;
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
@@ -131,8 +121,6 @@ int main() {
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
     fprintf(fstats,"Partition the interval of interest [%f,%f] into %d slices\n",
             a,b,nslices);
-    counts = malloc(nslices*sizeof(int));             
-    sli = malloc( (nslices+1)*sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB){
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo); 
@@ -170,7 +158,6 @@ int main() {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
-    alleigs = malloc(n*sizeof(double)); 
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
