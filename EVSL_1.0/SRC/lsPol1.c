@@ -19,7 +19,7 @@
  *    @param[in] ffun Function to generate an approximation for
  *    @param[in] tol Tolerance for approximation
  *
- *    @param[out] mu
+ *    @param[out] mu Coefficients
  *    @param[out] c
  *    @param[out] h
  *    @param[out] deg Number of degrees used (elements in mu)
@@ -40,9 +40,6 @@ int lsPol1(const double* const intv, const int maxDeg, double (*ffun)(double),
   const int npts = maxDeg * 4;
   const double theta = PI / npts;
 
-  // printf("c: %f", c);
-  // printf("h: %f", h);
-  // printf("npts: %i", npts);
   double* theti;
   Malloc(theti, npts, double);
   int i = 0;
@@ -81,7 +78,6 @@ int lsPol1(const double* const intv, const int maxDeg, double (*ffun)(double),
   Malloc(ya, npts, double);
   double tt;
   double na;
-  // Malloc(na, npts, double);
 
   int k = 0;
   for (k = 0; k < maxDeg; k++) {
@@ -97,10 +93,7 @@ int lsPol1(const double* const intv, const int maxDeg, double (*ffun)(double),
       sum += yi[i] * gi[i];
     }
     mu[k] = t * sum;
-    // printf("Sum: %f \n", sum);
-    // printf("mu[%i]: %f \n",k, mu[k]);
     chebxPltd(k, mu, ptsNrm, xi, ya);
-    // printf("ya: %f \n", ya);
     double nrm = 0;
     for (i = 0; i < ptsNrm; i++) {
       na = (ya[i] - yx[i]) / yx[i];
@@ -153,9 +146,6 @@ int lsPol2(const double* const intv, const int maxDeg, double (*ffun)(double),
   const int npts = maxDeg * 4;
   const double theta = PI / npts;
 
-  // printf("c: %f", c);
-  // printf("h: %f", h);
-  // printf("npts: %i", npts);
   double* theti;
   Malloc(theti, npts, double);
   int i = 0;
@@ -210,10 +200,7 @@ int lsPol2(const double* const intv, const int maxDeg, double (*ffun)(double),
       sum += yi[i] * gi[i];
     }
     pol->mu[k] = t * sum;
-    // printf("Sum: %f \n", sum);
-    // printf("mu[%i]: %f \n",k, mu[k]);
     chebxPltd(k, pol->mu, ptsNrm, xi, ya);
-    // printf("ya: %f \n", ya);
     double max = -DBL_MAX;
     for (i = 0; i < ptsNrm; i++) {
       na = (ya[i] - yx[i]) / yx[i];
@@ -222,7 +209,6 @@ int lsPol2(const double* const intv, const int maxDeg, double (*ffun)(double),
       }
     }
     tt = max;  // infinity norm of a vector should just be it's max element
-    // printf("tt: %f \n", tt);
     if (tt < tol) {
       pol->deg = k + 1;
       break;
