@@ -1,12 +1,15 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <float.h>
 #include "blaslapack.h"
 #include "def.h"
 #include "evsl.h"
 #include "internal_proto.h"
 #include "string.h"  //for memset
 #include "struct.h"
+
+#define USE_RAND_NUM 0
 /**----------------------------------------------------------------------
  *
  *    Computes the density of states (DOS, or spectral density)
@@ -53,16 +56,12 @@ void ones(int n, double* v) { int i = 0; for(i = 0; i < n; i++) { v[i] = 1; }}
  * @param w Work vector of length 3*n [allocate before call]
  * @param v is untouched
  **/
-int pnav(polparams *pol, double *v, double *y, double *w, evslData data) {//Really just ChebAv
+int pnav(double* mu, const int m, const double cc, const double dd, double *v, double *y, double *w) {//Really just ChebAv
   printf("eln: %i", evsldata.n);
   int n = evsldata.n;
   printf("N: %i \n", n);
-  /*-------------------- unpack pol */
-  double *mu = pol->mu;
-  double dd = pol->dd;
-  double cc = pol->cc;
-  int m = pol->deg;
   printf("mu[0]: %f", mu[0]);
+  printf("v[0]: %f", v[0]);
   printf("dd: %f", dd);
   printf("cc: %f", cc);
   printf("m: %i", m);
@@ -93,16 +92,9 @@ int pnav(polparams *pol, double *v, double *y, double *w, evslData data) {//Real
     t = k == 1 ? t1 : t2; 
     /*-------------------- */    
     s = mu[k];
-    if (evsldata.ifGenEv) {
-      /*-------------------- Vkp1 = A*B\Vk - cc*Vk */    
-      solve_B(vk, w2);
-      matvec_A(w2, vkp1);
-    } else {
-      /*-------------------- Vkp1 = A*Vk - cc*Vk */    
       matvec_B(vk, vkp1);
     printf("vk0: %f \n", vk[0]);
     printf("vkp0: %f \n", vkp1[0]);
-    }
     printf("N: %i \n", n);
 
     for (i=0; i<n; i++) {
@@ -116,6 +108,8 @@ int pnav(polparams *pol, double *v, double *y, double *w, evslData data) {//Real
     vk = vkp1;
     vkp1 = tmp;
   }
+    printf("End y[0]: %f \n",  y[0]);
+    printf("End y[%i]: %f \n", n, y[0]);
 
   return 0;
 }
@@ -128,23 +122,51 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
            double *neig, const double *const intv, const double tau) {
   //--------------------
 
-  const int maxit = msteps;
+  int maxit = msteps;
   const double tol = tau;
+  int n = evsldata.n;
 
-  const int n = evsldata.n;
   const int mdeg = 200;
+
+  polparams pol_sqr;
+  polparams pol_sol;
+
 
   double c_sqr, c_sol, h_sqr, h_sol;
   double *mu_sol, *mu_sqr;
+  double *mu_sol_tmp, *mu_sqr_tmp;
+  int *deg_sqr_tmp, *deg_sol_tmp;
+
+  Malloc(pol_sqr.mu, mdeg, double);
+  Malloc(pol_sol.mu, mdeg, double);
+  Malloc(deg_sqr_tmp, 1, int);
+  Malloc(deg_sol_tmp, 1, int);
+
+  double* vinit;
+  Malloc(vinit, n, double);
+#if USE_RAND_NUM
+  printf("Using rand numbers \n");
+  randn_double(n,vinit);
+#else
+  ones(n,vinit);
+  printf("Using predetermined numbers \n");
+  printf("vinit[0]: %f \n", vinit[0]);
+#endif
+
 
   if (degB <= 0) {
     printf("LanDos with degB <= 0 not yet implemented");
     exit(-1);
   }
   else {
-    lsPol1(&intv[4], mdeg, fsqrt, tau, mu_sqr, c_sqr, h_sqr);
-    lsPol1(&intv[4], mdeg, rec, tau, mu_sol, c_sol, h_sol);
+    lsPol2(&intv[4], mdeg, fsqrt, tau, &pol_sqr);
+    lsPol2(&intv[4], mdeg, rec, tau, &pol_sol);
+
   }
+  const int deg_sol = deg_sol_tmp[0];
+  const int deg_sqr = deg_sqr_tmp[0];
+  free(deg_sol_tmp);
+  free(deg_sqr_tmp);
 
   double tm,  tmv=0.0, tr0, tr1, tall;
   double *y, flami; 
@@ -153,9 +175,11 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   int i, k, kdim;
   // handle case where fstats is NULL. Then no output. Needed for openMP.
   int do_print = 1;   
+#if 0
   if (fstats == NULL){
     do_print = 0;
   }  
+#endif
   /*--------------------   frequently used constants  */
   char cN = 'N';   
   int one = 1;
@@ -165,26 +189,29 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   /*--------------------   how often to test */
   int cycle = 20; 
   /* size of the matrix */
-  int n = evsldata.n;
   maxit = min(n, maxit);
   /*-------------------- Rational filter with pole at ((a+b)/2,(b-a)/2) with 
     multiplicity pow, bar value equals 1/2        */
   /*-------------------- a, b, used for testing only at end */
   double bar = 0.5;
+  
+#if 0
   if (check_intv(intv, fstats) < 0) {
     *nevOut = 0;
     *lamo = NULL; *Wo = NULL; *reso = NULL;
     return 0;
   }
+#endif
   double aa = intv[0];
   double bb = intv[1];
-  int deg = rat->pow; // multiplicity of the pole
   /*-----------------------------------------------------------------------* 
    * *Non-restarted* Lanczos iteration 
    *-----------------------------------------------------------------------*/
+#if 0
   if (do_print) {
     fprintf(fstats, " ** Rat-LanNr \n");
   }
+#endif
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
   Malloc(V, n*(maxit+1), double);
@@ -217,16 +244,24 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   Malloc(wk, wk_size, double);
   w2 = wk + n;
   /*-------------------- copy initial vector to Z(:,1) */
-#if FILTER_VINIT
+#if 1
   /* Filter the initial vector */
   tm = cheblan_timer();
-  chebxPltd(/*Stuff*/);
+  printf("vinit[0]: %f \n", vinit[0]);
+  pnav(pol_sqr.mu, pol_sqr.deg, pol_sqr.cc, pol_sqr.dd, vinit, V, wk); //Ish
+  for(i = 0; i < pol_sqr.deg; i++) {
+    printf("V[i]: %f \n", V[i]);
+  }
   tmv += cheblan_timer() - tm;
+#if 0
   nsv += deg;
+#endif
   Malloc(vrand, n, double);
   if(evsldata.ifGenEv){
     DCOPY(&n, V, &one, Z, &one);
+#if 0
     nmv += (deg-1);
+#endif
   }
 #else
   DCOPY(&n, vinit, &one, Z, &one);
@@ -258,6 +293,8 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   double alpha, nalpha, beta=0.0, nbeta;
   int count = 0;
   // ---------------- main Lanczos loop 
+  //
+  // ##Should be good through about here
   for (k=0; k<maxit; k++) {
     /*-------------------- quick reference to Z(:,k-1) when k>0*/
     zold = k > 0 ? Z+(k-1)*n : NULL;
@@ -271,13 +308,14 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
     znew = z + n;
     /*-------------------- compute w = rat * v */
     tm = cheblan_timer();
-    chebxPltd(mu_sol, c_sol, h_sol, v, znew, www); //Ish
-    RatFiltApply(n, rat, v, znew, wk);
+    pnav(pol_sol.mu, pol_sol.deg, pol_sol.cc, pol_sol.dd, v, znew, wk); //Ish
     tmv += cheblan_timer() - tm;
+#if 0
     if (evsldata.ifGenEv) {
       nmv += (deg-1);
     }
     nsv += deg;
+#endif
     /*------------------ znew = znew - beta*zold */
     if (zold) {
       nbeta = -beta;
@@ -310,19 +348,31 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
     nwn += 3;
     /*-------------------- lucky breakdown test */
     if (beta*nwn< orthTol*wn) {
+#if 0
       if (do_print) {
         fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", k, beta);
       }
-# if FILTER_VINIT      
+#endif
+#if 1      
       /*------------------ generate a new init vector in znew */
+#if USE_RAND_NUM
       rand_double(n, vrand);
+#else
+      ones(n, vrand);
+#endif
       /* Filter the initial vector */
       tm = cheblan_timer();
-      RatFiltApply(n, rat, vrand, znew, wk);
+      pnav(pol_sol.mu, pol_sol.deg, pol_sol.cc, pol_sol.dd, vrand, znew, wk); //Ish
       tmv += cheblan_timer() - tm;
+#if 0
       nmv += (deg-1);
+#endif
 #else 
+#if USE_RAND_NUM
       rand_double(n, znew);
+#else
+      ones(n,vrand);
+#endif
 #endif            
       if (evsldata.ifGenEv) {
 	/* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
@@ -337,7 +387,9 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
 	/*-------------------- znew = znew / beta */
         DSCAL(&n, &t, znew, &one);
         beta = 0.0;
+#if 0
         nsv += deg;        
+#endif
       } else {
 	/* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
 	/* beta = norm(vnew) */
@@ -389,10 +441,12 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
       }
     }
 
+#if 0
     if (do_print) {
       fprintf(fstats, "k %4d:   # sols %8d, nconv %4d  tr1 %21.15e\n",
               k, nsv, nconv,tr1);
     }
+#endif
     /* -------------------- simple test because all eigenvalues
        are between gamB and ~1. */
     if (fabs(tr1-tr0) < tol*fabs(tr1)) {
@@ -479,10 +533,12 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   }
 
   /*-------------------- Done.  output : */
+#if 0
   *nevOut = nev;
   *lamo = Lam;
   *Wo = Rvec;
   *reso = res;
+#endif
   /*-------------------- free arrays */
   free(V);
   free(dT);
@@ -499,6 +555,7 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   /*-------------------- record stats */
   tall = cheblan_timer() - tall;
   /*-------------------- print stat */
+#if 0
   if (do_print){
     fprintf(fstats, "------This slice consumed: \n");
     fprintf(fstats, "# of solves :        %d\n", nsv);
@@ -509,6 +566,9 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
     fprintf(fstats, "solve time  :        %.2f\n", tmv);
     fprintf(fstats,"======================================================\n");
   }
+#endif
+  for(i = 0; i < n; i++) {
+    printf("LanDos y[%i] : %f", i, y[i]);
+    } 
   return 0;
-}
 }

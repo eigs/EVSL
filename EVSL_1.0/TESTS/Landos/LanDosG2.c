@@ -175,6 +175,8 @@ int main() {
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
     SetBMatrix(&Bcsr);
+
+    SetGenEig();
   }
 
   //-------------------- Read in a test matrix
