@@ -31,6 +31,10 @@ int ChebSI(int nev, double *intv, int maxit, double tol, double *vinit,
            polparams *pol, int *nevo, double **lamo, double **Yo, double **reso,
            FILE *fstats);
 
+/*- - - - - - - - - - dos_utils.c */
+int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double), const double npts, polparams* pol);
+
+
 /*- - - - - - - - - lanbounds.c */
 int LanBounds(int msteps, double *v, double *lmin, double *lmax);
 
@@ -46,9 +50,6 @@ int LanDosG(const int nvec, int msteps, const int degB, const int npts, double *
 /*- - - - - - - - - lanTrbounds.c */
 int LanTrbounds(int lanm, int maxit, double tol, double *vinit, int bndtype,
                 double *lammin, double *lammax, FILE *fstats);
-
-/*- - - - - - - - - - lsPol.c */
-int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double), const double npts, polparams* pol);
 
 /*- - - - - - - - - ratfilter.c */
 //
