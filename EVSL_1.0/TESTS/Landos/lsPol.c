@@ -11,9 +11,8 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-
-double rec(const double a)  { return 1 / a; }
-double isqrt(const double a)  { return 1 / sqrt(a); }
+double rec(const double a) { return 1 / a; }
+double isqrt(const double a) { return 1 / sqrt(a); }
 
 /*
  *-----------------------------------------------------------------------
@@ -35,8 +34,8 @@ int main() {
   intv[1] = 2.5;
   const double tau = 1.0e-04;
   polparams pol;
-  //Test v2
-  pol.mu  = (double *)malloc(sizeof(double) * mdeg);
+  // Test v2
+  pol.mu = (double *)malloc(sizeof(double) * mdeg);
   pol.cc = 5;
   printf("num: %f \n", pol.cc);
   printf("Next:! \n");

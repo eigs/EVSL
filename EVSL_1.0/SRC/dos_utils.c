@@ -28,11 +28,10 @@
  *----------------------------------------------------------------------*/
 
 int apfun(const double c, const double h, const double *const xi,
-           double (*ffun)(double), const int npts, double *yi) {
+          double (*ffun)(double), const int npts, double *yi) {
   int i = 0;
   for (i = 0; i < npts; i++) {
     yi[i] = ffun(c + h * xi[i]);
   }
   return 0;
 }
-

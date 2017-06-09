@@ -26,13 +26,15 @@
  *                mu = coefficients \\
  *                deg = number of coefficients
  *
- *    @warning The polparams struct returned only contains the following members: mu, cc, dd, deg (This is all that is used by ChebAv used by landosG2).
+ *    @warning The polparams struct returned only contains the following
+ *members: mu, cc, dd, deg (This is all that is used by ChebAv used by
+ *landosG2).
  *
  *
  *----------------------------------------------------------------------*/
 
 int lsPol(const double* const intv, const int maxDeg, double (*ffun)(double),
-           const double tol, polparams* pol) {
+          const double tol, polparams* pol) {
   const double a = intv[0];
   const double b = intv[1];
   pol->cc = (a + b) / 2;
