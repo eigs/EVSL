@@ -12,8 +12,8 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 
-const double rec(const double a) { return 1 / a; }
-const double isqrt(const double a) { return 1 / sqrt(a); }
+double rec(const double a)  { return 1 / a; }
+double isqrt(const double a)  { return 1 / sqrt(a); }
 
 /*
  *-----------------------------------------------------------------------
