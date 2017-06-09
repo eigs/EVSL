@@ -27,7 +27,6 @@ int get_matrix_info(FILE* fmat, io_t* pio);
 int readVec(const char* filename, int *npts, double **vec) {
   int i;
   FILE* ifp = fopen(filename, "r");
-  int tmp;
   fscanf(ifp, "%i", npts);
   *vec = (double*)malloc(sizeof(double) * *npts);
   for (i = 0; i < (*npts); i++) {
