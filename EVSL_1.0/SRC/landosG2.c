@@ -32,7 +32,6 @@
  *
  *----------------------------------------------------------------------*/
 
-double fsqrt(const double a) { return sqrt(1.0 / a); }
 
 double rec(const double a) { return 1.0 / a; }
 
@@ -153,7 +152,7 @@ int LanDosG2(const int nvec, const int msteps, const int degB, int npts, double 
     exit(-1);
   }
   else {
-    lsPol2(&intv[4], mdeg, fsqrt, tau, &pol_sqr);
+    lsPol2(&intv[4], mdeg, sqrt, tau, &pol_sqr);
     lsPol2(&intv[4], mdeg, rec, tau, &pol_sol);
   }
   int *ind;
