@@ -12,10 +12,6 @@ double rec(const double a) { return 1.0 / a; }  // Reciprocal
 
 double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
 
-/** ---------------------------------------------------------------------
- * Contains various functions and utilities used primarily for DOS functions.
- * */
-
 /**----------------------------------------------------------------------
  *
  *    Evalutes ffun at the xi's.
@@ -42,31 +38,8 @@ int apfun(const double c, const double h, const double *const xi,
   return 0;
 }
 
-/**----------------------------------------------------------------------
- *
- *    Computes the density of states (DOS, or spectral density)
- *
- *    @param[in] *A  -- used through calls to matvec_A
- *    @param[in] nvec  number of sample vectors used
- *    @param[in] msteps number of Lanczos steps
- *    @param[in] npts number of sample points used for the DOS curve
- *    @param[in] *intv Stores the two intervals of interest \\
- *      intv[0:1] = [lambda_min, lambda_max]\\
- *      intv[2:3] = [a b] = interval where DOS is to be computed
- *
- *    @param[out] xdos Length-npts long vector, x-coordinate points for
- *    plotting the DOS. Must be preallocated before calling LanDos
- *
- *    @param[out] ydos Length-npts long vector, y-coordinate points for
- *    plotting the DOS. Must be preallocated before calling LanDos
- *
- *    @param[out] neig == estimated number of eigenvalues
- *
- *
- *----------------------------------------------------------------------*/
-
 /**
- * @brief @b Computes y=P(A) v, where pn is a Cheb. polynomial expansion
+ * Computes y=P(A) v, where pn is a Cheb. polynomial expansion
  *
  * This explicitly calls matvec, so it can be useful for implementing
  * user-specific matrix-vector multiplication.
@@ -138,10 +111,6 @@ int pnav(double *mu, const int m, const double cc, const double dd, double *v,
  *                dd = (b - a) / 2 \\
  *                mu = coefficients \\
  *                deg = number of coefficients
- *
- *    @warning The polparams struct returned only contains the following
- *members: mu, cc, dd, deg (This is all that is used by ChebAv used by
- *landosG2).
  *
  *
  *----------------------------------------------------------------------*/

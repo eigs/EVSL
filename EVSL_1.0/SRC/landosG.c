@@ -14,7 +14,6 @@
  *    Computes the density of states (DOS, or spectral density) using Lanczos
  *    algorithm for the general eigenvalue problem.
  *
- *
  *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] degB Degree with which B should be approximated by
