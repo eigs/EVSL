@@ -85,9 +85,9 @@ int main() {
   fprintf(stdout, " LanDos ret %d \n", ret);
 
   ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv);  // Exact DOS
+  EVSLFinish();
   free_coo(&cooMat);
   fprintf(stdout, " exDOS ret %d \n", ret);
-
   //--------------------Make OUT dir if it does'nt exist
   struct stat st = {0};
   if (stat("OUT", &st) == -1) {

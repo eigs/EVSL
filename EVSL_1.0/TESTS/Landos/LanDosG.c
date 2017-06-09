@@ -187,6 +187,8 @@ int main() {
   // -------------------- Calculate the exact DOS
   ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv);
 
+  EVSLFinish();
+
   free_coo(&cooMat);
   free_coo(&Acoo);
   free_coo(&Bcoo);
