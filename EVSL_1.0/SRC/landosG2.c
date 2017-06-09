@@ -32,9 +32,9 @@
  *
  *----------------------------------------------------------------------*/
 
-double fsqrt(const double a) { return sqrt(1 / a); }
+double fsqrt(const double a) { return sqrt(1.0 / a); }
 
-double rec(const double a) { return 1 / a; }
+double rec(const double a) { return 1.0 / a; }
 
 void ones(int n, double* v) { int i = 0; for(i = 0; i < n; i++) { v[i] = 1; }}
 
@@ -98,8 +98,32 @@ int pnav(double* mu, const int m, const double cc, const double dd, double *v, d
 
 
 
+/**----------------------------------------------------------------------
+ *
+ *    Computes the density of states (DOS, or spectral density) using Lanczos
+ *    algorithm for the general eigenvalue problem.
+ *
+ *
+ *    @param[in] nvec  number of sample vectors used
+ *    @param[in] msteps number of Lanczos steps
+ *    @param[in] degB Degree with which B should be approximated by
+ *    @param[in] npts number of sample points used for the DOS curve
+ *    @param[in] *intv Stores the three intervals of interest \\
+ *      intv[0:1] = [lambda_min, lambda_max]\\
+ *      intv[2:3] = [a b] = interval where DOS is to be computed
+ *
+ *    @param[out] xdos Length-npts long vector, x-coordinate points for
+ *    plotting the DOS. Must be preallocated before calling LanDos
+ *
+ *    @param[out] ydos Length-npts long vector, y-coordinate points for
+ *    plotting the DOS. Must be preallocated before calling LanDos
+ *
+ *    @param[out] neig == estimated number of eigenvalues
+ *
+ *
+ *----------------------------------------------------------------------*/
 
-int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos, double *ydos,
+int LanDosG2(const int nvec, const int msteps, const int degB, int npts, double *xdos, double *ydos,
 	     double *neig, const double *const intv, const double tau) {
   //--------------------
 
@@ -114,8 +138,8 @@ int LanDosG2(const int nvec, int msteps, const int degB, int npts, double *xdos,
   set_pol_def(&pol_sol);
 
   double tall;
-  double* mu_sqr;
-  double* mu_sol;
+  double* mu_sqr = NULL;
+  double* mu_sol = NULL;
   mu_sqr = (double*) malloc(mdeg * sizeof(double));
   mu_sol = (double*) malloc(mdeg * sizeof(double));
   pol_sqr.mu = mu_sqr;

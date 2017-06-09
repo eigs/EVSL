@@ -196,20 +196,20 @@ int main() {
   }
 
   //-------------------- Write to  output files
-  FILE* ofp = fopen("OUT/myydos.txt", "w");
+  FILE* ofp = fopen("OUT/myydosG.txt", "w");
   for (i = 0; i < npts; i++) 
     fprintf(ofp," %10.4f  %10.4f\n",xdos[i],ydos[i]);
   fclose(ofp);
 
   //-------------------- save exact DOS 
-  ofp = fopen("OUT/Exydos.txt", "w");
+  ofp = fopen("OUT/ExydosG.txt", "w");
   for (i = 0; i < npts; i++) 
     fprintf(ofp," %10.4f  %10.4f\n",xHist[i],yHist[i]);
   fclose(ofp);
   //-------------------- invoke gnuplot for plotting ...
-  system("gnuplot < tester.gnuplot");
+  system("gnuplot < testerG.gnuplot");
   //-------------------- and gv for visualizing /
-  system("gv tester.eps");
+  system("gv testerG.eps");
   //-------------------- done 
   free(xHist);
   free(yHist);
