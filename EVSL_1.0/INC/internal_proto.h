@@ -20,6 +20,15 @@ int ChebAv(polparams *pol, double *v, double *y, double *w);
 //
 void chext(polparams *pol, double aIn, double bIn);
 
+/*- - - - - - - - - dos_utils.c */
+int apfun(const double c, const double h, const double* xi, double (*ffun)(double), const int npts, double* yi);
+//
+double rec(const double a);
+//
+double isqrt(const double a);
+//
+int pnav(double *mu, const int m, const double cc, const double dd, double *v,
+         double *y, double *w);  // Really just ChebAv
 
 /*- - - - - - - - - dump.c */
 //
@@ -63,6 +72,9 @@ int scaleweigthts(int n, double a, double b, complex double *zk, int* pow, compl
 
 /*- - - - - - - - - ratlanNr.c */
 void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w3);
+
+/*- - - - - - - - - - simpson.c */
+void simpson(double *xi, double *yi, int npts);
 
 /*- - - - - - - - - spmat.c */
 void matvec_csr(double *x, double *y, void *data);

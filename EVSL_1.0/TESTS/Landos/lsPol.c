@@ -10,9 +10,7 @@
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
-
-double rec(const double a) { return 1 / a; }
-double isqrt(const double a) { return 1 / sqrt(a); }
+double invsqrt(const double a) { return 1 / sqrt(a); }
 
 /*
  *-----------------------------------------------------------------------
@@ -39,7 +37,7 @@ int main() {
   pol.cc = 5;
   printf("num: %f \n", pol.cc);
   printf("Next:! \n");
-  lsPol(intv, mdeg, isqrt, tau, &pol);
+  lsPol(intv, mdeg, invsqrt, tau, &pol);
   for (i = 0; i < pol.deg; i++) {
     printf("mu: %f \n", pol.mu[i]);
   }
