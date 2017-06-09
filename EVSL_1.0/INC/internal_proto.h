@@ -20,6 +20,8 @@ int ChebAv(polparams *pol, double *v, double *y, double *w);
 //
 void chext(polparams *pol, double aIn, double bIn);
 
+/*- - - - - - - - - dos_utils.c */
+int apfun(const double c, const double h, const double* xi, double (*ffun)(double), const int npts, double* yi);
 
 /*- - - - - - - - - dump.c */
 //
@@ -31,6 +33,7 @@ void save_vec(int n, double *x, const char fn[]);
 
 /*- - - - - - - - - evsl.c */
 //
+
 
 /*- - - - - - - - - misc_la.c */
 //
@@ -45,7 +48,6 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
 void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q, double *v, double *w);
 //
 void orth(double *V, int n, int k, double *Vo, double *work);
-
 
 /*- - - - - - - - - ratfilter.c */
 //
@@ -63,6 +65,9 @@ int scaleweigthts(int n, double a, double b, complex double *zk, int* pow, compl
 
 /*- - - - - - - - - ratlanNr.c */
 void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w3);
+
+/*- - - - - - - - - - simpson.c */
+void simpson(double *xi, double *yi, int npts);
 
 /*- - - - - - - - - spmat.c */
 void matvec_csr(double *x, double *y, void *data);
