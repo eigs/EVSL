@@ -133,10 +133,10 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
 
   double tall;
 
-  double *mu_sqr = NULL;
-  double *mu_sol = NULL;
-  mu_sqr = (double *)malloc(mdeg * sizeof(double));
-  mu_sol = (double *)malloc(mdeg * sizeof(double));
+  double *mu_sqr ;
+  double *mu_sol ;
+  Calloc(mu_sqr, mdeg, double);
+  Calloc(mu_sol, mdeg, double);
   pol_sqr.mu = mu_sqr;
   pol_sol.mu = mu_sol;
 
