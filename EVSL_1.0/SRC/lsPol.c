@@ -57,7 +57,7 @@ int lsPol(const double* const intv, const int maxDeg, double (*ffun)(double),
 
   double* gi;
   Malloc(gi, npts, double);
-  apfun1(pol->cc, pol->dd, xi, ffun, npts, gi);
+  apfun(pol->cc, pol->dd, xi, ffun, npts, gi);
   free(xi);
 
   // ----------------------- Degree loop
@@ -71,7 +71,7 @@ int lsPol(const double* const intv, const int maxDeg, double (*ffun)(double),
 
   double* yx;
   Malloc(yx, npts, double);
-  apfun1(pol->cc, pol->dd, xi, ffun, ptsNrm, yx);
+  apfun(pol->cc, pol->dd, xi, ffun, ptsNrm, yx);
 
   double* yi;
   Malloc(yi, npts, double);

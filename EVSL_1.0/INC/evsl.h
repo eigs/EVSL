@@ -112,7 +112,7 @@ void sort_double(int n, double *v, int *ind);
 //
 void linspace(double a, double b, int num, double *arr);
 
-int apfun1(const double c, const double h, const double* xi, double (*ffun)(double), const int npts, double* yi);
+int apfun(const double c, const double h, const double* xi, double (*ffun)(double), const int npts, double* yi);
 
 /*- - - - - - - - - - landos.c */
 // Computes the density of states (DOS, or spectral density)
