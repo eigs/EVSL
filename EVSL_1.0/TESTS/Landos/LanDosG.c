@@ -19,26 +19,20 @@ int get_matrix_info(FILE* fmat, io_t* pio);
 /*
  * Reads in a vector as an nx1 matrix.
  *
- * @parm[in,out] mat UNallocated cooMat to read into.
+ * @parm[out] npts pointer to an int to store # of points
+ * @parm[out] vec UNallocated space to read vector to
  * @parm[in] filename file to read from, where the first line contains number
  * of elements/width/height of matrix, and the rest of the lines contain the
  * values. */
-int readVec(const char* filename, int *npts, double *vec) {
-  *npts  = 111;
+int readVec(const char* filename, int *npts, double **vec) {
   int i;
   FILE* ifp = fopen(filename, "r");
   int tmp;
-  fscanf(ifp, "%i", &tmp);
-  *npts = tmp;
-  printf("tmp: %i", tmp);
-  printf("npts: %i", *npts);
-  vec = (double*)malloc(sizeof(double) * (*npts));
-  
+  fscanf(ifp, "%i", npts);
+  *vec = (double*)malloc(sizeof(double) * *npts);
   for (i = 0; i < (*npts); i++) {
-    fscanf(ifp, "%lf", &vec[i]);
+    fscanf(ifp, "%lf", (&(*vec)[i]));
   }
-  printf("vec[0]: %f", vec[0]);
-  printf("vec[%i]: %f", *npts, vec[*npts-1]);
   fclose(ifp);
   return 0;
 }
@@ -162,11 +156,7 @@ int main() {
   //-------------------- Read in the eigenvalues
   double* ev;
   int numev;
-  readVec("ev.dat", &numev, ev);
-  printf("Num ev: %i \n", numev);
-  printf("ev: %p \n", ev);
-  printf("ev[0]: %f \n", ev[0]);
-  printf("ev[%i]: %f \n", numev, ev[numev-1]);
+  readVec("ev.dat", &numev, &ev);
 
   //-------------------- Define some constants to test with
   //-------------------- reset to whole interval
