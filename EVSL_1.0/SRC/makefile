@@ -2,9 +2,6 @@
 
 include ../makefile.in
 
-# Common flags
-FLAGS = -DUNIX -O3 -g -Wall 
-
 INCLUDES = -I../INC -ISRC 
 
 # Object files
