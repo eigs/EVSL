@@ -34,7 +34,6 @@ void save_vec(int n, double *x, const char fn[]);
 /*- - - - - - - - - evsl.c */
 //
 
-
 /*- - - - - - - - - misc_la.c */
 //
 int SymmTridEig(double *eigVal, double *eigVec, int n, const double *diag, const double *sdiag);
@@ -48,6 +47,7 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
 void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q, double *v, double *w);
 //
 void orth(double *V, int n, int k, double *Vo, double *work);
+
 
 /*- - - - - - - - - ratfilter.c */
 //

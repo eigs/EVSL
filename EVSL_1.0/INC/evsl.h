@@ -50,7 +50,6 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit, int bndtype,
 /*- - - - - - - - - - lsPol.c */
 int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double), const double npts, polparams* pol);
 
-
 /*- - - - - - - - - ratfilter.c */
 //
 void set_ratf_def(ratparams *rat);
@@ -83,7 +82,6 @@ void free_csr(csrMat *csr);
 void free_coo(cooMat *coo);
 // matvec y = A*x
 int matvec(char trans, csrMat *A, double *x, double *y);
-
 
 /*- - - - - - - - - evsl.c */
 /* set an external matvec function */
@@ -129,7 +127,6 @@ void randn_double(int n, double *v);
 void sort_double(int n, double *v, int *ind);
 //
 void linspace(double a, double b, int num, double *arr);
-
 
 
 
