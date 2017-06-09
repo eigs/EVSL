@@ -33,7 +33,9 @@
  *----------------------------------------------------------------------*/
 
 
-double rec(const double a) { return 1.0 / a; }
+const double rec(const double a) { return 1.0 / a; }
+
+const double isqrt(const double a) { return 1.0 / sqrt(a); }
 
 void ones(int n, double* v) { int i = 0; for(i = 0; i < n; i++) { v[i] = 1; }}
 
@@ -152,7 +154,7 @@ int LanDosG2(const int nvec, const int msteps, const int degB, int npts, double 
     exit(-1);
   }
   else {
-    lsPol2(&intv[4], mdeg, sqrt, tau, &pol_sqr);
+    lsPol2(&intv[4], mdeg, isqrt, tau, &pol_sqr);
     lsPol2(&intv[4], mdeg, rec, tau, &pol_sol);
   }
   int *ind;

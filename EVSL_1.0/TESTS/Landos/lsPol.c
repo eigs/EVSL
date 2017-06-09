@@ -12,7 +12,8 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 
-double rec(const double a) { return 1 / a; }
+const double rec(const double a) { return 1 / a; }
+const double isqrt(const double a) { return 1 / sqrt(a); }
 
 /*
  *-----------------------------------------------------------------------
@@ -39,7 +40,7 @@ int main() {
   pol.cc = 5;
   printf("num: %f \n", pol.cc);
   printf("Next:! \n");
-  lsPol2(intv, mdeg, sqrt, tau, &pol);
+  lsPol2(intv, mdeg, isqrt, tau, &pol);
   for (i = 0; i < pol.deg; i++) {
     printf("mu: %f \n", pol.mu[i]);
   }
