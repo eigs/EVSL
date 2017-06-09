@@ -23,38 +23,22 @@ int get_matrix_info(FILE* fmat, io_t* pio);
  * @parm[in] filename file to read from, where the first line contains number
  * of elements/width/height of matrix, and the rest of the lines contain the
  * values. */
-int readVec(const char* filename, cooMat* mat) {
-  int err;
-  int numEles, i;
+int readVec(const char* filename, int *npts, double *vec) {
+  *npts  = 111;
+  int i;
   FILE* ifp = fopen(filename, "r");
-  if (ifp == NULL) {
-    fprintf(stderr, "Can't open input file \n");
-    exit(1);
+  int tmp;
+  fscanf(ifp, "%i", &tmp);
+  *npts = tmp;
+  printf("tmp: %i", tmp);
+  printf("npts: %i", *npts);
+  vec = (double*)malloc(sizeof(double) * (*npts));
+  
+  for (i = 0; i < (*npts); i++) {
+    fscanf(ifp, "%lf", &vec[i]);
   }
-  err =fscanf(ifp, "%i", &numEles);
-  if(err) {
-    fprintf(stderr, "Was unable to load file, err code: %i \n", err);
-    exit(-1);
-  }
-  // Setup cooMat
-  mat->ncols = numEles;
-  mat->nrows = 1;
-  mat->nnz = numEles;
-  int* ir = (int*)malloc(sizeof(int) * numEles);
-  int* jc = (int*)malloc(sizeof(int) * numEles);
-  mat->ir = ir;
-  mat->jc = jc;
-  double* vv = (double*)malloc(sizeof(double) * numEles);
-  mat->vv = vv;
-  for (i = 0; i < numEles; i++) {
-    mat->ir[i] = 1;
-    mat->jc[i] = i;
-    err = fscanf(ifp, "%lf", &mat->vv[i]);
-    if(err) {
-      fprintf(stderr, "Was unable to load file, err code: %i \n", err);
-      exit(-1);
-    }
-  }
+  printf("vec[0]: %f", vec[0]);
+  printf("vec[%i]: %f", *npts, vec[*npts-1]);
   fclose(ifp);
   return 0;
 }
@@ -81,8 +65,8 @@ int main() {
   int n = 0, i, nslices, ierr;
   double a, b;
 
-  cooMat Acoo, Bcoo, cooMat;  // A, B, and eigenvalue matrices in COO form
-  csrMat Acsr, Bcsr, csrMat;  // A, B, and eigenvalue matrices in CSR form
+  cooMat Acoo, Bcoo;  // A, B
+  csrMat Acsr, Bcsr;  // A, B
 
   FILE *flog = stdout, *fmat = NULL;
   FILE* fstats = NULL;
@@ -176,8 +160,13 @@ int main() {
   }
 
   //-------------------- Read in the eigenvalues
-  readVec("ev.dat", &cooMat);
-  cooMat_to_csrMat(0, &cooMat, &csrMat);
+  double* ev;
+  int numev;
+  readVec("ev.dat", &numev, ev);
+  printf("Num ev: %i \n", numev);
+  printf("ev: %p \n", ev);
+  printf("ev[0]: %f \n", ev[0]);
+  printf("ev[%i]: %f \n", numev, ev[numev-1]);
 
   //-------------------- Define some constants to test with
   //-------------------- reset to whole interval
@@ -194,11 +183,10 @@ int main() {
   fprintf(stdout, " LanDos ret %d \n", ret);
 
   // -------------------- Calculate the exact DOS
-  ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv);
+  ret = exDOS(ev, numev, npts, xHist, yHist, intv);
 
   EVSLFinish();
 
-  free_coo(&cooMat);
   free_coo(&Acoo);
   free_coo(&Bcoo);
   fprintf(stdout, " exDOS ret %d \n", ret);
@@ -231,7 +219,6 @@ int main() {
   free(yHist);
   free(xdos);
   free(ydos);
-  free_csr(&csrMat);
   free_csr(&Acsr);
   free_csr(&Bcsr);
   return 0;
