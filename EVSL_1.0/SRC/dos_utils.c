@@ -1,11 +1,17 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "blaslapack.h"
 #include "def.h"
 #include "evsl.h"
 #include "internal_proto.h"
 #include "struct.h"
+
+double rec(const double a) { return 1.0 / a; }  // Reciprocal
+
+double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
+
 /** ---------------------------------------------------------------------
  * Contains various functions and utilities used primarily for DOS functions.
  * */
@@ -58,10 +64,6 @@ int apfun(const double c, const double h, const double *const xi,
  *
  *
  *----------------------------------------------------------------------*/
-
-double rec(const double a) { return 1.0 / a; }  // Reciprocal
-
-double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
 
 /**
  * @brief @b Computes y=P(A) v, where pn is a Cheb. polynomial expansion

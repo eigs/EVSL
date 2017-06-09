@@ -22,6 +22,13 @@ void chext(polparams *pol, double aIn, double bIn);
 
 /*- - - - - - - - - dos_utils.c */
 int apfun(const double c, const double h, const double* xi, double (*ffun)(double), const int npts, double* yi);
+//
+double rec(const double a);
+//
+double isqrt(const double a);
+//
+int pnav(double *mu, const int m, const double cc, const double dd, double *v,
+         double *y, double *w);  // Really just ChebAv
 
 /*- - - - - - - - - dump.c */
 //
