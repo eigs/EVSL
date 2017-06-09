@@ -248,8 +248,6 @@ int LanDosG2(const int nvec, const int msteps, const int degB, int npts, double 
     /*--------------------  Lanczos recurrence coefficients */
     double alpha, nalpha, beta=0.0, nbeta;
     // ---------------- main Lanczos loop 
-    //
-    // ##Should be good through about here
     for (k=0; k<maxit; k++) {
       /*-------------------- quick reference to Z(:,k-1) when k>0*/
       zold = k > 0 ? Z+(k-1)*n : NULL;
@@ -315,9 +313,6 @@ int LanDosG2(const int nvec, const int msteps, const int degB, int npts, double 
 	  /*-------------------- znew = znew / beta */
 	  DSCAL(&n, &t, znew, &one);
 	  beta = 0.0;
-#if 0
-	  nsv += deg;        
-#endif
 	} else {
 	  /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
 	  /* beta = norm(vnew) */
