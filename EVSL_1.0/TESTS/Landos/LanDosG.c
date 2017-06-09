@@ -216,6 +216,8 @@ int main() {
   //-------------------- and gv for visualizing /
   system("gv testerG.eps");
   //-------------------- done
+  fclose(fstats);
+  fclose(fmat);
   free(xHist);
   free(yHist);
   free(xdos);
