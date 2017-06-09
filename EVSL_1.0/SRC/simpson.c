@@ -23,7 +23,7 @@
  *    
  *----------------------------------------------------------------------*/
 
-void simpson2(double* xi, double* yi, int npts) {
+void simpson(double* xi, double* yi, int npts) {
   double tc = 0.0, ti, tm, ysav;   
   int i=1;
   //-------------------- save yi[even_i] 

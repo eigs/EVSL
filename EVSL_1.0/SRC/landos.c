@@ -166,7 +166,7 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
   // y = ydos * scaling
   DSCAL(&npts, &scaling, y, &one);
   DCOPY(&npts, y, &one, ydos, &one);
-  simpson2(xdos, y, npts);
+  simpson(xdos, y, npts);
 
   *neig = y[npts - 1] * n;
   free(gamma2);

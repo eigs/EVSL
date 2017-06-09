@@ -30,7 +30,7 @@ void spslicer2(double* xi, double* yi, int n_int, int npts, double* sli) {
   int ls = 0;
  
   //-------------------- in-place integration ydos<--- int ydos..
-  simpson2(xi,yi,npts);
+  simpson(xi,yi,npts);
   //
   t = yi[0];
   want = (yi[npts - 1] - yi[0]) / (double) n_int;

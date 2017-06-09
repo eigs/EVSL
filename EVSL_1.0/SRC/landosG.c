@@ -350,7 +350,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts, double *
   // y = ydos * scaling
   DSCAL(&npts, &scaling, y, &one);
   DCOPY(&npts, y, &one, ydos, &one);
-  simpson2(xdos, y, npts);
+  simpson(xdos, y, npts);
   *neig = y[npts - 1] * n;
   free(gamma2);
   /*-------------------- free arrays */
