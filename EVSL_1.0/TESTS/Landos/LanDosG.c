@@ -208,6 +208,7 @@ int main() {
   //-------------------- done
   fclose(fstats);
   fclose(fmat);
+  free(ev);
   free(xHist);
   free(yHist);
   free(xdos);
