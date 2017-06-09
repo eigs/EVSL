@@ -252,7 +252,7 @@ cholmod_dense cholmod_X, cholmod_B, *cholmod_Y=NULL, *cholmod_E=NULL,
  *
  * */
 void BSolSuiteSparse(double *b, double *x, void *data) {
-  int n;
+  //int n;
 
   BSolDataSuiteSparse *Bsol_data = (BSolDataSuiteSparse *) data;
   cholmod_factor *LB;
@@ -260,7 +260,7 @@ void BSolSuiteSparse(double *b, double *x, void *data) {
 
   LB = Bsol_data->LB;
   cc = &Bsol_data->cm;
-  n = LB->n;
+  //n = LB->n;
 
   /* give the wrapper data */
   cholmod_X.x = x;
@@ -339,7 +339,7 @@ int FreeBSolSuiteSparseData(BSolDataSuiteSparse *data) {
  *  x = L^{-T}*b
  * */
 void LTSolSuiteSparse(double *b, double *x, void *data) {
-  int n;
+  //int n;
 
   BSolDataSuiteSparse *Bsol_data = (BSolDataSuiteSparse *) data;
   cholmod_factor *LB;
@@ -347,7 +347,7 @@ void LTSolSuiteSparse(double *b, double *x, void *data) {
 
   LB = Bsol_data->LB;
   cc = &Bsol_data->cm;
-  n = LB->n;
+  //n = LB->n;
   
   /* XXX are these always safe ? */
   cholmod_B.x = b;

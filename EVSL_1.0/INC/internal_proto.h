@@ -114,7 +114,7 @@ static inline void matvec_B(double *x, double *y) {
 */
 static inline void solve_B(double *x, double *y) {
   CHKERR(!evsldata.Bsol);
-  evsldata.Bmv->func(x, y, evsldata.Bsol->data);
+  evsldata.Bsol->func(x, y, evsldata.Bsol->data);
 }
 
 /*- - - - - - - - - - check if an interval is valid */
