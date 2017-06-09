@@ -51,9 +51,7 @@ int readDiagMat(const char* filename, cooMat* mat) {
 
 /*
  *-----------------------------------------------------------------------
- * Tests landos.c -- Only the  following variable are the outputs. The
- * noted  values are  the values  when the  randn_double in  landos is
- * replaced with a vector of ones.
+ * Tests landos.c -- Includes graphical comparison of exact DOS and calculated.
  *-----------------------------------------------------------------------
  */
 int main() {
@@ -64,26 +62,27 @@ int main() {
   cooMat_to_csrMat(0, &cooMat, &csrMat);
  
   //-------------------- Define some constants to test with
-  const int msteps = 30;
-  const int npts = 200;
-  const int nvec = 100;
-  double intv[4] = {-2.448170338612495, 11.868902203167497, 5, 8};
+  const int msteps = 30; //Steps to perform
+  const int npts = 200; //Number of points
+  const int nvec = 100; //Number of random vectors to generate
+  double intv[4] = {-2.448170338612495, 11.868902203167497, 5, 8}; //Interval of interest
   //-------------------- reset to whole interval
   intv[2] = intv[0];
   intv[3] = intv[1];
   int i, ret;
-  double neig;
+  double neig; //Number eigenvalues
   //-------------------- exact histogram and computed DOS
-  double* xHist = (double*)calloc(npts, sizeof(double));
-  double* yHist = (double*)calloc(npts, sizeof(double));
-  double* xdos = (double*)calloc(npts, sizeof(double));
-  double* ydos = (double*)calloc(npts, sizeof(double));
+  double* xHist = (double*)calloc(npts, sizeof(double)); //Exact DOS x values
+  double* yHist = (double*)calloc(npts, sizeof(double)); //Exact DOS y values
+  double* xdos = (double*)calloc(npts, sizeof(double)); //Calculated DOS x vals
+  double* ydos = (double*)calloc(npts, sizeof(double)); //Calculated DOS y vals
 
+  EVSLStart();
   SetAMatrix(&csrMat);
-  ret = LanDos(nvec, msteps, npts, xdos, ydos, &neig, intv);
+  ret = LanDos(nvec, msteps, npts, xdos, ydos, &neig, intv); //Calculate DOS
   fprintf(stdout, " LanDos ret %d \n",ret) ;
   
-  ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv) ; 
+  ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv);//Exact DOS
   free_coo(&cooMat);
   fprintf(stdout, " exDOS ret %d \n",ret) ;
 

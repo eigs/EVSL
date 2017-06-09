@@ -19,60 +19,31 @@ int get_matrix_info(FILE *fmat, io_t *pio);
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 /*
- * Reads in a diag matrix.
+ * Reads in a vector as an nx1 matrix.
  *
  * @parm[in,out] mat UNallocated cooMat to read into.
  * @parm[in] filename file to read from, where the first line contains number
  * of elements/width/height of matrix, and the rest of the lines contain the
  * values. */
-int readDiagMat(const char* filename, cooMat* mat) {
-  int width, i; 
-  FILE* ifp = fopen(filename, "r");
-  if (ifp == NULL) {
-    fprintf(stderr, "Can't open input file \n");
-    exit(1);
-  }
-  fscanf(ifp, "%i", &width);
-  // Setup cooMat
-  mat->ncols = width;
-  mat->nrows = width;
-  mat->nnz = width;
-  int* ir = (int*)malloc(sizeof(int) * width);
-  int* jc = (int*)malloc(sizeof(int) * width);
-  mat->ir = ir;
-  mat->jc = jc;
-  double* vv = (double*)malloc(sizeof(double) * width);
-  mat->vv = vv;
-
-  for (i = 0; i < width; i++) {
-    mat->ir[i] = i;
-    mat->jc[i] = i;
-    fscanf(ifp, "%lf", &mat->vv[i]);
-  }
-  fclose(ifp);
-  return 0;
-}
-
 int readVec(const char* filename, cooMat* mat) {
-  int width, i; 
+  int  numEles, i; 
   FILE* ifp = fopen(filename, "r");
   if (ifp == NULL) {
     fprintf(stderr, "Can't open input file \n");
     exit(1);
   }
-  fscanf(ifp, "%i", &width);
+  fscanf(ifp, "%i", &numEles);
   // Setup cooMat
-  mat->ncols = width;
+  mat->ncols = numEles;
   mat->nrows = 1;
-  mat->nnz = width;
-  int* ir = (int*)malloc(sizeof(int) * width);
-  int* jc = (int*)malloc(sizeof(int) * width);
+  mat->nnz = numEles;
+  int* ir = (int*)malloc(sizeof(int) * numEles);
+  int* jc = (int*)malloc(sizeof(int) * numEles);
   mat->ir = ir;
   mat->jc = jc;
-  double* vv = (double*)malloc(sizeof(double) * width);
+  double* vv = (double*)malloc(sizeof(double) * numEles);
   mat->vv = vv;
-
-  for (i = 0; i < width; i++) {
+  for (i = 0; i < numEles; i++) {
     mat->ir[i] = 1;
     mat->jc[i] = i;
     fscanf(ifp, "%lf", &mat->vv[i]);
@@ -83,23 +54,23 @@ int readVec(const char* filename, cooMat* mat) {
 
 /*
  *-----------------------------------------------------------------------
- * Tests landos.c -- Only the  following variable are the outputs. The
- * noted  values are  the values  when the  randn_double in  landos is
- * replaced with a vector of ones.
+ * Tests landosG.c , the Lanczos DOS approximate for the general eigenvalue
+ * problem. Includes graphical comparison of calculated vs exact DOS
  *-----------------------------------------------------------------------
  */
 int main() {
-  const int msteps = 30;
-  const int degB = 20;
-  const int npts = 200;
-  const int nvec = 50;
-  const double tau = 1e-4;
+  const int msteps = 30; //Number of steps
+  const int degB = 20; //Degree to aproximate B with
+  const int npts = 200; //Number of points
+  const int nvec = 50; //Number of random vectors to use
+  const double tau = 1e-4; //Tolerance in polynomial approximation
+  // ---------------- Intervals of interest
   double intv[6] = {-2.739543872224533e-13, 0.0325, -2.739543872224533e-13, 0.0325, 0.5479, 2.5000};
   int n=0, i,  nslices, ierr ;
   double a, b;
 
-  cooMat Acoo, Bcoo, cooMat;
-  csrMat Acsr, Bcsr, csrMat;
+  cooMat Acoo, Bcoo, cooMat; //A, B, and eigenvalue matrices in COO form
+  csrMat Acsr, Bcsr, csrMat; //A, B, and eigenvalue matrices in CSR form
 
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
@@ -194,7 +165,7 @@ int main() {
     SetGenEig();
   }
 
-  //-------------------- Read in a test matrix
+  //-------------------- Read in the eigenvalues
   readVec("ev.dat", &cooMat);
   cooMat_to_csrMat(0, &cooMat, &csrMat);
 
@@ -208,16 +179,19 @@ int main() {
   double* xdos = (double*)calloc(npts, sizeof(double));
   double* ydos = (double*)calloc(npts, sizeof(double));
 
-  ret = LanDosG2(nvec, msteps, degB,  npts, xdos, ydos, &neig, intv, tau);
+  // ------------------- Calculate the approximate DOS
+  ret = LanDosG(nvec, msteps, degB,  npts, xdos, ydos, &neig, intv, tau);
   fprintf(stdout, " LanDos ret %d \n",ret) ;
  
+  // -------------------- Calculate the exact DOS
   ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv) ; 
+
   free_coo(&cooMat);
   free_coo(&Acoo);
   free_coo(&Bcoo);
   fprintf(stdout, " exDOS ret %d \n",ret) ;
 
-  //--------------------Make OUT dir if it does'nt exist
+  //--------------------Make OUT dir if it doesn't exist
   struct stat st = {0};
   if (stat("OUT", &st) == -1) {
 	  mkdir("OUT", 0700);

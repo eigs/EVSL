@@ -33,11 +33,9 @@
  *----------------------------------------------------------------------*/
 
 
-double rec(const double a) { return 1.0 / a; }
+double rec(const double a) { return 1.0 / a; } //Reciprocal 
 
-double isqrt(const double a) { return 1.0 / sqrt(a); }
-
-void ones(int n, double* v) { int i = 0; for(i = 0; i < n; i++) { v[i] = 1; }}
+double isqrt(const double a) { return 1.0 / sqrt(a); } //Inverse square root
 
 
 /**
@@ -109,9 +107,7 @@ int pnav(double* mu, const int m, const double cc, const double dd, double *v, d
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] degB Degree with which B should be approximated by
  *    @param[in] npts number of sample points used for the DOS curve
- *    @param[in] *intv Stores the three intervals of interest \\
- *      intv[0:1] = [lambda_min, lambda_max]\\
- *      intv[2:3] = [a b] = interval where DOS is to be computed
+ *    @param[in] *intv Stores the three intervals of interest
  *
  *    @param[out] xdos Length-npts long vector, x-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
@@ -124,14 +120,14 @@ int pnav(double* mu, const int m, const double cc, const double dd, double *v, d
  *
  *----------------------------------------------------------------------*/
 
-int LanDosG2(const int nvec, const int msteps, const int degB, int npts, double *xdos, double *ydos,
+int LanDosG(const int nvec, const int msteps, const int degB, int npts, double *xdos, double *ydos,
 	     double *neig, const double *const intv, const double tau) {
   //--------------------
 
-  int maxit = msteps,m;
+  int maxit = msteps,m; //Max number of iteratios
   int n = evsldata.n;
 
-  const int mdeg = 200;
+  const int mdeg = 200; 
 
   polparams pol_sqr;
   polparams pol_sol;
@@ -139,6 +135,7 @@ int LanDosG2(const int nvec, const int msteps, const int degB, int npts, double 
   set_pol_def(&pol_sol);
 
   double tall;
+
   double* mu_sqr = NULL;
   double* mu_sol = NULL;
   mu_sqr = (double*) malloc(mdeg * sizeof(double));
@@ -154,8 +151,8 @@ int LanDosG2(const int nvec, const int msteps, const int degB, int npts, double 
     exit(-1);
   }
   else {
-    lsPol2(&intv[4], mdeg, isqrt, tau, &pol_sqr);
-    lsPol2(&intv[4], mdeg, rec, tau, &pol_sol);
+    lsPol(&intv[4], mdeg, isqrt, tau, &pol_sqr);
+    lsPol(&intv[4], mdeg, rec, tau, &pol_sol);
   }
   int *ind;
   Malloc(ind, npts, int);
@@ -165,13 +162,7 @@ int LanDosG2(const int nvec, const int msteps, const int degB, int npts, double 
   //-------------------- to report timings/
   tall = cheblan_timer();
   int i, j, k;
-  // handle case where fstats is NULL. Then no output. Needed for openMP.
 
-#if 0
-  if (fstats == NULL){
-    do_print = 0;
-  }  
-#endif
   /*--------------------   frequently used constants  */
   int one = 1;
   /* size of the matrix */

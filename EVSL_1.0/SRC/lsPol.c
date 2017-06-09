@@ -20,7 +20,7 @@
  *    @param[in] ffun Function to generate an approximation for
  *    @param[in] tol Tolerance for approximation
  *
- *    @param[out] pol PARTIAL polparams struct \\
+ *    @param[out] pol polparams struct \\
  *      Contains: cc = (a + b) / 2 \\
  *                dd = (b - a) / 2 \\
  *                mu = coefficients \\
@@ -31,7 +31,7 @@
  *
  *----------------------------------------------------------------------*/
 
-int lsPol2(const double* const intv, const int maxDeg, double (*ffun)(double),
+int lsPol(const double* const intv, const int maxDeg, double (*ffun)(double),
            const double tol, polparams* pol) {
   const double a = intv[0];
   const double b = intv[1];

@@ -40,11 +40,10 @@ int main() {
   pol.cc = 5;
   printf("num: %f \n", pol.cc);
   printf("Next:! \n");
-  lsPol2(intv, mdeg, isqrt, tau, &pol);
+  lsPol(intv, mdeg, isqrt, tau, &pol);
   for (i = 0; i < pol.deg; i++) {
     printf("mu: %f \n", pol.mu[i]);
   }
-  lsPol2(intv, mdeg, rec, tau, &pol);
   free(pol.mu);
   free(intv);
 

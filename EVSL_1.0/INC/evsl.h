@@ -118,7 +118,8 @@ int apfun1(const double c, const double h, const double* xi, double (*ffun)(doub
 // Computes the density of states (DOS, or spectral density)
 int LanDos(const int nvec, int msteps, const int npts, double *xdos,
            double *ydos, double *neig, const double *const intv);
-int LanDosG2(const int nvec, int msteps, const int degB, const int npts, double *xdos,
+//*- - - - - - - - -  landosG.c - Generalized lanDOS */
+int LanDosG(const int nvec, int msteps, const int degB, const int npts, double *xdos,
            double *ydos, double *neig, const double *const intv, const double tau);
 
 /*- - - - - - - - - - simpson2.c */
@@ -127,8 +128,7 @@ void simpson2(double *xi, double *yi, int npts);
 /*- - - - - - - - - - spslicer2.c */
 void spslicer2(double *xi, double *yi, int n_int, int npts, double *sli);
 
-/*- - - - - - - - - - lsPol1.c */
-int lsPol1(const double *const intv, const int maxDeg, double (*ffun)(double), const double npts, double* mu, double c, double h, int* deg);
-int lsPol2(const double *const intv, const int maxDeg, double (*ffun)(double), const double npts, polparams* pol);
+/*- - - - - - - - - - lsPol.c */
+int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double), const double npts, polparams* pol);
 
 #endif
