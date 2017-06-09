@@ -35,12 +35,7 @@ int main() {
   // Test v2
   pol.mu = (double *)malloc(sizeof(double) * mdeg);
   pol.cc = 5;
-  printf("num: %f \n", pol.cc);
-  printf("Next:! \n");
   lsPol(intv, mdeg, invsqrt, tau, &pol);
-  for (i = 0; i < pol.deg; i++) {
-    printf("mu: %f \n", pol.mu[i]);
-  }
   free(pol.mu);
   free(intv);
 
