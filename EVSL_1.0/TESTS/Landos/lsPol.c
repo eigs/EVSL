@@ -22,8 +22,6 @@ double invsqrt(const double a) { return 1 / sqrt(a); }
 int main() {
   const double mdeg = 200;
   double *intv = (double *)malloc(sizeof(double) * 7);
-  int i;
-
   intv[0] = -2.7395e-13;
   intv[1] = 14;
   intv[4] = 0.54793803;
