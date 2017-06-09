@@ -53,6 +53,34 @@ int readDiagMat(const char* filename, cooMat* mat) {
   return 0;
 }
 
+int readVec(const char* filename, cooMat* mat) {
+  int width, i; 
+  FILE* ifp = fopen(filename, "r");
+  if (ifp == NULL) {
+    fprintf(stderr, "Can't open input file \n");
+    exit(1);
+  }
+  fscanf(ifp, "%i", &width);
+  // Setup cooMat
+  mat->ncols = width;
+  mat->nrows = 1;
+  mat->nnz = width;
+  int* ir = (int*)malloc(sizeof(int) * width);
+  int* jc = (int*)malloc(sizeof(int) * width);
+  mat->ir = ir;
+  mat->jc = jc;
+  double* vv = (double*)malloc(sizeof(double) * width);
+  mat->vv = vv;
+
+  for (i = 0; i < width; i++) {
+    mat->ir[i] = 1;
+    mat->jc[i] = i;
+    fscanf(ifp, "%lf", &mat->vv[i]);
+  }
+  fclose(ifp);
+  return 0;
+}
+
 /*
  *-----------------------------------------------------------------------
  * Tests landos.c -- Only the  following variable are the outputs. The
@@ -167,7 +195,7 @@ int main() {
   }
 
   //-------------------- Read in a test matrix
-  readDiagMat("testmat.dat", &cooMat);
+  readVec("ev.dat", &cooMat);
   cooMat_to_csrMat(0, &cooMat, &csrMat);
 
   //-------------------- Define some constants to test with
@@ -182,7 +210,7 @@ int main() {
 
   ret = LanDosG2(nvec, msteps, degB,  npts, xdos, ydos, &neig, intv, tau);
   fprintf(stdout, " LanDos ret %d \n",ret) ;
-  
+ 
   ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv) ; 
   free_coo(&cooMat);
   free_coo(&Acoo);
