@@ -24,13 +24,18 @@ int get_matrix_info(FILE* fmat, io_t* pio);
  * of elements/width/height of matrix, and the rest of the lines contain the
  * values. */
 int readVec(const char* filename, cooMat* mat) {
+  int err;
   int numEles, i;
   FILE* ifp = fopen(filename, "r");
   if (ifp == NULL) {
     fprintf(stderr, "Can't open input file \n");
     exit(1);
   }
-  fscanf(ifp, "%i", &numEles);
+  err =fscanf(ifp, "%i", &numEles);
+  if(err) {
+    fprintf(stderr, "Was unable to load file, err code: %i \n", err);
+    exit(-1);
+  }
   // Setup cooMat
   mat->ncols = numEles;
   mat->nrows = 1;
@@ -44,7 +49,11 @@ int readVec(const char* filename, cooMat* mat) {
   for (i = 0; i < numEles; i++) {
     mat->ir[i] = 1;
     mat->jc[i] = i;
-    fscanf(ifp, "%lf", &mat->vv[i]);
+    err = fscanf(ifp, "%lf", &mat->vv[i]);
+    if(err) {
+      fprintf(stderr, "Was unable to load file, err code: %i \n", err);
+      exit(-1);
+    }
   }
   fclose(ifp);
   return 0;
@@ -212,9 +221,9 @@ int main() {
     fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
   fclose(ofp);
   //-------------------- invoke gnuplot for plotting ...
-  system("gnuplot < testerG.gnuplot");
+  ierr = system("gnuplot < testerG.gnuplot");
   //-------------------- and gv for visualizing /
-  system("gv testerG.eps");
+  ierr = system("gv testerG.eps");
   //-------------------- done
   fclose(fstats);
   fclose(fmat);
