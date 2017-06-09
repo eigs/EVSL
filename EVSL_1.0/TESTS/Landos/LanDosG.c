@@ -36,6 +36,7 @@ int readVec(const char* filename, int *npts, double **vec) {
   return 0;
 }
 
+
 /*
  *-----------------------------------------------------------------------
  * Tests landosG.c , the Lanczos DOS approximate for the general eigenvalue
@@ -168,8 +169,11 @@ int main() {
   double* ydos = (double*)calloc(npts, sizeof(double));
 
   // ------------------- Calculate the approximate DOS
+
+  double t0 = cheblan_timer();
   ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv, tau);
-  fprintf(stdout, " LanDos ret %d \n", ret);
+  double t1 = cheblan_timer();
+  fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1-t0 );
 
   // -------------------- Calculate the exact DOS
   ret = exDOS(ev, numev, npts, xHist, yHist, intv);
