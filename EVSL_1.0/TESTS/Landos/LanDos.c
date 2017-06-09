@@ -75,9 +75,9 @@ int main() {
   double* xHist = (double*)calloc(npts, sizeof(double));  // Exact DOS x values
   double* yHist = (double*)calloc(npts, sizeof(double));  // Exact DOS y values
   double* xdos = (double*)calloc(npts, sizeof(double));   // Calculated DOS x
-                                                         // vals
-  double* ydos = (double*)calloc(npts, sizeof(double));  // Calculated DOS y
-                                                         // vals
+                                                          // vals
+  double* ydos = (double*)calloc(npts, sizeof(double));   // Calculated DOS y
+                                                          // vals
 
   EVSLStart();
   SetAMatrix(&csrMat);

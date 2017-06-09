@@ -24,7 +24,7 @@ int get_matrix_info(FILE* fmat, io_t* pio);
  * @parm[in] filename file to read from, where the first line contains number
  * of elements/width/height of matrix, and the rest of the lines contain the
  * values. */
-int readVec(const char* filename, int *npts, double **vec) {
+int readVec(const char* filename, int* npts, double** vec) {
   int i;
   FILE* ifp = fopen(filename, "r");
   fscanf(ifp, "%i", npts);

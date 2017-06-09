@@ -133,8 +133,8 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
 
   double tall;
 
-  double *mu_sqr ;
-  double *mu_sol ;
+  double *mu_sqr;
+  double *mu_sol;
   Calloc(mu_sqr, mdeg, double);
   Calloc(mu_sol, mdeg, double);
   pol_sqr.mu = mu_sqr;
