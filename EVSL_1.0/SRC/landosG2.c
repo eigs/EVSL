@@ -33,9 +33,9 @@
  *----------------------------------------------------------------------*/
 
 
-const double rec(const double a) { return 1.0 / a; }
+double rec(const double a) { return 1.0 / a; }
 
-const double isqrt(const double a) { return 1.0 / sqrt(a); }
+double isqrt(const double a) { return 1.0 / sqrt(a); }
 
 void ones(int n, double* v) { int i = 0; for(i = 0; i < n; i++) { v[i] = 1; }}
 
