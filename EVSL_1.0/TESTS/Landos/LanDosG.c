@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include "evsl.h"
 #include "io.h"
-
+#include "evsl_suitesparse.h"
 /*-------------------- protos */
 int exDOS(double* vals, int n, int npts, double* x, double* y, double* intv);
 int read_coo_MM(const char* matfile, int idxin, int idxout, cooMat* Acoo);
@@ -72,7 +72,7 @@ void diagScaling(cooMat* A, cooMat* B, double* sqrtdiag) {
     col = B->jc[i];
     tmp = 1.0/(sqrtdiag[row]*sqrtdiag[col]);       
     B->vv[i] = B->vv[i]*tmp;  
-    }
+  }
 }
 
 /*
@@ -95,16 +95,10 @@ int main() {
   const int nvec = 30;      // Number of random vectors to use
   const double tau = 1e-4;  // Tolerance in polynomial approximation
   // ---------------- Intervals of interest  
-  // This has to be modified !!!! 
   //intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
   // intv[2] and intv[3] are the input interval of interest [a. b]
   // intv[4] and intv[5] are the smallest and largest eigenvalues of B after diagonal scaling
-  double intv[6] = {-2.739543872224533e-13,
-                    0.0325,
-                    -2.739543872224533e-13,
-                    0.0325,
-                    0.5479,
-                    2.5000};
+  double intv[6];
   int n = 0, i, nslices, ierr;
   double a, b;
 
@@ -206,79 +200,94 @@ int main() {
     rand_double(n, vinit);
     double lmin = 0.0, lmax=0.0;
     ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
-    free(vinit);
+    /*------------- get the bounds for B ------*/
     intv[4] = lmin;
     intv[5] = lmax;
-    //printf("%lf, %lf\n",lmin, lmax);
     
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
     SetBMatrix(&Bcsr);
-
+    BSolDataSuiteSparse Bsol;
+    // Later we have to remove all the B_sol related function used in LanTrbounds
+    // when estimating the spectrum of (A,B )
+    /*-------------------- use SuiteSparse as the solver for B */
+    SetupBSolSuiteSparse(&Bcsr, &Bsol);
+    /*-------------------- set the solver for B and LT */
+    SetBSol(BSolSuiteSparse, (void *) &Bsol);
     SetGenEig();
+    rand_double(n, vinit);
+    ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
+    free(vinit);
+    FreeBSolSuiteSparseData(&Bsol);  
+    /*----------------- get the bounds for (A, B) ---------*/
+    intv[0] = lmin;
+    intv[1] = lmax;
+    /*----------------- plotting the DOS on [a, b] ---------*/
+    intv[2] = lmin;
+    intv[3] = lmax;
+    //printf("%lf, %lf, %lf, %lf \n", lmin, lmax, intv[0], intv[1]);
+    //-------------------- Read in the eigenvalues
+    double* ev;
+    int numev;
+    readVec("ev.dat", &numev, &ev);
+
+    //-------------------- Define some constants to test with
+    //-------------------- reset to whole interval
+    int ret;
+    double neig;
+    //-------------------- exact histogram and computed DOS
+    double* xHist = (double*)calloc(npts, sizeof(double));
+    double* yHist = (double*)calloc(npts, sizeof(double));
+    double* xdos = (double*)calloc(npts, sizeof(double));
+    double* ydos = (double*)calloc(npts, sizeof(double));
+
+    // ------------------- Calculate the approximate DOS
+
+    double t0 = cheblan_timer();
+    ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv, tau);
+    double t1 = cheblan_timer();
+    fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1-t0 );
+
+    // -------------------- Calculate the exact DOS
+    ret = exDOS(ev, numev, npts, xHist, yHist, intv);
+
+    EVSLFinish();
+
+    free_coo(&Acoo);
+    free_coo(&Bcoo);
+    fprintf(stdout, " exDOS ret %d \n", ret);
+
+    //--------------------Make OUT dir if it doesn't exist
+    struct stat st = {0};
+    if (stat("OUT", &st) == -1) {
+      mkdir("OUT", 0700);
+    }
+
+    //-------------------- Write to  output files
+    FILE* ofp = fopen("OUT/myydosG.txt", "w");
+    for (i = 0; i < npts; i++)
+      fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
+    fclose(ofp);
+
+    //-------------------- save exact DOS
+    ofp = fopen("OUT/ExydosG.txt", "w");
+    for (i = 0; i < npts; i++)
+      fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
+    fclose(ofp);
+    //-------------------- invoke gnuplot for plotting ...
+    ierr = system("gnuplot < testerG.gnuplot");
+    //-------------------- and gv for visualizing /
+    ierr = system("gv testerG.eps");
+    free(xHist);
+    free(yHist);
+    free(xdos);
+    free(ydos);
+    free(ev);
   }
-
-  //-------------------- Read in the eigenvalues
-  double* ev;
-  int numev;
-  readVec("ev.dat", &numev, &ev);
-
-  //-------------------- Define some constants to test with
-  //-------------------- reset to whole interval
-  int ret;
-  double neig;
-  //-------------------- exact histogram and computed DOS
-  double* xHist = (double*)calloc(npts, sizeof(double));
-  double* yHist = (double*)calloc(npts, sizeof(double));
-  double* xdos = (double*)calloc(npts, sizeof(double));
-  double* ydos = (double*)calloc(npts, sizeof(double));
-
-  // ------------------- Calculate the approximate DOS
-
-  double t0 = cheblan_timer();
-  ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv, tau);
-  double t1 = cheblan_timer();
-  fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1-t0 );
-
-  // -------------------- Calculate the exact DOS
-  ret = exDOS(ev, numev, npts, xHist, yHist, intv);
-
-  EVSLFinish();
-
-  free_coo(&Acoo);
-  free_coo(&Bcoo);
-  fprintf(stdout, " exDOS ret %d \n", ret);
-
-  //--------------------Make OUT dir if it doesn't exist
-  struct stat st = {0};
-  if (stat("OUT", &st) == -1) {
-    mkdir("OUT", 0700);
-  }
-
-  //-------------------- Write to  output files
-  FILE* ofp = fopen("OUT/myydosG.txt", "w");
-  for (i = 0; i < npts; i++)
-    fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
-  fclose(ofp);
-
-  //-------------------- save exact DOS
-  ofp = fopen("OUT/ExydosG.txt", "w");
-  for (i = 0; i < npts; i++)
-    fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
-  fclose(ofp);
-  //-------------------- invoke gnuplot for plotting ...
-  ierr = system("gnuplot < testerG.gnuplot");
-  //-------------------- and gv for visualizing /
-  ierr = system("gv testerG.eps");
   //-------------------- done
   fclose(fstats);
   fclose(fmat);
-  free(ev);
-  free(xHist);
-  free(yHist);
-  free(xdos);
-  free(ydos);
   free(sqrtdiag);
   free_csr(&Acsr);
   free_csr(&Bcsr);
