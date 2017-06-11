@@ -70,11 +70,7 @@ int main() {
   const int npts = 200;     // Number of points
   const int nvec = 30;      // Number of random vectors to use
   const double tau = 1e-4;  // Tolerance in polynomial approximation
-  // ---------------- Intervals of interest  
-  // This has to be modified !!!! 
-  //intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
-  // intv[2] and intv[3] are the input interval of interest [a. b]
-  // intv[4] and intv[5] are the smallest and largest eigenvalues of B after diagonal scaling
+  // ---------------- Intervals of interest
   double intv[6] = {-2.739543872224533e-13,
                     0.0325,
                     -2.739543872224533e-13,
