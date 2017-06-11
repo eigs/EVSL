@@ -36,6 +36,22 @@ int readVec(const char* filename, int* npts, double** vec) {
   return 0;
 }
 
+/*
+ * Extract the diagonal entries vec(i) of the mass matrix B
+ */
+int extract_diag(cooMat* B, double** vec) {
+
+
+}
+
+/*
+ * Diagonal scaling for A and B such that A(i,j) = A(i,j)/(vec(i)*vec(j)) and B(i,j) = B(i,j)/(vec(i)*vec(j))
+ */
+int extract_diag(cooMat* A, cooMat* B, double** vec) {
+
+}
+
+
 
 /*
  *-----------------------------------------------------------------------
