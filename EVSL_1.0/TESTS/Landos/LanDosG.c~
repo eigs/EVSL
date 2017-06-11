@@ -37,25 +37,49 @@ int readVec(const char* filename, int* npts, double** vec) {
 }
 
 /*
- * Extract the diagonal entries vec(i) of the mass matrix B
+ * Extract the square root of diagonal entries of the mass matrix B
  */
-int extract_diag(cooMat* B, double** vec) {
-
-
+void extractDiag(cooMat* B, double* sqrtdiag) {
+  int nnz = B->nnz;
+  int i, row, col;
+  for (i=0; i<nnz; i++) {
+    row = B->ir[i];
+    col = B->jc[i];
+    if (row == col) {
+      sqrtdiag[col] = sqrt(B->vv[i]);
+    } 
+  }
 }
 
 /*
- * Diagonal scaling for A and B such that A(i,j) = A(i,j)/(vec(i)*vec(j)) and B(i,j) = B(i,j)/(vec(i)*vec(j))
+ * Diagonal scaling for A and B such that A(i,j) = A(i,j)/(sqrtdiag(i)*sqrtdiag(j)) and B(i,j) = B(i,j)/(sqrtdiag(i)*sqrtdiag(j))
  */
-int diag_scaling(cooMat* A, cooMat* B, double** vec) {
-
+void diagScaling(cooMat* A, cooMat* B, double* sqrtdiag) {
+  int i, row, col, nnz;
+  double tmp;
+  // diagonal scaling for A
+  nnz = A->nnz;
+  for (i=0; i<nnz; i++) {
+    row = A->ir[i];
+    col = A->jc[i];
+    tmp = 1.0/(sqrtdiag[row]*sqrtdiag[col]);
+    A->vv[i] = A->vv[i]*tmp;
+  }
+  // diagonal scaling for B
+  nnz = B->nnz;
+  for (i=0; i<nnz; i++) {
+    row = B->ir[i];
+    col = B->jc[i];
+    tmp = 1.0/(sqrtdiag[row]*sqrtdiag[col]);       
+    B->vv[i] = B->vv[i]*tmp;  
+    }
 }
 
 /*
  * Recover the eigenvectors
  */
-int recover_vector(double* V, double** vec) {
-
+int recoverVector(double* V, double** vec) {
+  return 0;
 }
 
 /*
@@ -70,7 +94,11 @@ int main() {
   const int npts = 200;     // Number of points
   const int nvec = 30;      // Number of random vectors to use
   const double tau = 1e-4;  // Tolerance in polynomial approximation
-  // ---------------- Intervals of interest
+  // ---------------- Intervals of interest  
+  // This has to be modified !!!! 
+  //intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
+  // intv[2] and intv[3] are the input interval of interest [a. b]
+  // intv[4] and intv[5] are the smallest and largest eigenvalues of B after diagonal scaling
   double intv[6] = {-2.739543872224533e-13,
                     0.0325,
                     -2.739543872224533e-13,
@@ -82,7 +110,8 @@ int main() {
 
   cooMat Acoo, Bcoo;  // A, B
   csrMat Acsr, Bcsr;  // A, B
-
+  double* sqrtdiag;
+  
   FILE *flog = stdout, *fmat = NULL;
   FILE* fstats = NULL;
   io_t io;
@@ -158,6 +187,13 @@ int main() {
         fprintf(flog, "read_coo error for B = %d\n", ierr);
         exit(6);
       }
+      /*------------------ diagonal scaling for Acoo and Bcoo */
+      sqrtdiag = (double *)calloc(n, sizeof(double));
+      extractDiag(&Bcoo,  sqrtdiag);
+      diagScaling(&Acoo, &Bcoo, sqrtdiag);
+      //save_vec(n, diag, "OUT/diag.txt");
+
+      
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
@@ -234,6 +270,7 @@ int main() {
   free(yHist);
   free(xdos);
   free(ydos);
+  free(sqrtdiag);
   free_csr(&Acsr);
   free_csr(&Bcsr);
   return 0;

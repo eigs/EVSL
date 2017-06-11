@@ -37,25 +37,49 @@ int readVec(const char* filename, int* npts, double** vec) {
 }
 
 /*
- * Extract the diagonal entries vec(i) of the mass matrix B
+ * Extract the square root of diagonal entries of the mass matrix B
  */
-int extract_diag(cooMat* B, double** vec) {
-
-
+void extractDiag(cooMat* B, double* sqrtdiag) {
+  int nnz = B->nnz;
+  int i, row, col;
+  for (i=0; i<nnz; i++) {
+    row = B->ir[i];
+    col = B->jc[i];
+    if (row == col) {
+      sqrtdiag[col] = sqrt(B->vv[i]);
+    } 
+  }
 }
 
 /*
- * Diagonal scaling for A and B such that A(i,j) = A(i,j)/(vec(i)*vec(j)) and B(i,j) = B(i,j)/(vec(i)*vec(j))
+ * Diagonal scaling for A and B such that A(i,j) = A(i,j)/(sqrtdiag(i)*sqrtdiag(j)) and B(i,j) = B(i,j)/(sqrtdiag(i)*sqrtdiag(j))
  */
-int diag_scaling(cooMat* A, cooMat* B, double** vec) {
-
+void diagScaling(cooMat* A, cooMat* B, double* sqrtdiag) {
+  int i, row, col, nnz;
+  double tmp;
+  // diagonal scaling for A
+  nnz = A->nnz;
+  for (i=0; i<nnz; i++) {
+    row = A->ir[i];
+    col = A->jc[i];
+    tmp = 1.0/(sqrtdiag[row]*sqrtdiag[col]);
+    A->vv[i] = A->vv[i]*tmp;
+  }
+  // diagonal scaling for B
+  nnz = B->nnz;
+  for (i=0; i<nnz; i++) {
+    row = B->ir[i];
+    col = B->jc[i];
+    tmp = 1.0/(sqrtdiag[row]*sqrtdiag[col]);       
+    B->vv[i] = B->vv[i]*tmp;  
+    }
 }
 
 /*
- * Recover the eigenvectors
+ * Recover the eigenvectors This is needed for GEN_MM folder only not DOS folder
  */
-int recover_vector(double* V, double** vec) {
-
+int recoverVector(double* V, double** vec) {
+  return 0;
 }
 
 /*
@@ -86,7 +110,8 @@ int main() {
 
   cooMat Acoo, Bcoo;  // A, B
   csrMat Acsr, Bcsr;  // A, B
-
+  double* sqrtdiag;
+  
   FILE *flog = stdout, *fmat = NULL;
   FILE* fstats = NULL;
   io_t io;
@@ -162,6 +187,13 @@ int main() {
         fprintf(flog, "read_coo error for B = %d\n", ierr);
         exit(6);
       }
+      /*------------------ diagonal scaling for Acoo and Bcoo */
+      sqrtdiag = (double *)calloc(n, sizeof(double));
+      extractDiag(&Bcoo,  sqrtdiag);
+      diagScaling(&Acoo, &Bcoo, sqrtdiag);
+      //save_vec(n, diag, "OUT/diag.txt");
+
+      
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
@@ -238,6 +270,7 @@ int main() {
   free(yHist);
   free(xdos);
   free(ydos);
+  free(sqrtdiag);
   free_csr(&Acsr);
   free_csr(&Bcsr);
   return 0;
