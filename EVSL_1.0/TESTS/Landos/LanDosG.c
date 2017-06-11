@@ -45,9 +45,9 @@ int readVec(const char* filename, int* npts, double** vec) {
  */
 int main() {
   const int msteps = 30;    // Number of steps
-  const int degB = 20;      // Degree to aproximate B with
+  const int degB = 40;      // Degree to aproximate B with
   const int npts = 200;     // Number of points
-  const int nvec = 50;      // Number of random vectors to use
+  const int nvec = 30;      // Number of random vectors to use
   const double tau = 1e-4;  // Tolerance in polynomial approximation
   // ---------------- Intervals of interest
   double intv[6] = {-2.739543872224533e-13,

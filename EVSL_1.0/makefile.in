@@ -19,6 +19,6 @@ RANLIB = ranlib
 #LIBLAPACK = -L/scratch/syphax/Rational_GEIG/lapack-3.5.0 -llapack -lrefblas
 #LIBLAPACK = -L/home/ruipeng/workspace/lapack-3.7.0 -llapack -lrefblas
 #LIBLAPACK = /home/li50/workspace/OpenBLAS/libopenblas.a
-LIBLAPACK = /home/ruipeng/workspace/OpenBLAS/libopenblas.a -lpthread
-#LIBLAPACK = -llapack -lblas
+#LIBLAPACK = /home/ruipeng/workspace/OpenBLAS/libopenblas.a -lpthread
+LIBLAPACK = -llapack -lblas
 
