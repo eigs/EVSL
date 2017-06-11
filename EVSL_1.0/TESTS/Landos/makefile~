@@ -15,6 +15,7 @@ OBJS_LDG = LanDosG.o exDOS.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
 LIB = -L../../ -levsl
 
 ## not needed for pol. filtering. 
+LIB_UMF = 
 
 LIB_EXT = $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)
 

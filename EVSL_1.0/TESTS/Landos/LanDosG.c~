@@ -76,7 +76,7 @@ void diagScaling(cooMat* A, cooMat* B, double* sqrtdiag) {
 }
 
 /*
- * Recover the eigenvectors
+ * Recover the eigenvectors This is needed for GEN_MM folder only not DOS folder
  */
 int recoverVector(double* V, double** vec) {
   return 0;
@@ -192,8 +192,6 @@ int main() {
       extractDiag(&Bcoo,  sqrtdiag);
       diagScaling(&Acoo, &Bcoo, sqrtdiag);
       //save_vec(n, diag, "OUT/diag.txt");
-
-      
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
@@ -202,6 +200,17 @@ int main() {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
+    /*----------------  compute the range of the spectrum of B */
+    SetAMatrix(&Bcsr);
+    double *vinit = (double *)malloc(n*sizeof(double)); 
+    rand_double(n, vinit);
+    double lmin = 0.0, lmax=0.0;
+    ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
+    free(vinit);
+    intv[4] = lmin;
+    intv[5] = lmax;
+    //printf("%lf, %lf\n",lmin, lmax);
+    
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
