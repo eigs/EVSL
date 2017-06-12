@@ -32,6 +32,37 @@ void extractDiag(cooMat *B, double *sqrtdiag) {
 }
 
 /*
+ * Initialize the member of BSolDataPol struct
+ */
+void SetupBSolPol(csrMat *B, BSolDataPol *data){
+  int n = B->nrows, mdeg = 200;  
+  set_pol_def(&data->pol_sol);      
+  double *mu_sol = (double*)calloc(mdeg, sizeof(double));
+  data->pol_sol.mu = mu_sol; 
+  data->wk = (double *)malloc(3*n*sizeof(double));
+  lsPol(&data->intv[0], mdeg, rec, 1e-5, &data->pol_sol);
+}
+
+/*
+ * Free the BSolDataPol struct
+ */
+void FreeBSolPolData(BSolDataPol *data){
+  free(data->wk);
+  free_pol(&data->pol_sol);
+}
+
+/*
+ * Setup the function pointer for evsl struct to call B_sol function
+ */
+void BSolPol(double *b, double *x, void *data){
+  BSolDataPol* Bsol_data = (BSolDataPol *) data;
+  double *wk = Bsol_data->wk;
+  polparams pol = Bsol_data->pol_sol;
+  pnav(pol.mu, pol.deg, pol.cc, pol.dd, b, x,
+       wk);
+}
+
+/*
  * Diagonal scaling for A and B such that A(i,j) =
  * A(i,j)/(sqrtdiag(i)*sqrtdiag(j)) and B(i,j) =
  * B(i,j)/(sqrtdiag(i)*sqrtdiag(j))

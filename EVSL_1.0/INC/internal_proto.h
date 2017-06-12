@@ -29,6 +29,9 @@ double isqrt(const double a);
 //
 int pnav(double *mu, const int m, const double cc, const double dd, double *v,
          double *y, double *w);  // Really just ChebAv
+//
+int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double),
+          const double npts, polparams *pol);
 
 /*- - - - - - - - - dump.c */
 //

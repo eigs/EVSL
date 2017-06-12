@@ -32,11 +32,14 @@ int ChebSI(int nev, double *intv, int maxit, double tol, double *vinit,
            FILE *fstats);
 
 /*- - - - - - - - - - dos_utils.c */
-int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double),
-          const double npts, polparams *pol);
-
+void SetupBSolPol(csrMat *B, BSolDataPol *data);
+//
+void FreeBSolPolData(BSolDataPol *data);
+//
+void BSolPol(double *b, double *x, void *data);
+//
 void extractDiag(cooMat *B, double *sqrtdiag);
-
+//
 void diagScaling(cooMat *A, cooMat *B, double *sqrtdiag);
 
 /*- - - - - - - - - lanbounds.c */
