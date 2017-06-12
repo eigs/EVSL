@@ -15,6 +15,7 @@ typedef struct _cooMat {
       *ir,    /**< row indices of nonzero entries */
       *jc;    /**< column indices of a nonzero entries */
   double *vv; /**< values */
+  double *diag; /**< diagonal elements */
 } cooMat;
 
 /*! 
