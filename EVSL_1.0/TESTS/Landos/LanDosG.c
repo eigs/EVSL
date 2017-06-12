@@ -41,13 +41,6 @@ int readVec(const char* filename, int* npts, double** vec) {
 }
 
 
-/*
- * Recover the eigenvectors This is needed for GEN_MM folder only not DOS folder
- */
-int recoverVector(double* V, double* sqrtdiag) {
-  // Formula (2.19) in the paper.  V(:,i) is x in the paper and D^{1/2} is sqrtdiag here
-  return 0;
-}
 
 
 /*
