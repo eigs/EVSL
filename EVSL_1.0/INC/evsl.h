@@ -59,6 +59,10 @@ int LanDosG(const int nvec, int msteps, const int degB, const int npts,
 int LanTrbounds(int lanm, int maxit, double tol, double *vinit, int bndtype,
                 double *lammin, double *lammax, FILE *fstats);
 
+/*- - - -- - - - - - misc_la.c */
+int scalEigVec(int n, int nev, double *Y, double* sqrtdiag);
+
+
 /*- - - - - - - - - ratfilter.c */
 //
 void set_ratf_def(ratparams *rat);
