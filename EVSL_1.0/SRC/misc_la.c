@@ -249,7 +249,7 @@ int scalEigVec(int n, int nev, double *Y, double* sqrtdiag) {
   for (i=0; i<nev; i++){
     v = &Y[i*n];
     for (j=0; j<n; j++) {
-      v[j] = v[j]*sqrtdiag(j);
+      v[j] = v[j]*sqrtdiag[j];
     }
   }
   return 0;
