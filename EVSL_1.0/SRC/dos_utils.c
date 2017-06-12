@@ -52,7 +52,7 @@ void SetupBsqureSolPol(csrMat *B, BSolDataPol *data){
   double *mu_sol = (double*)calloc(mdeg, sizeof(double));
   data->pol_sol.mu = mu_sol; 
   data->wk = (double *)malloc(3*n*sizeof(double));
-  lsPol(&data->intv[0], mdeg, rec, 1e-5, &data->pol_sol);
+  lsPol(&data->intv[0], mdeg, isqrt, 1e-5, &data->pol_sol);
 }
 
 
