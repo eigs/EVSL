@@ -9,10 +9,15 @@
 #include "evsl.h"
 #include "io.h"
 #include "evsl_suitesparse.h"
+#include "internal_proto.h"
+
+#define BsolPol 1
+
 /*-------------------- protos */
 int exDOS(double* vals, int n, int npts, double* x, double* y, double* intv);
 int read_coo_MM(const char* matfile, int idxin, int idxout, cooMat* Acoo);
 int get_matrix_info(FILE* fmat, io_t* pio);
+
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -35,6 +40,7 @@ int readVec(const char* filename, int* npts, double** vec) {
   fclose(ifp);
   return 0;
 }
+
 
 /*
  * Extract the square root of diagonal entries of the mass matrix B
@@ -79,15 +85,49 @@ void diagScaling(cooMat* A, cooMat* B, double* sqrtdiag) {
  * Recover the eigenvectors This is needed for GEN_MM folder only not DOS folder
  */
 int recoverVector(double* V, double* sqrtdiag) {
-   // Formula (2.19) in the paper.  V(:,i) is x in the paper and D^{1/2} is sqrtdiag here
+  // Formula (2.19) in the paper.  V(:,i) is x in the paper and D^{1/2} is sqrtdiag here
   return 0;
 }
 
+/*
+ * Define a struct for using polynomial to solve B
+ */
+typedef struct BSolDataPol {
+  polparams pol_sol; // polynomial for approximating B^{-1}
+  double *wk; // working array for performing matvec
+  double intv[2]; // spectrum range of B 
+} BSolDataPol;
+
+
+/*
+ * Initialize the member of BSolDataPol struct
+ */
+void SetupBSolPol(csrMat *B, BSolDataPol *data){
+  int n = B->nrows, mdeg = 200;  
+  set_pol_def(&data->pol_sol);      
+  double *mu_sol = (double*)calloc(mdeg, sizeof(double));
+  data->pol_sol.mu = mu_sol; 
+  data->wk = (double *)malloc(3*n*sizeof(double));
+  lsPol(&data->intv[0], mdeg, rec, 1e-5, &data->pol_sol);
+}
+
+/*
+ * Free the BSolDataPol struct
+ */
+void FreeBSolPolData(BSolDataPol *data){
+  free(data->wk);
+  free_pol(&data->pol_sol);
+}
+
+/*
+ * Setup the function pointer for evsl struct to call B_sol function
+ */
 void BSolPol(double *b, double *x, void *data){
-   polparams* pol = (polparams *) data;
-   double* wk;
-   pnav(pol->mu, pol->deg, pol->cc, pol->dd, b, x,
-               wk);
+  BSolDataPol* Bsol_data = (BSolDataPol *) data;
+  double *wk = Bsol_data->wk;
+  polparams pol = Bsol_data->pol_sol;
+  pnav(pol.mu, pol.deg, pol.cc, pol.dd, b, x,
+       wk);
 }
 
 /*
@@ -106,13 +146,18 @@ int main() {
   //intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
   // intv[2] and intv[3] are the input interval of interest [a. b]
   // intv[4] and intv[5] are the smallest and largest eigenvalues of B after diagonal scaling
-  double intv[6];
+  double intv[6] = {-2.739543872224533e-13,
+                    0.0325,
+                    -2.739543872224533e-13,
+                    0.0325,
+                    0.5479,
+                    2.5000};
   int n = 0, i, nslices, ierr;
   double a, b;
 
   cooMat Acoo, Bcoo;  // A, B
   csrMat Acsr, Bcsr;  // A, B
-  double* sqrtdiag;
+  double* sqrtdiag = NULL;
   
   FILE *flog = stdout, *fmat = NULL;
   FILE* fstats = NULL;
@@ -202,38 +247,57 @@ int main() {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
-    /*----------------  compute the range of the spectrum of B */
-    SetAMatrix(&Bcsr);
-    double *vinit = (double *)malloc(n*sizeof(double)); 
-    rand_double(n, vinit);
-    double lmin = 0.0, lmax=0.0;
-    ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
-    /*------------- get the bounds for B ------*/
-    intv[4] = lmin;
-    intv[5] = lmax;
-    
-    /*-------------------- set the left-hand side matrix A */
-    SetAMatrix(&Acsr);
-    /*-------------------- set the right-hand side matrix B */
-    SetBMatrix(&Bcsr);
-    BSolDataSuiteSparse Bsol;
-    // Later we have to remove all the B_sol related function used in LanTrbounds
-    // when estimating the spectrum of (A,B )
-    /*-------------------- use SuiteSparse as the solver for B */
-    SetupBSolSuiteSparse(&Bcsr, &Bsol);
-    /*-------------------- set the solver for B and LT */
-    SetBSol(BSolSuiteSparse, (void *) &Bsol);
-    SetGenEig();
-    rand_double(n, vinit);
-    ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
-    free(vinit);
-    FreeBSolSuiteSparseData(&Bsol);  
-    /*----------------- get the bounds for (A, B) ---------*/
-    intv[0] = lmin;
-    intv[1] = lmax;
-    /*----------------- plotting the DOS on [a, b] ---------*/
-    intv[2] = lmin;
-    intv[3] = lmax;
+    if (1) {
+      /*----------------  compute the range of the spectrum of B */
+      SetAMatrix(&Bcsr);
+      double *vinit = (double *)malloc(n*sizeof(double)); 
+      rand_double(n, vinit);
+      double lmin = 0.0, lmax=0.0;
+      ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
+      /*------------- get the bounds for B ------*/
+      intv[4] = lmin;
+      intv[5] = lmax;
+      /*-------------------- set the left-hand side matrix A */
+      SetAMatrix(&Acsr);
+      /*-------------------- set the right-hand side matrix B */
+      SetBMatrix(&Bcsr);
+#if BsolPol
+      /*-------------------- Use polynomial to solve B */
+	BSolDataPol Bsol;
+	Bsol.intv[0] = lmin;
+	Bsol.intv[1] = lmax;    
+	SetupBSolPol(&Bcsr, &Bsol);
+	SetBSol(BSolPol, (void *) &Bsol);
+#else
+      /*-------------------- Use Choleksy factorization to solve B */
+	BSolDataSuiteSparse Bsol;
+	/*-------------------- use SuiteSparse as the solver for B */
+	SetupBSolSuiteSparse(&Bcsr, &Bsol);
+	/*-------------------- set the solver for B */
+	SetBSol(BSolSuiteSparse, (void *) &Bsol);
+#endif
+      SetGenEig();
+      rand_double(n, vinit);
+      ierr = LanTrbounds(40, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
+      free(vinit);
+#if BsolPol
+	FreeBSolPolData(&Bsol);  
+#else
+	FreeBSolSuiteSparseData(&Bsol);  
+#endif
+      /*----------------- get the bounds for (A, B) ---------*/
+      intv[0] = lmin;
+      intv[1] = lmax;
+      /*----------------- plotting the DOS on [a, b] ---------*/
+      intv[2] = lmin;
+      intv[3] = lmax;
+    } else {
+      /*-------------------- set the left-hand side matrix A */
+      SetAMatrix(&Acsr);
+      /*-------------------- set the right-hand side matrix B */
+      SetBMatrix(&Bcsr);
+      SetGenEig();
+    }
     //printf("%lf, %lf, %lf, %lf \n", lmin, lmax, intv[0], intv[1]);
     //-------------------- Read in the eigenvalues
     double* ev;
@@ -292,11 +356,11 @@ int main() {
     free(xdos);
     free(ydos);
     free(ev);
+    if (sqrtdiag) free(sqrtdiag);
   }
   //-------------------- done
   fclose(fstats);
   fclose(fmat);
-  free(sqrtdiag);
   free_csr(&Acsr);
   free_csr(&Bcsr);
   return 0;
