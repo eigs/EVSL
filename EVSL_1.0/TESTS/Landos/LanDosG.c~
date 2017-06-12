@@ -85,7 +85,6 @@ int recoverVector(double* V, double* sqrtdiag) {
 
 void BSolPol(double *b, double *x, void *data){
    polparams* pol = (polparams *) data;
-   double* wk;
    pnav(pol->mu, pol->deg, pol->cc, pol->dd, b, x,
                wk);
 }
