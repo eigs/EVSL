@@ -14,11 +14,15 @@ double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
 
 /*
  * Extract the square root of diagonal entries of the mass matrix B
+ *
+ * @param[in] B Matrix to extract the square root of the diagonals
+ * @param[out] sqrtdiag preallocated vector of lengeth B.ncols to put the sqrt of
+ *  diagonals into
  */
 void extractDiag(cooMat *B, double *sqrtdiag) {
   int nnz = B->nnz;
   int i, row, col;
-  for (i = 0; i < nnz; i++) {
+  for (i = 0; i < nnz; i++) { /* Iterate over all elements looking for diags */
     row = B->ir[i];
     col = B->jc[i];
     if (row == col) {
@@ -31,6 +35,11 @@ void extractDiag(cooMat *B, double *sqrtdiag) {
  * Diagonal scaling for A and B such that A(i,j) =
  * A(i,j)/(sqrtdiag(i)*sqrtdiag(j)) and B(i,j) =
  * B(i,j)/(sqrtdiag(i)*sqrtdiag(j))
+ *
+ * @param[in,out] A Matrix to scale using sqrtdiag
+ * @param[in,out] B Matrix to scale using sqrtdiag
+ * @param[in] sqrtdiag The vector contating the square root of the diagonal
+ *  elements of B obtained via extractDiag
  */
 void diagScaling(cooMat *A, cooMat *B, double *sqrtdiag) {
   int i, row, col, nnz;
@@ -52,6 +61,7 @@ void diagScaling(cooMat *A, cooMat *B, double *sqrtdiag) {
     B->vv[i] = B->vv[i] * tmp;
   }
 }
+
 /**----------------------------------------------------------------------
  *
  *    Evalutes ffun at the xi's.
