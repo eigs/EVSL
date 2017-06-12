@@ -78,8 +78,15 @@ void diagScaling(cooMat* A, cooMat* B, double* sqrtdiag) {
 /*
  * Recover the eigenvectors This is needed for GEN_MM folder only not DOS folder
  */
-int recoverVector(double* V, double** vec) {
+int recoverVector(double* V, double* sqrtdiag) {
+   // Formula (2.19) in the paper.  V(:,i) is x in the paper and D^{1/2} is sqrtdiag here
   return 0;
+}
+
+void BSolPol(double *b, double *x, void *data){
+   polparams* pol = (polparams *) data;
+   pnav(pol->mu, pol->deg, pol->cc, pol->dd, b, x,
+               wk);
 }
 
 /*
