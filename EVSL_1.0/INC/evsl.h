@@ -32,8 +32,12 @@ int ChebSI(int nev, double *intv, int maxit, double tol, double *vinit,
            FILE *fstats);
 
 /*- - - - - - - - - - dos_utils.c */
-int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double), const double npts, polparams* pol);
+int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double),
+          const double npts, polparams *pol);
 
+void extractDiag(cooMat *B, double *sqrtdiag);
+
+void diagScaling(cooMat *A, cooMat *B, double *sqrtdiag);
 
 /*- - - - - - - - - lanbounds.c */
 int LanBounds(int msteps, double *v, double *lmin, double *lmax);
@@ -44,8 +48,9 @@ int LanDos(const int nvec, int msteps, const int npts, double *xdos,
            double *ydos, double *neig, const double *const intv);
 
 //*- - - - - - - - -  landosG.c - Generalized lanDOS */
-int LanDosG(const int nvec, int msteps, const int degB, const int npts, double *xdos,
-           double *ydos, double *neig, const double *const intv, const double tau);
+int LanDosG(const int nvec, int msteps, const int degB, const int npts,
+            double *xdos, double *ydos, double *neig, const double *const intv,
+            const double tau);
 
 /*- - - - - - - - - lanTrbounds.c */
 int LanTrbounds(int lanm, int maxit, double tol, double *vinit, int bndtype,
@@ -114,7 +119,6 @@ int kpmdos(int Mdeg, int damping, int nvec, double *ab, double *mu,
 /*- - - - - - - - - - spslicer2.c */
 void spslicer2(double *xi, double *yi, int n_int, int npts, double *sli);
 
-
 /*- - - - - - - - - timing.c */
 //
 double cheblan_timer();
@@ -128,8 +132,5 @@ void randn_double(int n, double *v);
 void sort_double(int n, double *v, int *ind);
 //
 void linspace(double a, double b, int num, double *arr);
-
-
-
 
 #endif

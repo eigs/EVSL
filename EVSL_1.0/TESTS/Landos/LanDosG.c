@@ -7,8 +7,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "evsl.h"
-#include "io.h"
 #include "evsl_suitesparse.h"
+#include "io.h"
 /*-------------------- protos */
 int exDOS(double* vals, int n, int npts, double* x, double* y, double* intv);
 int read_coo_MM(const char* matfile, int idxin, int idxout, cooMat* Acoo);
@@ -37,57 +37,18 @@ int readVec(const char* filename, int* npts, double** vec) {
 }
 
 /*
- * Extract the square root of diagonal entries of the mass matrix B
- */
-void extractDiag(cooMat* B, double* sqrtdiag) {
-  int nnz = B->nnz;
-  int i, row, col;
-  for (i=0; i<nnz; i++) {
-    row = B->ir[i];
-    col = B->jc[i];
-    if (row == col) {
-      sqrtdiag[col] = sqrt(B->vv[i]);
-    } 
-  }
-}
-
-/*
- * Diagonal scaling for A and B such that A(i,j) = A(i,j)/(sqrtdiag(i)*sqrtdiag(j)) and B(i,j) = B(i,j)/(sqrtdiag(i)*sqrtdiag(j))
- */
-void diagScaling(cooMat* A, cooMat* B, double* sqrtdiag) {
-  int i, row, col, nnz;
-  double tmp;
-  // diagonal scaling for A
-  nnz = A->nnz;
-  for (i=0; i<nnz; i++) {
-    row = A->ir[i];
-    col = A->jc[i];
-    tmp = 1.0/(sqrtdiag[row]*sqrtdiag[col]);
-    A->vv[i] = A->vv[i]*tmp;
-  }
-  // diagonal scaling for B
-  nnz = B->nnz;
-  for (i=0; i<nnz; i++) {
-    row = B->ir[i];
-    col = B->jc[i];
-    tmp = 1.0/(sqrtdiag[row]*sqrtdiag[col]);       
-    B->vv[i] = B->vv[i]*tmp;  
-  }
-}
-
-/*
  * Recover the eigenvectors This is needed for GEN_MM folder only not DOS folder
  */
 int recoverVector(double* V, double* sqrtdiag) {
-   // Formula (2.19) in the paper.  V(:,i) is x in the paper and D^{1/2} is sqrtdiag here
+  // Formula (2.19) in the paper.  V(:,i) is x in the paper and D^{1/2} is
+  // sqrtdiag here
   return 0;
 }
 
-void BSolPol(double *b, double *x, void *data){
-   polparams* pol = (polparams *) data;
-   double* wk;
-   pnav(pol->mu, pol->deg, pol->cc, pol->dd, b, x,
-               wk);
+void BSolPol(double* b, double* x, void* data) {
+  polparams* pol = (polparams*)data;
+  double* wk;
+  pnav(pol->mu, pol->deg, pol->cc, pol->dd, b, x, wk);
 }
 
 /*
@@ -102,10 +63,11 @@ int main() {
   const int npts = 200;     // Number of points
   const int nvec = 30;      // Number of random vectors to use
   const double tau = 1e-4;  // Tolerance in polynomial approximation
-  // ---------------- Intervals of interest  
-  //intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
+  // ---------------- Intervals of interest
+  // intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
   // intv[2] and intv[3] are the input interval of interest [a. b]
-  // intv[4] and intv[5] are the smallest and largest eigenvalues of B after diagonal scaling
+  // intv[4] and intv[5] are the smallest and largest eigenvalues of B after
+  // diagonal scaling
   double intv[6];
   int n = 0, i, nslices, ierr;
   double a, b;
@@ -113,7 +75,7 @@ int main() {
   cooMat Acoo, Bcoo;  // A, B
   csrMat Acsr, Bcsr;  // A, B
   double* sqrtdiag;
-  
+
   FILE *flog = stdout, *fmat = NULL;
   FILE* fstats = NULL;
   io_t io;
@@ -190,10 +152,10 @@ int main() {
         exit(6);
       }
       /*------------------ diagonal scaling for Acoo and Bcoo */
-      sqrtdiag = (double *)calloc(n, sizeof(double));
-      extractDiag(&Bcoo,  sqrtdiag);
+      sqrtdiag = (double*)calloc(n, sizeof(double));
+      extractDiag(&Bcoo, sqrtdiag);
       diagScaling(&Acoo, &Bcoo, sqrtdiag);
-      //save_vec(n, diag, "OUT/diag.txt");
+      // save_vec(n, diag, "OUT/diag.txt");
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
@@ -204,37 +166,38 @@ int main() {
     }
     /*----------------  compute the range of the spectrum of B */
     SetAMatrix(&Bcsr);
-    double *vinit = (double *)malloc(n*sizeof(double)); 
+    double* vinit = (double*)malloc(n * sizeof(double));
     rand_double(n, vinit);
-    double lmin = 0.0, lmax=0.0;
+    double lmin = 0.0, lmax = 0.0;
     ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
     /*------------- get the bounds for B ------*/
     intv[4] = lmin;
     intv[5] = lmax;
-    
+
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
     SetBMatrix(&Bcsr);
     BSolDataSuiteSparse Bsol;
-    // Later we have to remove all the B_sol related function used in LanTrbounds
+    // Later we have to remove all the B_sol related function used in
+    // LanTrbounds
     // when estimating the spectrum of (A,B )
     /*-------------------- use SuiteSparse as the solver for B */
     SetupBSolSuiteSparse(&Bcsr, &Bsol);
     /*-------------------- set the solver for B and LT */
-    SetBSol(BSolSuiteSparse, (void *) &Bsol);
+    SetBSol(BSolSuiteSparse, (void*)&Bsol);
     SetGenEig();
     rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
     free(vinit);
-    FreeBSolSuiteSparseData(&Bsol);  
+    FreeBSolSuiteSparseData(&Bsol);
     /*----------------- get the bounds for (A, B) ---------*/
     intv[0] = lmin;
     intv[1] = lmax;
     /*----------------- plotting the DOS on [a, b] ---------*/
     intv[2] = lmin;
     intv[3] = lmax;
-    //printf("%lf, %lf, %lf, %lf \n", lmin, lmax, intv[0], intv[1]);
+    // printf("%lf, %lf, %lf, %lf \n", lmin, lmax, intv[0], intv[1]);
     //-------------------- Read in the eigenvalues
     double* ev;
     int numev;
@@ -255,7 +218,7 @@ int main() {
     double t0 = cheblan_timer();
     ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv, tau);
     double t1 = cheblan_timer();
-    fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1-t0 );
+    fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1 - t0);
 
     // -------------------- Calculate the exact DOS
     ret = exDOS(ev, numev, npts, xHist, yHist, intv);

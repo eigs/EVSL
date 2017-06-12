@@ -12,6 +12,46 @@ double rec(const double a) { return 1.0 / a; }  // Reciprocal
 
 double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
 
+/*
+ * Extract the square root of diagonal entries of the mass matrix B
+ */
+void extractDiag(cooMat *B, double *sqrtdiag) {
+  int nnz = B->nnz;
+  int i, row, col;
+  for (i = 0; i < nnz; i++) {
+    row = B->ir[i];
+    col = B->jc[i];
+    if (row == col) {
+      sqrtdiag[col] = sqrt(B->vv[i]);
+    }
+  }
+}
+
+/*
+ * Diagonal scaling for A and B such that A(i,j) =
+ * A(i,j)/(sqrtdiag(i)*sqrtdiag(j)) and B(i,j) =
+ * B(i,j)/(sqrtdiag(i)*sqrtdiag(j))
+ */
+void diagScaling(cooMat *A, cooMat *B, double *sqrtdiag) {
+  int i, row, col, nnz;
+  double tmp;
+  // diagonal scaling for A
+  nnz = A->nnz;
+  for (i = 0; i < nnz; i++) {
+    row = A->ir[i];
+    col = A->jc[i];
+    tmp = 1.0 / (sqrtdiag[row] * sqrtdiag[col]);
+    A->vv[i] = A->vv[i] * tmp;
+  }
+  // diagonal scaling for B
+  nnz = B->nnz;
+  for (i = 0; i < nnz; i++) {
+    row = B->ir[i];
+    col = B->jc[i];
+    tmp = 1.0 / (sqrtdiag[row] * sqrtdiag[col]);
+    B->vv[i] = B->vv[i] * tmp;
+  }
+}
 /**----------------------------------------------------------------------
  *
  *    Evalutes ffun at the xi's.
