@@ -198,24 +198,3 @@ int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double),
   free(gi);
   return 0;
 }
-
-/*
- * Computes the elementwise inverse squareroot the diagonal elements of a
- * vector.
- *
- * @param mat The cooMatrix whose diagonals to take the squareroot of.
- * @param d2 The output vector. Should be UNallocated.
- * D_2 = 1/sqrt(D_1)
- * */
-int inversesqrt(cooMat *mat, double *d2) {
-  int i;
-  if (mat.ncols != mat.nrows) {
-    fprintf(stderr, "inversesqrt is not intended for a non-square matrix!");
-  }
-  Malloc(d2, mat.ncols, double);
-  for (i = 0; i < mat.ncols; i++) { /* Square matrix so ncols = nrows */
-    d2 = 1.0 / sqrt(mat.diag[i]);
-  }
-  return 0;
-}
-}

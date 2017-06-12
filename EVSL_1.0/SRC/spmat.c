@@ -100,7 +100,6 @@ void free_coo(cooMat *coo) {
   free(coo->ir);
   free(coo->jc);
   free(coo->vv);
-  free(coo->diag);
 }
 
 /** 

@@ -118,7 +118,6 @@ int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo) {
   int* IR = (int *)malloc(nnz2*sizeof(int));
   int* JC = (int *)malloc(nnz2*sizeof(int));
   double* VAL = (double *)malloc(nnz2*sizeof(double));
-  double* DIAG = (double *)malloc(ncol*sizeof(double));
   /*-------- read line by line */
   char *p1, *p2;
   for (k=0; k<nnz; k++) {
@@ -152,9 +151,6 @@ int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo) {
         VAL[j] = VAL[k];
         j++;
       }
-      else {
-        DIAG[IR[k]-1] = VAL[k];
-      }
     if (j != nnz2) {
       nnz2 = j;
     }
@@ -174,7 +170,6 @@ int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo) {
   Acoo->ir = IR;
   Acoo->jc = JC;
   Acoo->vv = VAL;
-  Acoo->diag = DIAG;
   return 0;
 }
 
