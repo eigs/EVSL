@@ -9,7 +9,6 @@
 #include "evsl.h"
 #include "io.h"
 #include "evsl_suitesparse.h"
-#include "internal_proto.h"
 
 #define BsolPol 1
 

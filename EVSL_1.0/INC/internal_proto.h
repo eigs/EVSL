@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <complex.h>
 #include "evsl.h"
+#include "struct.h"
 
 /*- - - - - - - - - chebpoly.c */
 //

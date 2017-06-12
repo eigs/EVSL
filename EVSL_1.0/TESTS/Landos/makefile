@@ -9,7 +9,6 @@ INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
 
 # Object files
 OBJS_LD = LanDos.o exDOS.o 
-OBJS_LP = lsPol.o 
 OBJS_LDG = LanDosG.o exDOS.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
 
 LIB = -L../../ -levsl
@@ -19,7 +18,7 @@ LIB = -L../../ -levsl
 LIB_EXT = $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)
 
 # Rules
-default: LanDos.ex lsPol.ex LanDosG.ex
+default: LanDos.ex LanDosG.ex
 
 %.o : %.c
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
@@ -32,8 +31,6 @@ LanDos.ex: $(OBJS_LD)
 LanDosG.ex: $(OBJS_LDG)
 	$(LINK) -o LanDosG.ex $(OBJS_LDG) $(LIB) $(LIB_EXT)
 
-lsPol.ex: $(OBJS_LP)
-	$(LINK) -o lsPol.ex $(OBJS_LP) $(LIB) $(LIB_EXT)
 
 clean:
 	rm -f *.o *.ex
