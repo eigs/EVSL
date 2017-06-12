@@ -41,8 +41,6 @@ int readVec(const char* filename, int* npts, double** vec) {
 }
 
 
-
-
 /*
  *-----------------------------------------------------------------------
  * Tests landosG.c , the Lanczos DOS approximate for the general eigenvalue

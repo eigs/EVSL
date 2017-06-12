@@ -34,6 +34,8 @@ int ChebSI(int nev, double *intv, int maxit, double tol, double *vinit,
 /*- - - - - - - - - - dos_utils.c */
 void SetupBSolPol(csrMat *B, BSolDataPol *data);
 //
+void SetupBsqureSolPol(csrMat *B, BSolDataPol *data);
+//
 void FreeBSolPolData(BSolDataPol *data);
 //
 void BSolPol(double *b, double *x, void *data);

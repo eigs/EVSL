@@ -32,7 +32,7 @@ void extractDiag(cooMat *B, double *sqrtdiag) {
 }
 
 /*
- * Initialize the member of BSolDataPol struct
+ * Initialize the member of BSolDataPol struct for solving B
  */
 void SetupBSolPol(csrMat *B, BSolDataPol *data){
   int n = B->nrows, mdeg = 200;  
@@ -42,6 +42,19 @@ void SetupBSolPol(csrMat *B, BSolDataPol *data){
   data->wk = (double *)malloc(3*n*sizeof(double));
   lsPol(&data->intv[0], mdeg, rec, 1e-5, &data->pol_sol);
 }
+
+/*
+ * Initialize the member of BSolDataPol struct for solving B^{1/2}
+ */
+void SetupBsqureSolPol(csrMat *B, BSolDataPol *data){
+  int n = B->nrows, mdeg = 200;  
+  set_pol_def(&data->pol_sol);      
+  double *mu_sol = (double*)calloc(mdeg, sizeof(double));
+  data->pol_sol.mu = mu_sol; 
+  data->wk = (double *)malloc(3*n*sizeof(double));
+  lsPol(&data->intv[0], mdeg, rec, 1e-5, &data->pol_sol);
+}
+
 
 /*
  * Free the BSolDataPol struct
@@ -61,6 +74,7 @@ void BSolPol(double *b, double *x, void *data){
   pnav(pol.mu, pol.deg, pol.cc, pol.dd, b, x,
        wk);
 }
+
 
 /*
  * Diagonal scaling for A and B such that A(i,j) =
