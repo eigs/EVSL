@@ -46,7 +46,7 @@ void SetupBSolPol(csrMat *B, BSolDataPol *data){
 /*
  * Initialize the member of BSolDataPol struct for solving B^{1/2}
  */
-void SetupBsqureSolPol(csrMat *B, BSolDataPol *data){
+void SetupBsqrtSolPol(csrMat *B, BSolDataPol *data){
   int n = B->nrows, mdeg = 200;  
   set_pol_def(&data->pol_sol);      
   double *mu_sol = (double*)calloc(mdeg, sizeof(double));
