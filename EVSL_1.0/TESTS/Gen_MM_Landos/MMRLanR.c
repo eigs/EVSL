@@ -267,6 +267,8 @@ int main() {
         fprintf(fmtout, "%.15e\n", alleigs[j]);
       fclose(fmtout);
     }    
+    free(ydos);
+    free(xdos);
     free(vinit);
     free(sli);
     free_coo(&Acoo);
