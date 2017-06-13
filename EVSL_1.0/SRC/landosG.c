@@ -20,6 +20,7 @@
  *                Must be positive. Planned feature: if non-positive use
  *    @param[in] npts number of sample points used for the DOS curve
  *    @param[in] *intv Stores the three intervals of interest
+ *    @param[in] tau Tolerence used
  *
  *    @param[out] xdos Length-npts long vector, x-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
@@ -28,6 +29,9 @@
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
  *    @param[out] neig == estimated number of eigenvalues
+ *
+ *    @note To transfer LanDos calls to LanDosG calls, let degB be a positive
+ *    integer, and select a value for tau, perhapse 1e-4.
  *
  *
  *----------------------------------------------------------------------*/
@@ -40,7 +44,6 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   int maxit = msteps, m;  // Max number of iteratios
   int n = evsldata.n;
 
-  const int debB = 200;
 
   double tall;
 
@@ -56,8 +59,8 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
     double *mu_sqr;
     double *mu_sol;
 
-    Calloc(mu_sqr, debB, double);
-    Calloc(mu_sol, debB, double);
+    Calloc(mu_sqr, degB, double);
+    Calloc(mu_sol, degB, double);
 
     pol_sqr.mu = mu_sqr;
     pol_sol.mu = mu_sol;
@@ -66,8 +69,8 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
       printf("LanDos with degB <= 0 not yet implemented");
       exit(-1);
     } else {
-      lsPol(&intv[4], debB, isqrt, tau, &pol_sqr);
-      lsPol(&intv[4], debB, rec, tau, &pol_sol);
+      lsPol(&intv[4], degB, isqrt, tau, &pol_sqr);
+      lsPol(&intv[4], degB, rec, tau, &pol_sol);
     }
   }
 
