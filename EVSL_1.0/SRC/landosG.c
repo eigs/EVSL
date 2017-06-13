@@ -45,7 +45,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   int n = evsldata.n;
 
 
-  double tall;
+  //double tall;
 
   const int ifGenEv = evsldata.ifGenEv;
 
@@ -83,7 +83,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   double *y;
   Calloc(y, npts, double);
   //-------------------- to report timings/
-  tall = cheblan_timer();
+  //tall = cheblan_timer();
   int i, j, k;
 
   /*--------------------   frequently used constants  */
@@ -91,7 +91,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   /* size of the matrix */
   maxit = min(n, maxit);
   double *gamma2;
-  Malloc(gamma2, maxit, double);
+  Calloc(gamma2, maxit, double);
   /*-----------------------------------------------------------------------*
    * *Non-restarted* Lanczos iteration
    *-----------------------------------------------------------------------
@@ -300,7 +300,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
     free_pol(&pol_sol);
   }
   /*-------------------- record stats */
-  tall = cheblan_timer() - tall;
+  // tall = cheblan_timer() - tall;
   /*-------------------- print stat */
 
   return 0;

@@ -124,6 +124,12 @@ int main() {
         fprintf(fstats, "matrix read successfully\n");
         // nnz = Acoo.nnz;
         n = Acoo.nrows;
+        if(n <= 0) {
+          fprintf(stderr, "non-positive number of rows");
+          exit(7);
+        }
+
+
         // printf("size of A is %d\n", n);
         // printf("nnz of  A is %d\n", nnz);
       } else {
@@ -151,7 +157,15 @@ int main() {
       // save_vec(n, diag, "OUT/diag.txt");
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
+      if(ierr) {
+        fprintf(flog, "Could not convert matrix to csr: %i", ierr);
+        exit(8);
+      }
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
+      if(ierr) {
+        fprintf(flog, "Could not convert matrix to csr: %i", ierr);
+        exit(9);
+      }
     }
     if (io.Fmt == HB) {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
@@ -164,6 +178,10 @@ int main() {
       rand_double(n, vinit);
       double lmin = 0.0, lmax = 0.0;
       ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
+      if(ierr) {
+        fprintf(flog, "Could not run LanTrBounds: %i", ierr);
+        exit(10);
+      }
       /*------------- get the bounds for B ------*/
       intv[4] = lmin;
       intv[5] = lmax;
@@ -189,6 +207,10 @@ int main() {
       SetGenEig();
       rand_double(n, vinit);
       ierr = LanTrbounds(40, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
+      if(ierr) {
+        fprintf(flog, "Could not run LanTrBounds: %i", ierr);
+        exit(10);
+      }
       free(vinit);
 #if BsolPol
       FreeBSolPolData(&Bsol);
@@ -259,8 +281,14 @@ int main() {
     fclose(ofp);
     //-------------------- invoke gnuplot for plotting ...
     ierr = system("gnuplot < testerG.gnuplot");
+    if(ierr) {
+      printf("Could not run gnuplot: %i", ierr);
+    }
     //-------------------- and gv for visualizing /
     ierr = system("gv testerG.eps");
+    if(ierr) {
+      printf("Could not run gv: %i", ierr);
+    }
     free(xHist);
     free(yHist);
     free(xdos);
