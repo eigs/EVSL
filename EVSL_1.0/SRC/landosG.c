@@ -85,10 +85,10 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
    *-----------------------------------------------------------------------
    -------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
-  Malloc(V, n * (maxit + 1), double);
+  Calloc(V, n * (maxit + 1), double);
   if (evsldata.ifGenEv) {
     /* storage for Z = B * V */
-    Malloc(Z, n * (maxit + 1), double);
+    Calloc(Z, n * (maxit + 1), double);
   } else {
     /* Z and V are the same */
     Z = V;
@@ -123,7 +123,9 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
     /*-------------------- copy initial vector to Z(:,1) */
     /* Filter the initial vector */
     tm = cheblan_timer();
+    if(evsldata.ifGenEv) {
     pnav(pol_sqr.mu, pol_sqr.deg, pol_sqr.cc, pol_sqr.dd, vinit, V, wk);  // Ish
+    }
     tmv += cheblan_timer() - tm;
 
     /*--------------------  normalize it */
@@ -136,7 +138,8 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
       nmv++;
     } else {
       /* 2-norm */
-      t = 1.0 / DNRM2(&n, V, &one);  // add a test here.
+      t = 1.0 / DNRM2(&n, vinit, &one);  // add a test here.
+      DCOPY(&n, vinit, &one, V, &one);
     }
     /* unit B^{-1}-norm or 2-norm */
     DSCAL(&n, &t, V, &one);

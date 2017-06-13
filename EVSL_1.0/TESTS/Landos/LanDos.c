@@ -64,8 +64,10 @@ int main() {
   const int msteps = 30;  // Steps to perform
   const int npts = 200;   // Number of points
   const int nvec = 100;   // Number of random vectors to generate
-  double intv[4] = {-2.448170338612495, 11.868902203167497, 5,
+  double intv[6] = {-2.448170338612495, 11.868902203167497,0,0,5,
                     8};  // Interval of interest
+  const int degB = 1; // Positive value to work with landosG
+  const double tau = 1e-4; //Tolerance
   //-------------------- reset to whole interval
   intv[2] = intv[0];
   intv[3] = intv[1];
@@ -79,9 +81,10 @@ int main() {
   double* ydos = (double*)calloc(npts, sizeof(double));   // Calculated DOS y
                                                           // vals
 
+  SetStdEig();
   EVSLStart();
   SetAMatrix(&csrMat);
-  ret = LanDos(nvec, msteps, npts, xdos, ydos, &neig, intv);  // Calculate DOS
+  ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv, tau);  // Calculate DOS
   fprintf(stdout, " LanDos ret %d \n", ret);
 
   ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv);  // Exact DOS
