@@ -137,15 +137,16 @@ int apfun(const double c, const double h, const double *const xi,
  * This explicitly calls matvec, so it can be useful for implementing
  * user-specific matrix-vector multiplication.
  *
- * @param pol Struct containing the paramenters and expansion coefficient of
- * the polynomail.
- * @param v input vector
+ * @param[in] mu Coefficents
+ * @param[in] cc
+ * @param[in] dd
+ * @param[in] v input vector
  *
  * @param[out] y p(A)v
  *
  * @b Workspace
- * @param w Work vector of length 3*n [allocate before call]
- * @param v is untouched
+ * @param w[in,out] Work vector of length 3*n [allocate before call]
+ * @param v[in] is untouched
  **/
 int pnav(double *mu, const int m, const double cc, const double dd, double *v,
          double *y, double *w) {  // Really just ChebAv

@@ -43,7 +43,8 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - dumps.c       :  Miscellaneous functions for I/O and for debugging 
    - evsl.c        :  Set EVSL solver options and data
    - lanbounds.c   :  Lanczos alg. to give bounds of spectrum
-   - landos.c      :  Lanczos based DOS algorithm 
+   - landos.c      :  DEPRECATED: Lanczos based DOS algorithm 
+   - landosG.c     :  Lanczos based DOS algorithm 
    - lanTrbound.c  :  A more robust alg. to give bounds of spectrum based on TR Lanczos
    - mactime.c     :  Timer for mac iOS
    - misc_la.c     :  Miscellaneous linear algebra functions
@@ -67,7 +68,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - lapl.c     : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
    - io.c       : parse command-line input parameters
 
-* TESTS/Gen_MM  : test drivers for generalized eigenvalue problems with general matrices read from files
+* TESTS/Gen_MM_Landos  : test drivers for generalized eigenvalue problems with general matrices read from files
    - MMPLanR.c  : Polynomial filtering T-R Lanczos
    - MMRLanN.c  : Rational filtering non-restart Lanczos
    - MMRLanR.c  : Rational filtering T-R Lanczos
@@ -80,6 +81,10 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - LapPSI.c           : Polynomial filtering subspace iterations
    - LapRLanN.c         : Rational filtering non-restart Lanczos
    - LapRLanR.c         : Rational filtering T-R Lanczos
+
+* TESTS/Landos     : test drivers for the lanDOS related functions.
+   - LanDos.c      : Standard eigenvalue problem DOS using Lancco's
+   - LanDosG.c     : General eigenvalue problem DOS using Lancco's
 
 * TESTS/MM         : general matrices in sparse format read from files
    - MMPLanN.c     : Polynomial filtering non-restart Lanczos

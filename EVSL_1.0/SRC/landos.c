@@ -11,7 +11,6 @@
  *
  *    Computes the density of states (DOS, or spectral density)
  *
- *    @param[in] *A  -- used through calls to matvec_A
  *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] npts number of sample points used for the DOS curve
