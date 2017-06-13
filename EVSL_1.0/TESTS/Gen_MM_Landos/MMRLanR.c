@@ -165,19 +165,19 @@ int main() {
     xintv[1] = lmax;
     xintv[2] = a;
     xintv[3] = b;
-    /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
-    /*-------------------- define kpmdos parameters */
-    //-------------------- call kpmdos 
+    /*-------------------- call landos to get the DOS for dividing the spectrum*/
+    /*-------------------- define landos parameters */
+    //-------------------- call landos 
     double t = cheblan_timer();
     double* xdos = (double*)calloc(npts, sizeof(double));
     double* ydos = (double*)calloc(npts, sizeof(double));
     ierr = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &ecount, xintv, tau);
     t = cheblan_timer() - t;
     if (ierr) {
-      printf("kpmdos error %d\n", ierr);
+      printf("landos error %d\n", ierr);
       return 1;
     }
-    fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
+    fprintf(fstats, " Time to build DOS (landos) was : %10.2f  \n",t);
     fprintf(fstats, " estimated eig count in interval: %.15e \n",ecount);
     //-------------------- call splicer to slice the spectrum
     sli = malloc((nslices+1)*sizeof(double));
