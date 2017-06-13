@@ -177,7 +177,7 @@ int main() {
     ierr = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &ecount, xintv, tau);
     t = cheblan_timer() - t;
     if (ierr) {
-      printf("kpmdos error %d\n", ierr);
+      printf("Landos error %d\n", ierr);
       return 1;
     }
     fprintf(fstats, " Time to build DOS (Landos) was : %10.2f  \n",t);
