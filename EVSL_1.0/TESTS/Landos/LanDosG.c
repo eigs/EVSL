@@ -7,8 +7,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "evsl.h"
-#include "io.h"
 #include "evsl_suitesparse.h"
+#include "io.h"
 
 #define BsolPol 1
 
@@ -16,7 +16,6 @@
 int exDOS(double* vals, int n, int npts, double* x, double* y, double* intv);
 int read_coo_MM(const char* matfile, int idxin, int idxout, cooMat* Acoo);
 int get_matrix_info(FILE* fmat, io_t* pio);
-
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -52,10 +51,11 @@ int main() {
   const int npts = 200;     // Number of points
   const int nvec = 30;      // Number of random vectors to use
   const double tau = 1e-4;  // Tolerance in polynomial approximation
-  // ---------------- Intervals of interest  
-  //intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
+  // ---------------- Intervals of interest
+  // intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
   // intv[2] and intv[3] are the input interval of interest [a. b]
-  // intv[4] and intv[5] are the smallest and largest eigenvalues of B after diagonal scaling
+  // intv[4] and intv[5] are the smallest and largest eigenvalues of B after
+  // diagonal scaling
   double intv[6] = {-2.739543872224533e-13,
                     0.0325,
                     -2.739543872224533e-13,
@@ -68,7 +68,7 @@ int main() {
   cooMat Acoo, Bcoo;  // A, B
   csrMat Acsr, Bcsr;  // A, B
   double* sqrtdiag = NULL;
-  
+
   FILE *flog = stdout, *fmat = NULL;
   FILE* fstats = NULL;
   io_t io;
@@ -145,10 +145,10 @@ int main() {
         exit(6);
       }
       /*------------------ diagonal scaling for Acoo and Bcoo */
-      sqrtdiag = (double *)calloc(n, sizeof(double));
-      extractDiag(&Bcoo,  sqrtdiag);
+      sqrtdiag = (double*)calloc(n, sizeof(double));
+      extractDiag(&Bcoo, sqrtdiag);
       diagScaling(&Acoo, &Bcoo, sqrtdiag);
-      //save_vec(n, diag, "OUT/diag.txt");
+      // save_vec(n, diag, "OUT/diag.txt");
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
@@ -160,9 +160,9 @@ int main() {
     if (1) {
       /*----------------  compute the range of the spectrum of B */
       SetAMatrix(&Bcsr);
-      double *vinit = (double *)malloc(n*sizeof(double)); 
+      double* vinit = (double*)malloc(n * sizeof(double));
       rand_double(n, vinit);
-      double lmin = 0.0, lmax=0.0;
+      double lmin = 0.0, lmax = 0.0;
       ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
       /*------------- get the bounds for B ------*/
       intv[4] = lmin;
@@ -173,27 +173,27 @@ int main() {
       SetBMatrix(&Bcsr);
 #if BsolPol
       /*-------------------- Use polynomial to solve B */
-	BSolDataPol Bsol;
-	Bsol.intv[0] = lmin;
-	Bsol.intv[1] = lmax;    
-	SetupBSolPol(&Bcsr, &Bsol);
-	SetBSol(BSolPol, (void *) &Bsol);
+      BSolDataPol Bsol;
+      Bsol.intv[0] = lmin;
+      Bsol.intv[1] = lmax;
+      SetupBSolPol(&Bcsr, &Bsol);
+      SetBSol(BSolPol, (void*)&Bsol);
 #else
       /*-------------------- Use Choleksy factorization to solve B */
-	BSolDataSuiteSparse Bsol;
-	/*-------------------- use SuiteSparse as the solver for B */
-	SetupBSolSuiteSparse(&Bcsr, &Bsol);
-	/*-------------------- set the solver for B */
-	SetBSol(BSolSuiteSparse, (void *) &Bsol);
+      BSolDataSuiteSparse Bsol;
+      /*-------------------- use SuiteSparse as the solver for B */
+      SetupBSolSuiteSparse(&Bcsr, &Bsol);
+      /*-------------------- set the solver for B */
+      SetBSol(BSolSuiteSparse, (void*)&Bsol);
 #endif
       SetGenEig();
       rand_double(n, vinit);
       ierr = LanTrbounds(40, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
       free(vinit);
 #if BsolPol
-	FreeBSolPolData(&Bsol);  
+      FreeBSolPolData(&Bsol);
 #else
-	FreeBSolSuiteSparseData(&Bsol);  
+      FreeBSolSuiteSparseData(&Bsol);
 #endif
       /*----------------- get the bounds for (A, B) ---------*/
       intv[0] = lmin;
@@ -208,7 +208,7 @@ int main() {
       SetBMatrix(&Bcsr);
       SetGenEig();
     }
-    //printf("%lf, %lf, %lf, %lf \n", lmin, lmax, intv[0], intv[1]);
+    // printf("%lf, %lf, %lf, %lf \n", lmin, lmax, intv[0], intv[1]);
     //-------------------- Read in the eigenvalues
     double* ev;
     int numev;
@@ -229,7 +229,7 @@ int main() {
     double t0 = cheblan_timer();
     ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv, tau);
     double t1 = cheblan_timer();
-    fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1-t0 );
+    fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1 - t0);
 
     // -------------------- Calculate the exact DOS
     ret = exDOS(ev, numev, npts, xHist, yHist, intv);

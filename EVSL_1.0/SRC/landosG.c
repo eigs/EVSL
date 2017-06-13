@@ -42,7 +42,6 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
 
   const int debB = 200;
 
-
   double tall;
 
   const int ifGenEv = evsldata.ifGenEv;
@@ -51,7 +50,6 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   polparams pol_sol;
 
   if (ifGenEv) {
-
     set_pol_def(&pol_sqr);
     set_pol_def(&pol_sol);
 
@@ -71,7 +69,6 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
       lsPol(&intv[4], debB, isqrt, tau, &pol_sqr);
       lsPol(&intv[4], debB, rec, tau, &pol_sol);
     }
-
   }
 
   double *vinit;
@@ -135,8 +132,9 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
     /*-------------------- copy initial vector to Z(:,1) */
     /* Filter the initial vector */
     tm = cheblan_timer();
-    if(ifGenEv) {
-      pnav(pol_sqr.mu, pol_sqr.deg, pol_sqr.cc, pol_sqr.dd, vinit, V, wk);  // Ish
+    if (ifGenEv) {
+      pnav(pol_sqr.mu, pol_sqr.deg, pol_sqr.cc, pol_sqr.dd, vinit, V,
+           wk);  // Ish
     }
     tmv += cheblan_timer() - tm;
 
@@ -202,7 +200,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
         } else {
           tm = cheblan_timer();
           pnav(pol_sol.mu, pol_sol.deg, pol_sol.cc, pol_sol.dd, znew, vnew,
-              wk);  // Ish
+               wk);  // Ish
           tmv += cheblan_timer() - tm;
         }
         /*-------------------- beta = (vnew, znew)^{1/2} */
@@ -270,7 +268,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
       }
       for (j = 0; j < numPlaced; j++)
         y[ind[j]] += gamma2[i] *
-          exp(-((xdos[ind[j]] - t) * (xdos[ind[j]] - t)) / sigma2);
+                     exp(-((xdos[ind[j]] - t) * (xdos[ind[j]] - t)) / sigma2);
     }
   }
   double scaling = 1.0 / (nvec * sqrt(sigma2 * PI));
