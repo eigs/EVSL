@@ -21,7 +21,7 @@ double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
  *  diagonals into
  */
 void extractDiag(cooMat *B, double *sqrtdiag) {
-  int nnz = B->nnz;
+  const int nnz = B->nnz;
   int i, row, col;
   for (i = 0; i < nnz; i++) { /* Iterate over all elements looking for diags */
     row = B->ir[i];
@@ -36,7 +36,7 @@ void extractDiag(cooMat *B, double *sqrtdiag) {
  * Initialize the member of BSolDataPol struct for solving B
  */
 void SetupBSolPol(csrMat *B, BSolDataPol *data) {
-  int n = B->nrows, mdeg = 200;
+  const int n = B->nrows, mdeg = 200;
   set_pol_def(&data->pol_sol);
   double *mu_sol = (double *)calloc(mdeg, sizeof(double));
   data->pol_sol.mu = mu_sol;
@@ -48,7 +48,7 @@ void SetupBSolPol(csrMat *B, BSolDataPol *data) {
  * Initialize the member of BSolDataPol struct for solving B^{1/2}
  */
 void SetupBsqrtSolPol(csrMat *B, BSolDataPol *data) {
-  int n = B->nrows, mdeg = 200;
+  const int n = B->nrows, mdeg = 200;
   set_pol_def(&data->pol_sol);
   double *mu_sol = (double *)calloc(mdeg, sizeof(double));
   data->pol_sol.mu = mu_sol;
@@ -149,14 +149,16 @@ int apfun(const double c, const double h, const double *const xi,
  **/
 int pnav(double *mu, const int m, const double cc, const double dd, double *v,
          double *y, double *w) {  // Really just ChebAv
-  int n = evsldata.n;
+  const int n = evsldata.n;
   /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   double *vk = w;
   double *vkp1 = w + n;
   double *vkm1 = vkp1 + n;
   /*-------------------- */
   int k, i;
-  double t, s, *tmp, t1 = 1.0 / dd, t2 = 2.0 / dd;
+  double t, s, *tmp;
+  const double t1 = 1.0 / dd;
+  const double t2 = 2.0 / dd;
   /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
   memcpy(vk, v, n * sizeof(double));
   memset(vkm1, 0, n * sizeof(double));
@@ -259,14 +261,13 @@ int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double),
   double na;
 
   int k = 0;
+  const double t1 = 1.0 / npts;
+  const double t2 = 2.0 / npts;
   for (k = 0; k < maxDeg; k++) {
     for (i = 0; i < npts; i++) {
       yi[i] = cos(k * theti[i]);
     }
-    double t = 2.0 / npts;
-    if (k == 0) {
-      t = t * 0.5;
-    }
+    const double t = k == 0 ? t1 : t2;
     double sum = 0;
     for (i = 0; i < npts; i++) {
       sum += yi[i] * gi[i];

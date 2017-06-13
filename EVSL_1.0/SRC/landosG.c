@@ -116,7 +116,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   const int M = min(msteps, 30);
   const double H = (lM - lm) / (M - 1);
   const double sigma = H / sqrt(8 * log(kappa));
-  double sigma2 = 2 * sigma * sigma;
+  const double sigma2 = 2 * sigma * sigma;
   //-------------------- If gaussian small than tol ignore point.
   const double tol = 1e-08;
   double width = sigma * sqrt(-2.0 * log(tol));
@@ -125,7 +125,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   int nmv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
   double *wk, *vrand = NULL;
-  int wk_size = ifGenEv ? 6 * n : 4 * n;
+  const int wk_size = ifGenEv ? 6 * n : 4 * n;
   Malloc(wk, wk_size, double);
   for (m = 0; m < nvec; m++) {
     randn_double(n, vinit);
