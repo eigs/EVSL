@@ -249,14 +249,14 @@ int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double),
   // Compute f(x) once
 
   double *yx;
-  Malloc(yx, npts, double);
+  Malloc(yx, ptsNrm, double);
   apfun(pol->cc, pol->dd, xi, ffun, ptsNrm, yx);
 
   double *yi;
   Malloc(yi, npts, double);
 
   double *ya;
-  Malloc(ya, npts, double);
+  Malloc(ya, ptsNrm, double);
 
   double na;
 
