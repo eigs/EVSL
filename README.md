@@ -36,8 +36,8 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
     - internal_proto.h : internal function prototypes for SRC/
     
  * SRC
-   - chelanNr.c    :  Polynomial Filtered no-restart Lanczos
-   - chelanTr.c    :  Polynomial Filtered thick restart Lanczos
+   - cheblanNr.c    :  Polynomial Filtered no-restart Lanczos
+   - cheblanTr.c    :  Polynomial Filtered thick restart Lanczos
    - chebpoly.c    :  Computing and applying polynomial filters
    - chebsi.c      :  Polynomial Filtered Subspace iteration
    - dumps.c       :  Miscellaneous functions for I/O and for debugging 
@@ -45,7 +45,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - lanbounds.c   :  Lanczos alg. to give bounds of spectrum
    - landos.c      :  Lanczos based DOS algorithm for the standard problem
    - landosG.c     :  Lanczos based DOS algorithm for general and standard problems
-   - lanTrbound.c  :  A more robust alg. to give bounds of spectrum based on TR Lanczos
+   - lanTrbounds.c  :  A more robust alg. to give bounds of spectrum based on TR Lanczos
    - mactime.c     :  Timer for mac iOS
    - misc_la.c     :  Miscellaneous linear algebra functions
    - ratfilter.c   :  Computing and applying rational filters
@@ -53,6 +53,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - ratlanTr.c    :  Rational Filtered thick restart Lanczos
    - spmat.c       :  Sparse matrix routines
    - spslicer.c    :  Spectrum slicing
+   - spslicer2.c    :  Spectrum slicing
    - timing.c      :  Timer
    - vect.c        :  Vector operations
 
@@ -112,10 +113,10 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   make clean; make
   ```    
 **Test programs**:
-      In the TESTS_* directories, one will find makefiles to 
+      In the TESTS/* directories, one will find makefiles to 
       build sample drivers that test a few different situations.
       For building the drivers for rational filtering solvers and all drivers for 
-      generalized eigenvalue problems in TESTS_Gen_* directories, one will also need to
+      generalized eigenvalue problems in TESTS/Gen_* directories, one will also need to
       modify EXTERNAL/makefile.in, where SUITESPARSE path needs to be provided.
 
 **SuiteSparse**:
