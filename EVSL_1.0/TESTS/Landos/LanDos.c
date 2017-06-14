@@ -138,6 +138,8 @@ int main() {
   free(yHist);
   free(xdos);
   free(ydos);
+  free(xdos2);
+  free(ydos2);
   free_csr(&csrMat);
   return 0;
 }
