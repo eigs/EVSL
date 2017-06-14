@@ -18,13 +18,13 @@
  *      intv[0:1] = [lambda_min, lambda_max]\\
  *      intv[2:3] = [a b] = interval where DOS is to be computed
  *
- *    @param[out] xdos Length-npts long vector, x-coordinate points for
+ *    @param[out] *xdos Length-npts long vector, x-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] ydos Length-npts long vector, y-coordinate points for
+ *    @param[out] *ydos Length-npts long vector, y-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] neig == estimated number of eigenvalues
+ *    @param[out] neig  estimated number of eigenvalues
  *
  *    @note This only works with the standard eigenvalue problem. Use landosG.c
  *    /LanDosG for the generalized eigenvalue problem.

@@ -22,13 +22,13 @@
  *    @param[in] *intv Stores the three intervals of interest
  *    @param[in] tau Tolerence used
  *
- *    @param[out] xdos Length-npts long vector, x-coordinate points for
+ *    @param[out] *xdos Length-npts long vector, x-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] ydos Length-npts long vector, y-coordinate points for
+ *    @param[out] *ydos Length-npts long vector, y-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] neig == estimated number of eigenvalues
+ *    @param[out] neig  estimated number of eigenvalues
  *
  *    @note This works for both the standard and generalized eigenvalue
  *    problems.
