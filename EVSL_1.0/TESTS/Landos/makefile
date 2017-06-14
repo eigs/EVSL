@@ -1,21 +1,20 @@
 .SUFFIXES : .c .o
 
 include ../../makefile.in
-include ../../EXTERNAL/makefile.in
 
 FLAGS = -DUNIX -O3 -g -Wall
 
-INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
+INCLUDES = -I../../INC 
 
 # Object files
 OBJS_LD = LanDos.o exDOS.o 
-OBJS_LDG = LanDosG.o exDOS.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
+OBJS_LDG = LanDosG.o exDOS.o io.o mmio.o 
 
-LIB = -L../../ -levsl
+ LIB = -L../../ -levsl
 
 ## not needed for pol. filtering. 
 
-LIB_EXT = $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)
+LIB_EXT =   -fopenmp $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: LanDos.ex LanDosG.ex
