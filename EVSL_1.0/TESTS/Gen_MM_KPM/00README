@@ -1,8 +1,8 @@
 This  directory  contains  drivers  for testing  a  few  routines  for
 computing eigenvalues  of general sparse (symmetric  real) matrix pair
 (A, B), where B has to  be positive definite.  These matrices are read
-from a file  in the matrix market format.  Note:  The HB matrix format
-is not supported.
+from a file  in the matrix market format. Uses KPM for DOS. Note:  The 
+HB matrix format is not supported. 
 
 For  the rational  filter driver  you will  need to  link to
 various modules  from the  SuiteSparse package. 
