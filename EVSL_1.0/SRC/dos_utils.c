@@ -71,8 +71,7 @@ void BSolPol(double *b, double *x, void *data){
   BSolDataPol* Bsol_data = (BSolDataPol *) data;
   double *wk = Bsol_data->wk;
   polparams pol = Bsol_data->pol_sol;
-  pnav(pol.mu, pol.deg, pol.cc, pol.dd, b, x,
-       wk);
+  pnav(pol.mu, pol.deg, pol.cc, pol.dd, b, x, wk);
 }
 
 
