@@ -17,6 +17,7 @@ typedef struct _cooMat {
   double *vv; /**< values */
 } cooMat;
 
+
 /*! 
  * @brief sparse matrix format: the compressed sparse row (CSR) format, 0-based
  * 
@@ -159,6 +160,15 @@ typedef struct _evsldata {
   EVSLBSol *Bsol;           /**< function and data for B solve */
   EVSLLTSol *LTsol;         /**< function and data for LT solve */
 } evslData;
+
+/*
+ * Define a struct for using polynomial to solve B
+ */
+typedef struct _BSolDataPol {
+  polparams pol_sol; // polynomial for approximating B^{-1}
+  double *wk; // working array for performing matvec
+  double intv[2]; // spectrum range of B 
+} BSolDataPol;
 
 
 /* global variable: evslData */

@@ -11,7 +11,7 @@
  *
  *    Computes the density of states (DOS, or spectral density)
  *
- *    @param[in] *A  -- used through calls to matvec_A 
+ *    @param[in] *A  -- used through calls to matvec_A
  *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] npts number of sample points used for the DOS curve
@@ -25,26 +25,26 @@
  *    @param[out] ydos Length-npts long vector, y-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] neig == estimated number of eigenvalues 
+ *    @param[out] neig == estimated number of eigenvalues
  *
  *
  *----------------------------------------------------------------------*/
 
-int LanDos(const int nvec, int msteps, int npts, double *xdos,
-           double *ydos, double *neig, const double *const intv) {
+int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
+           double *neig, const double *const intv) {
   //--------------------
   double *alp, *bet, nbet, nalp, t, *V;
   int one = 1;
   int n, m, i, j;
-  
+
   n = evsldata.n;
   //-------------------- Variables that persist through iterations
-  double *v, *y;            // v=Vector for current iteration; y Stores y values
+  double *v, *y;  // v=Vector for current iteration; y Stores y values
   int *ind;
   Malloc(v, n, double);
   Calloc(y, npts, double);
-  Malloc(ind,npts, int);
-  /*-------------------- for tridiag. eigenvalue problem + lanczos 
+  Malloc(ind, npts, int);
+  /*-------------------- for tridiag. eigenvalue problem + lanczos
                          quadrature */
   double *S, *ritzVal, *gamma2;
   // S will contain a matrix compressed into a single array.
@@ -61,7 +61,7 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos,
   const double H = (lM - lm) / (M - 1);
   const double sigma = H / sqrt(8 * log(kappa));
   double sigma2 = 2 * sigma * sigma;
-//-------------------- If gaussian small than tol ignore point.
+  //-------------------- If gaussian small than tol ignore point.
   const double tol = 1e-08;
   double width = sigma * sqrt(-2.0 * log(tol));
   linspace(aa, bb, npts, xdos);  // xdos = linspace(lm,lM, npts);
@@ -76,9 +76,9 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos,
     t = DDOT(&n, v, &one, v, &one);
     //-------------------- normalize vector
     //                     v = can also  use DNRM2 instead.
-    t = 1.0 / sqrt(t);  
+    t = 1.0 / sqrt(t);
     DSCAL(&n, &t, v, &one);
-    DCOPY(&n, v, &one, V, &one);  
+    DCOPY(&n, v, &one, V, &one);
     double wn = 0.0;
     /*-------------------- main Lanczos loop */
     for (j = 0; j < msteps; j++) {
@@ -140,40 +140,39 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos,
 
     // theta = ritzVal = sorted eigenvalues IN ASCENDING ORDER
     for (i = 0; i < msteps; i++) {
-      //-------------------- weights for Lanczos quadrature 
+      //-------------------- weights for Lanczos quadrature
       // Gamma2(i) = elementwise square of top entry of i-th eginvector
-      gamma2[i] = S[i * msteps] * S[i * msteps]; 
+      gamma2[i] = S[i * msteps] * S[i * msteps];
     }
     //-------------------- dos curve parameters
     // Generate DOS from small gaussians centered at the ritz values
-    for (i = 0; i < msteps;  i++) {
+    for (i = 0; i < msteps; i++) {
       // As msteps is width of ritzVal -> we get msteps eigenvectors
       const double t = ritzVal[i];
       int numPlaced = 0;
       //-------------------- Place elements close to t in ind
-      for (j = 0; j < npts;  j++) {  
-        if (abs(xdos[j] - t) < width) 
-          ind[numPlaced++] = j;
+      for (j = 0; j < npts; j++) {
+        if (abs(xdos[j] - t) < width) ind[numPlaced++] = j;
       }
-      
-      for (j = 0; j < numPlaced; j++) 
-        y[ind[j]] += gamma2[i]*exp(-((xdos[ind[j]]-t)*(xdos[ind[j]]-t))/ sigma2);
 
-     }
+      for (j = 0; j < numPlaced; j++)
+        y[ind[j]] += gamma2[i] *
+                     exp(-((xdos[ind[j]] - t) * (xdos[ind[j]] - t)) / sigma2);
+    }
     //-------------------- end vector loop
-  } 
-  
+  }
+
   double scaling = 1.0 / (nvec * sqrt(sigma2 * PI));
   // y = ydos * scaling
   DSCAL(&npts, &scaling, y, &one);
   DCOPY(&npts, y, &one, ydos, &one);
-  simpson2(xdos, y, npts);
+  simpson(xdos, y, npts);
 
   *neig = y[npts - 1] * n;
   free(gamma2);
   free(S);
   free(ritzVal);
-  
+
   free(alp);
   free(bet);
   free(V);

@@ -9,7 +9,7 @@
 
 /**----------------------------------------------------------------------
  *
- *    Interval partitioner based for Lanczos DOS output 
+ *    Interval partitioner based for Lanczos DOS output
  *
  *    @param[in] xi coordinates of interval [a b]
  *    @param[in] yi yi[k] = integral of the does from a to xi[k]
@@ -26,24 +26,24 @@ void spslicer2(double* xi, double* yi, int n_int, int npts, double* sli) {
   /*-------------------- makes a call here to  integration by Simpson */
   double want;
   int k = 0;
-  double t ; 
+  double t;
   int ls = 0;
- 
+
   //-------------------- in-place integration ydos<--- int ydos..
-  simpson2(xi,yi,npts);
+  simpson(xi, yi, npts);
   //
   t = yi[0];
-  want = (yi[npts - 1] - yi[0]) / (double) n_int;
+  want = (yi[npts - 1] - yi[0]) / (double)n_int;
   sli[ls] = xi[k];
   //-------------------- First point - t should be zero actually
   for (k = 1; k < npts; k++) {
     if (yi[k] - t >= want) {
       //-------------------- New interval defined
-      ls = ls + 1;  
+      ls = ls + 1;
       sli[ls] = xi[k];
       t = yi[k];
     }
   }
   //-------------------- bound for last interval is last point.
-  sli[n_int] = xi[npts-1];
+  sli[n_int] = xi[npts - 1];
 }

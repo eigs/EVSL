@@ -49,3 +49,5 @@
 
 # Output files
 *.out
+
+OUT/

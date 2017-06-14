@@ -1,5 +1,5 @@
 1
-../../MATRICES/A.mtx ../../MATRICES/B.mtx stiff1 mass1 MM1  1500.617629  1746.952 2
+../../MATRICES/A.mtx ../../MATRICES/B.mtx stiff1 mass1 MM1  28.617629  1746.952 2
 ../../MATRICES/Asmall.mtx ../../MATRICES/Bsmall.mtx stiff1 mass1 MM1  0.6  0.9 2
 ../../MATRICES/A.mtx ../../MATRICES/B.mtx stiff1 mass1 MM1  28.617629  1746.952 2
 ../../MATRICES/A5.mtx ../../MATRICES/B5.mtx stiff5 mass5 MM1  28.617629  1000.952 3

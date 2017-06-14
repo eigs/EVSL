@@ -130,4 +130,3 @@ void vec_iperm(int n, int *p, double *x, double *y) {
     }
   }
 }
-

@@ -18,7 +18,7 @@ int main() {
   /*--------------------------------------------------------------
    * this tests the spectrum slicing idea for a generic matrix pair
    * read in matrix format -- using
-   * Thick-Restarted Lanczos with rational filtering.
+   * Thick-Restarted Lanczos with polynomial filtering.
    *-------------------------------------------------------------*/
   int n=0, i, j, npts, nslices, nvec, Mdeg, nev, 
       mlan, max_its, ev_int, sl, ierr, totcnt;
@@ -29,10 +29,7 @@ int main() {
   int *counts; // #ev computed in each slice  
   /* initial vector: random */
   double *vinit;
-  /* parameters for rational filter */
-  int num = 1; // number of poles used for each slice
-  int pow = 2; // multiplicity of each pole
-  double beta = 0.01; // beta in the LS approximation
+  polparams pol;
   /*-------------------- matrices A, B: coo format and csr format */
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
@@ -48,7 +45,7 @@ int main() {
   /*-------------------- Bsol */
   BSolDataSuiteSparse Bsol;
   /*-------------------- stopping tol */
-  tol = 1e-6;
+  tol = 1e-8;
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
@@ -78,7 +75,7 @@ int main() {
     b = io.b; // right endpoint of input interval
     nslices = io.n_intv;
     char path[1024];   // path to write the output files
-    strcpy( path, "OUT/MMRLanR_");
+    strcpy( path, "OUT/MMPLanR_");
     strcat( path, io.MatNam1);
     fstats = fopen(path,"w"); // write all the output to the file io.MatNam 
     if (!fstats) {
@@ -92,7 +89,7 @@ int main() {
     counts = malloc(nslices*sizeof(int));             
     sli = malloc( (nslices+1)*sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
-    if (io.Fmt > HB) {
+    if (io.Fmt > HB){
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo); 
       if (ierr == 0) {
         fprintf(fstats,"matrix read successfully\n");
@@ -144,7 +141,7 @@ int main() {
     //-------------------- initial vector  
     vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);
-    ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
+    ierr = LanTrbounds(50, 200, 1e-12, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n", 
 	    lmin, lmax);
     /*-------------------- interval and eig bounds */
@@ -190,37 +187,32 @@ int main() {
       //-------------------- 
       a = sli[sl];
       b = sli[sl+1];
-      printf(" subinterval: [%.4e , %.4e]\n", a, b); 
-      double intv[4];
-      intv[0] = a;
-      intv[1] = b;
-      intv[2] = lmin;
-      intv[3] = lmax;
-      // find the rational filter on this slice
-      ratparams rat;
-      // setup default parameters for rat
-      set_ratf_def(&rat);
-      // change some default parameters here:
-      rat.pw = pow;
-      rat.num = num;
-      rat.beta = beta;
-      // now determine rational filter
-      find_ratf(intv, &rat);
-      // use the solver function from UMFPACK
-      void **solshiftdata = (void **) malloc(num*sizeof(void *));
-      /*------------ factoring the shifted matrices and store the factors */
-      SetupASIGMABSolSuiteSparse(&Acsr, &Bcsr, num, rat.zk, solshiftdata);
-      /*------------ give the data to rat */
-      SetASigmaBSol(&rat, NULL, ASIGMABSolSuiteSparse, solshiftdata);
+      printf(" subinterval: [%.15e , %.15e]\n", a, b); 
+      xintv[0] = a;
+      xintv[1] = b;
+      xintv[2] = lmin;
+      xintv[3] = lmax;
+      //-------------------- set up default parameters for pol.
+      set_pol_def(&pol);
+      // can change default values here e.g.
+      pol.damping = 2;
+      pol.thresh_int = 0.5;
+      pol.thresh_ext = 0.5;
+      //pol.max_deg  = 300;
+      //-------------------- Now determine polymomial
+      find_pol(xintv, &pol);
+      fprintf(fstats, " polynomial deg %d, bar %.15e gam %.15e\n",
+              pol.deg,pol.bar, pol.gam);
+      //save_vec(pol.deg+1, pol.mu, "OUT/mu.txt");
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int+2;
       //-------------------- Dimension of Krylov subspace and maximal iterations
       mlan = max(4*nev,100);  mlan = min(mlan, n);  max_its = 3*mlan;
       //-------------------- RationalLanNr
-      ierr = RatLanTr(mlan, nev, intv, max_its, tol, vinit, &rat, &nev2, &lam, 
-		      &Y, &res, fstats);
+      ierr = ChebLanTr(mlan, nev, xintv, max_its, tol, vinit, 
+                       &pol, &nev2, &lam, &Y, &res, fstats);
       if (ierr) {
-	printf("RatLanNr error %d\n", ierr);
+	printf("ChebLanTr error %d\n", ierr);
 	return 1;
       }
 
@@ -243,14 +235,12 @@ int main() {
       if (lam) free(lam);
       if (Y) free(Y);
       if (res) free(res);
-      FreeASIGMABSolSuiteSparse(rat.num, solshiftdata);
-      free(solshiftdata);
-      free_rat(&rat);
+      free_pol(&pol);
       free(ind);
     } //for (sl=0; sl<nslices; sl++)
     //-------------------- free other allocated space 
     fprintf(fstats," --> Total eigenvalues found = %d\n",totcnt);
-    sprintf(path, "OUT/EigsOut_RLanR_(%s_%s)", io.MatNam1, io.MatNam2);
+    sprintf(path, "OUT/EigsOut_PLanR_(%s_%s)", io.MatNam1, io.MatNam2);
     FILE *fmtout = fopen(path,"w");
     if (fmtout) {
       for (j=0; j<totcnt; j++)
