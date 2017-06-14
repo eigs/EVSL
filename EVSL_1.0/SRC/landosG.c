@@ -30,10 +30,9 @@
  *
  *    @param[out] neig == estimated number of eigenvalues
  *
- *    @note To transfer LanDos calls to LanDosG calls, let degB be a positive
- *    integer, and select a value for tau, perhapse 1e-4.
- *
- *
+ *    @note This works for both the standard and generalized eigenvalue
+ *    problems.
+ *    landos.c/LanDos is only for the standard eigenvalue problem.
  *----------------------------------------------------------------------*/
 
 int LanDosG(const int nvec, const int msteps, const int degB, int npts,
@@ -44,8 +43,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   int maxit = msteps, m;  // Max number of iteratios
   int n = evsldata.n;
 
-
-  //double tall;
+  // double tall;
 
   const int ifGenEv = evsldata.ifGenEv;
 
@@ -83,7 +81,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   double *y;
   Calloc(y, npts, double);
   //-------------------- to report timings/
-  //tall = cheblan_timer();
+  // tall = cheblan_timer();
   int i, j, k;
 
   /*--------------------   frequently used constants  */

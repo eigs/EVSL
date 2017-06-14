@@ -26,16 +26,22 @@
  *
  *    @param[out] neig == estimated number of eigenvalues
  *
- *    @deprecated deprecated in favor of LanDosG, which now supports both the
- *    standard and general eigenvalue problem.
- *
+ *    @Note: This only works with the standard eigenvalue problem. Use landosG.c
+ *    /LanDosG for the generalized eigenvalue problem.
  *
  *----------------------------------------------------------------------*/
 
 int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
            double *neig, const double *const intv) {
-  printf("WARNING: LanDos is deprecated. Please use LanDosG instead. \n");
   //--------------------
+  const int ifGenEv = evsldata.ifGenEv;
+  if (ifGenEv) {
+    fprintf(stderr,
+            "ERROR: landos.c/LanDos only works with the standard eigenvalue "
+            "problem. Please use landosG.c/LanDos for the generalized problem. "
+            "\n");
+    exit(-1);
+  }
   double *alp, *bet, nbet, nalp, t, *V;
   int one = 1;
   int n, m, i, j;
