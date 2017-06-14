@@ -8,10 +8,6 @@
 #include <unistd.h>
 #include "evsl.h"
 #include "io.h"
-<<<<<<< HEAD
-=======
-//#include "evsl_suitesparse.h"
->>>>>>> 273256f2f366f095d98ee1f5bd7c5ae5765866b8
 
 #define BsolPol 1
 
@@ -19,7 +15,6 @@
 int exDOS(double* vals, int n, int npts, double* x, double* y, double* intv);
 int read_coo_MM(const char* matfile, int idxin, int idxout, cooMat* Acoo);
 int get_matrix_info(FILE* fmat, io_t* pio);
-
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
