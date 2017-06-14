@@ -115,8 +115,8 @@ int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo) {
   else
     nnz2 = nnz;
   /*-------- Allocate mem for COO */
-  int* IR = (int *)malloc(nnz2*sizeof(int));
-  int* JC = (int *)malloc(nnz2*sizeof(int));
+  int* IR = (int *)calloc(nnz2,sizeof(int));
+  int* JC = (int *)calloc(nnz2,sizeof(int));
   double* VAL = (double *)malloc(nnz2*sizeof(double));
   /*-------- read line by line */
   char *p1, *p2;
