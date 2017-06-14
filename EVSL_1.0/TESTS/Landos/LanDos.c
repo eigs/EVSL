@@ -76,21 +76,33 @@ int main() {
   intv[2] = intv[0];
   intv[3] = intv[1];
   int i, ret;
-  double neig;  // Number eigenvalues
+  double neig, neig2;  // Number eigenvalues
   //-------------------- exact histogram and computed DOS
   double* xHist = (double*)calloc(npts, sizeof(double));  // Exact DOS x values
   double* yHist = (double*)calloc(npts, sizeof(double));  // Exact DOS y values
   double* xdos = (double*)calloc(npts, sizeof(double));   // Calculated DOS x
                                                           // vals
   double* ydos = (double*)calloc(npts, sizeof(double));   // Calculated DOS y
+  double* xdos2 = (double*)calloc(npts, sizeof(double));  // Calculated DOS x
+                                                          // vals
+  double* ydos2 = (double*)calloc(npts, sizeof(double));  // Calculated DOS y
                                                           // vals
 
   SetStdEig();
   EVSLStart();
   SetAMatrix(&csrMat);
+  double t0 = cheblan_timer();
   ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv,
                 tau);  // Calculate DOS
+  double t1 = cheblan_timer();
   fprintf(stdout, " LanDos ret %d \n", ret);
+  double t2 = cheblan_timer();
+  ret =
+      LanDos(nvec, msteps, npts, xdos2, ydos2, &neig2, intv);  // Calculate DOS
+  double t3 = cheblan_timer();
+  fprintf(stdout, " LanDos ret %d \n", ret);
+  printf("neig1: %f, neig2: %f \n", neig, neig2);
+  printf("1: %f, 2: %f \n", t1 - t0, t3 - t2);
 
   ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv);  // Exact DOS
   EVSLFinish();
@@ -104,9 +116,13 @@ int main() {
 
   //-------------------- Write to  output files
   FILE* ofp = fopen("OUT/myydos.txt", "w");
-  for (i = 0; i < npts; i++)
+  FILE* ofp2 = fopen("OUT/myydos2.txt", "w");
+  for (i = 0; i < npts; i++) {
     fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
+    fprintf(ofp2, " %10.4f  %10.4f\n", xdos2[i], ydos2[i]);
+  }
   fclose(ofp);
+  fclose(ofp2);
 
   //-------------------- save exact DOS
   ofp = fopen("OUT/Exydos.txt", "w");
