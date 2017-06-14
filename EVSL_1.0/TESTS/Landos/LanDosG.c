@@ -56,11 +56,11 @@ int main() {
   // intv[4] and intv[5] are the smallest and largest eigenvalues of B after
   // diagonal scaling
   double intv[6] = {-2.739543872224533e-13,
-                    0.0325,
+                     0.0325,
                     -2.739543872224533e-13,
-                    0.0325,
-                    0.5479,
-                    2.5000};
+                     0.0325,
+                     0.5479,
+                     2.5000};
   int n = 0, i, nslices, ierr;
   double a, b;
 
@@ -113,8 +113,7 @@ int main() {
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats,
-            "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
+    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
             nslices);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
@@ -192,16 +191,16 @@ int main() {
       /*-------------------- Use polynomial to solve B */
       BSolDataPol Bsol;
       Bsol.intv[0] = lmin;
-      Bsol.intv[1] = lmax;
+      Bsol.intv[1] = lmax;    
       SetupBSolPol(&Bcsr, &Bsol);
-      SetBSol(BSolPol, (void*)&Bsol);
+      SetBSol(BSolPol, (void *) &Bsol);
 #else
       /*-------------------- Use Choleksy factorization to solve B */
       BSolDataSuiteSparse Bsol;
       /*-------------------- use SuiteSparse as the solver for B */
       SetupBSolSuiteSparse(&Bcsr, &Bsol);
       /*-------------------- set the solver for B */
-      SetBSol(BSolSuiteSparse, (void*)&Bsol);
+      SetBSol(BSolSuiteSparse, (void *) &Bsol);
 #endif
       SetGenEig();
       rand_double(n, vinit);
