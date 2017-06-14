@@ -26,7 +26,7 @@
  *
  *    @param[out] neig == estimated number of eigenvalues
  *
- *    @Note: This only works with the standard eigenvalue problem. Use landosG.c
+ *    @note This only works with the standard eigenvalue problem. Use landosG.c
  *    /LanDosG for the generalized eigenvalue problem.
  *
  *----------------------------------------------------------------------*/
