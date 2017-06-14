@@ -1,6 +1,6 @@
 ## EVSL:  EigenValues Slicing Library (Version 1.0)         
-\verbatim
-<pre>
+
+~~~
 
                                       ___  __   __  ___   _    
                                      | __| \ \ / / / __| | |   
@@ -10,9 +10,7 @@
                           ChebLanTR, ChebLanNR, ChebSI, RatLanTr and RatLanNr 
                Polynomial and Rational Filtered Lanczos and subspace iteration algorithms 
                                  For Symmetric Eigenvalue problems
-</pre>
-\endverbatim
-
+~~~
 
 Welcome to EVSL. EVSL is a C library for computing the eigenvalues of
 a symmetric matrix  that are located in a given  interval.  This first
