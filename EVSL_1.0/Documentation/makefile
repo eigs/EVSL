@@ -1,4 +1,4 @@
 latex:
-	cd Out/latex && make
+	cd OUT/latex && make
 clean:
-	rm -fr Out
+	rm -fr OUT
