@@ -9,7 +9,7 @@
  * Assume input csr is 0-based index
  * output csc 0/1 index specified by OUTINDEX      *
  */
-void csrcsc(int OUTINDEX, int nrow, int ncol, int job,
+void csrcsc(int OUTINDEX, const int nrow, const int ncol, int job,
     double *a, int *ja, int *ia,
     double *ao, int *jao, int *iao) {
   int i,k;
@@ -106,20 +106,21 @@ void free_coo(cooMat *coo) {
  * @brief convert coo to csr
  */
 int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
-  int nnz = coo->nnz;
+  const int nnz = coo->nnz;
   //printf("@@@@ coo2csr, nnz %d\n", nnz);
   /* allocate memory */
   csr_resize(coo->nrows, coo->ncols, nnz, csr);
+  const int nrows = coo->nrows;
   /* fill (ia, ja, a) */
   int i;
-  for (i=0; i<coo->nrows+1; i++) {
+  for (i=0; i<nrows+1; i++) {
     csr->ia[i] = 0;
   }
   for (i=0; i<nnz; i++) {
     int row = coo->ir[i] - cooidx;
     csr->ia[row+1] ++;
   }
-  for (i=0; i<coo->nrows; i++) {
+  for (i=0; i<nrows; i++) {
     csr->ia[i+1] += csr->ia[i];
   }
   for (i=0; i<nnz; i++) {
@@ -131,7 +132,7 @@ int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
     csr->ja[k] = col;
     csr->ia[row]++;
   }
-  for (i=coo->nrows; i>0; i--) {
+  for (i=nrows; i>0; i--) {
     csr->ia[i] = csr->ia[i-1];
   }
   csr->ia[0] = 0;

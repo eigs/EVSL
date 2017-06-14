@@ -147,9 +147,13 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   *  where p(t) is the approximate DOS as given in the KPM method
   *  in the expanded form:  \f$\sum mu_i C_i /\sqrt{1-t^2}\f$
   **/
-void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) {
+void intChx(const int Mdeg, double *mu, const int npts, double *xi, double *yi) {
   //
   int ndp1, j, k;
+  if(npts <= 0) {
+    fprintf(stderr, "Must have more than 0 points");
+    exit (1);
+  }
   double val0, theta0, *thetas;
   Malloc(thetas, npts, double);
   ndp1   = Mdeg+1; 
