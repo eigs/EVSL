@@ -50,6 +50,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - chebpoly.c    :  Computing and applying polynomial filters
    - chebsi.c      :  Polynomial Filtered Subspace iteration
    - dumps.c       :  Miscellaneous functions for I/O and for debugging 
+   - dos_utils.c   :  Miscellaneous functions used for DOS based functions.
    - evsl.c        :  Set EVSL solver options and data
    - lanbounds.c   :  Lanczos alg. to give bounds of spectrum
    - landos.c      :  Lanczos based DOS algorithm for the standard problem
