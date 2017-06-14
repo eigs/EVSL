@@ -54,7 +54,7 @@
 int ChebLanNr(double *intv, int maxit, double tol, double *vinit, 
               polparams *pol, int *nevOut, double **lamo, double **Wo, 
               double **reso, FILE *fstats) {
-  const int ifGenEv = ifGenEv;
+  const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */
   double tm,  tmv=0.0, tr0, tr1, tall;
   double *y, flami; 

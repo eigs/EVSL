@@ -439,7 +439,7 @@ void free_rat(ratparams *rat) {
  * 
  */
 void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
-  const int ifGenEv = ifGenEv;
+  const int ifGenEv = evsldata.ifGenEv;
   int ii, jj, kk, k=0, kf;
   int *mulp = rat->mulp;
   int num = rat->num;

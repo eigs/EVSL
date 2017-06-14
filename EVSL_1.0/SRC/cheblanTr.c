@@ -59,7 +59,7 @@
 int ChebLanTr(int lanm, int nev, double *intv, int maxit, 
               double tol, double *vinit, polparams *pol, int *nev2, 
               double **vals, double **W, double **resW, FILE *fstats) {
-  const int ifGenEv = ifGenEv;
+  const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */
   double tm, tall=0.0, tmv=0.0;
   //double tolP = tol;

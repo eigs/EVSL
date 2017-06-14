@@ -28,7 +28,7 @@
 int kpmdos(int Mdeg, int damping, int nvec, double *intv,
     double *mu, double *ecnt) {
   /*-------------------- initialize variables */
-  const int ifGenEv = ifGenEv;
+  const int ifGenEv = evsldata.ifGenEv;
   int n = evsldata.n;
   double *vkp1, *v, *vkm1, *vk, *jac;
   double *w = NULL;
