@@ -43,8 +43,8 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - dumps.c       :  Miscellaneous functions for I/O and for debugging 
    - evsl.c        :  Set EVSL solver options and data
    - lanbounds.c   :  Lanczos alg. to give bounds of spectrum
-   - landos.c      :  DEPRECATED: Lanczos based DOS algorithm 
-   - landosG.c     :  Lanczos based DOS algorithm 
+   - landos.c      :  Lanczos based DOS algorithm for the standard problem
+   - landosG.c     :  Lanczos based DOS algorithm for general and standard problems
    - lanTrbound.c  :  A more robust alg. to give bounds of spectrum based on TR Lanczos
    - mactime.c     :  Timer for mac iOS
    - misc_la.c     :  Miscellaneous linear algebra functions
