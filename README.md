@@ -67,6 +67,9 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - lapl.c     : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
    - io.c       : parse command-line input parameters
 
+
+===> THE FOLLOWING HAS BEEN SPLIT INTO TWO -- UPDATE
+
 * TESTS/Gen_MM  : test drivers for generalized eigenvalue problems with general matrices read from files
    - MMPLanR.c  : Polynomial filtering T-R Lanczos
    - MMRLanN.c  : Rational filtering non-restart Lanczos
@@ -100,30 +103,30 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 ###  INSTALLATION
 -----------------------------------------------------------------------
 
-**Library**: The users only need to modify the file makefile.in [see makefile.in.example for samples of files makefile.in that are given for mac-os and for Linux].
+**Library**: The user only needs to modify the file makefile.in [see makefile.in.example for samples of files makefile.in that are given for mac-os and for Linux].
   ```   
   cp makefile.in_Linux/MacOS.example makefile.in. 
   modify makefile.in [provide C compiler and BLAS/LAPACK path]
   make clean; make
   ```    
 **Test programs**:
-      In the TESTS_* directories, one will find makefiles to 
+      In the directories under TESTS/, you will find makefiles to 
       build sample drivers that test a few different situations.
       For building the drivers for rational filtering solvers and all drivers for 
-      generalized eigenvalue problems in TESTS_Gen_* directories, one will also need to
+      generalized eigenvalue problems in TESTS_Gen_* directories, you will also need to
       modify EXTERNAL/makefile.in, where SUITESPARSE path needs to be provided.
 
 **SuiteSparse**:
       SuiteSparse is the default direct linear solver of EVSL, for the
       rational filtering and generalized eigenvalue problems.
-      EVSL use UMFPACK to solve linear systems with (A-SIGMA I) or (A-SIGMA B),
-      and use CHOLMOD to solve linear systems with B.
+      EVSL uses SuiteSparse to solve linear systems with (A-SIGMA I) or (A-SIGMA B),
+      and  CHOLMOD for  solving linear systems with B.
 
       Users can use other solvers by providing the same interface as done for SuiteSparse.
       Follow the examples implemented in EXTERNAL/evsl_suitesparse.c
  
 >  NOTE:  SuiteSparse is NOT distributed with EVSL, and is Copyrighted by Timothy Davis.  
->  Please refer to SuiteSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
+>  Refer to SuiteSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
 
 -----------------------------------------------------------------------
 ###  LINKING  WITH  UMFPACK (SuiteSparse 4.5.3)

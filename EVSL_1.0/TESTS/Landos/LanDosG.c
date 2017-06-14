@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include "evsl.h"
 #include "io.h"
-#include "evsl_suitesparse.h"
 
 #define BsolPol 1
 
