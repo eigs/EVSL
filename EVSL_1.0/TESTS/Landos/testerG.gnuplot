@@ -1,4 +1,4 @@
-set term post enh 		  # enhanced PostScript, essentially PostScript
+set term post enhanced color landscape 		  # enhanced PostScript, essentially PostScript
   		 		  # with bounding boxes
 set out 'testerG.eps'              # output file
 
