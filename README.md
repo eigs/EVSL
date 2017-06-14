@@ -1,16 +1,17 @@
 ## EVSL:  EigenValues Slicing Library (Version 1.0)         
-<!-- language: lang-none -->
+\verbatim
 <pre>
 
-                                          ___  __   __  ___   _    
-                                         | __| \ \ / / / __| | |   
-                                         | _|   \ V /  \__ \ | |__ 
-                                         |___|   \_/   |___/ |____|
-    
-                              ChebLanTR, ChebLanNR, ChebSI, RatLanTr and RatLanNr 
-                   Polynomial and Rational Filtered Lanczos and subspace iteration algorithms 
-                                     For Symmetric Eigenvalue problems
+                                      ___  __   __  ___   _    
+                                     | __| \ \ / / / __| | |   
+                                     | _|   \ V /  \__ \ | |__ 
+                                     |___|   \_/   |___/ |____|                  
+
+                          ChebLanTR, ChebLanNR, ChebSI, RatLanTr and RatLanNr 
+               Polynomial and Rational Filtered Lanczos and subspace iteration algorithms 
+                                 For Symmetric Eigenvalue problems
 </pre>
+\endverbatim
 
 
 Welcome to EVSL. EVSL is a C library for computing the eigenvalues of
@@ -63,11 +64,11 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - timing.c      :  Timer
    - vect.c        :  Vector operations
 
-* libevsl.a  : library
+  * libevsl.a  : library
 
-* TESTS/Fortran : Fortran test drivers
+  * TESTS/Fortran : Fortran test drivers
 
-* TESTS/Gen_Lap : test drivers for generalized eigenvalue problems with Laplacians
+  * TESTS/Gen_Lap : test drivers for generalized eigenvalue problems with Laplacians
    - LapPLanN.c : Polynomial filtering Lanczos
    - LapPLanR.c : Polynomial filtering T-R Lanczos
    - LapRLanN.c : Rational filtering Lanczos
@@ -75,13 +76,13 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - lapl.c     : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
    - io.c       : parse command-line input parameters
 
-* TESTS/Gen_MM_Landos  : test drivers for generalized eigenvalue problems with general matrices read from files
+  * TESTS/Gen_MM_Landos  : test drivers for generalized eigenvalue problems with general matrices read from files
    - MMPLanR.c  : Polynomial filtering T-R Lanczos
    - MMRLanN.c  : Rational filtering non-restart Lanczos
    - MMRLanR.c  : Rational filtering T-R Lanczos
    - mmio.c     : IO routines for the matrix market format
 
-* TEST/Lap      : test drivers for standard eigenvalue problems with Laplacian matrices
+  * TEST/Lap      : test drivers for standard eigenvalue problems with Laplacian matrices
    - LapPLanN.c         : Polynomial filtering non-restart Lanczos
    - LapPLanN_MatFree.c : "matrix-free" version: not forming matrix but passing mat-vec function
    - LapPLanR.c         : Polynomial filtering T-R Lanczos
@@ -89,11 +90,11 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - LapRLanN.c         : Rational filtering non-restart Lanczos
    - LapRLanR.c         : Rational filtering T-R Lanczos
 
-* TESTS/Landos     : test drivers for the lanDOS related functions.
+  * TESTS/Landos     : test drivers for the lanDOS related functions.
    - LanDos.c      : Standard eigenvalue problem DOS using Lancco's
    - LanDosG.c     : General eigenvalue problem DOS using Lancco's
 
-* TESTS/MM         : general matrices in sparse format read from files
+  * TESTS/MM         : general matrices in sparse format read from files
    - MMPLanN.c     : Polynomial filtering non-restart Lanczos
    - MMPLanR.c     : Polynomial filtering T-R Lanczos
    - MMPLanR_omp.c : Polynomial filtering T-R Lanczos (parallelized with OMP for slices)
@@ -101,10 +102,10 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - MMRLanN.c     : Rational filtering non-restart Lanczos
    - MMRLanR.c     : Rational filtering T-R Lanczos
 
-* EXTERNAL         : direct solver (SuiteSparse) interface for generalized eigenvalue problems
+  * EXTERNAL         : direct solver (SuiteSparse) interface for generalized eigenvalue problems
    - evsl_suitesparse.c : suitesparse UMFPACK and CHOLMOD interface
 
-* FORTRAN          : Fortran interface
+  * FORTRAN          : Fortran interface
    - evsl_f90.c    : Fortran interface
 
    
