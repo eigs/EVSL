@@ -15,6 +15,7 @@
 *    all eigenvalues of matrix pair (A,B)
 *----------------------------------------------------------------------*/   
 int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
+  const int ifGenEv = evsldata.ifGenEv;
   double *alp, *bet, nbet, nalp, t, *V, *Z;
   int j, one=1, n;
 
@@ -23,7 +24,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);
   Malloc(V, (msteps+1)*n, double);
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     /* storage for Z = B * V */
     Malloc(Z, (msteps+1)*n, double);
   } else {
@@ -31,7 +32,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
     Z = V;
   }
   /* init vector */
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     /* B norm */
     matvec_B(v, Z);
     t = 1.0 / sqrt(DDOT(&n, v, &one, Z, &one));
@@ -74,7 +75,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
       double mt = -t;
       DAXPY(&n, &mt, &Z[i*n], &one, &Z[(j+1)*n], &one);
     }
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /* vnew = B \ znew */
       solve_B(&Z[(j+1)*n], &V[(j+1)*n]);
     }
@@ -91,7 +92,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
     t = 1.0 / bet[j];
     /* vnew = vnew / bet */
     DSCAL(&n, &t, &V[(j+1)*n], &one);
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /* znew = znew / bet */
       DSCAL(&n, &t, &Z[(j+1)*n], &one);
     }
@@ -125,7 +126,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   free(alp);
   free(bet);
   free(V);
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     free(Z);
   }
   free(S);
