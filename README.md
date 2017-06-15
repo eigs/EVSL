@@ -1,24 +1,7 @@
 ## EVSL:  EigenValues Slicing Library (Version 1.0)         
 
-```html
-
-<center>
-<FONT SIZE=6 COLOR = "0099cc"> 
-E V S L &nbsp; Version 1.0 
-</FONT> 
-<br> <br> 
-</center> 
 ```
-
-```css
-1. <span style="color: #f2cf4a; font-family: Babas; font-size: 4em;">
-EVSL</span>
-2.
-
-```
-    
-
-```                                  ___  __   __  ___   _    
+                                      ___  __   __  ___   _    
                                      | __| \ \ / / / __| | |   
                                      | _|   \ V /  \__ \ | |__ 
                                      |___|   \_/   |___/ |____|
