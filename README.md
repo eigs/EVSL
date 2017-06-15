@@ -20,8 +20,8 @@ independently.  EVSL  implements a polynomial filtered  Lanczos (thick
 restart, no  restart) a rational  filtered Lanczos (thick  restart, no
 restart), and a polynomial filtered subspace iteration for solving
 standard eigenvalue problems 
-\f$A * x = \lambda * x \f$ and generalized eigenvalue problems
-\f$A * x = \lambda * B * x\f$.
+A u = &lambda;  u  and generalized eigenvalue problems
+A u = &lambda;  B u.
 
 
 For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
