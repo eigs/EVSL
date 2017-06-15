@@ -133,10 +133,12 @@ int main() {
     }
     alleigs = malloc(n*sizeof(double)); 
     /*----------------  compute the range of the spectrum of B */
+    SetStdEig();
     SetAMatrix(&Bcsr);
     vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);    
     ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
+    SetGenEig();
     /*------------- get the bounds for B ------*/
     xintv[4] = lmin;
     xintv[5] = lmax; 
