@@ -173,11 +173,13 @@ int main() {
     }
     if (1) {
       /*----------------  compute the range of the spectrum of B */
+      SetStdEig();
       SetAMatrix(&Bcsr);
       double* vinit = (double*)malloc(n * sizeof(double));
       rand_double(n, vinit);
       double lmin = 0.0, lmax = 0.0;
       ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
+      SetGenEig();
       if(ierr) {
         fprintf(flog, "Could not run LanTrBounds: %i", ierr);
         exit(10);
@@ -256,10 +258,11 @@ int main() {
     // -------------------- Calculate the exact DOS
     ret = exDOS(ev, numev, npts, xHist, yHist, intv);
 
-    EVSLFinish();
 
     free_coo(&Acoo);
     free_coo(&Bcoo);
+    free_csr(&Acsr);
+    free_csr(&Bcsr);
     fprintf(stdout, " exDOS ret %d \n", ret);
 
     //--------------------Make OUT dir if it doesn't exist
@@ -294,12 +297,11 @@ int main() {
     free(xdos);
     free(ydos);
     free(ev);
+    fclose(fstats);
     if (sqrtdiag) free(sqrtdiag);
   }
-  //-------------------- done
-  fclose(fstats);
   fclose(fmat);
-  free_csr(&Acsr);
-  free_csr(&Bcsr);
+  EVSLFinish();
+  //-------------------- done
   return 0;
 }
