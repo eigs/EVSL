@@ -70,14 +70,14 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - io.c       : parse command-line input parameters
 
 
-* TESTS/Gen_MM_KPM:
-* TESTS/Gen_MM_LAN: test drivers for generalized eigenvalue problems with general matrices read from files
+* TESTS/Gen_MM_KPM: test drivers for generalized eigenvalue problems with general matrices read from files.
+  Spectrum slicer uses KPM.
    - MMPLanR.c  : Polynomial filtering T-R Lanczos
    - MMRLanN.c  : Rational filtering non-restart Lanczos
    - MMRLanR.c  : Rational filtering T-R Lanczos
    - mmio.c     : IO routines for the matrix market format
-                  The *_KPM  directory has drivers that use the KPM method for spectrum slicing
-                  The *_LAN  directory has drivers that use the Lanczos method for spectrum slicing
+ 
+* TESTS/Gen_MM_LAN: same as above but spectrum slicing based on the  Lanczos method
 
 * TEST/Lap              : test drivers for standard eigenvalue problems with Laplacian matrices
    - LapPLanN.c         : Polynomial filtering non-restart Lanczos
