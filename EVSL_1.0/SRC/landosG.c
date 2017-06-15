@@ -16,19 +16,23 @@
  *
  *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
- *    @param[in] degB Degree with which B should be approximated by
+ *    @param[in] degB Degree with which B should be approximated by \\
+ *                Must be positive. Planned feature: if non-positive use
  *    @param[in] npts number of sample points used for the DOS curve
  *    @param[in] *intv Stores the three intervals of interest
+ *    @param[in] tau Tolerence used
  *
- *    @param[out] xdos Length-npts long vector, x-coordinate points for
+ *    @param[out] *xdos Length-npts long vector, x-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] ydos Length-npts long vector, y-coordinate points for
+ *    @param[out] *ydos Length-npts long vector, y-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] neig == estimated number of eigenvalues
+ *    @param[out] neig  estimated number of eigenvalues
  *
- *
+ *    @note This works for both the standard and generalized eigenvalue
+ *    problems.
+ *    landos.c/LanDos is only for the standard eigenvalue problem.
  *----------------------------------------------------------------------*/
 
 int LanDosG(const int nvec, const int msteps, const int degB, int npts,
@@ -39,39 +43,45 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   int maxit = msteps, m;  // Max number of iteratios
   int n = evsldata.n;
 
-  const int mdeg = 200;
+  // double tall;
+
+  const int ifGenEv = evsldata.ifGenEv;
 
   polparams pol_sqr;
   polparams pol_sol;
-  set_pol_def(&pol_sqr);
-  set_pol_def(&pol_sol);
 
-  double tall;
+  if (ifGenEv) {
+    set_pol_def(&pol_sqr);
+    set_pol_def(&pol_sol);
 
-  double *mu_sqr;
-  double *mu_sol;
-  Calloc(mu_sqr, mdeg, double);
-  Calloc(mu_sol, mdeg, double);
-  pol_sqr.mu = mu_sqr;
-  pol_sol.mu = mu_sol;
+    double *mu_sqr;
+    double *mu_sol;
+
+    Calloc(mu_sqr, degB, double);
+    Calloc(mu_sol, degB, double);
+
+    pol_sqr.mu = mu_sqr;
+    pol_sol.mu = mu_sol;
+
+    if (degB <= 0) {
+      printf("LanDos with degB <= 0 not yet implemented");
+      exit(-1);
+    } else {
+      lsPol(&intv[4], degB, isqrt, tau, &pol_sqr);
+      lsPol(&intv[4], degB, rec, tau, &pol_sol);
+    }
+  }
 
   double *vinit;
   Malloc(vinit, n, double);
 
-  if (degB <= 0) {
-    printf("LanDos with degB <= 0 not yet implemented");
-    exit(-1);
-  } else {
-    lsPol(&intv[4], mdeg, isqrt, tau, &pol_sqr);
-    lsPol(&intv[4], mdeg, rec, tau, &pol_sol);
-  }
   int *ind;
   Malloc(ind, npts, int);
   double tm, tmv = 0.0;
   double *y;
   Calloc(y, npts, double);
   //-------------------- to report timings/
-  tall = cheblan_timer();
+  // tall = cheblan_timer();
   int i, j, k;
 
   /*--------------------   frequently used constants  */
@@ -79,16 +89,16 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   /* size of the matrix */
   maxit = min(n, maxit);
   double *gamma2;
-  Malloc(gamma2, maxit, double);
+  Calloc(gamma2, maxit, double);
   /*-----------------------------------------------------------------------*
    * *Non-restarted* Lanczos iteration
    *-----------------------------------------------------------------------
    -------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
-  Malloc(V, n * (maxit + 1), double);
-  if (evsldata.ifGenEv) {
+  Calloc(V, n * (maxit + 1), double);
+  if (ifGenEv) {
     /* storage for Z = B * V */
-    Malloc(Z, n * (maxit + 1), double);
+    Calloc(Z, n * (maxit + 1), double);
   } else {
     /* Z and V are the same */
     Z = V;
@@ -107,7 +117,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   const int M = min(msteps, 30);
   const double H = (lM - lm) / (M - 1);
   const double sigma = H / sqrt(8 * log(kappa));
-  double sigma2 = 2 * sigma * sigma;
+  const double sigma2 = 2 * sigma * sigma;
   //-------------------- If gaussian small than tol ignore point.
   const double tol = 1e-08;
   double width = sigma * sqrt(-2.0 * log(tol));
@@ -116,19 +126,22 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   int nmv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
   double *wk, *vrand = NULL;
-  int wk_size = evsldata.ifGenEv ? 6 * n : 4 * n;
+  const int wk_size = ifGenEv ? 6 * n : 4 * n;
   Malloc(wk, wk_size, double);
   for (m = 0; m < nvec; m++) {
     randn_double(n, vinit);
     /*-------------------- copy initial vector to Z(:,1) */
     /* Filter the initial vector */
     tm = cheblan_timer();
-    pnav(pol_sqr.mu, pol_sqr.deg, pol_sqr.cc, pol_sqr.dd, vinit, V, wk);  // Ish
+    if (ifGenEv) {
+      pnav(pol_sqr.mu, pol_sqr.deg, pol_sqr.cc, pol_sqr.dd, vinit, V,
+           wk);  // Ish
+    }
     tmv += cheblan_timer() - tm;
 
     /*--------------------  normalize it */
     double t;
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /* B norm */
       matvec_B(V, Z);
       t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
@@ -136,7 +149,8 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
       nmv++;
     } else {
       /* 2-norm */
-      t = 1.0 / DNRM2(&n, V, &one);  // add a test here.
+      t = 1.0 / DNRM2(&n, vinit, &one);  // add a test here.
+      DCOPY(&n, vinit, &one, V, &one);
     }
     /* unit B^{-1}-norm or 2-norm */
     DSCAL(&n, &t, V, &one);
@@ -176,7 +190,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
       nalpha = -alpha;
       DAXPY(&n, &nalpha, z, &one, znew, &one);
       /*-------------------- FULL reortho to all previous Lan vectors */
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, wk);
         /* -------------- NOTE: B-matvec
@@ -203,7 +217,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
       /*-------------------- lucky breakdown test */
       if (beta * nwn < orthTol * wn) {
         rand_double(n, vnew);
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
           CGS_DGKS2(n, k + 1, NGS_MAX, V, Z, vnew, wk);
           /* -------------- NOTE: B-matvec */
@@ -229,7 +243,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
         /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
         DSCAL(&n, &t, vnew, &one);
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /*-------------------- znew = znew / beta */
           DSCAL(&n, &t, znew, &one);
         }
@@ -275,16 +289,16 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   free(wk);
   free(y);
   free(ind);
-  free_pol(&pol_sqr);
-  free_pol(&pol_sol);
   if (vrand) {
     free(vrand);
   }
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     free(Z);
+    free_pol(&pol_sqr);
+    free_pol(&pol_sol);
   }
   /*-------------------- record stats */
-  tall = cheblan_timer() - tall;
+  // tall = cheblan_timer() - tall;
   /*-------------------- print stat */
 
   return 0;

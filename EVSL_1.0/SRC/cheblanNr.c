@@ -54,6 +54,7 @@
 int ChebLanNr(double *intv, int maxit, double tol, double *vinit, 
               polparams *pol, int *nevOut, double **lamo, double **Wo, 
               double **reso, FILE *fstats) {
+  const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */
   double tm,  tmv=0.0, tr0, tr1, tall;
   double *y, flami; 
@@ -108,7 +109,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
   Malloc(V, n*(maxit+1), double);
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     /* storage for Z = B * V */
     Malloc(Z, n*(maxit+1), double);
   } else {
@@ -131,7 +132,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   int nmv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
   double *u, *wk, *w2, *vrand=NULL;
-  int wk_size = evsldata.ifGenEv ? 4*n : 3*n;
+  int wk_size = ifGenEv ? 4*n : 3*n;
   Malloc(wk, wk_size, double);
   w2 = wk + n;
 #if FILTER_VINIT
@@ -148,7 +149,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
 #endif
   /*--------------------  normalize it */
   double t, nt, res0;
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     /* B norm */
     matvec_B(V, Z);
     t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
@@ -204,7 +205,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     nalpha = -alpha;
     DAXPY(&n, &nalpha, z, &one, znew, &one);
     /*-------------------- FULL reortho to all previous Lan vectors */
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
       CGS_DGKS2(n, k+1, NGS_MAX, Z, V, znew, wk);
       /* vnew = B \ znew */
@@ -234,7 +235,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
 #else
       rand_double(n, vnew);
 #endif
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
       /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
         CGS_DGKS2(n, k+1, NGS_MAX, V, Z, vnew, wk);        
         matvec_B(vnew, znew);
@@ -253,7 +254,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       /*-------------------- vnew = vnew / beta */
       t = 1.0 / beta;
       DSCAL(&n, &t, vnew, &one);
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         /*-------------------- znew = znew / beta */
         DSCAL(&n, &t, znew, &one);
       }
@@ -328,7 +329,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     u = &Rvec[nev*n];
     DGEMV(&cN, &n, &kdim, &done, V, &n, y, &one, &dzero, u, &one);
     /*-------------------- normalize u */
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /* B-norm, w2 = B*u */
       matvec_B(u, w2);
       t = sqrt(DDOT(&n, u, &one, w2, &one)); /* should be one */
@@ -343,7 +344,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- scal u */
     t = 1.0 / t;
     DSCAL(&n, &t, u, &one);
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /*------------------ w2 = B*u */
       DSCAL(&n, &t, w2, &one);
     }
@@ -359,7 +360,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     }
     /*-------------------- compute residual wrt A for this pair */
     nt = -t;
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /*-------------------- w = w - t*B*u */
       DAXPY(&n, &nt, w2, &one, wk, &one);
       /*-------------------- res0 = norm(w) */
@@ -393,7 +394,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   if (vrand) {
     free(vrand);
   }
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     free(Z);
   }
   /*-------------------- record stats */

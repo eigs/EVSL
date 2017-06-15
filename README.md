@@ -1,14 +1,17 @@
 ## EVSL:  EigenValues Slicing Library (Version 1.0)         
-```
+
+~~~
+
                                       ___  __   __  ___   _    
                                      | __| \ \ / / / __| | |   
                                      | _|   \ V /  \__ \ | |__ 
-                                     |___|   \_/   |___/ |____|
+                                     |___|   \_/   |___/ |____|                  
 
                           ChebLanTR, ChebLanNR, ChebSI, RatLanTr and RatLanNr 
                Polynomial and Rational Filtered Lanczos and subspace iteration algorithms 
                                  For Symmetric Eigenvalue problems
-```
+~~~
+
 Welcome to EVSL. EVSL is a C library for computing the eigenvalues of
 a symmetric matrix  that are located in a given  interval.  This first
 release includes the routines listed above and does not yet offer full
@@ -27,7 +30,9 @@ standard eigenvalue problems
 For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
 -----------------------------------------------------------------------    
+
 ### DESCRIPTION OF CONTENTS
+
 -----------------------------------------------------------------------
 
  * INC
@@ -38,15 +43,17 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
     - internal_proto.h : internal function prototypes for SRC/
     
  * SRC
-   - chelanNr.c    :  Polynomial Filtered no-restart Lanczos
-   - chelanTr.c    :  Polynomial Filtered thick restart Lanczos
+   - cheblanNr.c    :  Polynomial Filtered no-restart Lanczos
+   - cheblanTr.c    :  Polynomial Filtered thick restart Lanczos
    - chebpoly.c    :  Computing and applying polynomial filters
    - chebsi.c      :  Polynomial Filtered Subspace iteration
    - dumps.c       :  Miscellaneous functions for I/O and for debugging 
+   - dos_utils.c   :  Miscellaneous functions used for DOS based functions.
    - evsl.c        :  Set EVSL solver options and data
    - lanbounds.c   :  Lanczos alg. to give bounds of spectrum
-   - landos.c      :  Lanczos based DOS algorithm 
-   - lanTrbound.c  :  A more robust alg. to give bounds of spectrum based on TR Lanczos
+   - landos.c      :  Lanczos based DOS algorithm for the standard problem
+   - landosG.c     :  Lanczos based DOS algorithm for general and standard problems
+   - lanTrbounds.c  :  A more robust alg. to give bounds of spectrum based on TR Lanczos
    - mactime.c     :  Timer for mac iOS
    - misc_la.c     :  Miscellaneous linear algebra functions
    - ratfilter.c   :  Computing and applying rational filters
@@ -54,14 +61,15 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - ratlanTr.c    :  Rational Filtered thick restart Lanczos
    - spmat.c       :  Sparse matrix routines
    - spslicer.c    :  Spectrum slicing
+   - spslicer2.c    :  Spectrum slicing
    - timing.c      :  Timer
    - vect.c        :  Vector operations
 
-* libevsl.a  : library
+ * libevsl.a  : library
 
-* TESTS/Fortran : Fortran test drivers
+ * TESTS/Fortran : Fortran test drivers
 
-* TESTS/Gen_Lap : test drivers for generalized eigenvalue problems with Laplacians
+ * TESTS/Gen_Lap : test drivers for generalized eigenvalue problems with Laplacians
    - LapPLanN.c : Polynomial filtering Lanczos
    - LapPLanR.c : Polynomial filtering T-R Lanczos
    - LapRLanN.c : Rational filtering Lanczos
@@ -79,7 +87,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
                   The *_KPM  directory has drivers that use the KPM method for spectrum slicing
                   The *_LAN  directory has drivers that use the Lanczos method for spectrum slicing
 
-* TEST/Lap              : test drivers for standard eigenvalue problems with Laplacian matrices
+ * TEST/Lap      : test drivers for standard eigenvalue problems with Laplacian matrices
    - LapPLanN.c         : Polynomial filtering non-restart Lanczos
    - LapPLanN_MatFree.c : "matrix-free" version: not forming matrix but passing mat-vec function
    - LapPLanR.c         : Polynomial filtering T-R Lanczos
@@ -87,7 +95,11 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - LapRLanN.c         : Rational filtering non-restart Lanczos
    - LapRLanR.c         : Rational filtering T-R Lanczos
 
-* TESTS/MM         : general matrices in sparse format read from files
+ * TESTS/Landos     : test drivers for the lanDOS related functions.
+   - LanDos.c      : Standard eigenvalue problem DOS using Lancco's
+   - LanDosG.c     : General eigenvalue problem DOS using Lancco's
+
+ * TESTS/MM         : general matrices in sparse format read from files
    - MMPLanN.c     : Polynomial filtering non-restart Lanczos
    - MMPLanR.c     : Polynomial filtering T-R Lanczos
    - MMPLanR_omp.c : Polynomial filtering T-R Lanczos (parallelized with OMP for slices)
@@ -95,28 +107,30 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - MMRLanN.c     : Rational filtering non-restart Lanczos
    - MMRLanR.c     : Rational filtering T-R Lanczos
 
-* EXTERNAL         : direct solver (SuiteSparse) interface for generalized eigenvalue problems
+ * EXTERNAL         : direct solver (SuiteSparse) interface for generalized eigenvalue problems
    - evsl_suitesparse.c : suitesparse UMFPACK and CHOLMOD interface
 
-* FORTRAN          : Fortran interface
+ * FORTRAN          : Fortran interface
    - evsl_f90.c    : Fortran interface
 
    
 -----------------------------------------------------------------------
+
 ###  INSTALLATION
+
 -----------------------------------------------------------------------
 
 **Library**: The user only needs to modify the file makefile.in [see makefile.in.example for samples of files makefile.in that are given for mac-os and for Linux].
-  ```   
-  cp makefile.in_Linux/MacOS.example makefile.in. 
-  modify makefile.in [provide C compiler and BLAS/LAPACK path]
-  make clean; make
-  ```    
+
+    cp makefile.in_Linux/MacOS.example makefile.in. 
+    modify makefile.in [provide C compiler and BLAS/LAPACK path]
+    make clean; make
+
 **Test programs**:
       In the directories under TESTS/, you will find makefiles to 
       build sample drivers that test a few different situations.
       For building the drivers for rational filtering solvers and all drivers for 
-      generalized eigenvalue problems in TESTS_Gen_* directories, you will also need to
+      generalized eigenvalue problems in TESTS/Gen_* directories, you will also need to
       modify EXTERNAL/makefile.in, where SUITESPARSE path needs to be provided.
 
 **SuiteSparse**:
@@ -132,33 +146,37 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 >  Refer to SuiteSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
 
 -----------------------------------------------------------------------
+
 ###  LINKING  WITH  UMFPACK (SuiteSparse 4.5.3)
+
 -----------------------------------------------------------------------
   UMFPACK and CHOLMOD requires AMD, COLAMD, CCOLAMD
   and  CAMD,  and  optionally  METIS 5.1.0.   Compile  each  of  these
   packages  to  have  the  library  file in  the  Lib  directory.   If
   SuiteSparse  is configured  with METIS,  give the  path to  METIS (v
   5.1.0)  as  well  to  make  libmetis.a,  in metis-5.1.0/ type
-  ```
-  make  config; make
-  ```
+
+      make  config; make
+
   Please  refer to SuiteSparse and METIS for installation details.
 
 -----------------------------------------------------------------------
+
 ###  RATIONAL FILTERING
+
 -----------------------------------------------------------------------
   Rational  filtering  requires  solving  linear  systems  (where  the
   coefficient matrix  is the  original matrix  shifted by  a **complex**
   shift).  A linear solver routine  must be provided.  
 
   After  having  computed  the  rational  filter  by
-  ```
-  find_ratf(intv, &rat),
-  ```
+
+      find_ratf(intv, &rat),
+
   users  can call
-  ```
-  SetASigmaBSol(&rat, func, allf, data)
-  ```
+
+      SetASigmaBSol(&rat, func, allf, data)
+
   to set the solver functions and associated data for all the poles of 
   the rational filter.
   `func` is an array of function pointers of  length num of  poles, i.e.,  `rat->num`. 
@@ -168,9 +186,9 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   length,  where `data[i]`  is the  data needed  by `func[i]`.   
 
   All "func" must be of the following prototype
-  ```
-  void SolFuncC(int n, double *br, double *bz, double *xr, double *xz, void *data);
-  ```
+
+      void SolFuncC(int n, double *br, double *bz, double *xr, double *xz, void *data);
+
   where `n`  is the size  of the system,  `br`, `bz` are  the right-hand
   side (real and  imaginary parts of complex vector),  `xr`, `xz` will
   be the  solution (complex vector),  and `data` contains  all the
@@ -182,14 +200,16 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   should be ready to use.
   
 -----------------------------------------------------------------------
+
 ###  MATRIX-FREE SOLVERS
+
 -----------------------------------------------------------------------
   All  the  iterative solvers  in  EVSL  can  be used  in  matrix-free
   ways. Users need only to  provide the matrix-vector product function
   of the following prototype:
-  ```
-  void MVFunc(double *x, double *y, void *data);
-  ```
+
+      void MVFunc(double *x, double *y, void *data);
+
   where y  = A *  x and data  is the pointer  to the associated  data to
   perform the  matvec. The  `(void *)`  argument is  to provide  a uniform
   interface  to all  user-specific  functions. For  a particular  Matvec
@@ -199,10 +219,10 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   call  this  function  to  perform  all matvecs.    The user can also
   provide CSR  matrices to EVSL, in which case EVSL will use its internal 
   MATVEC routine. This can be set by
-  ```
-  SetAMatrix(csrMat *A)
-  SetBMatrix(csrMat *B)
-  ```
+
+      SetAMatrix(csrMat *A)
+      SetBMatrix(csrMat *B)
+
   for matrices A and B
 
   
@@ -210,29 +230,29 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   matrices is  provided, where the  matrix is not explicitly  formed but
   5pt/7pt stencil is used instead. In  this example, a struct for matvec
   is first defined:
-  ```
-  typedef struct _lapmv_t {  
-    int  nx,  ny,  nz; 
-    double  *stencil;  
-  } lapmv_t;
-  ```
+
+      typedef struct _lapmv_t {  
+        int  nx,  ny,  nz; 
+        double  *stencil;  
+      } lapmv_t;
+
   and the matvec function is implemented
-  ```
-  void Lap2D3DMatvec(double  *x, double  *y,  void  *data) {  
-    lapmv_t *lapmv = (lapmv_t *) data; 
-    int nx = lapmv->nx; 
-    int ny = lapmv->ny;
-    int nz = lapmv->nz; 
-    double *stencil = lapmv->stencil; 
-    ...  
-  }
-  ```
+
+      void Lap2D3DMatvec(double  *x, double  *y,  void  *data) {  
+        lapmv_t *lapmv = (lapmv_t *) data; 
+        int nx = lapmv->nx; 
+        int ny = lapmv->ny;
+        int nz = lapmv->nz; 
+        double *stencil = lapmv->stencil; 
+        ...  
+      }
+
   in  which   the  pointer  is  first   casted  and  all  the   data  is
   unpacked. Once these are ready, they can be passed to EVSL by calling    
-  ```
-  SetAMatvec(n, &Lap2D3DMatvec, (void*) &lapmv) and
-  SetBMatvec(n, &Lap2D3DMatvec, (void*) &lapmv)
-  ```
+
+      SetAMatvec(n, &Lap2D3DMatvec, (void*) &lapmv) and
+      SetBMatvec(n, &Lap2D3DMatvec, (void*) &lapmv)
+
   to set the matvec routines for A and B respectively,
   where the first input is the size of the "matrix", the second input is
   the  function pointer  and the  third one  is the  data pointer.  Once
@@ -244,33 +264,37 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   will be straightforward to use it in EVSL.
   
 -----------------------------------------------------------------------
+
 ###  GENERALIZED EIGENVALUE PROBLEM
+
 -----------------------------------------------------------------------
   For solving A * x = \lambda * B * x, the users must also provide a solver
   for the B matrix by calling
-  ```
-  SetBSol(SolFuncR func, void *data).
-  ```
+
+      SetBSol(SolFuncR func, void *data).
+
   To tell EVSL to solve the generalized eigenvalue problem, one must call
-  ```
-  SetGenEig()
-  ```
+
+      SetGenEig()
+
   since by default, EVSL assumes solving standard eigenvalue problem even
   if B is provided. Call function
-  ```
-  SetStdEig()
-  ```
+
+      SetStdEig()
+
   for solving standard eigenvalue problem
 
   The current version of EVSL will need solves with LT for spectrum slicing,
   where B=L*L' is the Cholesky factorization. Call function
-  ```
-  SetLTSol(SolFuncR func, void *data)
-  ```
+
+    SetLTSol(SolFuncR func, void *data)
+
   to set the solver function
 
 -----------------------------------------------------------------------
+
 ###  Initialization and Finalization
+
 -----------------------------------------------------------------------
 * Use `EVSLStart()` and `EVSLFinish()` before and after any call to the EVSL functions 
 

@@ -28,11 +28,12 @@
 int kpmdos(int Mdeg, int damping, int nvec, double *intv,
     double *mu, double *ecnt) {
   /*-------------------- initialize variables */
+  const int ifGenEv = evsldata.ifGenEv;
   int n = evsldata.n;
   double *vkp1, *v, *vkm1, *vk, *jac;
   double *w = NULL;
   /*-------------------- workspace for generalized eigenvalue prob */
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     Malloc(w, n, double);
   }
   Malloc(vkp1, n, double);
@@ -71,7 +72,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   tcnt = 0.0;
   /*-------------------- for random loop */
   for (m=0; m<nvec; m++) {
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /* unit 2-norm v */
       rand_double(n, v);
       t = 1.0 / DNRM2(&n, v, &one);
@@ -97,7 +98,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
     /*-------------------- Chebyshev (degree) loop */
     for (k=0; k<Mdeg; k++){
       /*-------------------- Cheb. recurrence */
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         /* v_{k+1} := B \ A * v_k (partial result) */
         matvec_A(vk, w);
         solve_B(w, vkp1);
@@ -134,7 +135,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   free(vkm1);
   free(vk);
   free(jac);
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     free(w);
   }
 
@@ -146,9 +147,13 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   *  where p(t) is the approximate DOS as given in the KPM method
   *  in the expanded form:  \f$\sum mu_i C_i /\sqrt{1-t^2}\f$
   **/
-void intChx(int Mdeg, double *mu, int npts, double *xi, double *yi) {
+void intChx(const int Mdeg, double *mu, const int npts, double *xi, double *yi) {
   //
   int ndp1, j, k;
+  if(npts <= 0) {
+    fprintf(stderr, "Must have more than 0 points");
+    exit (1);
+  }
   double val0, theta0, *thetas;
   Malloc(thetas, npts, double);
   ndp1   = Mdeg+1; 

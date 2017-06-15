@@ -11,7 +11,6 @@
  *
  *    Computes the density of states (DOS, or spectral density)
  *
- *    @param[in] *A  -- used through calls to matvec_A
  *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] npts number of sample points used for the DOS curve
@@ -19,20 +18,30 @@
  *      intv[0:1] = [lambda_min, lambda_max]\\
  *      intv[2:3] = [a b] = interval where DOS is to be computed
  *
- *    @param[out] xdos Length-npts long vector, x-coordinate points for
+ *    @param[out] *xdos Length-npts long vector, x-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] ydos Length-npts long vector, y-coordinate points for
+ *    @param[out] *ydos Length-npts long vector, y-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] neig == estimated number of eigenvalues
+ *    @param[out] neig  estimated number of eigenvalues
  *
+ *    @note This only works with the standard eigenvalue problem. Use landosG.c
+ *    /LanDosG for the generalized eigenvalue problem.
  *
  *----------------------------------------------------------------------*/
 
 int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
            double *neig, const double *const intv) {
   //--------------------
+  const int ifGenEv = evsldata.ifGenEv;
+  if (ifGenEv) {
+    fprintf(stderr,
+            "ERROR: landos.c/LanDos only works with the standard eigenvalue "
+            "problem. Please use landosG.c/LanDos for the generalized problem. "
+            "\n");
+    exit(-1);
+  }
   double *alp, *bet, nbet, nalp, t, *V;
   int one = 1;
   int n, m, i, j;

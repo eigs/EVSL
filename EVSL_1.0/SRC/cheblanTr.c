@@ -59,6 +59,7 @@
 int ChebLanTr(int lanm, int nev, double *intv, int maxit, 
               double tol, double *vinit, polparams *pol, int *nev2, 
               double **vals, double **W, double **resW, FILE *fstats) {
+  const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */
   double tm, tall=0.0, tmv=0.0;
   //double tolP = tol;
@@ -131,7 +132,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   Malloc(V, n*lanm1, double);
   /*-------------------- for gen eig prob, storage for Z = B * V */
   double *Z;
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     Malloc(Z, n*lanm1, double);
   } else {
     Z = V;
@@ -146,7 +147,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   Malloc(res, nev, double);
   double *BY = NULL;
   /*-------------------- for gen eig prob, storage for B*Y */
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     Malloc(BY, n*nev, double);
   }
   /*-------------------- lock =  number of locked vectors */
@@ -160,7 +161,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   Malloc(Rval, lanm, double);
   Malloc(resi, lanm, double);
   Malloc(Rvec, n*lanm, double);
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     Malloc(BRvec, n*lanm, double);
   }
   /*-------------------- Eigen vectors of T */
@@ -171,7 +172,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   Malloc(s, lanm, double);
   /*-------------------- alloc some work space */
   double *work, *vrand=NULL;
-  int work_size = evsldata.ifGenEv ? 4*n : 3*n;
+  int work_size = ifGenEv ? 4*n : 3*n;
   Malloc(work, work_size, double);  
 #if FILTER_VINIT
   tm = cheblan_timer();
@@ -186,7 +187,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
 #endif
   /*-------------------- normalize it */
   double t;
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     /* B norm */
     matvec_B(V, Z);
     t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
@@ -231,7 +232,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       nmv += deg;
       /*------------------ deflation */
       if (lock > 0) {
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /* orthogonalize against locked vectors first, w = w - B*Y*Y'*w */
           CGS_DGKS2(n, lock, NGS_MAX, BY, Y, znew, work);
         } else {
@@ -258,7 +259,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       }
       T[trlen*lanm1+trlen] = s[k1];
       wn += fabs(s[k1]);
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         /*-------------------- vnew = B \ znew */
         solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
@@ -281,7 +282,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
 #else
         rand_double(n, vnew);
 #endif
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /* orthogonalize against locked vectors first, v = v - Y*(B*Y)'*v */
           CGS_DGKS2(n, lock, NGS_MAX, Y, BY, vnew, work);
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
@@ -306,7 +307,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         /*------------------- w = w / beta */
         double ibeta = 1.0 / beta;
         DSCAL(&n, &ibeta, vnew, &one);
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           DSCAL(&n, &ibeta, znew, &one);
         }
       }
@@ -342,7 +343,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       it++;
       /*-------------------- deflation: orthgonalize vs locked ones first */
       if (lock > 0) {
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /* orthgonlize against locked vectors first, znew = znew - B*Y*Y'*znew */
           CGS_DGKS2(n, lock, NGS_MAX, BY, Y, znew, work);
         } else {
@@ -364,7 +365,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       double nalpha = -alpha;
       DAXPY(&n, &nalpha, z, &one, znew, &one);
       /*-------------------- FULL reortho to all previous Lan vectors */
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);
         /* vnew = B \ znew */
@@ -396,7 +397,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         /* generate a new init vector*/
         rand_double(n, vnew);
 #endif
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /* orthogonalize against locked vectors first, w = w - Y*(B*Y)'*w */
           CGS_DGKS2(n, lock, NGS_MAX, Y, BY, vnew, work);
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
@@ -421,7 +422,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         /*---------------------- vnew = vnew / beta */
         double ibeta = 1.0 / beta;
         DSCAL(&n, &ibeta, vnew, &one);
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /*-------------------- znew = znew / beta */
           DSCAL(&n, &ibeta, znew, &one);
         }
@@ -527,7 +528,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     /*---------------------- Compute the Ritz vectors: 
      *                       Rvec(:,1:jl) = V(:,1:k) * EvecT(:,1:jl) */
     DGEMM(&cN, &cN, &n, &jl, &k, &done, V, &n, EvecT, &lanm1, &dzero, Rvec, &n);
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       DGEMM(&cN, &cN, &n, &jl, &k, &done, Z, &n, EvecT, &lanm1, &dzero, BRvec, &n);
     }
     /*-------------------- Pass-2: check if Ritz vals of A are in [a,b] */
@@ -539,13 +540,13 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     for (i=0; i<jl; i++) {
       double *y = Rvec + i*n;
       double *By = NULL;
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         By = BRvec + i*n;
       }
       double *w = work;
       double *w2 = w + n;
       /*------------------ normalize just in case. */
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         /* B-norm, w2 = B*y */
         matvec_B(y, w2);
         t = sqrt(DDOT(&n, y, &one, w2, &one));
@@ -561,7 +562,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       t = 1.0 / t;
       DSCAL(&n, &t, y, &one);
       /*-------------------- scal B*y */
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         DSCAL(&n, &t, w2, &one);
       }
       /*-------------------- w = A*y */
@@ -576,7 +577,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         ll++;
         /*-------------------- compute residual wrt A for this pair */
         double nt3 = -t3;
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /* w = w - t3*w2, w2 = B*y,  (w=A*y-t3*B*y) */
           DAXPY(&n, &nt3, w2, &one, w, &one);
           /* res0 = 2-norm of w */
@@ -603,7 +604,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
               fprintf(fstats, "-- More eigval found: realloc space for %d evs\n", nev);
             }
             Realloc(Y, nev*n, double);
-            if (evsldata.ifGenEv) {
+            if (ifGenEv) {
               Realloc(BY, nev*n, double);
             }
             Realloc(Lam, nev, double);
@@ -611,7 +612,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           }
           /*--------------------   accept (t3, y) */
           DCOPY(&n, y, &one, Y+lock*n, &one);
-          if (evsldata.ifGenEv) {
+          if (ifGenEv) {
             DCOPY(&n, By, &one, BY+lock*n, &one);
           }
           Lam[lock] = t3;
@@ -621,7 +622,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           /*-------------------- restart; move Ritz pair for TR to front */
           Rval[trlen] = Rval[i];
           DCOPY(&n, y, &one, V+trlen*n, &one);
-          if (evsldata.ifGenEv) {
+          if (ifGenEv) {
             DCOPY(&n, By, &one, Z+trlen*n, &one);
           }
           /* special vector for TR that is the bottom row of 
@@ -664,7 +665,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     memset(T, 0, lanm1*lanm1*sizeof(double));
     /*-------------------- move starting vector vector V(:,k+1);  V(:,trlen+1) = V(:,k+1) */
     DCOPY(&n, V+k*n, &one, V+trlen*n, &one);
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       DCOPY(&n, Z+k*n, &one, Z+trlen*n, &one);
     }
   } /* outer loop (it) */
@@ -691,7 +692,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   if (vrand) {
     free(vrand);
   }
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     free(Z);
     free(BY);
     free(BRvec);
