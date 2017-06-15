@@ -1,0 +1,44 @@
+
+----------------------------------------
+ DRIVERS FOR STANDARD PROBLEMS
+----------------------------------------
+
+Lap
+ 
+ Drivers for testing a few  methods on simple Laplacean matrices.  You
+ will also find here a driver for a matrix-free test whereby no matrix
+ is passed  but the  matrix vector-product is  done via  function (and
+ set-up as a function pointer).
+
+MM 
+ 
+ Drivers for testing a few  routines to compute eigenvalues of general
+ sparse (symmetric real) matrices. These matrices are read from a file
+ in  the matrix  market  format. Note:  The HB  matrix  format is  not
+ supported.
+
+----------------------------------------
+ DRIVERS FOR GENERALIZED PROBLEMS
+---------------------------------------- 
+
+Gen_Lap
+
+  Test drivers  are for  testing  a  few methods  on  simple
+  (artificial) Laplacean matrix pair (A, B).  
+  
+Gen_MM
+ 
+ Drivers  for testing  a  few routines  for  computing eigenvalues  of
+ general sparse (symmetric real) matrix pair (A, B), where B has to be
+ positive definite.  These matrices are read from a file in the matrix
+ market format.  Note: The HB matrix format is not supported.
+
+----------------------------------------
+ OTHER 
+---------------------------------------- 
+
+Landos
+ 
+ Drivers for  testing Density of  states routines. So far  the Lanczos
+ method for DOS is tested.
+

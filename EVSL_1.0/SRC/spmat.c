@@ -4,11 +4,11 @@
 #include "struct.h"
 #include "internal_proto.h"
 
-/**-------------------------------------------------*
+/**
  * @brief convert csr to csc
  * Assume input csr is 0-based index
  * output csc 0/1 index specified by OUTINDEX      *
- * ------------------------------------------------*/
+ */
 void csrcsc(int OUTINDEX, int nrow, int ncol, int job,
     double *a, int *ja, int *ia,
     double *ao, int *jao, int *iao) {
@@ -43,11 +43,11 @@ void csrcsc(int OUTINDEX, int nrow, int ncol, int job,
   iao[0] = OUTINDEX;
 }
 
-/**-------------------------------------------*
+/**
  * @brief  Sort each row of a csr by increasing column 
  * order
  * By double transposition
- *-------------------------------------------*/
+ */
 void sortrow(csrMat *A) {
   /*-------------------------------------------*/
   int nrows = A->nrows;
@@ -68,7 +68,11 @@ void sortrow(csrMat *A) {
   free(ib);
 }
 
+/** 
+ * @brief  memory allocation for csr matrix
+ */
 void csr_resize(int nrow, int ncol, int nnz, csrMat *csr) {
+  csr->owndata = 1;
   csr->nrows = nrow;
   csr->ncols = ncol;
   Malloc(csr->ia, nrow+1, int);
@@ -76,26 +80,37 @@ void csr_resize(int nrow, int ncol, int nnz, csrMat *csr) {
   Malloc(csr->a, nnz, double);
 }
 
+/**
+ * @brief  memory deallocation for csr matrix
+ */
 void free_csr(csrMat *csr) {
+  /* if it does not own the data, do nothing */
+  if (!csr->owndata) {
+    return;
+  }
   free(csr->ia);
   free(csr->ja);
   free(csr->a);
 }
 
+/** 
+ * @brief  memory deallocation for coo matrix
+ */
 void free_coo(cooMat *coo) {
   free(coo->ir);
   free(coo->jc);
   free(coo->vv);
 }
 
-/*---------------------------------------------------------
+/** 
  * @brief convert coo to csr
- *---------------------------------------------------------*/
+ */
 int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
   int nnz = coo->nnz;
   //printf("@@@@ coo2csr, nnz %d\n", nnz);
+  /* allocate memory */
   csr_resize(coo->nrows, coo->ncols, nnz, csr);
-
+  /* fill (ia, ja, a) */
   int i;
   for (i=0; i<coo->nrows+1; i++) {
     csr->ia[i] = 0;
@@ -120,29 +135,39 @@ int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
     csr->ia[i] = csr->ia[i-1];
   }
   csr->ia[0] = 0;
-
+  /* sort rows ? */
   sortrow(csr);
   return 0;
 }
 
 
-double dcsr1nrm(csrMat *A){
-  // computes the 1-norm of A 
-  double ta = 0.0, t = 0.0;
-  int nrows =A->nrows,  one = 1, i, k, k1, len;
+#if 0
+/**-------------------------------------------*
+ * @brief  compute the inf-norm of a csr matrix
+ *-------------------------------------------*/
+double dcsrinfnrm(csrMat *A){
+  // computes the inf-norm of A: max abs row sum
+  double ta = 0.0;
+  int nrows =A->nrows, i, j;
   int *ia = A->ia;
   double *aa = A->a;
-  k = ia[0];
-  for (i=0; i<nrows;i++){
-    k1 = ia[i+1];
-    len = k1-k;
-    t = DASUM(&len,&aa[k],&one);
+  /* for each row */
+  for (i=0; i<nrows; i++) {
+    /* abs row sum */
+    double t = 0.0;
+    for (j=ia[i]; j<ia[i+1]; j++) {
+      t += fabs(aa[j]);
+    }
+    /* take max */
     ta = max(ta,t);
-    k = k1;
   }
   return (ta);
 }
+#endif
 
+/**
+ * @brief csr matrix matvec or transpose matvec, (ia, ja, a) form
+ */
 void dcsrmv(char trans, int nrow, int ncol, double *a, 
     int *ia, int *ja, double *x, double *y) {
   int  len, jj=nrow;
@@ -185,88 +210,65 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
     }
   }
 }
-/*
-* @brief matvec for CSR matrix, y = A * x or y = A' * x
+
+/**
+* @brief matvec for a CSR matrix, y = A*x. 
+* void *data points to csrMat, 
+* compatible form with EVSLMatvec (see struct.h)
 */
-int matvec_csr(char trans, csrMat *A, double *x, double *y) {
-  dcsrmv(trans, A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
-  return 0;
+void matvec_csr(double *x, double *y, void *data) {
+  csrMat *A = (csrMat *) data;
+  dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
 }
 
-/*
-* @brief y = A * x
-* This is a special matvec function for the matrix A in
-*    A * x = \lambda * B * x
-* When matvec function is set, A will be ignored so it can be NULL
-*/
-int matvec_A(csrMat *A, double *x, double *y) {
-  /* if an external matvec routine is set, A will be ignored */
-  if (evsldata.Amatvec.func) {
-    (evsldata.Amatvec.func)(x, y, evsldata.Amatvec.data);
+
+/** @brief inline function used by matadd
+ * insert an element pointed by j of A (times t) to location k in C (row i)
+ * */
+inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k, 
+                          int *j, int *map) {
+  /* if this entry already exists in C: 
+   * checking if it is the first entry of this row
+   * and if column indices match 
+   * NOTE that pointer j or k will be modified */
+  if (*k > C->ia[i] && C->ja[(*k)-1] == A->ja[*j]) {
+    if (map) {
+      /* j maps to k-1 in C */
+      map[(*j)] = (*k) - 1;
+    }
+    /* add to existing entry */
+    C->a[(*k)-1] += t * A->a[*j];
   } else {
-    dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
+    if (map) {
+      /* jA maps to k in C */
+      map[*j] = *k; 
+    }
+    /* create new entry */
+    C->ja[*k] = A->ja[*j];
+    C->a[*k] = t * A->a[*j];
+    (*k)++;
   }
-  return 0;
+  (*j) ++;
 }
 
-/* @warning: A must have been `sortrow' already */
-int check_full_diag(char type, csrMat *A) {
-  int i,j;
-  for (i=0; i<A->nrows; i++) {
-    /* if row i is empty, error */
-    if (A->ia[i] == A->ia[i+1]) {
-      return 2;
-    }
-    /* j is the location of the diag entry of row i 
-     * !!! A is assumed to be sorted !!! */   
-    if (type == 'U' || type == 'u') {
-      j = A->ia[i];
-    } else {
-      j = A->ia[i+1]-1;
-    }
-    if (A->ja[j] != i) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-/* @brief solve R x = b or R' x = b */
-int tri_sol_upper(char trans, csrMat *R, double *b, double *x) {
-  int i, j, i1, i2, n = R->nrows;
-  double d, xi;
-  if (trans == 'T' || trans == 't') {
-    memcpy(x, b, n*sizeof(double));
-    for (i=0; i<n; i++) {
-      i1 = R->ia[i];
-      i2 = R->ia[i+1];
-      d = R->a[i1];
-      xi = x[i] = x[i] / d;
-      for (j=i1+1; j<i2; j++) {
-        x[R->ja[j]] -= xi * R->a[j];
-      }
-    }
-  } else {
-    for (i=n-1; i>=0; i--) {
-      i1 = R->ia[i];
-      i2 = R->ia[i+1];
-      d = R->a[i1];
-      xi = b[i];
-      for (j=i1+1; j<i2; j++) {
-        xi -= R->a[j] * x[R->ja[j]];
-      }
-      x[i] = xi / d;
-    }
-  }
-  return 0;
-}
-
-/* C = alp * A + bet * B 
- * Note: Assume that A and B are sorted */
+/** @brief matrix addition C = alp * A + bet * B
+ * @param[in] alp
+ * @param[in] bet
+ * @param[in] A
+ * @param[in] B
+ * @param[out] C
+ * @warning the nz pattern of C will be union of those of A and B.
+ * no cancellation will be considered
+ * @warning A and B MUST be sorted, on output C will be sorted as well
+ * @param[out] mapA (of size nnzA or null), mapB (of size nnzB or null)
+ * if not null, on output mapA contains the location of each nonzero of A
+ * in the CSR matrix C, i.e. mapA[i] is the position of the corresponding
+ * entry in C.ja and C.a for entry in A.ja[i] and A.a[i]
+ * @param[out] mapB the same as mapA
+ * */
 int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
            int *mapA, int *mapB) {
-  int nnzA, nnzB, i, j, k;
-
+  int nnzA, nnzB, i, jA, jB, k;
   /* check dimension */
   if (A->nrows != B->nrows || A->ncols != B->ncols) {
     return 1;
@@ -274,55 +276,54 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
   /* nnz of A and B */
   nnzA = A->ia[A->nrows];
   nnzB = B->ia[B->nrows];
-  /* alloc C [at most has nnz = nnzA + nnzB] */
+  /* alloc C [at most has nnzC = nnzA + nnzB] */
   csr_resize(A->nrows, A->ncols, nnzA+nnzB, C);
-
-  k = 0; /* nnz counter of C */
+  /* nnz counter of C */
+  k = 0; 
   C->ia[0] = 0;
-  for (i=0; i<nrow; i++) {
+  for (i=0; i<A->nrows; i++) {
     /* open row i of A and B */
-    for (jA=A->ia[i],jB=B->ia[i]; ; ) {
+    /* merging two sorted list */
+    for (jA=A->ia[i], jB=B->ia[i]; ; ) {
       if (jA < A->ia[i+1] && jB < B->ia[i+1]) {
-        /* will insert an element */
+        /* will insert the element with smaller col id */
         if (A->ja[jA] <= B->ja[jB]) {
           /* insert jA */
-          if (k > Cp[i] && Ci[k-1] == A->ja[jA]) {
-            Cx[k-1] = A->a[jA];
-            Cz[k-1] = 0.0;
-          } else {
-            Ci[k] = A->ja[jA];
-            Cx[k] = A->a[jA];
-            Cz[k] = 0.0;
-            k++;
-          }
-          jA ++;
+          matadd_insert(alp, A, C, i, &k, &jA, mapA);
         } else {
           /* instert jB */
-          map[jB] = k;
-          if (k == Cp[i] || Ci[k-1] != B->ja[jA]) {
-            Ci[k] = B->ja[jA];
-            Cx[k] = 0.0;
-            Cz[k] = 0.0;
-            k++;
-          }
-          jB ++;
+          matadd_insert(bet, B, C, i, &k, &jB, mapB);
         }
       } else if (jA == A->ia[i+1]) {
-        for (; jB < B->ia[i+1]; jB++) {
+        for (; jB < B->ia[i+1]; ) {
+          /* instert jB */
+          matadd_insert(bet, B, C, i, &k, &jB, mapB);
         }
         break;
       } else {
-        for (; jA < A->ia[i+1]; jA++) {
+        for (; jA < A->ia[i+1]; ) {
+          /* insert jA */
+          matadd_insert(alp, A, C, i, &k, &jA, mapA);
         }
         break;
       }
     }
-
-
-  
-
-  Realloc(C->ja, nnzC, int);
-  Realloc(C->a, nnzC, double);
-  free(iw);
+    C->ia[i+1] = k;
+  }
+  Realloc(C->ja, k, int);
+  Realloc(C->a, k, double);
   return 0;
 }
+
+/** @brief return an identity matrix of dimension n */
+int speye(int n, csrMat *A) {
+  int i;
+  csr_resize(n, n, n, A);
+  for (i=0; i<n; i++) {
+    A->ia[i] = A->ja[i] = i;
+    A->a[i] = 1.0;
+  }
+  A->ia[n] = n;
+  return 0;
+}
+

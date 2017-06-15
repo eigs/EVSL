@@ -33,7 +33,7 @@ void contQuad(int method, int n, complex double* zk) {
     for (i=0; i<m; i++) {
       beta[i] = 0.5/(sqrt(1-pow(2*(i+1),-2)));
     }
-    dstev_(&JOBZ, &n, D, beta, Z, &n, WORK, &INFO);
+    DSTEV(&JOBZ, &n, D, beta, Z, &n, WORK, &INFO);
     for (i=0; i<n; i++) {
       tmp2 = I*M_PI/2.0*(1.0-D[i]);
       zk[i] = cexp(tmp2);
@@ -412,48 +412,8 @@ int find_ratf(double *intv, ratparams *rat) {
   /*-------------------- compute expansion coefficients on [aa, bb]*/
   scaleweigthts(n, aa, bb, zk, mulp, omega);
     
-  rat->solshift = NULL;
-  rat->solshiftdata = NULL;
+  rat->ASIGBsol = NULL;
 
-  return 0;
-}
-
-int set_ratf_solfunc(ratparams *rat, csrMat *A, csrMat *B, linSolFunc *funcs, 
-                     void **data) {
-  int i,err;
-  /* (re)allocate enough space (number of poles) */
-  Realloc(rat->solshift, rat->num, linSolFunc);
-  Realloc(rat->solshiftdata, rat->num, void *);
-  /* if funcs are not provided, use the default sovler: UMFPACK */
-  if (funcs == NULL) {
-#ifdef EVSL_WITH_SUITESPARSE
-    rat->use_default_solver = 1;
-    if (B) {
-      if (!evsldata.hasB) {
-        printf("warning [%s (%d)]: Rhs mat B has not been set with 'SetRhsMatrix'\n",
-               __FILE__, __LINE__);
-      }
-      err = set_ratf_solfunc_gen_default(A, B, rat);
-    } else {
-      if (evsldata.hasB) {
-        printf("warning [%s (%d)]: Rhs mat B has been set but B=NULL is given\n",
-               __FILE__, __LINE__);
-      }
-      err = set_ratf_solfunc_default(A, rat);
-    }
-#else
-    printf("error: EVSL was not compiled with the default solver, ");
-    printf("so the users must provide solvers\n");
-    err = -1;
-#endif
-    return err;
-  }
-  /* if funcs are provided, copy the function pointers and data */
-  rat->use_default_solver = 0;
-  for (i=0; i<rat->num; i++) {
-    rat->solshift[i] = funcs[i];
-    rat->solshiftdata[i] = data ? data[i] : NULL;
-  }
   return 0;
 }
 
@@ -461,10 +421,81 @@ void free_rat(ratparams *rat) {
   free(rat->mulp);
   free(rat->omega);
   free(rat->zk);
-  free(rat->solshift);
-#ifdef EVSL_WITH_SUITESPARSE
-  free_rat_default_sol(rat);
-#endif
-  free(rat->solshiftdata);
+  free(rat->ASIGBsol);
+}
+
+/**
+ * @brief Apply rational filter R to a vetor b
+ *
+ * For generalized e.v problem x = L' * (A-SB) \ L*b [w:=work]
+ * x = L * b
+ * w = (A-sB) \ x
+ * x = L' * w
+ * 
+ * @param w6 Work array of size 4*n for standard ev problem, 
+ *                         size 6*n for generalized ev problem
+ *
+ * @param[out] x Becomes R(A)b
+ * 
+ */
+void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
+  int ii, jj, kk, k=0, kf;
+  int *mulp = rat->mulp;
+  int num = rat->num;
+  complex double *omega = rat->omega;
+  
+  double *xr, *xz, *bz, *br, *yr=NULL, *yz=NULL;
+  double zkr, zkc;
+  xr = w6;
+  xz = xr + n;
+  bz = xz + n;
+  br = bz + n;
+  if (evsldata.ifGenEv) {
+    yr = br + n;
+    yz = yr + n;
+  }
+  /*------------------ zero out x */
+  for (ii=0; ii<n; ii++) {
+    x[ii] = 0.0;
+  }
+  /*------------------ loop through each pole */
+  for (kk=0; kk<num; kk++) {
+    /*---------------- solver for A-s[kk]*B */
+    EVSLASIGMABSol *sol = &rat->ASIGBsol[kk];
+    /*---------------- make sure xr, xz are zero */
+    for (ii=0; ii<n; ii++){
+      xr[ii] = xz[ii] = 0.0;
+    }
+    kf = k + mulp[kk];
+    /*------------------ power loop */
+    for (jj=kf-1; jj>=k; jj--) {
+      /*---------------- weight */
+      zkr = creal(omega[jj]);
+      zkc = cimag(omega[jj]);
+      /*---------------- initilize the right hand side */
+      for (ii=0; ii<n; ii++) {
+        br[ii] = zkr*b[ii] + xr[ii];
+        bz[ii] = zkc*b[ii] + xz[ii];
+      }
+      /*---------------- solve shifted system */
+      if (evsldata.ifGenEv) {
+        if (jj > k) {
+          (sol->func)(n, br, bz, yr, yz, sol->data);
+          matvec_B(yr, xr);
+          matvec_B(yz, xz);
+        } else {
+          /*------------- jj == k */
+          (sol->func)(n, br, bz, xr, xz, sol->data);
+        }
+      } else {
+        (sol->func)(n, br, bz, xr, xz, sol->data);
+      }
+    }
+    /*------------------ solution (real part) */
+    for (ii=0; ii<n; ii++) {
+      x[ii] += 2*xr[ii];
+    }
+    k = kf;
+  }
 }
 

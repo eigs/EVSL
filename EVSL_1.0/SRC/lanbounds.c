@@ -7,52 +7,80 @@
 #include "internal_proto.h"
 
 /**----------------------------------------------------------------------
- *
-*    @param *A    matrix A
+*
 *    @param msteps   number of Lanczos steps
 *    @param *v    initial vector
 *
 *    @param[out] *lmin, *lmax [lmin lmax] is the desired interval containing  
-*    all eigenvalues of A
+*    all eigenvalues of matrix pair (A,B)
 *----------------------------------------------------------------------*/   
-int LanBounds(csrMat *A, int msteps, double *v, double *lmin, double *lmax) {
-  double *alp, *bet, nbet, nalp, t, *V;
-  int one=1, n;
+int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
+  double *alp, *bet, nbet, nalp, t, *V, *Z;
+  int j, one=1, n;
 
-  n = A->nrows;
+  n = evsldata.n;
+  msteps = min(n, msteps);
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);
   Malloc(V, (msteps+1)*n, double);
-
-  t = DDOT(&n, v, &one, v, &one);
-  t = 1.0 / sqrt(t);
-  DSCAL(&n, &t, v, &one);
+  if (evsldata.ifGenEv) {
+    /* storage for Z = B * V */
+    Malloc(Z, (msteps+1)*n, double);
+  } else {
+    /* Z and V are the same */
+    Z = V;
+  }
+  /* init vector */
+  if (evsldata.ifGenEv) {
+    /* B norm */
+    matvec_B(v, Z);
+    t = 1.0 / sqrt(DDOT(&n, v, &one, Z, &one));
+    DSCAL(&n, &t, Z, &one);
+  } else {
+    /* 2-norm */
+    t = 1.0 / DNRM2(&n, v, &one);
+  }
+  /* starting vector */
   DCOPY(&n, v, &one, V, &one);
-  double wn = 0.0; 
-/*-------------------- main Lanczos loop */
-  int j;
+  /* unit B-norm or 2-norm */
+  DSCAL(&n, &t, V, &one);
+  double wn = 0.0;
+  /*-------------------- main Lanczos loop */
   for (j=0; j<msteps; j++) {
-    // w = A*v
-    matvec_genev(A, &V[j*n], &V[(j+1)*n]);
-    // w = w - bet * vold
+    int i;
+    /* znew = A*v */
+    /* vnew = A*v */
+    matvec_A(&V[j*n], &Z[(j+1)*n]);
+    /* znew = znew - bet * zold */
+    /* vnew = vnew - bet * vold */
     if (j) {
       nbet = -bet[j-1];
-      DAXPY(&n, &nbet, &V[(j-1)*n], &one, &V[(j+1)*n], &one);
+      DAXPY(&n, &nbet, &Z[(j-1)*n], &one, &Z[(j+1)*n], &one);
     }
-    /* alp = w' * v */
-    alp[j] = DDOT(&n, &V[(j+1)*n], &one, &V[j*n], &one);
+    /* alpha */
+    /* alp = znew' * v */
+    /* alp = vnew' * v */
+    alp[j] = DDOT(&n, &Z[(j+1)*n], &one, &V[j*n], &one);
     wn += alp[j] * alp[j];
-    // w = w - alp * v
+    /* znew = znew - alp * z */
+    /* vnew = vnew - alp * v */
     nalp = -alp[j];
-    DAXPY(&n, &nalp, &V[j*n], &one, &V[(j+1)*n], &one);
-    // full reortho
-    int i;
+    DAXPY(&n, &nalp, &Z[j*n], &one, &Z[(j+1)*n], &one);
+    /* full reortho for znew */
     for (i=0; i<=j; i++) {
-      t = DDOT(&n, &V[(j+1)*n], &one, &V[i*n], &one);
+      /* (znew, v) */
+      /* (vnew, v) */
+      t = DDOT(&n, &Z[(j+1)*n], &one, &V[i*n], &one);
       double mt = -t;
-      DAXPY(&n, &mt, &V[i*n], &one, &V[(j+1)*n], &one);
+      DAXPY(&n, &mt, &Z[i*n], &one, &Z[(j+1)*n], &one);
     }
-    bet[j] = DDOT(&n, &V[(j+1)*n], &one, &V[(j+1)*n], &one);
+    if (evsldata.ifGenEv) {
+      /* vnew = B \ znew */
+      solve_B(&Z[(j+1)*n], &V[(j+1)*n]);
+    }
+    /* beta = (vnew, znew) */
+    /* beta = (vnew, vnew) */
+    bet[j] = DDOT(&n, &V[(j+1)*n], &one, &Z[(j+1)*n], &one);
     if (bet[j]*(j+1) < orthTol*wn) {
       fprintf(stdout, "lanbounds: lucky break, j=%d, beta=%e, break\n", j, bet[j]);
       msteps = j + 1;
@@ -61,20 +89,29 @@ int LanBounds(csrMat *A, int msteps, double *v, double *lmin, double *lmax) {
     wn += 2.0 * bet[j];
     bet[j] = sqrt(bet[j]);
     t = 1.0 / bet[j];
+    /* vnew = vnew / bet */
     DSCAL(&n, &t, &V[(j+1)*n], &one);
-  }
+    if (evsldata.ifGenEv) {
+      /* znew = znew / bet */
+      DSCAL(&n, &t, &Z[(j+1)*n], &one);
+    }
+  } /* main loop */
 
   double bottomBeta = bet[msteps-1];
   double *S, *ritzVal;
   Malloc(S, msteps*msteps, double);
   Malloc(ritzVal, msteps, double);
-//-------------------- diagonalize tridiagonal matrix    
+  /*-------------------- diagonalize tridiagonal matrix */
   SymmTridEig(ritzVal, S, msteps, alp, bet);
-//-------------------- 'safe' bounds  
+#if 1
+  *lmin = ritzVal[0]        - fabs(bottomBeta * S[msteps-1]);
+  *lmax = ritzVal[msteps-1] + fabs(bottomBeta * S[msteps*msteps-1]);
+#else
+  /*-------------------- 'safe' bounds */
   double amin, amax,  x;
   amax = -INFINITY;
   amin =  INFINITY;
-  for (j=0; j<msteps; j++){
+  for (j=0; j<msteps; j++) {
     t = fabs(bottomBeta * S[(j+1)*msteps-1]);
     x = ritzVal[j]-t; 
     if (x<amin) amin = x; 
@@ -83,12 +120,17 @@ int LanBounds(csrMat *A, int msteps, double *v, double *lmin, double *lmax) {
   }
   *lmin = amin; 
   *lmax = amax; 
-//-------------------- done 
+#endif
+  /*-------------------- done */
   free(alp);
   free(bet);
   free(V);
+  if (evsldata.ifGenEv) {
+    free(Z);
+  }
   free(S);
   free(ritzVal);
+
   return 0;
 }
 
