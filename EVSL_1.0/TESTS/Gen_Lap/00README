@@ -1,5 +1,5 @@
 These  drivers  are for  testing  a  few methods  on  simple
-(artificial) Laplacean matrix pair (A, B).  
+(artificial) Laplacean matrix pairs (A, B).  
 
 LapPLanR.c : 
     driver for testing spectrum slicing -- with 
