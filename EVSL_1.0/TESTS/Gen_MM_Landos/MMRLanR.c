@@ -184,7 +184,6 @@ int main() {
     fprintf(fstats, " Time to build DOS (Landos) was : %10.2f  \n", t);
     fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
     //-------------------- call splicer to slice the spectrum
-    sli = malloc((nslices + 1) * sizeof(double));
     fprintf(fstats, "DOS parameters: msteps = %d, nvec = %d, npnts = %d\n",
             msteps, nvec, npts);
     spslicer2(xdos, ydos, nslices, npts, sli);

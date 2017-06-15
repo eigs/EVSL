@@ -94,7 +94,6 @@ int main() {
             "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
             nslices);
     counts = malloc(nslices * sizeof(int));
-    sli = malloc((nslices + 1) * sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
