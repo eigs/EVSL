@@ -174,4 +174,26 @@ typedef struct _BSolDataPol {
 /* global variable: evslData */
 extern evslData evsldata;
 
+/*!
+ * @brief timing and memory statistics of pEVSL
+ *
+ */
+typedef struct _evslstat {
+  /* timing [level-1 funcs] */
+  double t_iter;
+  /* timing [level-2 funcs] */
+  double t_mvA;
+  double t_mvB;
+  double t_svB;
+  size_t n_mvA;
+  size_t n_mvB;
+  size_t n_svB;
+  /* memory */
+  size_t alloced;
+  size_t alloced_total;
+  size_t alloced_max;
+} evslStat;
+
+/* global variable: pevsl_stats */
+extern evslStat evslstat;
 #endif

@@ -67,7 +67,6 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   }
   int *ind;
   Malloc(ind, npts, int);
-  double tm, tmv = 0.0;
   double *y;
   Calloc(y, npts, double);
   //-------------------- to report timings/
@@ -112,8 +111,6 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   const double tol = 1e-08;
   double width = sigma * sqrt(-2.0 * log(tol));
   linspace(aa, bb, npts, xdos);  // xdos = linspace(lm,lM, npts);
-  /*-------------------- nmv counts  matvecs */
-  int nmv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
   double *wk, *vrand = NULL;
   int wk_size = evsldata.ifGenEv ? 6 * n : 4 * n;
@@ -122,10 +119,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
     randn_double(n, vinit);
     /*-------------------- copy initial vector to Z(:,1) */
     /* Filter the initial vector */
-    tm = cheblan_timer();
     pnav(pol_sqr.mu, pol_sqr.deg, pol_sqr.cc, pol_sqr.dd, vinit, V, wk);  // Ish
-    tmv += cheblan_timer() - tm;
-
     /*--------------------  normalize it */
     double t;
     if (evsldata.ifGenEv) {
@@ -133,7 +127,6 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
       matvec_B(V, Z);
       t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
       DSCAL(&n, &t, Z, &one);
-      nmv++;
     } else {
       /* 2-norm */
       t = 1.0 / DNRM2(&n, V, &one);  // add a test here.
@@ -185,14 +178,11 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
           printf("LanDos with degB <= 0 not yet implemented");
           exit(-1);
         } else {
-          tm = cheblan_timer();
           pnav(pol_sol.mu, pol_sol.deg, pol_sol.cc, pol_sol.dd, znew, vnew,
                wk);  // Ish
-          tmv += cheblan_timer() - tm;
         }
         /*-------------------- beta = (vnew, znew)^{1/2} */
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
-        nmv++;
       } else {
         /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
         /* beta = norm(vnew) */
@@ -208,7 +198,6 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
           CGS_DGKS2(n, k + 1, NGS_MAX, V, Z, vnew, wk);
           /* -------------- NOTE: B-matvec */
           matvec_B(vnew, znew);
-          nmv++;
           beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
           /*-------------------- vnew = vnew / beta */
           t = 1.0 / beta;
