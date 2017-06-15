@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 #include "evsl.h"
 #include "io.h"
@@ -45,6 +46,7 @@ int readVec(const char* filename, int* npts, double** vec) {
  *-----------------------------------------------------------------------
  */
 int main() {
+  srand(time(NULL));
   const int msteps = 30;    // Number of steps
   const int degB = 40;      // Degree to aproximate B with
   const int npts = 200;     // Number of points

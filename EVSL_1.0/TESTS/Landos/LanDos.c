@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 #include "evsl.h"
 
@@ -54,6 +55,7 @@ int readDiagMat(const char* filename, cooMat* mat) {
  *-----------------------------------------------------------------------
  */
 int main() {
+  srand(time(NULL));
   cooMat cooMat;
   csrMat csrMat;
   //-------------------- Read in a test matrix
