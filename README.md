@@ -1,8 +1,7 @@
 ## EVSL:  EigenValues Slicing Library (Version 1.0)         
 
 ```
-<font size=+4> E V S L </font> 
-
+		                    E V S L 
                           ChebLanTR, ChebLanNR, ChebSI, RatLanTr and RatLanNr 
                Polynomial and Rational Filtered Lanczos and subspace iteration algorithms 
                                  For Symmetric Eigenvalue problems
