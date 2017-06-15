@@ -7,10 +7,10 @@
 #include "evsl_suitesparse.h"
 
 /** @file suitesparse.c
- *  @brief Default solver function for solving shifted system and factoring B
+ *  @brief Default solver function for solving shifted systems and factoring B
  *
- *  This file contains the default solver function for solving shifted system 
- *  with A - SIGMA*I or A - SIGMA*B, and for factoring B matrix.
+ *  This file contains the default solver function for solving shifted systems 
+ *  with A - SIGMA*I or A - SIGMA*B, and for factoring the B matrix.
  *  The default solvers are UMFPACK and CHOLMOD from SuiteSparse
  *
  */
@@ -19,7 +19,7 @@
  * @brief default complex linear solver routine passed to evsl
  * 
  * @param n       size of the system
- * @param br,bz   vectors of length n, complex right-hand side (real and imaginary)
+ * @param br,bi   vectors of length n, complex right-hand side (real and imaginary)
  * @data          all data that are needed for solving the system
  * 
  * @param[out] xr,xz     vectors of length n, complex solution (real and imaginary)
@@ -27,13 +27,13 @@
  * @warning: This function MUST be of this prototype
  *
  *------------------------------------------------------------------*/
-void ASIGMABSolSuiteSparse(int n, double *br, double *bz, double *xr, 
+void ASIGMABSolSuiteSparse(int n, double *br, double *bi, double *xr, 
                            double *xz, void *data) {
   void* Numeric = data;
   double Control[UMFPACK_CONTROL]; 
   umfpack_zl_defaults(Control);
   Control[UMFPACK_IRSTEP] = 0; // no iterative refinement for umfpack
-  umfpack_zl_solve(UMFPACK_A, NULL, NULL, NULL, NULL, xr, xz, br, bz, 
+  umfpack_zl_solve(UMFPACK_A, NULL, NULL, NULL, NULL, xr, xz, br, bi, 
                    Numeric, Control, NULL);
 }
 
@@ -73,8 +73,8 @@ int SetupASIGMABSolSuiteSparse(csrMat *A, csrMat *BB, int num,
   nnzB = B->ia[nrow];
   /* map from nnz in B to nnz in C, useful for multi-poles */
   Malloc(map, nnzB, int);
-  /* NOTE: SuiteSparse requires that the matrix must be sorted.
-   * The matadd routine can guarantee this
+  /* NOTE: SuiteSparse requires that the matrix entries be sorted.
+   * The matadd routine will  guarantee this
    * C = A + 0.0 * B 
    * This actually computes the pattern of A + B
    * and also can guarantee C has sorted rows 
@@ -158,10 +158,6 @@ void FreeASIGMABSolSuiteSparse(int num, void **data) {
     umfpack_zl_free_numeric(&data[i]);
   }
 }
-
-
-
-
 
 /**
  * @brief Create cholmod_sparse matrix just as a wrapper of a csrMat
