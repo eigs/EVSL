@@ -169,10 +169,10 @@ int main() {
     xintv[1] = lmax;
     xintv[2] = a;
     xintv[3] = b;
-    /*-------------------- call kpmdos to get the DOS for dividing the
+    /*-------------------- call landos to get the DOS for dividing the
      * spectrum*/
-    /*-------------------- define kpmdos parameters */
-    //-------------------- call kpmdos
+    /*-------------------- define landos parameters */
+    //-------------------- call landos
     double t = cheblan_timer();
     double *xdos = (double *)calloc(npts, sizeof(double));
     double *ydos = (double *)calloc(npts, sizeof(double));

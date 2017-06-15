@@ -158,6 +158,7 @@ int main() {
     /*-------------------- for generalized eigenvalue problem */
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
+    //-------------------- initial vector
     rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-11, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n",
@@ -177,10 +178,10 @@ int main() {
     ierr = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &ecount, xintv, tau);
     t = cheblan_timer() - t;
     if (ierr) {
-      printf("landos error %d\n", ierr);
+      printf("Landos error %d\n", ierr);
       return 1;
     }
-    fprintf(fstats, " Time to build DOS (landos) was : %10.2f  \n", t);
+    fprintf(fstats, " Time to build DOS (Landos) was : %10.2f  \n", t);
     fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
     //-------------------- call splicer to slice the spectrum
     sli = malloc((nslices + 1) * sizeof(double));
@@ -274,8 +275,6 @@ int main() {
       for (j = 0; j < totcnt; j++) fprintf(fmtout, "%.15e\n", alleigs[j]);
       fclose(fmtout);
     }
-    free(ydos);
-    free(xdos);
     free(vinit);
     free(sli);
     free_coo(&Acoo);
@@ -286,6 +285,8 @@ int main() {
     FreeBSolPolData(&Bsqrtsol);
     free(alleigs);
     free(counts);
+    free(xdos);
+    free(ydos);
     if (sqrtdiag) free(sqrtdiag);
     if (fstats != stdout) fclose(fstats);
     /*-------------------- end matrix loop */
