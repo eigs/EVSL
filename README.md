@@ -1,9 +1,6 @@
 ## EVSL:  EigenValues Slicing Library (Version 1.0)         
 ```
-                                      ___  __   __  ___   _    
-                                     | __| \ \ / / / __| | |   
-                                     | _|   \ V /  \__ \ | |__ 
-                                     |___|   \_/   |___/ |____|
+ <span style="color: #f2cf4a; font-family: Babas; font-size: 4em;"> E V S L </span>
 
                           ChebLanTR, ChebLanNR, ChebSI, RatLanTr and RatLanNr 
                Polynomial and Rational Filtered Lanczos and subspace iteration algorithms 
