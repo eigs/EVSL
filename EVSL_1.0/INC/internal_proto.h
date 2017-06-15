@@ -112,7 +112,11 @@ void vec_iperm(int n, int *p, double *x, double *y);
 */
 static inline void matvec_A(double *x, double *y) {
   CHKERR(!evsldata.Amv);
+  double tms = cheblan_timer();
   evsldata.Amv->func(x, y, evsldata.Amv->data);
+  double tme = cheblan_timer();
+  evslstat.t_mvA += tme - tms;
+  evslstat.n_mvA ++;
 }
 
 /**
@@ -121,7 +125,11 @@ static inline void matvec_A(double *x, double *y) {
 */
 static inline void matvec_B(double *x, double *y) {
   CHKERR(!evsldata.Bmv);
+  double tms = cheblan_timer();
   evsldata.Bmv->func(x, y, evsldata.Bmv->data);
+  double tme = cheblan_timer();
+  evslstat.t_mvB += tme - tms;
+  evslstat.n_mvB ++;
 }
 
 /**
@@ -130,7 +138,11 @@ static inline void matvec_B(double *x, double *y) {
 */
 static inline void solve_B(double *x, double *y) {
   CHKERR(!evsldata.Bsol);
+  double tms = cheblan_timer();
   evsldata.Bsol->func(x, y, evsldata.Bsol->data);
+  double tme = cheblan_timer();
+  evslstat.t_svB += tme - tms;
+  evslstat.n_svB ++;
 }
 
 /*- - - - - - - - - - check if an interval is valid */

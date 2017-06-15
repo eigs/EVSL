@@ -8,7 +8,7 @@ INCLUDES = -I../INC -ISRC
 OBJS = 	evsl.o dumps.o cheblanNr.o cheblanTr.o chebpoly.o lanbounds.o \
         lanTrbounds.o misc_la.o ratfilter.o ratlanNr.o ratlanTr.o spmat.o \
         spslice.o vect.o chebsi.o landos.o spslice2.o simpson.o  dos_utils.o \
-		landosG.o \
+	landosG.o stats.o \
 	../FORTRAN/evsl_f90.o
 
 ### OBJ_TIME = defined in makefile.in 

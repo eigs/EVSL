@@ -51,7 +51,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
              ratparams *rat, int *nevOut, double **lamo, double **Wo, 
              double **reso, FILE *fstats) {
   /*-------------------- for stats */
-  double tm,  tmv=0.0, tr0, tr1, tall;
+  double tr0, tr1, tall;
   double *y, flami; 
   //-------------------- to report timings/
   tall = cheblan_timer();
@@ -83,7 +83,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   }
   double aa = intv[0];
   double bb = intv[1];
-  int deg = rat->pow; // multiplicity of the pole
+  //int deg = rat->pow; // multiplicity of the pole
   /*-----------------------------------------------------------------------* 
    * *Non-restarted* Lanczos iteration 
    *-----------------------------------------------------------------------*/
@@ -112,10 +112,6 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- nev = current number of converged e-pairs 
     nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
-  /*-------------------- nmv counts  matvecs */
-  int nmv = 0;
-  /*-------------------- nsv counts  solves */
-  int nsv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
   double *u, *wk, *w2, *vrand = NULL;
   int wk_size = evsldata.ifGenEv ? 6*n : 4*n;
@@ -124,14 +120,10 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- copy initial vector to Z(:,1) */
 #if FILTER_VINIT
   /* Filter the initial vector */
-  tm = cheblan_timer();
   RatFiltApply(n, rat, vinit, V, wk);
-  tmv += cheblan_timer() - tm;
-  nsv += deg;
   Malloc(vrand, n, double);
   if(evsldata.ifGenEv){
     DCOPY(&n, V, &one, Z, &one);
-    nmv += (deg-1);
   }
 #else
   DCOPY(&n, vinit, &one, Z, &one);
@@ -143,7 +135,6 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     matvec_B(Z, V);
     t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
     DSCAL(&n, &t, Z, &one);
-    nmv++;
   } else {
     /* 2-norm */
     t = 1.0 / DNRM2(&n, V, &one); // add a test here.
@@ -180,13 +171,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- next Lanczos vector Z(:,k+1)*/
     znew = z + n;
     /*-------------------- compute w = rat * v */
-    tm = cheblan_timer();
     RatFiltApply(n, rat, v, znew, wk);
-    tmv += cheblan_timer() - tm;
-    if (evsldata.ifGenEv) {
-      nmv += (deg-1);
-    }
-    nsv += deg;
     /*------------------ znew = znew - beta*zold */
     if (zold) {
       nbeta = -beta;
@@ -209,7 +194,6 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       matvec_B(znew, vnew);
       /*-------------------- beta = (vnew, znew)^{1/2} */
       beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
-      nmv++;
     } else {
       /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
       /* beta = norm(vnew) */
@@ -226,10 +210,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       /*------------------ generate a new init vector in znew */
       rand_double(n, vrand);
       /* Filter the initial vector */
-      tm = cheblan_timer();
       RatFiltApply(n, rat, vrand, znew, wk);
-      tmv += cheblan_timer() - tm;
-      nmv += (deg-1);
 #else 
       rand_double(n, znew);
 #endif            
@@ -238,7 +219,6 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
         CGS_DGKS2(n, k+1, NGS_MAX, Z, V, znew, wk);
 	/* -------------- NOTE: B-matvec */
         matvec_B(znew, vnew);
-        nmv ++;
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
 	/*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
@@ -246,7 +226,6 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
 	/*-------------------- znew = znew / beta */
         DSCAL(&n, &t, znew, &one);
         beta = 0.0;
-        nsv += deg;        
       } else {
 	/* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
 	/* beta = norm(vnew) */
@@ -299,8 +278,8 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     }
 
     if (do_print) {
-      fprintf(fstats, "k %4d:   # sols %8d, nconv %4d  tr1 %21.15e\n",
-              k, nsv, nconv,tr1);
+      fprintf(fstats, "k %4d: nconv %4d  tr1 %21.15e\n",
+              k, nconv,tr1);
     }
     /* -------------------- simple test because all eigenvalues
        are between gamB and ~1. */
@@ -339,7 +318,6 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     if (evsldata.ifGenEv) {
       /* B-norm, w2 = B*u */
       matvec_B(u, w2);
-      nmv ++;
       t = sqrt(DDOT(&n, u, &one, w2, &one)); /* should be one */
     } else {
       /* 2-norm */
@@ -407,17 +385,8 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   }
   /*-------------------- record stats */
   tall = cheblan_timer() - tall;
-  /*-------------------- print stat */
-  if (do_print){
-    fprintf(fstats, "------This slice consumed: \n");
-    fprintf(fstats, "# of solves :        %d\n", nsv);
-    if (evsldata.ifGenEv) {
-      fprintf(fstats, "# of Matvec with B:  %d\n", nmv);
-    }
-    fprintf(fstats, "total time  :        %.2f\n", tall);
-    fprintf(fstats, "solve time  :        %.2f\n", tmv);
-    fprintf(fstats,"======================================================\n");
-  }
+  evslstat.t_iter = tall;
+  
   return 0;
 }
 
