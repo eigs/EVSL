@@ -100,9 +100,9 @@ int main(int argc, char *argv[]) {
   xdos = (double *) malloc((npts)*sizeof(double));
   ydos = (double *) malloc((npts)*sizeof(double));
 
-  fprintf(stdout," %d %d \n",npts,nslices);
+  //fprintf(stdout," %d %d \n",npts,nslices);
   LanDos(nvec, Mdeg, npts, xdos, ydos, &ecount, xintv);
-  fprintf(stdout," %f \n",ecount);
+  //fprintf(stdout," %f \n",ecount);
 
   //for (j=0; j<npts;j++) {
   //  printf(" %10.4f %10.4f \n",xdos[j],ydos[j]);}
@@ -146,6 +146,7 @@ int main(int argc, char *argv[]) {
     int nev_ex;
     double *lam_ex;
     //-------------------- 
+    StatsReset();
     a = sli[sl];
     b = sli[sl+1];
     printf(" subinterval: [%.4e , %.4e]\n", a, b); 
@@ -221,6 +222,8 @@ int main(int argc, char *argv[]) {
     free_pol(&pol);
     free(ind);
     free(lam_ex);
+
+    StatsPrint(fstats);
   }
   //-------------------- free other allocated space 
   free(vinit);

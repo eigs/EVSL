@@ -55,7 +55,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
               polparams *pol, int *nevOut, double **lamo, double **Wo, 
               double **reso, FILE *fstats) {
   /*-------------------- for stats */
-  double tm,  tmv=0.0, tr0, tr1, tall;
+  double tr0, tr1, tall;
   double *y, flami; 
   //-------------------- to report timings/
   tall = cheblan_timer();
@@ -127,8 +127,6 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- nev = current number of converged e-pairs 
                          nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
-  /*-------------------- nmv counts  matvecs */
-  int nmv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
   double *u, *wk, *w2, *vrand=NULL;
   int wk_size = evsldata.ifGenEv ? 4*n : 3*n;
@@ -136,11 +134,8 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   w2 = wk + n;
 #if FILTER_VINIT
   /*-------------------- compute w = p[(A-cc)/dd] * v */
-  tm = cheblan_timer();
   /*------------------  Filter the initial vector*/
   ChebAv(pol, vinit, V, wk);
-  tmv += cheblan_timer() - tm;
-  nmv += deg;  
   Malloc(vrand, n, double);
 #else
   /*-------------------- copy initial vector to V(:,1) */
@@ -153,7 +148,6 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     matvec_B(V, Z);
     t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
     DSCAL(&n, &t, Z, &one);
-    nmv++;
   } else {
     /* 2-norm */
     t = 1.0 / DNRM2(&n, V, &one); // add a test here.
@@ -185,11 +179,8 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- next Lanczos vector Z(:,k+1)*/
     znew = z + n;
     /*-------------------- compute w = p[(A-cc)/dd] * v */
-    tm = cheblan_timer();
     /*------------------ NOTE: z is used!!! [TODO: FIX ME] */
     ChebAv(pol, z, znew, wk);
-    tmv += cheblan_timer() - tm;
-    nmv += deg;
     /*------------------ znew = znew - beta*zold */
     if (zold) {
       nbeta = -beta;
@@ -227,10 +218,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       /*------------------ generate a new init vector */
       rand_double(n, vrand);
       /*------------------  Filter the initial vector*/
-      tm = cheblan_timer();
       ChebAv(pol, vrand, vnew, wk);
-      tmv += cheblan_timer() - tm;
-      nmv += deg;
 #else
       rand_double(n, vnew);
 #endif
@@ -292,8 +280,8 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     }
 
     if (do_print) {
-      fprintf(fstats, "k %4d:   nMV %8d, nconv %4d  tr1 %21.15e\n",
-              k, nmv, nconv,tr1);
+      fprintf(fstats, "k %4d:   nconv %4d  tr1 %21.15e\n",
+              k, nconv,tr1);
     }
     /* -------------------- simple test because all eigenvalues
                             are between gamB and ~1. */
@@ -349,7 +337,6 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     }
     /*-------------------- w = A*u */
     matvec_A(u, wk);
-    nmv ++;
     /*-------------------- Ritz val: t = (u'*w)/(u'*u)
                                      t = (u'*w)/(u'*B*u) */
     t = DDOT(&n, wk, &one, u, &one);
@@ -398,14 +385,9 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   }
   /*-------------------- record stats */
   tall = cheblan_timer() - tall;
-  /*-------------------- print stat */
-  if (do_print){
-    fprintf(fstats, "------This slice consumed: \n");
-    fprintf(fstats, "Matvecs :        %d\n", nmv);
-    fprintf(fstats, "total  time :    %.2f\n", tall);
-    fprintf(fstats, "matvec time :    %.2f\n", tmv);
-    fprintf(fstats,"======================================================\n");
-  }
+  
+  evslstat.t_iter = tall;
+
   return 0;
 }
 

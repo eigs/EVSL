@@ -142,4 +142,8 @@ void sort_double(int n, double *v, int *ind);
 //
 void linspace(double a, double b, int num, double *arr);
 
+void StatsPrint(FILE *fstats);
+
+void StatsReset();
+
 #endif
