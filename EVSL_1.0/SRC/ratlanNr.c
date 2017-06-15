@@ -141,11 +141,6 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   }
   /* unit B^{-1}-norm or 2-norm */
   DSCAL(&n, &t, V, &one);
-  /*-------------------- u  is just a pointer. wk == work space */
-  double *u, *wk, *w3;
-  Malloc(wk, 4*n, double);
-  w3 = wk;
-  //Malloc(w3, 3*n, double);  // work space for solving complex system
   /*-------------------- for ortho test */
   double wn = 0.0;
   int nwn = 0;
