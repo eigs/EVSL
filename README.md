@@ -13,14 +13,16 @@ Welcome to EVSL. EVSL is a C library for computing the eigenvalues of
 a symmetric matrix  that are located in a given  interval.  This first
 release includes the routines listed above and does not yet offer full
 parallel implementations  (trivial openMP test programs  are available
-in among  the test  drivers).  EVSL also  provides tools  for spectrum
+among   the test  drivers).  EVSL also  provides tools  for spectrum
 slicing, i.e.,  the technique of  subdividing a given interval  into p
 smaller subintervals and computing the eigenvalues in each subinterval
 independently.  EVSL  implements a polynomial filtered  Lanczos (thick
 restart, no  restart) a rational  filtered Lanczos (thick  restart, no
 restart), and a polynomial filtered subspace iteration for solving
-standard and generalized eigenvalue problems:
-$A * x = \lambda * x, A * x = \lambda * B * x$
+standard eigenvalue problems 
+\f$A * x = \lambda * x \f$ and generalized eigenvalue problems
+\f$A * x = \lambda * B * x\f$.
+
 
 For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
@@ -68,15 +70,16 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - io.c       : parse command-line input parameters
 
 
-===> THE FOLLOWING HAS BEEN SPLIT INTO TWO -- UPDATE
-
-* TESTS/Gen_MM  : test drivers for generalized eigenvalue problems with general matrices read from files
+* TESTS/Gen_MM_KPM:
+* TESTS/Gen_MM_LAN: test drivers for generalized eigenvalue problems with general matrices read from files
    - MMPLanR.c  : Polynomial filtering T-R Lanczos
    - MMRLanN.c  : Rational filtering non-restart Lanczos
    - MMRLanR.c  : Rational filtering T-R Lanczos
    - mmio.c     : IO routines for the matrix market format
+                  The *_KPM  directory has drivers that use the KPM method for spectrum slicing
+                  The *_LAN  directory has drivers that use the Lanczos method for spectrum slicing
 
-* TEST/Lap      : test drivers for standard eigenvalue problems with Laplacian matrices
+* TEST/Lap              : test drivers for standard eigenvalue problems with Laplacian matrices
    - LapPLanN.c         : Polynomial filtering non-restart Lanczos
    - LapPLanN_MatFree.c : "matrix-free" version: not forming matrix but passing mat-vec function
    - LapPLanR.c         : Polynomial filtering T-R Lanczos
