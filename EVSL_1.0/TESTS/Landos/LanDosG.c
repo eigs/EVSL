@@ -243,10 +243,10 @@ int main() {
     int ret;
     double neig;
     //-------------------- exact histogram and computed DOS
-    double* xHist = (double*)calloc(npts, sizeof(double));
-    double* yHist = (double*)calloc(npts, sizeof(double));
-    double* xdos = (double*)calloc(npts, sizeof(double));
-    double* ydos = (double*)calloc(npts, sizeof(double));
+    double* xHist = (double*)malloc(npts* sizeof(double));
+    double* yHist = (double*)malloc(npts* sizeof(double));
+    double* xdos = (double*)malloc(npts* sizeof(double));
+    double* ydos = (double*)malloc(npts* sizeof(double));
 
     // ------------------- Calculate the approximate DOS
 

@@ -173,8 +173,8 @@ int main() {
     /*-------------------- define landos parameters */
     //-------------------- call landos
     double t = cheblan_timer();
-    double *xdos = (double *)calloc(npts, sizeof(double));
-    double *ydos = (double *)calloc(npts, sizeof(double));
+    double *xdos = (double *)malloc(npts, sizeof(double));
+    double *ydos = (double *)malloc(npts, sizeof(double));
     ierr = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &ecount, xintv, tau);
     t = cheblan_timer() - t;
     if (ierr) {
