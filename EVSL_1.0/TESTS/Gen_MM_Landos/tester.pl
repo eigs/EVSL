@@ -2,10 +2,6 @@
 use strict;
 
 my $regex = "number of eigenvalues found"; #Regex to match
-my %data = ( 
-  'RMSE1' => 0.3, 
-  'RMSE2' => 0.3
-); 
 my $nev = 0;
 
 while (my $line = <>) {
