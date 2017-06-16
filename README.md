@@ -7,6 +7,7 @@
                                      | _|   \ V /  \__ \ | |__ 
                                      |___|   \_/   |___/ |____|                  
 
+
                           ChebLanTR, ChebLanNR, ChebSI, RatLanTr and RatLanNr 
                Polynomial and Rational Filtered Lanczos and subspace iteration algorithms 
                                  For Symmetric Eigenvalue problems
@@ -23,8 +24,8 @@ independently.  EVSL  implements a polynomial filtered  Lanczos (thick
 restart, no  restart) a rational  filtered Lanczos (thick  restart, no
 restart), and a polynomial filtered subspace iteration for solving
 standard eigenvalue problems 
-\f$A * x = \lambda * x \f$ and generalized eigenvalue problems
-\f$A * x = \lambda * B * x\f$.
+A u = &lambda;  u  and generalized eigenvalue problems
+A u = &lambda;  B u.
 
 
 For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
@@ -78,14 +79,14 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - io.c       : parse command-line input parameters
 
 
-* TESTS/Gen_MM_KPM:
-* TESTS/Gen_MM_LAN: test drivers for generalized eigenvalue problems with general matrices read from files
+* TESTS/Gen_MM_KPM: test drivers for generalized eigenvalue problems with general matrices read from files.
+  Spectrum slicer uses KPM.
    - MMPLanR.c  : Polynomial filtering T-R Lanczos
    - MMRLanN.c  : Rational filtering non-restart Lanczos
    - MMRLanR.c  : Rational filtering T-R Lanczos
    - mmio.c     : IO routines for the matrix market format
-                  The *_KPM  directory has drivers that use the KPM method for spectrum slicing
-                  The *_LAN  directory has drivers that use the Lanczos method for spectrum slicing
+ 
+* TESTS/Gen_MM_LAN: same as above but spectrum slicing based on the  Lanczos method
 
  * TEST/Lap      : test drivers for standard eigenvalue problems with Laplacian matrices
    - LapPLanN.c         : Polynomial filtering non-restart Lanczos
@@ -268,7 +269,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 ###  GENERALIZED EIGENVALUE PROBLEM
 
 -----------------------------------------------------------------------
-  For solving A * x = \lambda * B * x, the users must also provide a solver
+  For solving A x = &lambda; B  x, the users must also provide a solver
   for the B matrix by calling
 
       SetBSol(SolFuncR func, void *data).

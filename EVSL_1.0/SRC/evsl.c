@@ -9,6 +9,12 @@
  * */
 evslData evsldata;
 
+/** \brief global statistics of EVSL
+ *
+ * global variable is guaranteed to be initialized
+ * */
+evslStat evslstat;
+
 /**
  * @brief Initialize evslData 
  *
@@ -20,6 +26,9 @@ int EVSLStart() {
   evsldata.Bmv = NULL;
   evsldata.Bsol = NULL;
   evsldata.LTsol = NULL;
+
+  StatsReset();
+  
   return 0;
 }
 

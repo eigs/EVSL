@@ -61,7 +61,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
               double **vals, double **W, double **resW, FILE *fstats) {
   const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */
-  double tm, tall=0.0, tmv=0.0;
+  double tall=0.0;
   //double tolP = tol;
   double tr, last_tr;
   tall = cheblan_timer();
@@ -108,7 +108,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   /*-------------------- Assumption: polynomial pol computed before calling cheblanTr
                          pol.  approximates the delta function centered at 'gamB'
                          bar: a bar value to threshold Ritz values of p(A) */
-  int deg = pol->deg;
+  //int deg = pol->deg;
   double gamB=pol->gam, bar=pol->bar;
   /*-------------------- gamB must be within [-1, 1] */
   if (gamB > 1.0 || gamB < -1.0) {
@@ -154,8 +154,6 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   int lock = 0;
   /*-------------------- trlen = dim. of thick restart set */
   int trlen = 0, prtrlen=-1;
-  /*-------------------- nmv counts  matvecs */
-  int nmv = 0;
   /*-------------------- Ritz values and vectors of p(A) */
   double *Rval, *Rvec, *resi, *BRvec=NULL;
   Malloc(Rval, lanm, double);
@@ -175,11 +173,8 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   int work_size = ifGenEv ? 4*n : 3*n;
   Malloc(work, work_size, double);  
 #if FILTER_VINIT
-  tm = cheblan_timer();
   /*------------------  Filter the initial vector*/
   ChebAv(pol, vinit, V, work);
-  tmv += cheblan_timer() - tm;
-  nmv += deg;
   Malloc(vrand, n, double);
 #else
   /*-------------------- copy initial vector to V(:,1)   */
@@ -193,7 +188,6 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
     /* z = B*v */
     DSCAL(&n, &t, Z, &one);
-    nmv++;
   } else {
     /* 2-norm */
     t = 1.0 / DNRM2(&n, V, &one);
@@ -225,11 +219,8 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       double *vnew = v + n;
       double *znew = z + n;
       /*------------------ znew = p[(A-cc)/dd] * v */
-      tm = cheblan_timer();
       /*------------------ NOTE: z is used!!! [TODO: FIX ME] */
       ChebAv(pol, z, znew, work);
-      tmv += cheblan_timer() - tm;
-      nmv += deg;
       /*------------------ deflation */
       if (lock > 0) {
         if (ifGenEv) {
@@ -275,10 +266,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
 #if FILTER_VINIT
         /* filter random vector */
         rand_double(n, vrand);
-        tm = cheblan_timer();
         ChebAv(pol, vrand, vnew, work);
-        tmv += cheblan_timer() - tm;
-        nmv += deg;
 #else
         rand_double(n, vnew);
 #endif
@@ -335,11 +323,8 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       double *vnew = v + n;
       double *znew = z + n;
       /*------------------ znew = p[(A-cc)/dd] * v */
-      tm = cheblan_timer();
       /*------------------ NOTE: z is used!!! [TODO: FIX ME] */
       ChebAv(pol, z, znew, work);
-      tmv += cheblan_timer() - tm;
-      nmv += deg;
       it++;
       /*-------------------- deflation: orthgonalize vs locked ones first */
       if (lock > 0) {
@@ -389,10 +374,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
 #if FILTER_VINIT
         /* filter random vector */
         rand_double(n, vrand);
-        tm = cheblan_timer();
         ChebAv(pol, vrand, vnew, work);
-        tmv += cheblan_timer() - tm;
-        nmv += deg;
 #else
         /* generate a new init vector*/
         rand_double(n, vnew);
@@ -567,7 +549,6 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       }
       /*-------------------- w = A*y */
       matvec_A(y, w);
-      nmv ++;
       /*-------------------- Ritzval: t3 = (y'*w)/(y'*y) or
        *                              t3 = (y'*w)/(y'*B*y) */
       /*-------------------- Rayleigh quotient */
@@ -642,8 +623,8 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
      *       another test may be added later to make it more rigorous.
      */       
     if (do_print) {
-      fprintf(fstats,"it %4d:  nMV %7d, k %3d, jl %3d, ll %3d, lock %3d, trlen %3d\n",
-              it, nmv, k, jl, ll, lock, trlen);
+      fprintf(fstats,"it %4d:  k %3d, jl %3d, ll %3d, lock %3d, trlen %3d\n",
+              it, k, jl, ll, lock, trlen);
     }
     /*-------------------- TESTs for stopping */
     if ((prtrlen == 0) && (ll==0)) {
@@ -700,14 +681,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   /*-------------------- record stats */
   tall = cheblan_timer() - tall;
   /*-------------------- print stat */
-  if (do_print){
-    fprintf(fstats, "------This slice consumed: \n");
-    fprintf(fstats, "Matvecs :        %d\n", nmv);
-    fprintf(fstats, "total  time :    %.2f\n", tall);
-    fprintf(fstats, "matvec time :    %.2f\n", tmv);
-    fprintf(fstats,"======================================================\n");
-  }
-
+  evslstat.t_iter = tall;
   return 0;
 }
 
