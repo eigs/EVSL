@@ -50,6 +50,7 @@
 int RatLanNr(double *intv, int maxit, double tol, double *vinit, 
              ratparams *rat, int *nevOut, double **lamo, double **Wo, 
              double **reso, FILE *fstats) {
+  const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */
   double tr0, tr1, tall;
   double *y, flami; 
@@ -93,7 +94,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
   Malloc(V, n*(maxit+1), double);
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     /* storage for Z = B * V */
     Malloc(Z, n*(maxit+1), double);
   } else {
@@ -114,7 +115,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   int nev, nconv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
   double *u, *wk, *w2, *vrand = NULL;
-  int wk_size = evsldata.ifGenEv ? 6*n : 4*n;
+  int wk_size = ifGenEv ? 6*n : 4*n;
   Malloc(wk, wk_size, double);
   w2 = wk + n;
   /*-------------------- copy initial vector to Z(:,1) */
@@ -122,7 +123,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   /* Filter the initial vector */
   RatFiltApply(n, rat, vinit, V, wk);
   Malloc(vrand, n, double);
-  if(evsldata.ifGenEv){
+  if(ifGenEv){
     DCOPY(&n, V, &one, Z, &one);
   }
 #else
@@ -130,7 +131,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
 #endif  
   /*--------------------  normalize it */
   double t, nt, res0;
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     /* B norm */
     matvec_B(Z, V);
     t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
@@ -181,7 +182,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     nalpha = -alpha;
     DAXPY(&n, &nalpha, z, &one, znew, &one);
     /*-------------------- FULL reortho to all previous Lan vectors */
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
       CGS_DGKS2(n, k+1, NGS_MAX, Z, V, znew, wk);
       /* -------------- NOTE: B-matvec 
@@ -209,7 +210,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
 #else 
       rand_double(n, znew);
 #endif            
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
 	/* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k+1, NGS_MAX, Z, V, znew, wk);
 	/* -------------- NOTE: B-matvec */
@@ -234,7 +235,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       /*-------------------- vnew = vnew / beta */
       t = 1.0 / beta;
       DSCAL(&n, &t, vnew, &one);
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
 	/*-------------------- znew = znew / beta */
 	DSCAL(&n, &t, znew, &one);
       }    
@@ -310,7 +311,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     u = &Rvec[nev*n];
     DGEMV(&cN, &n, &kdim, &done, Z, &n, y, &one, &dzero, u, &one);
     /*-------------------- normalize u */
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /* B-norm, w2 = B*u */
       matvec_B(u, w2);
       t = sqrt(DDOT(&n, u, &one, w2, &one)); /* should be one */
@@ -326,7 +327,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     t = 1.0 / t;
     DSCAL(&n, &t, u, &one);
     /*-------------------- scal B*u */
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /*-------------------- w2 = B*u */
       DSCAL(&n, &t, w2, &one);
     }
@@ -341,7 +342,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     }
     /*-------------------- compute residual wrt A for this pair */
     nt = -t;
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /*-------------------- w = w - t*B*u */
       DAXPY(&n, &nt, w2, &one, wk, &one);
       /*-------------------- 2 norm of res */
@@ -375,7 +376,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   if (vrand) {
     free(vrand);
   }
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     free(Z);
   }
   /*-------------------- record stats */

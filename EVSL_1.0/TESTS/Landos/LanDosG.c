@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 #include "evsl.h"
 #include "io.h"
@@ -45,15 +46,17 @@ int readVec(const char* filename, int* npts, double** vec) {
  *-----------------------------------------------------------------------
  */
 int main() {
+  srand(time(NULL));
   const int msteps = 30;    // Number of steps
   const int degB = 40;      // Degree to aproximate B with
   const int npts = 200;     // Number of points
   const int nvec = 30;      // Number of random vectors to use
   const double tau = 1e-4;  // Tolerance in polynomial approximation
-  // ---------------- Intervals of interest  
-  //intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
+  // ---------------- Intervals of interest
+  // intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
   // intv[2] and intv[3] are the input interval of interest [a. b]
-  // intv[4] and intv[5] are the smallest and largest eigenvalues of B after diagonal scaling
+  // intv[4] and intv[5] are the smallest and largest eigenvalues of B after
+  // diagonal scaling
   double intv[6] = {-2.739543872224533e-13,
                      0.0325,
                     -2.739543872224533e-13,
@@ -121,6 +124,12 @@ int main() {
         fprintf(fstats, "matrix read successfully\n");
         // nnz = Acoo.nnz;
         n = Acoo.nrows;
+        if(n <= 0) {
+          fprintf(stderr, "non-positive number of rows");
+          exit(7);
+        }
+
+
         // printf("size of A is %d\n", n);
         // printf("nnz of  A is %d\n", nnz);
       } else {
@@ -142,13 +151,21 @@ int main() {
         exit(6);
       }
       /*------------------ diagonal scaling for Acoo and Bcoo */
-      sqrtdiag = (double *)calloc(n, sizeof(double));
-      extractDiag(&Bcoo,  sqrtdiag);
+      sqrtdiag = (double*)calloc(n, sizeof(double));
+      extractDiag(&Bcoo, sqrtdiag);
       diagScaling(&Acoo, &Bcoo, sqrtdiag);
-      //save_vec(n, diag, "OUT/diag.txt");
+      // save_vec(n, diag, "OUT/diag.txt");
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
+      if(ierr) {
+        fprintf(flog, "Could not convert matrix to csr: %i", ierr);
+        exit(8);
+      }
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
+      if(ierr) {
+        fprintf(flog, "Could not convert matrix to csr: %i", ierr);
+        exit(9);
+      }
     }
     if (io.Fmt == HB) {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
@@ -156,11 +173,17 @@ int main() {
     }
     if (1) {
       /*----------------  compute the range of the spectrum of B */
+      SetStdEig();
       SetAMatrix(&Bcsr);
-      double *vinit = (double *)malloc(n*sizeof(double)); 
+      double* vinit = (double*)malloc(n * sizeof(double));
       rand_double(n, vinit);
-      double lmin = 0.0, lmax=0.0;
+      double lmin = 0.0, lmax = 0.0;
       ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
+      SetGenEig();
+      if(ierr) {
+        fprintf(flog, "Could not run LanTrBounds: %i", ierr);
+        exit(10);
+      }
       /*------------- get the bounds for B ------*/
       intv[4] = lmin;
       intv[5] = lmax;
@@ -186,11 +209,15 @@ int main() {
       SetGenEig();
       rand_double(n, vinit);
       ierr = LanTrbounds(40, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
+      if(ierr) {
+        fprintf(flog, "Could not run LanTrBounds: %i", ierr);
+        exit(10);
+      }
       free(vinit);
 #if BsolPol
-      FreeBSolPolData(&Bsol);  
+      FreeBSolPolData(&Bsol);
 #else
-      FreeBSolSuiteSparseData(&Bsol);  
+      FreeBSolSuiteSparseData(&Bsol);
 #endif
       /*----------------- get the bounds for (A, B) ---------*/
       intv[0] = lmin;
@@ -205,7 +232,7 @@ int main() {
       SetBMatrix(&Bcsr);
       SetGenEig();
     }
-    //printf("%lf, %lf, %lf, %lf \n", lmin, lmax, intv[0], intv[1]);
+    // printf("%lf, %lf, %lf, %lf \n", lmin, lmax, intv[0], intv[1]);
     //-------------------- Read in the eigenvalues
     double* ev;
     int numev;
@@ -226,15 +253,16 @@ int main() {
     double t0 = cheblan_timer();
     ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv, tau);
     double t1 = cheblan_timer();
-    fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1-t0 );
+    fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1 - t0);
 
     // -------------------- Calculate the exact DOS
     ret = exDOS(ev, numev, npts, xHist, yHist, intv);
 
-    EVSLFinish();
 
     free_coo(&Acoo);
     free_coo(&Bcoo);
+    free_csr(&Acsr);
+    free_csr(&Bcsr);
     fprintf(stdout, " exDOS ret %d \n", ret);
 
     //--------------------Make OUT dir if it doesn't exist
@@ -256,19 +284,24 @@ int main() {
     fclose(ofp);
     //-------------------- invoke gnuplot for plotting ...
     ierr = system("gnuplot < testerG.gnuplot");
+    if(ierr) {
+      printf("Could not run gnuplot: %i", ierr);
+    }
     //-------------------- and gv for visualizing /
     ierr = system("gv testerG.eps");
+    if(ierr) {
+      printf("Could not run gv: %i", ierr);
+    }
     free(xHist);
     free(yHist);
     free(xdos);
     free(ydos);
     free(ev);
+    fclose(fstats);
     if (sqrtdiag) free(sqrtdiag);
   }
-  //-------------------- done
-  fclose(fstats);
   fclose(fmat);
-  free_csr(&Acsr);
-  free_csr(&Bcsr);
+  EVSLFinish();
+  //-------------------- done
   return 0;
 }

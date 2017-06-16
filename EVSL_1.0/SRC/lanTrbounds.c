@@ -31,6 +31,7 @@
 int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
                 int bndtype,
                 double *lammin, double *lammax, FILE *fstats) {
+  const int ifGenEv = evsldata.ifGenEv;
   double lmin=0.0, lmax=0.0, t, t1, t2;
   int do_print = 1;
   /* handle case where fstats is NULL. Then no output. Needed for openMP. */
@@ -69,7 +70,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   Malloc(V, n*lanm1, double);
   /*-------------------- for gen eig prob, storage for Z = B * V */
   double *Z;
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     Malloc(Z, n*lanm1, double);
   } else {
     Z = V;
@@ -83,7 +84,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   Malloc(Rval, lanm, double);
   /*-------------------- Only compute 2 Ritz vectors */
   Malloc(Rvec, n*2, double);
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     Malloc(BRvec, n*2, double);
   }
   /*-------------------- Eigen vectors of T */
@@ -98,7 +99,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   /*-------------------- copy initial vector to V(:,1)   */
   DCOPY(&n, vinit, &one, V, &one);
   /*-------------------- normalize it */
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     /* B norm */
     matvec_B(V, Z);
     t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
@@ -155,7 +156,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
       }
       T[trlen*lanm1+trlen] = s[k1];
       wn += fabs(s[k1]);
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         /*-------------------- vnew = B \ znew */
         solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
@@ -169,7 +170,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
       /*   beta ~ 0 */
       if (beta*nwn < orthTol*wn) {
         rand_double(n, vnew);
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);          
           matvec_B(vnew, znew);
@@ -190,7 +191,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         /*------------------- w = w / beta */
         double ibeta = 1.0 / beta;
         DSCAL(&n, &ibeta, vnew, &one);
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           DSCAL(&n, &ibeta, znew, &one);
         }
       }
@@ -231,7 +232,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
       double nalpha = -alpha;
       DAXPY(&n, &nalpha, z, &one, znew, &one);
       /*-------------------- FULL reortho to all previous Lan vectors */
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);
         /* vnew = B \ znew */
@@ -254,7 +255,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         }
         /* generate a new init vector*/
         rand_double(n, vnew);
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);          
           matvec_B(vnew, znew);
@@ -275,7 +276,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         /*---------------------- vnew = vnew / beta */
         double ibeta = 1.0 / beta;
         DSCAL(&n, &ibeta, vnew, &one);
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /*-------------------- znew = znew / beta */
           DSCAL(&n, &ibeta, znew, &one);
         }
@@ -312,7 +313,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
      *                       Rvec(:,end) = V(:,1:k) * EvecT(:,end) */
     DGEMV(&cN, &n, &k, &done, V, &n, EvecT, &one, &dzero, Rvec, &one);
     DGEMV(&cN, &n, &k, &done, V, &n, EvecT+(k-1)*lanm1, &one, &dzero, Rvec+n, &one);
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       DGEMV(&cN, &n, &k, &done, Z, &n, EvecT, &one, &dzero, BRvec, &one);
       DGEMV(&cN, &n, &k, &done, Z, &n, EvecT+(k-1)*lanm1, &one, &dzero, BRvec+n, &one);
     }
@@ -321,7 +322,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
     for (i=0; i<2; i++) {
       double *y = Rvec + i*n;
       DCOPY(&n, y, &one, V+i*n, &one);
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         double *By = BRvec + i*n;
         DCOPY(&n, By, &one, Z+i*n, &one);
       }
@@ -337,7 +338,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
       double *y = Rvec + i*n;
       double nt = -Rval[i];
       matvec_A(y, w1);
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         matvec_B(y, w2);
         DAXPY(&n, &nt, w2, &one, w1, &one);
         solve_B(w1, w2);
@@ -365,7 +366,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
     memset(T, 0, lanm1*lanm1*sizeof(double));
     /*-------------------- move starting vector vector V(:,k+1);  V(:,trlen+1) = V(:,k+1) */
     DCOPY(&n, V+k*n, &one, V+trlen*n, &one);
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       DCOPY(&n, Z+k*n, &one, Z+trlen*n, &one);
     }
   } /* outer loop (it) */
@@ -380,7 +381,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   free(EvecT);
   free(Rvec);
   free(work);
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     free(Z);
     free(BRvec);
   }

@@ -58,6 +58,7 @@
 int RatLanTr(int lanm, int nev, double *intv, int maxit, 
              double tol, double *vinit, ratparams *rat, int *nev2, 
              double **vals, double **W, double **resW, FILE *fstats) {
+  const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */
   double tall=0.0;
   //double tolP = tol;
@@ -122,7 +123,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   Malloc(V, n*lanm1, double);
   /*-------------------- for gen eig prob, storage for V = B * Z */
   double *Z;
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     Malloc(Z, n*lanm1, double);
   } else {
     Z = V;
@@ -136,7 +137,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   Malloc(Lam, nev, double);
   Malloc(res, nev, double);
   /*-------------------- for gen eig prob, storage for B*Y */
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     Malloc(Q, n*nev, double);
   } else {
     Q = Y;
@@ -150,7 +151,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   Malloc(Rval, lanm, double);
   Malloc(resi, lanm, double);
   Malloc(Rvec, n*lanm, double);
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     Malloc(Bvec, n*lanm, double);
   } else {
     Bvec = Rvec;
@@ -163,13 +164,13 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   Malloc(s, lanm, double);
   /*-------------------- alloc some work space */
   double *work, *vrand = NULL;
-  int work_size = evsldata.ifGenEv ? 6*n : 4*n;
+  int work_size = ifGenEv ? 6*n : 4*n;
   Malloc(work, work_size, double);  
 #if FILTER_VINIT  
   RatFiltApply(n, rat, vinit, V, work);
   Malloc(vrand, n, double);
   /*-------------------- copy initial vector to Z(:,1)   */
-  if(evsldata.ifGenEv){
+  if(ifGenEv){
     DCOPY(&n, V, &one, Z, &one);
   }  
 #else
@@ -178,7 +179,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
 #endif
   /*-------------------- normalize it */
   double t;
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     /* v = B*z */
     matvec_B(Z, V);
     /* B norm of z*/
@@ -218,7 +219,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       RatFiltApply(n, rat, v, znew, work);
       /*------------------ deflation */
       if (lock > 0) {
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /* orthgonlize against locked vectors first, w = w - B*Y*Y'*w */
           CGS_DGKS2(n, lock, NGS_MAX, Q, Y, znew, work);
         } else {
@@ -245,7 +246,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       }
       T[trlen*lanm1+trlen] = s[k1];
       wn += fabs(s[k1]);
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         /*-------------------- vnew = B * znew */
         matvec_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
@@ -269,7 +270,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
 #else 
       rand_double(n, znew);
 #endif                       
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
 	  /* orthgonlize against locked vectors first, w = w - B*Y*Y'*w */
           CGS_DGKS2(n, lock, NGS_MAX, Q, Y, znew, work);
 	  /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
@@ -294,7 +295,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
 	/*------------------- w = w / beta */
 	double ibeta = 1.0 / beta;
 	DSCAL(&n, &ibeta, vnew, &one);
-	if (evsldata.ifGenEv) {
+	if (ifGenEv) {
 	  DSCAL(&n, &ibeta, znew, &one);
 	}
       }
@@ -326,7 +327,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       it++;
       /*-------------------- deflation: orthgonalize vs locked ones first */
       if (lock > 0) {
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /* orthgonlize against locked vectors first, znew = znew - B*Y*Y'*znew */
           CGS_DGKS2(n, lock, NGS_MAX, Q, Y, znew, work);
         } else {
@@ -348,7 +349,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       double nalpha = -alpha;
       DAXPY(&n, &nalpha, z, &one, znew, &one);
       /*-------------------- FULL reortho to all previous Lan vectors */
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);
         /*-------------------- vnew = B * znew */
@@ -377,7 +378,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
 #else 
       rand_double(n, znew);
 #endif                
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
 	  /* orthgonlize against locked vectors first, w = w - B*Y*Y'*w */
           CGS_DGKS2(n, lock, NGS_MAX, Q, Y, znew, work);
 	  /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
@@ -402,7 +403,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
 	/*---------------------- vnew = vnew / beta */
 	double ibeta = 1.0 / beta;
 	DSCAL(&n, &ibeta, vnew, &one);
-	if (evsldata.ifGenEv) {
+	if (ifGenEv) {
 	  /*-------------------- znew = znew / beta */
 	  DSCAL(&n, &ibeta, znew, &one);
 	}
@@ -496,7 +497,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     /*---------------------- Compute the Ritz vectors: 
      *                       Rvec(:,1:jl) = V(:,1:k) * EvecT(:,1:jl) */
     DGEMM(&cN, &cN, &n, &jl, &k, &done, V, &n, EvecT, &lanm1, &dzero, Rvec, &n);
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       DGEMM(&cN, &cN, &n, &jl, &k, &done, Z, &n, EvecT, &lanm1, &dzero, Bvec, &n);
     }
     /*-------------------- Pass-2: check if Ritz vals of A are in [a,b] */
@@ -511,7 +512,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       double *w = work;
       double *w2 = w + n;
       /*------------------ normalize just in case. */
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         /* B-norm, w2 = B*y */
         matvec_B(y, w2);
         t = sqrt(DDOT(&n, y, &one, w2, &one));
@@ -526,7 +527,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       /*-------------------- scal y */
       t = 1.0 / t;
       DSCAL(&n, &t, y, &one);
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         DSCAL(&n, &t, w2, &one);
       }
       /*-------------------- w = A*y */
@@ -540,7 +541,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
         ll++;
         /*-------------------- compute residual wrt A for this pair */
         double nt3 = -t3;
-        if (evsldata.ifGenEv) {
+        if (ifGenEv) {
           /* w = w - t3*w2, w2 = B*y,  (w=A*y-t3*B*y) */
           DAXPY(&n, &nt3, w2, &one, w, &one);
           /* res0 = 2-norm of w */
@@ -562,7 +563,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
               fprintf(fstats, "-- More eigval found: realloc space for %d evs\n", nev);
             }
             Realloc(Y, nev*n, double);
-            if (evsldata.ifGenEv) {
+            if (ifGenEv) {
               Realloc(Q, nev*n, double);
             }
             Realloc(Lam, nev, double);
@@ -570,7 +571,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
           }
           /*--------------------   accept (t3, y) */
           DCOPY(&n, y, &one, Q+lock*n, &one);
-          if (evsldata.ifGenEv) {
+          if (ifGenEv) {
             DCOPY(&n, q, &one, Y+lock*n, &one);
           }
           Lam[lock] = t3;
@@ -580,7 +581,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
           /*-------------------- restart; move Ritz pair for TR to front */
           Rval[trlen] = Rval[i];
           DCOPY(&n, y, &one, Z+trlen*n, &one);
-          if (evsldata.ifGenEv) {
+          if (ifGenEv) {
             DCOPY(&n, q, &one, V+trlen*n, &one);
           }
           /* special vector for TR that is the bottom row of 
@@ -623,7 +624,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     memset(T, 0, lanm1*lanm1*sizeof(double));
     /*-------------------- move starting vector vector V(:,k+1);  V(:,trlen+1) = V(:,k+1) */
     DCOPY(&n, V+k*n, &one, V+trlen*n, &one);
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       DCOPY(&n, Z+k*n, &one, Z+trlen*n, &one);
     }
   } /* outer loop (it) */
@@ -650,7 +651,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   if (vrand) {
     free(vrand);
   }  
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     free(Z);
     free(Y);
     free(Bvec);

@@ -439,6 +439,7 @@ void free_rat(ratparams *rat) {
  * 
  */
 void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
+  const int ifGenEv = evsldata.ifGenEv;
   int ii, jj, kk, k=0, kf;
   int *mulp = rat->mulp;
   int num = rat->num;
@@ -450,7 +451,7 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
   xz = xr + n;
   bz = xz + n;
   br = bz + n;
-  if (evsldata.ifGenEv) {
+  if (ifGenEv) {
     yr = br + n;
     yz = yr + n;
   }
@@ -478,7 +479,7 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
         bz[ii] = zkc*b[ii] + xz[ii];
       }
       /*---------------- solve shifted system */
-      if (evsldata.ifGenEv) {
+      if (ifGenEv) {
         if (jj > k) {
           (sol->func)(n, br, bz, yr, yz, sol->data);
           matvec_B(yr, xr);

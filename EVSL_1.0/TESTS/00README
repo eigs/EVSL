@@ -26,12 +26,22 @@ Gen_Lap
   Test drivers  are for  testing  a  few methods  on  simple
   (artificial) Laplacean matrix pair (A, B).  
   
-Gen_MM
+Gen_MM_Landos
  
  Drivers  for testing  a  few routines  for  computing eigenvalues  of
  general sparse (symmetric real) matrix pair (A, B), where B has to be
  positive definite.  These matrices are read from a file in the matrix
- market format.  Note: The HB matrix format is not supported.
+ market format. Uses Lanczo's to compute DOS.
+ Note: The HB matrix format is not supported.
+
+Gen_MM_KPM
+ 
+ Drivers  for testing  a  few routines  for  computing eigenvalues  of
+ general sparse (symmetric real) matrix pair (A, B), where B has to be
+ positive definite.  These matrices are read from a file in the matrix
+ market format.  Uses kpm to compute DOS.
+ Note: The HB matrix format is not supported.
+
 
 ----------------------------------------
  OTHER 

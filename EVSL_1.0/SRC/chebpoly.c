@@ -497,6 +497,7 @@ void free_pol(polparams *pol) {
  * @param v is untouched
  **/
 int ChebAv(polparams *pol, double *v, double *y, double *w) {
+  const int ifGenEv = evsldata.ifGenEv;
   int n = evsldata.n;
   /*-------------------- unpack pol */
   double *mu = pol->mu;
@@ -507,7 +508,7 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
   double *vk   = w;
   double *vkp1 = w+n;
   double *vkm1 = vkp1+n;
-  double *w2 = evsldata.ifGenEv ? vkm1 + n : NULL;
+  double *w2 = ifGenEv ? vkm1 + n : NULL;
   /*-------------------- */
   int k, i;
   double t, s, *tmp, t1= 1.0 / dd, t2 = 2.0 / dd; 
@@ -525,7 +526,7 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
     t = k == 1 ? t1 : t2; 
     /*-------------------- */    
     s = mu[k];
-    if (evsldata.ifGenEv) {
+    if (ifGenEv) {
       /*-------------------- Vkp1 = A*B\Vk - cc*Vk */    
       solve_B(vk, w2);
       matvec_A(w2, vkp1);
