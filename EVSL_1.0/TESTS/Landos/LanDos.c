@@ -80,14 +80,14 @@ int main() {
   int i, ret;
   double neig, neig2;  // Number eigenvalues
   //-------------------- exact histogram and computed DOS
-  double* xHist = (double*)calloc(npts, sizeof(double));  // Exact DOS x values
-  double* yHist = (double*)calloc(npts, sizeof(double));  // Exact DOS y values
-  double* xdos = (double*)calloc(npts, sizeof(double));   // Calculated DOS x
+  double* xHist = (double*)malloc(npts* sizeof(double));  // Exact DOS x values
+  double* yHist = (double*)malloc(npts* sizeof(double));  // Exact DOS y values
+  double* xdos = (double*)malloc(npts* sizeof(double));   // Calculated DOS x
                                                           // vals
-  double* ydos = (double*)calloc(npts, sizeof(double));   // Calculated DOS y
-  double* xdos2 = (double*)calloc(npts, sizeof(double));  // Calculated DOS x
+  double* ydos = (double*)malloc(npts* sizeof(double));   // Calculated DOS y
+  double* xdos2 = (double*)malloc(npts* sizeof(double));  // Calculated DOS x
                                                           // vals
-  double* ydos2 = (double*)calloc(npts, sizeof(double));  // Calculated DOS y
+  double* ydos2 = (double*)malloc(npts* sizeof(double));  // Calculated DOS y
                                                           // vals
 
   SetStdEig();
