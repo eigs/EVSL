@@ -54,10 +54,21 @@ int readDiagMat(const char* filename, cooMat* mat) {
  * Tests landos.c -- Includes graphical comparison of exact DOS and calculated.
  *-----------------------------------------------------------------------
  */
-int main() {
+int main(int argc, char* argv[]) {
   srand(time(NULL));
   cooMat cooMat;
   csrMat csrMat;
+  int test = 0;
+  if (argc > 1) {
+    if (!strcmp(argv[1], "-t")) {
+      test = 1;
+    }
+  }
+  int doPrint = 1;
+  if (test) {
+    doPrint = 0;
+  }
+
   //-------------------- Read in a test matrix
   readDiagMat("testmat.dat", &cooMat);
   cooMat_to_csrMat(0, &cooMat, &csrMat);
@@ -83,12 +94,12 @@ int main() {
   double* xHist = (double*)calloc(npts, sizeof(double));  // Exact DOS x values
   double* yHist = (double*)calloc(npts, sizeof(double));  // Exact DOS y values
   double* xdos = (double*)calloc(npts, sizeof(double));   // Calculated DOS x
-                                                          // vals
+  // vals
   double* ydos = (double*)calloc(npts, sizeof(double));   // Calculated DOS y
   double* xdos2 = (double*)calloc(npts, sizeof(double));  // Calculated DOS x
-                                                          // vals
+  // vals
   double* ydos2 = (double*)calloc(npts, sizeof(double));  // Calculated DOS y
-                                                          // vals
+  // vals
 
   SetStdEig();
   EVSLStart();
@@ -97,19 +108,21 @@ int main() {
   ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv,
                 tau);  // Calculate DOS
   double t1 = cheblan_timer();
-  fprintf(stdout, " LanDos ret %d \n", ret);
+  if (doPrint) fprintf(stdout, " LanDos ret %d \n", ret);
   double t2 = cheblan_timer();
   ret =
       LanDos(nvec, msteps, npts, xdos2, ydos2, &neig2, intv);  // Calculate DOS
   double t3 = cheblan_timer();
-  fprintf(stdout, " LanDos ret %d \n", ret);
-  printf("neig1: %f, neig2: %f \n", neig, neig2);
-  printf("1: %f, 2: %f \n", t1 - t0, t3 - t2);
+  if (doPrint) {
+    fprintf(stdout, " LanDos ret %d \n", ret);
+    printf("neig1: %f, neig2: %f \n", neig, neig2);
+    printf("1: %f, 2: %f \n", t1 - t0, t3 - t2);
+  }
 
   ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv);  // Exact DOS
   EVSLFinish();
   free_coo(&cooMat);
-  fprintf(stdout, " exDOS ret %d \n", ret);
+  if (doPrint) fprintf(stdout, " exDOS ret %d \n", ret);
   //--------------------Make OUT dir if it does'nt exist
   struct stat st = {0};
   if (stat("OUT", &st) == -1) {
@@ -119,22 +132,51 @@ int main() {
   //-------------------- Write to  output files
   FILE* ofp = fopen("OUT/myydos.txt", "w");
   FILE* ofp2 = fopen("OUT/myydos2.txt", "w");
+  FILE* ofp3 = fopen("OUT/diff1.txt", "w");
+  FILE* ofp4 = fopen("OUT/diff2.txt", "w");
+  double* diff1 = malloc(sizeof(double) * npts);
+  double* diff2 = malloc(sizeof(double) * npts);
+  double sum1 = 0;
+  double sum2 = 0;
+  double rmse1 = 0;
+  double rmse2 = 0;
+
   for (i = 0; i < npts; i++) {
     fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
+    diff1[i] = fabs(yHist[i] - ydos[i]);
+    sum1 += diff1[i];
+    fprintf(ofp3, " %10.4f\n", diff1[i]);
+
     fprintf(ofp2, " %10.4f  %10.4f\n", xdos2[i], ydos2[i]);
+    diff2[i] = fabs(yHist[i] - ydos2[i]);
+    sum2 += diff1[i];
+    fprintf(ofp4, " %10.4f\n", diff1[i]);
   }
+  rmse1 = sqrt(sum1 * sum1);
+  rmse2 = sqrt(sum2 * sum2);
+  // Checker
+  if (test) {
+    printf("%s RMSE1 %f %f\n", argv[0], rmse1);
+    printf("%s RMSE2 %f %f\n", argv[0], rmse2);
+  }
+  free(diff1);
+  free(diff2);
   fclose(ofp);
   fclose(ofp2);
+  fclose(ofp3);
+  fclose(ofp4);
 
   //-------------------- save exact DOS
   ofp = fopen("OUT/Exydos.txt", "w");
   for (i = 0; i < npts; i++)
     fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
   fclose(ofp);
-  //-------------------- invoke gnuplot for plotting ...
-  system("gnuplot < tester.gnuplot");
-  //-------------------- and gv for visualizing /
-  system("gv tester.eps");
+  if (!test) {
+    //-------------------- invoke gnuplot for plotting ...
+    system("gnuplot < tester.gnuplot");
+    //-------------------- and gv for visualizing /
+    system("gv tester.eps");
+  }
   //-------------------- done
   free(xHist);
   free(yHist);
