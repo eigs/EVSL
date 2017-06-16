@@ -17,8 +17,7 @@ double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
  *
  * @param[in] B Matrix to extract the square root of the diagonals
  * @param[out] sqrtdiag preallocated vector of lengeth B.ncols to put the sqrt
- * of
- *  diagonals into
+ * of diagonals into
  */
 void extractDiag(cooMat *B, double *sqrtdiag) {
   const int nnz = B->nnz;

@@ -18,6 +18,7 @@
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] degB Degree with which B should be approximated by \\
  *                Must be positive. Planned feature: if non-positive use
+ *                Cholsky factorization.
  *    @param[in] npts number of sample points used for the DOS curve
  *    @param[in] *intv Stores the three intervals of interest
  *    @param[in] tau Tolerence used
@@ -129,11 +130,9 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
     randn_double(n, vinit);
     /*-------------------- copy initial vector to Z(:,1) */
     /* Filter the initial vector */
-    tm = cheblan_timer();
     if (ifGenEv) {
       pnav(pol_sqr.mu, pol_sqr.deg, pol_sqr.cc, pol_sqr.dd, vinit, V, wk);
     }
-    tmv += cheblan_timer() - tm;
     /*--------------------  normalize it */
     double t;
     if (ifGenEv) {
