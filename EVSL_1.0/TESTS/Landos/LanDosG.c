@@ -58,9 +58,9 @@ int main(int argc, char* argv[]) {
     doPrint = 0;
   }
   const int msteps = 30;    // Number of steps
-  const int degB = 30;      // Degree to aproximate B with
+  const int degB = 40;      // Degree to aproximate B with
   const int npts = 200;     // Number of points
-  const int nvec = 50;      // Number of random vectors to use
+  const int nvec = 30;      // Number of random vectors to use
   const double tau = 1e-4;  // Tolerance in polynomial approximation
   // ---------------- Intervals of interest
   // intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
