@@ -253,11 +253,10 @@ int main(int argc, char* argv[]) {
     int ret;
     double neig;
     //-------------------- exact histogram and computed DOS
-    double* xHist = (double*)calloc(npts, sizeof(double));
-    double* yHist = (double*)calloc(npts, sizeof(double));
-    double* xdos = (double*)calloc(npts, sizeof(double));
-    double* ydos = (double*)calloc(npts, sizeof(double));
-    double* diff = malloc(sizeof(double) * npts);
+    double* xHist = (double*)malloc(npts* sizeof(double));
+    double* yHist = (double*)malloc(npts* sizeof(double));
+    double* xdos = (double*)malloc(npts* sizeof(double));
+    double* ydos = (double*)malloc(npts* sizeof(double));
     double sum = 0;
     double rmse = 0;
 
