@@ -236,7 +236,7 @@ int main() {
     //-------------------- Read in the eigenvalues
     double* ev;
     int numev;
-    readVec("NMA1AB_eigenvalues.dat", &numev, &ev);
+    readVec("NM1AB_eigenvalues.dat", &numev, &ev);
 
     //-------------------- Define some constants to test with
     //-------------------- reset to whole interval
