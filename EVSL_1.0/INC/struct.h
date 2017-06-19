@@ -176,7 +176,7 @@ typedef struct _BSolDataPol {
 extern evslData evsldata;
 
 /*!
- * @brief timing and memory statistics of pEVSL
+ * @brief timing and memory statistics of EVSL
  *
  */
 typedef struct _evslstat {
