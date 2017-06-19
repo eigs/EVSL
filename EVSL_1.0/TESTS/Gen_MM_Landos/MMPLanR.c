@@ -50,7 +50,7 @@ int main() {
   /*-------------------- Bsol for B and B^{1/2} by polynomial*/
   BSolDataPol Bsol2, Bsqrtsol;
   /*-------------------- stopping tol */
-  tol = 1e-6;
+  tol = 1e-5;
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
@@ -232,7 +232,7 @@ int main() {
       nev = ev_int+2;
       //-------------------- Dimension of Krylov subspace and maximal iterations
       mlan = max(4*nev,100);  mlan = min(mlan, n);  max_its = 3*mlan;
-      //-------------------- RationalLanNr
+      //-------------------- RationalLanTr
       ierr = ChebLanTr(mlan, nev, xintv, max_its, tol, vinit, 
                        &pol, &nev2, &lam, &Y, &res, fstats);
       if (ierr) {

@@ -20,10 +20,10 @@ int main() {
    * read in matrix format -- using
    * Thick-Restarted Lanczos with polynomial filtering.
    *-------------------------------------------------------------*/
-  int n=0, i, j, npts, nslices, nvec, Mdeg, nev, 
-      mlan, max_its, ev_int, sl, ierr, totcnt;
+  int n=0, i, j, npts, nslices, nvec, nev, 
+      mlan, ev_int, sl, ierr, totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
-  double a, b, lmax, lmin, ecount, tol, *sli, *mu;
+  double a, b, lmax, lmin, ecount, tol, *sli;
   double xintv[6];
   double *alleigs; 
   int *counts; // #ev computed in each slice  
@@ -33,22 +33,24 @@ int main() {
   /*-------------------- matrices A, B: coo format and csr format */
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
-  double *sqrtdiag = NULL;    
+  double *sqrtdiag = NULL;  
   /* slicer parameters */  
-  Mdeg = 50;
-  nvec = 40;
-  mu = malloc((Mdeg+1)*sizeof(double));
+  int msteps = 40;
+  nvec = 10;
+  npts = 200;
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
   io_t io;
+  const int degB = 200;     // Max degree to aproximate B with
+  const double tau = 1e-4;  // Tolerance in polynomial approximation
   int numat, mat;
   char line[MAX_LINE];
-  /*-------------------- Bsol using cholmod*/
+  /*-------------------- Bsol by cholmod */
   BSolDataSuiteSparse Bsol;
+  /*-------------------- Bsol for B and B^{1/2} by polynomial*/
+  BSolDataPol Bsol2, Bsqrtsol;
   /*-------------------- stopping tol */
   tol = 1e-5;
-  /*-------------------- Polynomial approximation to B and sqrtB*/
-  BSolDataPol Bsol2, Bsqrtsol;  
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
@@ -139,19 +141,20 @@ int main() {
     vinit = (double *)malloc(n * sizeof(double));
     rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
+    SetGenEig();
     /*------------- get the bounds for B ------*/
     xintv[4] = lmin;
     xintv[5] = lmax;
-    /*---------------  Pass the bounds to Bsol2 and Bsqrtsol */
+    /*---------------  Pass the bounds to Bsol and Bsqrtsol */
     Bsol2.intv[0] = lmin;
     Bsol2.intv[1] = lmax;
     Bsqrtsol.intv[0] = lmin;
     Bsqrtsol.intv[1] = lmax;
-    /*--------------  Setup the Bsol and Bsqrtsol struct */
+    /*--------------  Setup the Bsol and Bsqrtsol struct  for Landos*/
     SetupBSolPol(&Bcsr, &Bsol2);
     SetupBsqrtSolPol(&Bcsr, &Bsqrtsol);
     SetBSol(BSolPol, (void *)&Bsol2);
-    SetLTSol(BSolPol, (void *)&Bsqrtsol);          
+    SetLTSol(BSolPol, (void *)&Bsqrtsol);    
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
@@ -165,32 +168,28 @@ int main() {
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n", 
 	    lmin, lmax);
     /*-------------------- interval and eig bounds */
-    xintv[0] = a;
-    xintv[1] = b;
-    xintv[2] = lmin;
-    xintv[3] = lmax;
+    xintv[0] = lmin;
+    xintv[1] = lmax;
+    xintv[2] = a;
+    xintv[3] = b;
     /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
-    /*-------------------- define kpmdos parameters */
-    //-------------------- call kpmdos 
+    /*-------------------- define landos parameters */
+    //-------------------- call landos 
     double t = cheblan_timer();
-    ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
+    double *xdos = (double *)calloc(npts, sizeof(double));
+    double *ydos = (double *)calloc(npts, sizeof(double));    
+    ierr = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &ecount, xintv, tau);
     t = cheblan_timer() - t;
     if (ierr) {
-      printf("kpmdos error %d\n", ierr);
+      printf("Landos error %d\n", ierr);
       return 1;
     }
-    fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
+    fprintf(fstats, " Time to build DOS (Landos) was : %10.2f  \n",t);
     fprintf(fstats, " estimated eig count in interval: %.15e \n",ecount);
     //-------------------- call splicer to slice the spectrum
-    npts = 10 * ecount; 
-    sli = malloc((nslices+1)*sizeof(double));
-    fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",
-	    Mdeg, nvec, npts);
-    ierr = spslicer(sli, mu, Mdeg, xintv, nslices,  npts);
-    if (ierr) {
-      printf("spslicer error %d\n", ierr);
-      return 1;
-    }
+    fprintf(fstats,"DOS parameters: msteps = %d, nvec = %d, npnts = %d\n",
+	    msteps, nvec, npts);
+    spslicer2(xdos, ydos, nslices, npts, sli);
     printf("====================  SLICES FOUND  ====================\n");
     for (j=0; j<nslices; j++) {
       printf(" %2d: [% .15e , % .15e]\n", j+1, sli[j],sli[j+1]);
@@ -198,12 +197,12 @@ int main() {
     //-------------------- # eigs per slice
     ev_int = (int) (1 + ecount / ((double) nslices));
     totcnt = 0;
-    /*-------------------- use SuiteSparse as the solver for B */
+    /*-------------------- use SuiteSparse as the solver for B  in eigenvalue computation*/
     SetupBSolSuiteSparse(&Bcsr, &Bsol);
-    /*-------------------- set the solver for B*/
+    /*-------------------- set the solver for B and LT */
     SetBSol(BSolSuiteSparse, (void *) &Bsol);
-    //SetLTSol(LTSolSuiteSparse, (void *) &Bsol);    
-    //-------------------- For each slice 
+    SetLTSol(LTSolSuiteSparse, (void *) &Bsol);
+    //-------------------- For each slice call RatLanrNr
     for (sl=0; sl<nslices; sl++) {
       printf("======================================================\n");
       int nev2;
@@ -232,14 +231,15 @@ int main() {
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int+2;
       //-------------------- Dimension of Krylov subspace and maximal iterations
-      mlan = max(4*nev,100);  mlan = min(mlan, n);  max_its = 3*mlan;
-      //-------------------- RationalLanNr
-      ierr = ChebLanTr(mlan, nev, xintv, max_its, tol, vinit, 
-                       &pol, &nev2, &lam, &Y, &res, fstats);
+      mlan = max(4*nev,100);  mlan = min(mlan, n); 
+      //-------------------- then call ChenLanNr
+      ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, 
+                     &lam, &Y, &res, fstats);                       
       if (ierr) {
 	printf("ChebLanTr error %d\n", ierr);
 	return 1;
       }
+
       /* sort the eigenvals: ascending order
        * ind: keep the orginal indices */
       ind = (int *) malloc(nev2*sizeof(int));
@@ -254,8 +254,8 @@ int main() {
       fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
       memcpy(&alleigs[totcnt],lam,nev2*sizeof(double));
       totcnt += nev2;
-      counts[sl] = nev2;   
-      ierr = scalEigVec(n, nev2, Y, sqrtdiag);                        
+      counts[sl] = nev2; 
+      ierr = scalEigVec(n, nev2, Y, sqrtdiag);           
       //-------------------- free allocated space withing this scope
       if (lam) free(lam);
       if (Y) free(Y);
@@ -280,13 +280,15 @@ int main() {
     free_csr(&Bcsr);
     FreeBSolSuiteSparseData(&Bsol);
     FreeBSolPolData(&Bsol2);
-    FreeBSolPolData(&Bsqrtsol);            
+    FreeBSolPolData(&Bsqrtsol);    
     free(alleigs);
     free(counts);
+    free(xdos);
+    free(ydos);    
+    if (sqrtdiag) free(sqrtdiag);    
     if (fstats != stdout) fclose(fstats);
     /*-------------------- end matrix loop */
   }
-  free(mu);
   if( flog != stdout) fclose( flog );
   fclose( fmat ); 
   /*-------------------- finalize EVSL */
