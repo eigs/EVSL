@@ -24,7 +24,7 @@ int main() {
     max_its, ev_int, sl, ierr, totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
-  double xintv[4];
+  double xintv[6];
   double *alleigs; 
   int *counts; // #ev computed in each slice  
   /* initial vector: random */
@@ -51,8 +51,6 @@ int main() {
   /*-------------------- stopping tol */
   tol = 1e-6;
   /*-------------------- Polynomial approximation to B and sqrtB*/
-  const int degB = 200;     // Max degree to aproximate B with
-  const double tau = 1e-4;  // Tolerance in polynomial approximation
   BSolDataPol Bsol2, Bsqrtsol;  
   /*-------------------- start EVSL */
   EVSLStart();

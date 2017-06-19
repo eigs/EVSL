@@ -137,7 +137,6 @@ int main() {
     vinit = (double *)malloc(n * sizeof(double));
     rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
-    SetGenEig();
     /*------------- get the bounds for B ------*/
     xintv[4] = lmin;
     xintv[5] = lmax;
@@ -154,10 +153,7 @@ int main() {
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
-    SetBMatrix(&Bcsr);
-    /*-------------------- set the solver for B and LT */
-    SetBSol(BSolSuiteSparse, (void *) &Bsol);
-    SetLTSol(LTSolSuiteSparse, (void *) &Bsol);    
+    SetBMatrix(&Bcsr);    
     /*-------------------- for generalized eigenvalue problem */
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
