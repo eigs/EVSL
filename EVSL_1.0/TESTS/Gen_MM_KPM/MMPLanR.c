@@ -283,6 +283,7 @@ int main() {
     FreeBSolPolData(&Bsqrtsol);            
     free(alleigs);
     free(counts);
+    free(sqrtdiag);
     if (fstats != stdout) fclose(fstats);
     /*-------------------- end matrix loop */
   }
