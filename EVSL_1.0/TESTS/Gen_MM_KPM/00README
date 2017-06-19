@@ -17,6 +17,16 @@ MMRLanN.c :
     Rational Filter non-restarting Lanczos 
     make MMRLanN.ex--> executable MMRLanN.ex
 
+MMPLanN.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter non-restarting Lanczos 
+    make MMPLanN.ex--> executable MMPLanN.ex
+
+MMPLanR.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter Lanczos with thick Restart
+    make MMRLanR.ex--> executable MMRLanR.ex
+
 matfile : input file containing the path to the matrix to be read by Gen*.c
           - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 	  1                                                 %% number of matrices
