@@ -36,6 +36,11 @@ MMPLanR.ex: $(OBJS_PR)
 
 all: $(ALLEXE)
 
+OUT/test_%.out: %.ex
+	./$< | ./tester.pl > $@
+
+test_all: OUT/test_MMRLanN.out OUT/test_MMRLanR.out
+
 clean:
 	rm -f *.o *.ex
 

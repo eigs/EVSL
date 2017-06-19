@@ -30,6 +30,11 @@ LanDos.ex: $(OBJS_LD)
 LanDosG.ex: $(OBJS_LDG)
 	$(LINK) -o LanDosG.ex $(OBJS_LDG) $(LIB) $(LIB_EXT)
 
+OUT/test_%.out: %.ex
+	./$< -t | ./tester.pl > $@
+	echo "Test passed"
+
+test_all: OUT/test_LanDos.out OUT/test_LanDosG.out
 
 clean:
 	rm -f *.o *.ex

@@ -45,8 +45,18 @@ int readVec(const char* filename, int* npts, double** vec) {
  * problem. Includes graphical comparison of calculated vs exact DOS
  *-----------------------------------------------------------------------
  */
-int main() {
+int main(int argc, char* argv[]) {
   srand(time(NULL));
+  int test = 0;
+  if (argc > 1) {
+    if (!strcmp(argv[1], "-t")) {
+      test = 1;
+    }
+  }
+  int doPrint = 1;
+  if (test) {
+    doPrint = 0;
+  }
   const int msteps = 30;    // Number of steps
   const int degB = 40;      // Degree to aproximate B with
   const int npts = 200;     // Number of points
@@ -58,11 +68,11 @@ int main() {
   // intv[4] and intv[5] are the smallest and largest eigenvalues of B after
   // diagonal scaling
   double intv[6] = {-2.739543872224533e-13,
-                     0.0325,
+                    0.0325,
                     -2.739543872224533e-13,
-                     0.0325,
-                     0.5479,
-                     2.5000};
+                    0.0325,
+                    0.5479,
+                    2.5000};
   int n = 0, i, nslices, ierr;
   double a, b;
 
@@ -115,7 +125,8 @@ int main() {
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
+    fprintf(fstats,
+            "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
             nslices);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
@@ -124,11 +135,10 @@ int main() {
         fprintf(fstats, "matrix read successfully\n");
         // nnz = Acoo.nnz;
         n = Acoo.nrows;
-        if(n <= 0) {
+        if (n <= 0) {
           fprintf(stderr, "non-positive number of rows");
           exit(7);
         }
-
 
         // printf("size of A is %d\n", n);
         // printf("nnz of  A is %d\n", nnz);
@@ -157,12 +167,12 @@ int main() {
       // save_vec(n, diag, "OUT/diag.txt");
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
-      if(ierr) {
+      if (ierr) {
         fprintf(flog, "Could not convert matrix to csr: %i", ierr);
         exit(8);
       }
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
-      if(ierr) {
+      if (ierr) {
         fprintf(flog, "Could not convert matrix to csr: %i", ierr);
         exit(9);
       }
@@ -180,7 +190,7 @@ int main() {
       double lmin = 0.0, lmax = 0.0;
       ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
       SetGenEig();
-      if(ierr) {
+      if (ierr) {
         fprintf(flog, "Could not run LanTrBounds: %i", ierr);
         exit(10);
       }
@@ -195,21 +205,21 @@ int main() {
       /*-------------------- Use polynomial to solve B */
       BSolDataPol Bsol;
       Bsol.intv[0] = lmin;
-      Bsol.intv[1] = lmax;    
+      Bsol.intv[1] = lmax;
       SetupBSolPol(&Bcsr, &Bsol);
-      SetBSol(BSolPol, (void *) &Bsol);
+      SetBSol(BSolPol, (void*)&Bsol);
 #else
       /*-------------------- Use Choleksy factorization to solve B */
       BSolDataSuiteSparse Bsol;
       /*-------------------- use SuiteSparse as the solver for B */
       SetupBSolSuiteSparse(&Bcsr, &Bsol);
       /*-------------------- set the solver for B */
-      SetBSol(BSolSuiteSparse, (void *) &Bsol);
+      SetBSol(BSolSuiteSparse, (void*)&Bsol);
 #endif
       SetGenEig();
       rand_double(n, vinit);
       ierr = LanTrbounds(40, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
-      if(ierr) {
+      if (ierr) {
         fprintf(flog, "Could not run LanTrBounds: %i", ierr);
         exit(10);
       }
@@ -243,10 +253,12 @@ int main() {
     int ret;
     double neig;
     //-------------------- exact histogram and computed DOS
-    double* xHist = (double*)calloc(npts, sizeof(double));
-    double* yHist = (double*)calloc(npts, sizeof(double));
-    double* xdos = (double*)calloc(npts, sizeof(double));
-    double* ydos = (double*)calloc(npts, sizeof(double));
+    double* xHist = (double*)malloc(npts* sizeof(double));
+    double* yHist = (double*)malloc(npts* sizeof(double));
+    double* xdos = (double*)malloc(npts* sizeof(double));
+    double* ydos = (double*)malloc(npts* sizeof(double));
+    double sum = 0;
+    double rmse = 0;
 
     // ------------------- Calculate the approximate DOS
 
@@ -257,7 +269,6 @@ int main() {
 
     // -------------------- Calculate the exact DOS
     ret = exDOS(ev, numev, npts, xHist, yHist, intv);
-
 
     free_coo(&Acoo);
     free_coo(&Bcoo);
@@ -273,8 +284,14 @@ int main() {
 
     //-------------------- Write to  output files
     FILE* ofp = fopen("OUT/myydosG.txt", "w");
-    for (i = 0; i < npts; i++)
+    for (i = 0; i < npts; i++) {
       fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
+      diff[i] = fabs(yHist[i] - ydos[i]);
+      sum += diff[i];
+    }
+    sum /= npts;
+    rmse = sqrt(sum * sum);
+
     fclose(ofp);
 
     //-------------------- save exact DOS
@@ -282,21 +299,26 @@ int main() {
     for (i = 0; i < npts; i++)
       fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
     fclose(ofp);
-    //-------------------- invoke gnuplot for plotting ...
-    ierr = system("gnuplot < testerG.gnuplot");
-    if(ierr) {
-      printf("Could not run gnuplot: %i", ierr);
-    }
-    //-------------------- and gv for visualizing /
-    ierr = system("gv testerG.eps");
-    if(ierr) {
-      printf("Could not run gv: %i", ierr);
+    if (!test) {
+      //-------------------- invoke gnuplot for plotting ...
+      ierr = system("gnuplot < testerG.gnuplot");
+      if (ierr) {
+        printf("Could not run gnuplot: %i", ierr);
+      }
+      //-------------------- and gv for visualizing /
+      ierr = system("gv testerG.eps");
+      if (ierr) {
+        printf("Could not run gv: %i", ierr);
+      }
+    } else {
+      printf("%s RMSE %f \n", argv[0], rmse);
     }
     free(xHist);
     free(yHist);
     free(xdos);
     free(ydos);
     free(ev);
+    free(diff);
     fclose(fstats);
     if (sqrtdiag) free(sqrtdiag);
   }

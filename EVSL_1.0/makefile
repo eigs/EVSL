@@ -24,3 +24,7 @@ docs:
 cleandocs:
 	( cd Documentation; make  clean)
 
+tests:
+	+ ( cd TESTS/Gen_MM_Landos; make test_all)
+	+ ( cd TESTS/Landos; make test_all)
+	( echo "Passed tests" )
