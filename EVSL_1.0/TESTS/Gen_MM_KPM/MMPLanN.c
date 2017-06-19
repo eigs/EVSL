@@ -21,7 +21,7 @@ int main() {
    * Thick-Restarted Lanczos with polynomial filtering.
    *-------------------------------------------------------------*/
   int n=0, i, j, npts, nslices, nvec, nev, 
-      mlan, max_its, ev_int, sl, ierr, totcnt;
+      mlan, ev_int, sl, ierr, totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli;
   double xintv[6];
@@ -231,10 +231,10 @@ int main() {
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int+2;
       //-------------------- Dimension of Krylov subspace and maximal iterations
-      mlan = max(4*nev,100);  mlan = min(mlan, n);  max_its = 3*mlan;
-      //-------------------- RationalLanTr
-      ierr = ChebLanTr(mlan, nev, xintv, max_its, tol, vinit, 
-                       &pol, &nev2, &lam, &Y, &res, fstats);
+      mlan = max(4*nev,100);  mlan = min(mlan, n); 
+      //-------------------- then call ChenLanNr
+      ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, 
+                     &lam, &Y, &res, fstats);                       
       if (ierr) {
 	printf("ChebLanTr error %d\n", ierr);
 	return 1;

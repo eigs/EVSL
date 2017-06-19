@@ -35,7 +35,7 @@ int main() {
   csrMat Acsr, Bcsr;
   double *sqrtdiag = NULL;    
   /* slicer parameters */  
-  Mdeg = 80;
+  Mdeg = 50;
   nvec = 40;
   mu = malloc((Mdeg+1)*sizeof(double));
   FILE *flog = stdout, *fmat = NULL;
@@ -46,7 +46,7 @@ int main() {
   /*-------------------- Bsol using cholmod*/
   BSolDataSuiteSparse Bsol;
   /*-------------------- stopping tol */
-  tol = 1e-6;
+  tol = 1e-5;
   /*-------------------- Polynomial approximation to B and sqrtB*/
   BSolDataPol Bsol2, Bsqrtsol;  
   /*-------------------- start EVSL */
