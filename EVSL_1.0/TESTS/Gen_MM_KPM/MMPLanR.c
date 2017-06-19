@@ -24,7 +24,7 @@ int main() {
       mlan, max_its, ev_int, sl, ierr, totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
-  double xintv[4];
+  double xintv[6];
   double *alleigs; 
   int *counts; // #ev computed in each slice  
   /* initial vector: random */
@@ -33,19 +33,22 @@ int main() {
   /*-------------------- matrices A, B: coo format and csr format */
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
+  double *sqrtdiag = NULL;    
   /* slicer parameters */  
-  Mdeg = 300;
-  nvec = 60;
+  Mdeg = 80;
+  nvec = 40;
   mu = malloc((Mdeg+1)*sizeof(double));
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
   io_t io;
   int numat, mat;
   char line[MAX_LINE];
-  /*-------------------- Bsol */
+  /*-------------------- Bsol using cholmod*/
   BSolDataSuiteSparse Bsol;
   /*-------------------- stopping tol */
-  tol = 1e-8;
+  tol = 1e-6;
+  /*-------------------- Polynomial approximation to B and sqrtB*/
+  BSolDataPol Bsol2, Bsqrtsol;  
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
@@ -117,6 +120,10 @@ int main() {
         fprintf(flog, "read_coo error for B = %d\n", ierr);
         exit(6);
       }
+      /*------------------ diagonal scaling for Acoo and Bcoo */
+      sqrtdiag = (double *)calloc(n, sizeof(double));
+      extractDiag(&Bcoo, sqrtdiag);
+      diagScaling(&Acoo, &Bcoo, sqrtdiag);      
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr); 
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
@@ -126,20 +133,34 @@ int main() {
       exit(7);
     }
     alleigs = malloc(n*sizeof(double)); 
+    /*----------------  compute the range of the spectrum of B */
+    SetStdEig();
+    SetAMatrix(&Bcsr);
+    vinit = (double *)malloc(n * sizeof(double));
+    rand_double(n, vinit);
+    ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
+    SetGenEig();
+    /*------------- get the bounds for B ------*/
+    xintv[4] = lmin;
+    xintv[5] = lmax;
+    /*---------------  Pass the bounds to Bsol2 and Bsqrtsol */
+    Bsol2.intv[0] = lmin;
+    Bsol2.intv[1] = lmax;
+    Bsqrtsol.intv[0] = lmin;
+    Bsqrtsol.intv[1] = lmax;
+    /*--------------  Setup the Bsol and Bsqrtsol struct */
+    SetupBSolPol(&Bcsr, &Bsol2);
+    SetupBsqrtSolPol(&Bcsr, &Bsqrtsol);
+    SetBSol(BSolPol, (void *)&Bsol2);
+    SetLTSol(BSolPol, (void *)&Bsqrtsol);          
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
     SetBMatrix(&Bcsr);
-    /*-------------------- use SuiteSparse as the solver for B */
-    SetupBSolSuiteSparse(&Bcsr, &Bsol);
-    /*-------------------- set the solver for B and LT */
-    SetBSol(BSolSuiteSparse, (void *) &Bsol);
-    SetLTSol(LTSolSuiteSparse, (void *) &Bsol);
     /*-------------------- for generalized eigenvalue problem */
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
     //-------------------- initial vector  
-    vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-12, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n", 
@@ -178,7 +199,12 @@ int main() {
     //-------------------- # eigs per slice
     ev_int = (int) (1 + ecount / ((double) nslices));
     totcnt = 0;
-    //-------------------- For each slice call RatLanrNr
+    /*-------------------- use SuiteSparse as the solver for B */
+    SetupBSolSuiteSparse(&Bcsr, &Bsol);
+    /*-------------------- set the solver for B*/
+    SetBSol(BSolSuiteSparse, (void *) &Bsol);
+    //SetLTSol(LTSolSuiteSparse, (void *) &Bsol);    
+    //-------------------- For each slice 
     for (sl=0; sl<nslices; sl++) {
       printf("======================================================\n");
       int nev2;
@@ -215,7 +241,6 @@ int main() {
 	printf("ChebLanTr error %d\n", ierr);
 	return 1;
       }
-
       /* sort the eigenvals: ascending order
        * ind: keep the orginal indices */
       ind = (int *) malloc(nev2*sizeof(int));
@@ -230,7 +255,8 @@ int main() {
       fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
       memcpy(&alleigs[totcnt],lam,nev2*sizeof(double));
       totcnt += nev2;
-      counts[sl] = nev2;      
+      counts[sl] = nev2;   
+      ierr = scalEigVec(n, nev2, Y, sqrtdiag);                        
       //-------------------- free allocated space withing this scope
       if (lam) free(lam);
       if (Y) free(Y);
@@ -254,6 +280,8 @@ int main() {
     free_coo(&Bcoo);
     free_csr(&Bcsr);
     FreeBSolSuiteSparseData(&Bsol);
+    FreeBSolPolData(&Bsol2);
+    FreeBSolPolData(&Bsqrtsol);            
     free(alleigs);
     free(counts);
     if (fstats != stdout) fclose(fstats);
