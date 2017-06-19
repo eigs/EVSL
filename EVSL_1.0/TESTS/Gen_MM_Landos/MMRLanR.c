@@ -38,8 +38,8 @@ int main() {
   csrMat Acsr, Bcsr;
   double *sqrtdiag = NULL;
   /* slicer parameters */
-  int msteps = 30;
-  nvec = 30;
+  int msteps = 40;
+  nvec = 10;
   npts = 200;
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
