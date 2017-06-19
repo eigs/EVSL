@@ -155,6 +155,9 @@ int main() {
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
     SetBMatrix(&Bcsr);
+    /*-------------------- set the solver for B and LT */
+    SetBSol(BSolSuiteSparse, (void *) &Bsol);
+    SetLTSol(LTSolSuiteSparse, (void *) &Bsol);    
     /*-------------------- for generalized eigenvalue problem */
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
