@@ -38,20 +38,20 @@ int main() {
   csrMat Acsr, Bcsr;
   double *sqrtdiag = NULL;  
   /* slicer parameters */  
-  Mdeg = 80;
-  nvec = 40;
+  Mdeg = 40;
+  nvec = 20;
   mu = malloc((Mdeg+1)*sizeof(double));
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
   io_t io;
+  const int degB = 200;     // Max degree to aproximate B with
+  const double tau = 1e-4;  // Tolerance in polynomial approximation    
   int numat, mat;
   char line[MAX_LINE];
-  /*-------------------- Bsol  using cholmod*/
-  BSolDataSuiteSparse Bsol;
   /*-------------------- stopping tol */
   tol = 1e-6;
   /*-------------------- Polynomial approximation to B and sqrtB*/
-  BSolDataPol Bsol2, Bsqrtsol;
+  BSolDataPol Bsol, Bsqrtsol;
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
@@ -145,16 +145,23 @@ int main() {
     /*------------- get the bounds for B ------*/
     xintv[4] = lmin;
     xintv[5] = lmax;
-    /*---------------  Pass the bounds to Bsol2 and Bsqrtsol */
-    Bsol2.intv[0] = lmin;
-    Bsol2.intv[1] = lmax;
+    /*---------------  Pass the bounds to Bsol and Bsqrtsol */
+    Bsol.intv[0] = lmin;
+    Bsol.intv[1] = lmax;
     Bsqrtsol.intv[0] = lmin;
     Bsqrtsol.intv[1] = lmax;
     /*--------------  Setup the Bsol and Bsqrtsol struct */
-    SetupBSolPol(&Bcsr, &Bsol2);
+    set_pol_def(&Bsol.pol_sol);
+    (Bsol.pol_sol).max_deg = degB;
+    (Bsol.pol_sol).tol = tau;      
+    SetupBSolPol(&Bcsr, &Bsol);    
+    set_pol_def(&Bsqrtsol.pol_sol);
+    (Bsqrtsol.pol_sol).max_deg = degB; 
+    (Bsqrtsol.pol_sol).tol = tau; 
     SetupBsqrtSolPol(&Bcsr, &Bsqrtsol);
-    SetBSol(BSolPol, (void *)&Bsol2);
-    SetLTSol(BSolPol, (void *)&Bsqrtsol);        
+    printf("The degree for LS approximations to B^{-1} and B^{-1/2} are %d and %d\n", (Bsol.pol_sol).deg, (Bsqrtsol.pol_sol).deg);    
+    SetBSol(BSolPol, (void *)&Bsol);
+    SetLTSol(BSolPol, (void *)&Bsqrtsol);           
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
@@ -194,11 +201,6 @@ int main() {
       return 1;
     }
     printf("====================  SLICES FOUND  ====================\n");
-    /*-------------------- use SuiteSparse as the solver for B */
-    SetupBSolSuiteSparse(&Bcsr, &Bsol);
-    /*-------------------- set the solver for B */
-    SetBSol(BSolSuiteSparse, (void *) &Bsol);
-    //SetLTSol(LTSolSuiteSparse, (void *) &Bsol);
     for (j=0; j<nslices; j++) {
       printf(" %2d: [% .15e , % .15e]\n", j+1, sli[j],sli[j+1]);
     }
@@ -287,8 +289,7 @@ int main() {
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
-    FreeBSolSuiteSparseData(&Bsol);
-    FreeBSolPolData(&Bsol2);
+    FreeBSolPolData(&Bsol);
     FreeBSolPolData(&Bsqrtsol);        
     free(alleigs);
     free(counts);

@@ -42,13 +42,11 @@ int main() {
   FILE *fstats = NULL;
   io_t io;
   const int degB = 200;     // Max degree to aproximate B with
-  const double tau = 1e-4;  // Tolerance in polynomial approximation
+  const double tau = 1e-4;  // Tolerance in polynomial approximation  
   int numat, mat;
   char line[MAX_LINE];
   /*-------------------- Bsol by cholmod */
   BSolDataSuiteSparse Bsol;
-  /*-------------------- Bsol for B and B^{1/2} by polynomial*/
-  BSolDataPol Bsol2, Bsqrtsol;
   /*-------------------- stopping tol */
   tol = 1e-5;
   /*-------------------- start EVSL */
@@ -141,20 +139,14 @@ int main() {
     vinit = (double *)malloc(n * sizeof(double));
     rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
-    SetGenEig();
     /*------------- get the bounds for B ------*/
     xintv[4] = lmin;
-    xintv[5] = lmax;
-    /*---------------  Pass the bounds to Bsol and Bsqrtsol */
-    Bsol2.intv[0] = lmin;
-    Bsol2.intv[1] = lmax;
-    Bsqrtsol.intv[0] = lmin;
-    Bsqrtsol.intv[1] = lmax;
-    /*--------------  Setup the Bsol and Bsqrtsol struct  for Landos*/
-    SetupBSolPol(&Bcsr, &Bsol2);
-    SetupBsqrtSolPol(&Bcsr, &Bsqrtsol);
-    SetBSol(BSolPol, (void *)&Bsol2);
-    SetLTSol(BSolPol, (void *)&Bsqrtsol);    
+    xintv[5] = lmax;     
+    /*-------------------- use SuiteSparse as the solver for B  in eigenvalue computation*/
+    SetupBSolSuiteSparse(&Bcsr, &Bsol);
+    /*-------------------- set the solver for B and LT */
+    SetBSol(BSolSuiteSparse, (void *) &Bsol);
+    SetLTSol(LTSolSuiteSparse, (void *) &Bsol);    
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
@@ -163,6 +155,7 @@ int main() {
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
     //-------------------- initial vector  
+    vinit = (double *)malloc(n * sizeof(double));    
     rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-12, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n", 
@@ -197,11 +190,6 @@ int main() {
     //-------------------- # eigs per slice
     ev_int = (int) (1 + ecount / ((double) nslices));
     totcnt = 0;
-    /*-------------------- use SuiteSparse as the solver for B  in eigenvalue computation*/
-    SetupBSolSuiteSparse(&Bcsr, &Bsol);
-    /*-------------------- set the solver for B and LT */
-    SetBSol(BSolSuiteSparse, (void *) &Bsol);
-    SetLTSol(LTSolSuiteSparse, (void *) &Bsol);
     //-------------------- For each slice call RatLanrNr
     for (sl=0; sl<nslices; sl++) {
       printf("======================================================\n");
@@ -278,9 +266,7 @@ int main() {
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
-    FreeBSolSuiteSparseData(&Bsol);
-    FreeBSolPolData(&Bsol2);
-    FreeBSolPolData(&Bsqrtsol);    
+    FreeBSolSuiteSparseData(&Bsol);   
     free(alleigs);
     free(counts);
     free(xdos);

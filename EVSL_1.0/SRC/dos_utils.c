@@ -35,24 +35,22 @@ void extractDiag(cooMat *B, double *sqrtdiag) {
  * Initialize the member of BSolDataPol struct for solving B
  */
 void SetupBSolPol(csrMat *B, BSolDataPol *data) {
-  const int n = B->nrows, mdeg = 200;
-  set_pol_def(&data->pol_sol);
-  double *mu_sol = (double *)calloc(mdeg, sizeof(double));
+  const int n = B->nrows;
+  double *mu_sol = (double *)calloc(data->pol_sol.max_deg, sizeof(double));
   data->pol_sol.mu = mu_sol;
   data->wk = (double *)malloc(3 * n * sizeof(double));
-  lsPol(&data->intv[0], mdeg, rec, 1e-5, &data->pol_sol);
+  lsPol(&data->intv[0], data->pol_sol.max_deg, rec, data->pol_sol.tol, &data->pol_sol);
 }
 
 /*
  * Initialize the member of BSolDataPol struct for solving B^{1/2}
  */
 void SetupBsqrtSolPol(csrMat *B, BSolDataPol *data) {
-  const int n = B->nrows, mdeg = 200;
-  set_pol_def(&data->pol_sol);
-  double *mu_sol = (double *)calloc(mdeg, sizeof(double));
+  const int n = B->nrows;
+  double *mu_sol = (double *)calloc(data->pol_sol.max_deg, sizeof(double));
   data->pol_sol.mu = mu_sol;
   data->wk = (double *)malloc(3 * n * sizeof(double));
-  lsPol(&data->intv[0], mdeg, isqrt, 1e-5, &data->pol_sol);
+  lsPol(&data->intv[0], data->pol_sol.max_deg, isqrt, data->pol_sol.tol, &data->pol_sol);
 }
 
 /*

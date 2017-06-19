@@ -146,10 +146,17 @@ int main() {
     Bsqrtsol.intv[0] = lmin;
     Bsqrtsol.intv[1] = lmax;
     /*--------------  Setup the Bsol and Bsqrtsol struct */
-    SetupBSolPol(&Bcsr, &Bsol);
+    set_pol_def(&Bsol.pol_sol);
+    (Bsol.pol_sol).max_deg = degB;
+    (Bsol.pol_sol).tol = tau;      
+    SetupBSolPol(&Bcsr, &Bsol);    
+    set_pol_def(&Bsqrtsol.pol_sol);
+    (Bsqrtsol.pol_sol).max_deg = degB; 
+    (Bsqrtsol.pol_sol).tol = tau; 
     SetupBsqrtSolPol(&Bcsr, &Bsqrtsol);
+    printf("The degree for LS approximations to B^{-1} and B^{-1/2} are %d and %d\n", (Bsol.pol_sol).deg, (Bsqrtsol.pol_sol).deg);  
     SetBSol(BSolPol, (void *)&Bsol);
-    SetLTSol(BSolPol, (void *)&Bsqrtsol);
+    SetLTSol(BSolPol, (void *)&Bsqrtsol);     
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */

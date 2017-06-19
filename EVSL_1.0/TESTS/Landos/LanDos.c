@@ -63,7 +63,7 @@ int main() {
   cooMat_to_csrMat(0, &cooMat, &csrMat);
 
   //-------------------- Define some constants to test with
-  const int msteps = 30;  // Steps to perform
+  const int msteps = 40;  // Steps to perform
   const int npts = 200;   // Number of points
   const int nvec = 100;   // Number of random vectors to generate
   double intv[6] = {-2.448170338612495,

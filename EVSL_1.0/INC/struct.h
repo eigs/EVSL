@@ -45,6 +45,7 @@ typedef struct _polparams {
   int damping;        /**< 0 = no damping, 1 = Jackson, 2 = Lanczos */
   double thresh_ext;  /**< threshold for accepting polynom. for end intervals */
   double thresh_int;  /**< threshold for interior intervals */
+  double tol;    /**< tolerance for LS approxiamtion */
   /**@}*/
   
   /** @name output from find_pol */
