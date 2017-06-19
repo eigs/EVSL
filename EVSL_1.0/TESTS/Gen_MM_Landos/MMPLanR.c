@@ -150,7 +150,7 @@ int main() {
     Bsol2.intv[1] = lmax;
     Bsqrtsol.intv[0] = lmin;
     Bsqrtsol.intv[1] = lmax;
-    /*--------------  Setup the Bsol and Bsqrtsol struct */
+    /*--------------  Setup the Bsol and Bsqrtsol struct  for Landos*/
     SetupBSolPol(&Bcsr, &Bsol2);
     SetupBsqrtSolPol(&Bcsr, &Bsqrtsol);
     SetBSol(BSolPol, (void *)&Bsol2);
@@ -159,11 +159,6 @@ int main() {
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
     SetBMatrix(&Bcsr);
-    /*-------------------- use SuiteSparse as the solver for B */
-    SetupBSolSuiteSparse(&Bcsr, &Bsol);
-    /*-------------------- set the solver for B and LT */
-    SetBSol(BSolSuiteSparse, (void *) &Bsol);
-    SetLTSol(LTSolSuiteSparse, (void *) &Bsol);
     /*-------------------- for generalized eigenvalue problem */
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
@@ -202,6 +197,11 @@ int main() {
     //-------------------- # eigs per slice
     ev_int = (int) (1 + ecount / ((double) nslices));
     totcnt = 0;
+    /*-------------------- use SuiteSparse as the solver for B  in eigenvalue computation*/
+    SetupBSolSuiteSparse(&Bcsr, &Bsol);
+    /*-------------------- set the solver for B and LT */
+    SetBSol(BSolSuiteSparse, (void *) &Bsol);
+    SetLTSol(LTSolSuiteSparse, (void *) &Bsol);
     //-------------------- For each slice call RatLanrNr
     for (sl=0; sl<nslices; sl++) {
       printf("======================================================\n");
