@@ -6,7 +6,7 @@
 #include "internal_proto.h"
 #include "evsl_suitesparse.h"
 
-/** @file suitesparse.c
+/** @file evsl_suitesparse.c
  *  @brief Default solver function for solving shifted systems and factoring B
  *
  *  This file contains the default solver function for solving shifted systems 
@@ -20,7 +20,7 @@
  * 
  * @param n       size of the system
  * @param br,bi   vectors of length n, complex right-hand side (real and imaginary)
- * @data          all data that are needed for solving the system
+ * @param data    all data that are needed for solving the system
  * 
  * @param[out] xr,xz     vectors of length n, complex solution (real and imaginary)
  *
@@ -48,6 +48,7 @@ void ASIGMABSolSuiteSparse(int n, double *br, double *bi, double *xr,
  * @param BB       matrix B, if NULL, it means B is identity
  * @param num      the number of SIGMA's
  * @param zk       array of SIGMA's of length num
+ * @param data    all data that are needed for solving the system
  * */
 int SetupASIGMABSolSuiteSparse(csrMat *A, csrMat *BB, int num,
                                complex double *zk, void **data) {
@@ -270,7 +271,8 @@ void BSolSuiteSparse(double *b, double *x, void *data) {
 
 /** @brief Setup the B-sol by computing the Cholesky factorization of B
  *
- * @param B       matrix B
+ * @param B         matrix B
+ * @param Bsol_data Struct which will be initialized 
  * */
 int SetupBSolSuiteSparse(csrMat *B, BSolDataSuiteSparse *Bsol_data) {
   cholmod_sparse *Bcholmod;

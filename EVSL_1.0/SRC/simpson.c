@@ -16,9 +16,6 @@
  *    @param[in] yi values of a function f at the xi
  *    @param[in] npts number of sample points
  *
- *    @param[out] si Length-npts long vector, y-coordinate points for
- *    plotting the DOS. Uses simpsen's rule completed by trapezoidal
- *    rule for middle points.
  *    In-place version.
  *
  *----------------------------------------------------------------------*/

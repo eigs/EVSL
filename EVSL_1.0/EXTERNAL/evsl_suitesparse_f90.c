@@ -60,7 +60,7 @@ void EVSLFORT(setup_asigmabsol_suitesparse)(uintptr_t *Af90,
 }
 
 /** @brief Fortran interface for SetASigmaBSol with SuiteSparse solve
- * @param[in/out] ratf90: pointer of rational filter
+ * @param[in,out] ratf90: pointer of rational filter
  * @param[out] solshiftf90: pointer of solshift array
  */
 void EVSLFORT(set_asigmabsol_suitesparse)(uintptr_t *ratf90, 

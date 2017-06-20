@@ -5,10 +5,13 @@
 #include <assert.h>
 #include <math.h>
 
-/*! \file define.h
+/*! \file def.h
     \brief defs in EVSL
 */
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 #define PI M_PI 
 //3.14159265358979323846
 #define orthTol 1e-14

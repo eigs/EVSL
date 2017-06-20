@@ -12,15 +12,16 @@
 /**
  * @brief Lanczos process for eigenvalue bounds [Thick restart version]
  *
- * @param lanm      Dimension of Krylov subspace [restart dimension]
+ * @param[in] lanm      Dimension of Krylov subspace [restart dimension]
  * 
- * @param maxit  max Num of outer Lanczos iterations (restarts) allowed -- 
+ * @param[in] maxit  max Num of outer Lanczos iterations (restarts) allowed -- 
  *         Each restart may or use the full lanm lanczos steps or fewer.
  * 
- * @param tol       tolerance for convergence
- * @param vinit     initial  vector for Lanczos -- [optional]
+ * @param[in] tol       tolerance for convergence
+ * @param[in] vinit     initial  vector for Lanczos -- [optional]
+ * @param[in] bndtype   Type of bound >1 for kato-temple, otherwise
+ *                      simple
  *
- * @b Modifies:
  * @param[out] lammin   Lower bound of the spectrum
  * @param[out] lammax   Upper bound of the spectrum
  * @param[out] fstats File stream which stats are printed to
