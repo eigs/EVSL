@@ -7,6 +7,7 @@
 #define EVSL_H
 
 #include <complex.h>
+#include <stdio.h>
 #include "struct.h"
 
 /*- - - - - - - - - cheblanNr.c */

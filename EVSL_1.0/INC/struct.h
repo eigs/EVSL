@@ -2,6 +2,7 @@
 #define STRUCT_H
 
 #include <complex.h>
+#include <stddef.h>
 /**
  * @file struct.h
  * @brief structs used in evsl
