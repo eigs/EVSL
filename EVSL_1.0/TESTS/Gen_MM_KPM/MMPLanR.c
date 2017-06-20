@@ -175,7 +175,6 @@ int main() {
     fprintf(fstats, " estimated eig count in interval: %.15e \n",ecount);
     //-------------------- call splicer to slice the spectrum
     npts = 10 * ecount; 
-    sli = malloc((nslices+1)*sizeof(double));
     fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",
 	    Mdeg, nvec, npts);
     ierr = spslicer(sli, mu, Mdeg, xintv, nslices,  npts);
