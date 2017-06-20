@@ -1,11 +1,11 @@
+#include "evsl.h"
+#include "evsl_suitesparse.h"
+#include "io.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include "evsl.h"
-#include "evsl_suitesparse.h"
-#include "io.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -27,13 +27,13 @@ int main() {
   double a, b, lmax, lmin, ecount, tol, *sli;
   double xintv[6];
   double *alleigs;
-  int *counts;  // #ev computed in each slice
+  int *counts; // #ev computed in each slice
   /* initial vector: random */
   double *vinit;
   /* parameters for rational filter */
-  int num = 1;         // number of poles used for each slice
-  int pow = 2;         // multiplicity of each pole
-  double beta = 0.01;  // beta in the LS approximation
+  int num = 1;        // number of poles used for each slice
+  int pow = 2;        // multiplicity of each pole
+  double beta = 0.01; // beta in the LS approximation
   /*-------------------- matrices A, B: coo format and csr format */
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
@@ -45,8 +45,8 @@ int main() {
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
   io_t io;
-  const int degB = 200;     // Max degree to aproximate B with
-  const double tau = 1e-4;  // Tolerance in polynomial approximation
+  const int degB = 200;    // Max degree to aproximate B with
+  const double tau = 1e-4; // Tolerance in polynomial approximation
   int numat, mat;
   char line[MAX_LINE];
   /*-------------------- Bsol for B and B^{1/2} */
@@ -78,8 +78,8 @@ int main() {
     /*----------------input matrix and interval information -*/
     fprintf(flog, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(flog, "MATRIX B: %s...\n", io.MatNam2);
-    a = io.a;  // left endpoint of input interval
-    b = io.b;  // right endpoint of input interval
+    a = io.a; // left endpoint of input interval
+    b = io.b; // right endpoint of input interval
     nslices = io.n_intv;
 
     struct stat st = {0}; /* Make sure OUT directory exists */
@@ -87,10 +87,10 @@ int main() {
       mkdir("OUT", 0750);
     }
 
-    char path[1024];  // path to write the output files
+    char path[1024]; // path to write the output files
     strcpy(path, "OUT/MMRLanN_");
     strcat(path, io.MatNam1);
-    fstats = fopen(path, "w");  // write all the output to the file io.MatNam
+    fstats = fopen(path, "w"); // write all the output to the file io.MatNam
     if (!fstats) {
       printf(" failed in opening output file in OUT/\n");
       fstats = stdout;
@@ -155,13 +155,15 @@ int main() {
     /*--------------  Setup the Bsol and Bsqrtsol struct */
     set_pol_def(&Bsol.pol_sol);
     (Bsol.pol_sol).max_deg = degB;
-    (Bsol.pol_sol).tol = tau;      
-    SetupBSolPol(&Bcsr, &Bsol);    
+    (Bsol.pol_sol).tol = tau;
+    SetupBSolPol(&Bcsr, &Bsol);
     set_pol_def(&Bsqrtsol.pol_sol);
-    (Bsqrtsol.pol_sol).max_deg = degB; 
-    (Bsqrtsol.pol_sol).tol = tau; 
+    (Bsqrtsol.pol_sol).max_deg = degB;
+    (Bsqrtsol.pol_sol).tol = tau;
     SetupBsqrtSolPol(&Bcsr, &Bsqrtsol);
-    printf("The degree for LS approximations to B^{-1} and B^{-1/2} are %d and %d\n", (Bsol.pol_sol).deg, (Bsqrtsol.pol_sol).deg);    
+    printf("The degree for LS approximations to B^{-1} and B^{-1/2} are %d and "
+           "%d\n",
+           (Bsol.pol_sol).deg, (Bsqrtsol.pol_sol).deg);
     SetBSol(BSolPol, (void *)&Bsol);
     SetLTSol(BSolPol, (void *)&Bsqrtsol);
     /*-------------------- set the left-hand side matrix A */
@@ -271,9 +273,12 @@ int main() {
       counts[sl] = nev2;
       ierr = scalEigVec(n, nev2, Y, sqrtdiag);
       //-------------------- free allocated space withing this scope
-      if (lam) free(lam);
-      if (Y) free(Y);
-      if (res) free(res);
+      if (lam)
+        free(lam);
+      if (Y)
+        free(Y);
+      if (res)
+        free(res);
       FreeASIGMABSolSuiteSparse(rat.num, solshiftdata);
       free(solshiftdata);
       free_rat(&rat);
@@ -284,7 +289,8 @@ int main() {
     sprintf(path, "OUT/EigsOut_RLanN_(%s, %s)", io.MatNam1, io.MatNam2);
     FILE *fmtout = fopen(path, "w");
     if (fmtout) {
-      for (j = 0; j < totcnt; j++) fprintf(fmtout, "%.15e\n", alleigs[j]);
+      for (j = 0; j < totcnt; j++)
+        fprintf(fmtout, "%.15e\n", alleigs[j]);
       fclose(fmtout);
     }
     free(vinit);
@@ -299,11 +305,14 @@ int main() {
     free(counts);
     free(xdos);
     free(ydos);
-    if (sqrtdiag) free(sqrtdiag);
-    if (fstats != stdout) fclose(fstats);
+    if (sqrtdiag)
+      free(sqrtdiag);
+    if (fstats != stdout)
+      fclose(fstats);
     /*-------------------- end matrix loop */
   }
-  if (flog != stdout) fclose(flog);
+  if (flog != stdout)
+    fclose(flog);
   fclose(fmat);
   /*-------------------- finalize EVSL */
   EVSLFinish();

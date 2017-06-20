@@ -1,3 +1,5 @@
+#include "evsl.h"
+#include "io.h"
 #include <fcntl.h>
 #include <math.h>
 #include <stdio.h>
@@ -7,15 +9,13 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include "evsl.h"
-#include "io.h"
 
 #define BsolPol 1
 
 /*-------------------- protos */
-int exDOS(double* vals, int n, int npts, double* x, double* y, double* intv);
-int read_coo_MM(const char* matfile, int idxin, int idxout, cooMat* Acoo);
-int get_matrix_info(FILE* fmat, io_t* pio);
+int exDOS(double *vals, int n, int npts, double *x, double *y, double *intv);
+int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
+int get_matrix_info(FILE *fmat, io_t *pio);
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -27,11 +27,11 @@ int get_matrix_info(FILE* fmat, io_t* pio);
  * @parm[in] filename file to read from, where the first line contains number
  * of elements/width/height of matrix, and the rest of the lines contain the
  * values. */
-int readVec(const char* filename, int* npts, double** vec) {
+int readVec(const char *filename, int *npts, double **vec) {
   int i;
-  FILE* ifp = fopen(filename, "r");
+  FILE *ifp = fopen(filename, "r");
   fscanf(ifp, "%i", npts);
-  *vec = (double*)malloc(sizeof(double) * *npts);
+  *vec = (double *)malloc(sizeof(double) * *npts);
   for (i = 0; i < (*npts); i++) {
     fscanf(ifp, "%lf", (&(*vec)[i]));
   }
@@ -47,31 +47,31 @@ int readVec(const char* filename, int* npts, double** vec) {
  */
 int main() {
   srand(time(NULL));
-  const int msteps = 30;    // Number of steps
-  const int degB = 40;      // Degree to aproximate B with
-  const int npts = 200;     // Number of points
-  const int nvec = 30;      // Number of random vectors to use
-  const double tau = 1e-4;  // Tolerance in polynomial approximation
+  const int msteps = 30;   // Number of steps
+  const int degB = 40;     // Degree to aproximate B with
+  const int npts = 200;    // Number of points
+  const int nvec = 30;     // Number of random vectors to use
+  const double tau = 1e-4; // Tolerance in polynomial approximation
   // ---------------- Intervals of interest
   // intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
   // intv[2] and intv[3] are the input interval of interest [a. b]
   // intv[4] and intv[5] are the smallest and largest eigenvalues of B after
   // diagonal scaling
   double intv[6] = {-2.739543872224533e-13,
-                     0.0325,
+                    0.0325,
                     -2.739543872224533e-13,
-                     0.0325,
-                     0.5479,
-                     2.5000};
+                    0.0325,
+                    0.5479,
+                    2.5000};
   int n = 0, i, nslices, ierr;
   double a, b;
 
-  cooMat Acoo, Bcoo;  // A, B
-  csrMat Acsr, Bcsr;  // A, B
-  double* sqrtdiag = NULL;
+  cooMat Acoo, Bcoo; // A, B
+  csrMat Acsr, Bcsr; // A, B
+  double *sqrtdiag = NULL;
 
   FILE *flog = stdout, *fmat = NULL;
-  FILE* fstats = NULL;
+  FILE *fstats = NULL;
   io_t io;
   int numat, mat;
   char line[MAX_LINE];
@@ -102,20 +102,21 @@ int main() {
     /*----------------input matrix and interval information -*/
     fprintf(flog, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(flog, "MATRIX B: %s...\n", io.MatNam2);
-    a = io.a;  // left endpoint of input interval
-    b = io.b;  // right endpoint of input interval
+    a = io.a; // left endpoint of input interval
+    b = io.b; // right endpoint of input interval
     nslices = io.n_intv;
-    char path[1024];  // path to write the output files
+    char path[1024]; // path to write the output files
     strcpy(path, "OUT/MMPLanR_");
     strcat(path, io.MatNam1);
-    fstats = fopen(path, "w");  // write all the output to the file io.MatNam
+    fstats = fopen(path, "w"); // write all the output to the file io.MatNam
     if (!fstats) {
       printf(" failed in opening output file in OUT/\n");
       fstats = stdout;
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
+    fprintf(fstats,
+            "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
             nslices);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
@@ -124,11 +125,10 @@ int main() {
         fprintf(fstats, "matrix read successfully\n");
         // nnz = Acoo.nnz;
         n = Acoo.nrows;
-        if(n <= 0) {
+        if (n <= 0) {
           fprintf(stderr, "non-positive number of rows");
           exit(7);
         }
-
 
         // printf("size of A is %d\n", n);
         // printf("nnz of  A is %d\n", nnz);
@@ -151,18 +151,18 @@ int main() {
         exit(6);
       }
       /*------------------ diagonal scaling for Acoo and Bcoo */
-      sqrtdiag = (double*)calloc(n, sizeof(double));
+      sqrtdiag = (double *)calloc(n, sizeof(double));
       extractDiag(&Bcoo, sqrtdiag);
       diagScaling(&Acoo, &Bcoo, sqrtdiag);
       // save_vec(n, diag, "OUT/diag.txt");
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
-      if(ierr) {
+      if (ierr) {
         fprintf(flog, "Could not convert matrix to csr: %i", ierr);
         exit(8);
       }
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
-      if(ierr) {
+      if (ierr) {
         fprintf(flog, "Could not convert matrix to csr: %i", ierr);
         exit(9);
       }
@@ -175,12 +175,12 @@ int main() {
       /*----------------  compute the range of the spectrum of B */
       SetStdEig();
       SetAMatrix(&Bcsr);
-      double* vinit = (double*)malloc(n * sizeof(double));
+      double *vinit = (double *)malloc(n * sizeof(double));
       rand_double(n, vinit);
       double lmin = 0.0, lmax = 0.0;
       ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
       SetGenEig();
-      if(ierr) {
+      if (ierr) {
         fprintf(flog, "Could not run LanTrBounds: %i", ierr);
         exit(10);
       }
@@ -195,23 +195,23 @@ int main() {
       /*-------------------- Use polynomial to solve B */
       BSolDataPol Bsol;
       Bsol.intv[0] = lmin;
-      Bsol.intv[1] = lmax;    
+      Bsol.intv[1] = lmax;
       set_pol_def(&Bsol.pol_sol);
       (Bsol.pol_sol).max_deg = degB;
       SetupBSolPol(&Bcsr, &Bsol);
-      SetBSol(BSolPol, (void *) &Bsol);
+      SetBSol(BSolPol, (void *)&Bsol);
 #else
       /*-------------------- Use Choleksy factorization to solve B */
       BSolDataSuiteSparse Bsol;
       /*-------------------- use SuiteSparse as the solver for B */
       SetupBSolSuiteSparse(&Bcsr, &Bsol);
       /*-------------------- set the solver for B */
-      SetBSol(BSolSuiteSparse, (void *) &Bsol);
+      SetBSol(BSolSuiteSparse, (void *)&Bsol);
 #endif
       SetGenEig();
       rand_double(n, vinit);
       ierr = LanTrbounds(40, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
-      if(ierr) {
+      if (ierr) {
         fprintf(flog, "Could not run LanTrBounds: %i", ierr);
         exit(10);
       }
@@ -236,7 +236,7 @@ int main() {
     }
     // printf("%lf, %lf, %lf, %lf \n", lmin, lmax, intv[0], intv[1]);
     //-------------------- Read in the eigenvalues
-    double* ev;
+    double *ev;
     int numev;
     readVec("NM1AB_eigenvalues.dat", &numev, &ev);
 
@@ -245,10 +245,10 @@ int main() {
     int ret;
     double neig;
     //-------------------- exact histogram and computed DOS
-    double* xHist = (double*)calloc(npts, sizeof(double));
-    double* yHist = (double*)calloc(npts, sizeof(double));
-    double* xdos = (double*)calloc(npts, sizeof(double));
-    double* ydos = (double*)calloc(npts, sizeof(double));
+    double *xHist = (double *)calloc(npts, sizeof(double));
+    double *yHist = (double *)calloc(npts, sizeof(double));
+    double *xdos = (double *)calloc(npts, sizeof(double));
+    double *ydos = (double *)calloc(npts, sizeof(double));
 
     // ------------------- Calculate the approximate DOS
 
@@ -259,7 +259,6 @@ int main() {
 
     // -------------------- Calculate the exact DOS
     ret = exDOS(ev, numev, npts, xHist, yHist, intv);
-
 
     free_coo(&Acoo);
     free_coo(&Bcoo);
@@ -274,7 +273,7 @@ int main() {
     }
 
     //-------------------- Write to  output files
-    FILE* ofp = fopen("OUT/myydosG.txt", "w");
+    FILE *ofp = fopen("OUT/myydosG.txt", "w");
     for (i = 0; i < npts; i++)
       fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
     fclose(ofp);
@@ -286,12 +285,12 @@ int main() {
     fclose(ofp);
     //-------------------- invoke gnuplot for plotting ...
     ierr = system("gnuplot < testerG.gnuplot");
-    if(ierr) {
+    if (ierr) {
       printf("Could not run gnuplot: %i", ierr);
     }
     //-------------------- and gv for visualizing /
     ierr = system("gv testerG.eps");
-    if(ierr) {
+    if (ierr) {
       printf("Could not run gv: %i", ierr);
     }
     free(xHist);
@@ -300,7 +299,8 @@ int main() {
     free(ydos);
     free(ev);
     fclose(fstats);
-    if (sqrtdiag) free(sqrtdiag);
+    if (sqrtdiag)
+      free(sqrtdiag);
   }
   fclose(fmat);
   EVSLFinish();
