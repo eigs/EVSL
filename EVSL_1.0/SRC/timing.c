@@ -1,7 +1,7 @@
 #include <time.h>
 #include <math.h>
 
-/*
+/**
  * @file timing.c
  * @brief Timer
  */

@@ -7,6 +7,10 @@
 #include "string.h"  //for memset
 #include "struct.h"
 //#include "vector.h"
+/**
+ * @file simpson.c
+ * @brief Simpson integrater
+ */
 
 /**----------------------------------------------------------------------
  *

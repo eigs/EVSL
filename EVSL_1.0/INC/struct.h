@@ -2,6 +2,10 @@
 #define STRUCT_H
 
 #include <complex.h>
+/**
+ * @file struct.h
+ * @brief structs used in evsl
+ */
 
 /**
  * @brief sparse matrix format: the coordinate (COO) format, 0-based

@@ -9,9 +9,9 @@
 #include "string.h"  //for memset
 #include "struct.h"
 
-/*
- * \file landos.c
- * \brief Function to use Lanczos method for approximating DOS for the
+/**
+ * @file landosG.c
+ * @brief Function to use Lanczos method for approximating DOS for the
  * general eigenvalue problem.
  */
 

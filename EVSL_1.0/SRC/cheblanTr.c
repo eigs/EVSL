@@ -8,8 +8,8 @@
 #include "struct.h"
 #include "internal_proto.h"
 
-/*
- * @file cheblanNr.c
+/**
+ * @file cheblanTr.c
  * @brief Polynomial Filtered thick restart Lanczos
  */
 /**

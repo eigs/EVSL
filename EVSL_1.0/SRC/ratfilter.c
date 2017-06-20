@@ -8,7 +8,7 @@
 #include "struct.h"
 #include "internal_proto.h"
 
-/*
+/**
  * @file ratfilter.c
  * @brief Computing and applying rational filters
  */

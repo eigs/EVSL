@@ -1,5 +1,6 @@
-/*
-  This file contains function prototypes and constant definitions for EVSL
+/**
+ * @file evsl.h
+ * @brief This file contains function prototypes and constant definitions for EVSL
 */
 
 #ifndef EVSL_H

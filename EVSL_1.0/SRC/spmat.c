@@ -4,7 +4,7 @@
 #include "struct.h"
 #include "internal_proto.h"
 
-/*
+/**
  * @file spmat.c
  * @brief Sparse matrix routines
  */

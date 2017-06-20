@@ -3,6 +3,10 @@
 
 #include "cholmod.h"
 #include "umfpack.h"
+/**
+ * @file evsl_suitesparse.h
+ * @brief Definitions used for suitesparse interface
+ */
 
 typedef struct _BSolDataSuiteSparse {
   cholmod_factor *LB;

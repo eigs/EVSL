@@ -3,7 +3,7 @@
 #include "def.h"
 #include "struct.h"
 #include "internal_proto.h"
-/*
+/**
  * @file vect.c
  * @brief Vector operations
  */

@@ -8,9 +8,10 @@
 #include "internal_proto.h"
 #include "struct.h"
 
-/* @file dos_utils.h
-   @brief A number of utility functions related to DOS functionality
-*/
+/** 
+ *  @file dos_utils.c
+ *  @brief A number of utility functions related to DOS functionality
+ */
 double rec(const double a) { return 1.0 / a; }  // Reciprocal
 
 double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root

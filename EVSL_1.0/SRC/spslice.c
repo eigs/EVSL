@@ -8,7 +8,7 @@
 #include "struct.h"
 #include "internal_proto.h"
 
-/*
+/**
  * @file spslice.c
  * @brief Spectrum slicing
  */

@@ -7,7 +7,7 @@
 #include "blaslapack.h"
 #include "struct.h"
 #include "internal_proto.h"
-/*
+/**
  * @file cheblanNr.c
  * @brief Polynomial Filtered no-restart Lanczos
  */

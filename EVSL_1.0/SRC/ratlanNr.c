@@ -8,7 +8,7 @@
 #include "blaslapack.h"
 #include "struct.h"
 #include "internal_proto.h"
-/*
+/**
  * @file ratlanNr.c
  * @brief Rational Filtered no-restart Lanczos
  */

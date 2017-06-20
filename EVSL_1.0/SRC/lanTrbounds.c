@@ -10,9 +10,9 @@
 
 #define COMP_RES 0
 
-/*
+/**
  * @file lanTrbounds.c
- * @biref A more robust algorithm to give bounds of spectrum based on TR
+ * @brief A more robust algorithm to give bounds of spectrum based on TR
  * Lanczos
  */
 /**

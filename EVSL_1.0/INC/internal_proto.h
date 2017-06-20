@@ -1,5 +1,6 @@
-/*
-  This file contains function prototypes and constant definitions internally used in EVSL
+/**
+ * @file internal_proto.h
+ * @brief This file contains function prototypes and constant definitions internally used in EVSL
 */
 #ifndef INTERNAL_PROTO_H
 #define INTERNAL_PROTO_H

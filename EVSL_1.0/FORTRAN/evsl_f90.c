@@ -4,6 +4,10 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/**
+ * @file evsl_f90.c
+ * @brief Definitions used by fortran interface
+ */
 /** global variables that hold results from EVSL
  * evsl_copy_result_f90 will copy results from these vars and reset them
  * */

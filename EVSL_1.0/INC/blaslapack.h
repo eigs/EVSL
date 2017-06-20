@@ -17,6 +17,11 @@
 #define DHSEQR   dhseqr_
 #define ZGESV    zgesv_
 
+/**
+ * @file blaslapack.h
+ * @brief Defs for blaslapack routines
+ */
+
 // Fortran logical type
 typedef int logical;
 
