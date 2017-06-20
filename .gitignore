@@ -50,6 +50,4 @@
 # Output files
 *.out
 
-OUT/
-
 *.mod
