@@ -9,6 +9,10 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/*
+ * @file ratlanTr.c
+ * @brief Rational filtered thick restart Lanczos
+ */
 /**
  * if filter the initial vector
  */ 

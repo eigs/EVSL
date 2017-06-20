@@ -3,6 +3,11 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/*
+ * @file evsl.c
+ * @brief Set EVSL solver options and data
+ */
+
 /** \brief global variable of EVSL
  *
  * global variable is guaranteed to be initialized

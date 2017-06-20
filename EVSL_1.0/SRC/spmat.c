@@ -4,6 +4,11 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/*
+ * @file spmat.c
+ * @brief Sparse matrix routines
+ */
+
 /**
  * @brief convert csr to csc
  * Assume input csr is 0-based index

@@ -10,6 +10,10 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/*
+ * @file misc_la.c
+ * @brief Miscellaneous linear algebra functions
+ */
 /**----------------------------------------------------------------------- 
  *  @brief compute all eigenvalues and eigenvectors of a symmetric tridiagonal
  *  matrix  

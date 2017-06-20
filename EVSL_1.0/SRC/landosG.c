@@ -9,6 +9,12 @@
 #include "string.h"  //for memset
 #include "struct.h"
 
+/*
+ * \file landos.c
+ * \brief Function to use Lanczos method for approximating DOS for the
+ * general eigenvalue problem.
+ */
+
 /**----------------------------------------------------------------------
  *
  *    Computes the density of states (DOS, or spectral density) using Lanczos

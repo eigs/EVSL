@@ -3,6 +3,10 @@
 #include <unistd.h>
 #include <stdio.h>  
 #include <math.h>
+/*
+ * @file mactime.c
+ * @brief Timer for mac OS
+ */
 
 /**
  * @brief evsl timer for mac

@@ -7,6 +7,10 @@
 #include "blaslapack.h"
 #include "struct.h"
 #include "internal_proto.h"
+/*
+ * @file chebpoly.c
+ * @brief Computing and applying polynomial filters
+ */
 
 /**
  * @brief set default values for polparams struct.

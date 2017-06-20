@@ -7,6 +7,10 @@
 #include "string.h"  //for memset
 #include "struct.h"
 
+/*
+ * @file spslice2.c
+ * @brief Spectrum slicing
+ */
 /**----------------------------------------------------------------------
  *
  *    Interval partitioner based for Lanczos DOS output

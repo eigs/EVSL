@@ -6,6 +6,10 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/*
+ * @file lanbounds.c
+ * @brief Lanczos alg. to give bounds of spectrum
+ */
 /**----------------------------------------------------------------------
 *
 *    @param msteps   number of Lanczos steps

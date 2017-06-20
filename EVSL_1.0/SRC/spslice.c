@@ -8,6 +8,10 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/*
+ * @file spslice.c
+ * @brief Spectrum slicing
+ */
 /**----------------------------------------------------------------------
  *
  * @brief This function  computes the  coefficients of the  density of

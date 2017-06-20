@@ -6,6 +6,10 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/*
+ * @file dumps.c
+ * @brief Miscellaneous functions used for DOS based functions
+ */
 //-------------------- miscellaneous functions for I/O 
 //                     and for debugging 
 

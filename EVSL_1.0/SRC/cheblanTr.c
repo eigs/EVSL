@@ -8,6 +8,10 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/*
+ * @file cheblanNr.c
+ * @brief Polynomial Filtered thick restart Lanczos
+ */
 /**
  * if filter the initial vector
  */ 

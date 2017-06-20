@@ -62,8 +62,8 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - ratlanNr.c    :  Rational Filtered no-restart Lanczos
    - ratlanTr.c    :  Rational Filtered thick restart Lanczos
    - spmat.c       :  Sparse matrix routines
-   - spslicer.c    :  Spectrum slicing
-   - spslicer2.c   :  Spectrum slicing
+   - spslice.c    :  Spectrum slicing
+   - spslice2.c   :  Spectrum slicing
    - timing.c      :  Timer
    - vect.c        :  Vector operations
 

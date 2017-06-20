@@ -1,6 +1,11 @@
 #include <time.h>
 #include <math.h>
 
+/*
+ * @file timing.c
+ * @brief Timer
+ */
+
 /**
  * @brief POSIX C 1993 timer, requires -librt
  */

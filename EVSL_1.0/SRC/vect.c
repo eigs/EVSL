@@ -3,6 +3,10 @@
 #include "def.h"
 #include "struct.h"
 #include "internal_proto.h"
+/*
+ * @file vect.c
+ * @brief Vector operations
+ */
 
 void rand_double(int n, double *v) {
   int i;

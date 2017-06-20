@@ -8,6 +8,10 @@
 #include "internal_proto.h"
 
 #define NBUF 2
+/*
+ * @file chebsi.c
+ * @brief Polynomial Filtered Subspace Iteration
+ */
 
 /**
  * @brief Chebyshev polynomial filtering Subspace Iteration

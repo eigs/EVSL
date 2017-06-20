@@ -9,6 +9,12 @@
 #include "internal_proto.h"
 
 #define COMP_RES 0
+
+/*
+ * @file lanTrbounds.c
+ * @biref A more robust algorithm to give bounds of spectrum based on TR
+ * Lanczos
+ */
 /**
  * @brief Lanczos process for eigenvalue bounds [Thick restart version]
  *

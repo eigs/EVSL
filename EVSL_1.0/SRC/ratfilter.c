@@ -8,6 +8,10 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/*
+ * @file ratfilter.c
+ * @brief Computing and applying rational filters
+ */
 /**------------------------- Cauchy integration-based filter --------------
  * @brief Compute the locations of the poles
  *
