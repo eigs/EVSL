@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <math.h>
 #include "evsl.h"
 #include "io.h"
@@ -37,6 +38,12 @@ int main(int argc, char *argv[]) {
   /* initial vector: random */
   double *vinit;
   polparams pol;
+
+  struct stat st = {0}; /* Make sure OUT directory exists */
+  if (stat("OUT", &st) == -1) {
+    mkdir("OUT", 0750);
+  }
+
   FILE *fstats = NULL;
   if (!(fstats = fopen("OUT/LapPLanR.out","w"))) {
     printf(" failed in opening output file in OUT/\n");

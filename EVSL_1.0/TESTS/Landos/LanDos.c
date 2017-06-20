@@ -113,7 +113,7 @@ int main() {
   //--------------------Make OUT dir if it does'nt exist
   struct stat st = {0};
   if (stat("OUT", &st) == -1) {
-    mkdir("OUT", 0700);
+    mkdir("OUT", 0750);
   }
 
   //-------------------- Write to  output files

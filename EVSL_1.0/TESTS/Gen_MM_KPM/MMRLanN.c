@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <math.h>
 #include "evsl.h"
 #include "io.h"
@@ -80,6 +81,12 @@ int main() {
     a = io.a; // left endpoint of input interval
     b = io.b; // right endpoint of input interval
     nslices = io.n_intv;
+
+    struct stat st = {0}; /* Make sure OUT directory exists */
+    if (stat("OUT", &st) == -1) {
+      mkdir("OUT", 0750);
+    }
+
     char path[1024];   // path to write the output files
     strcpy( path, "OUT/MMRLanN_");
     strcat( path, io.MatNam1);

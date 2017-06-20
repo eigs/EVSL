@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
+#include <sys/stat.h>
 #include <math.h>
 #include "evsl.h"
 #include "io.h"
@@ -98,6 +99,12 @@ int main () {
     a = io.a;
     b = io.b;
     n_intv = io.n_intv;
+
+    struct stat st = {0}; /* Make sure OUT directory exists */
+    if (stat("OUT", &st) == -1) {
+      mkdir("OUT", 0750);
+    }
+
     char path[1024] ;   // path to write the output files
     strcpy( path, "OUT/MMPSI_");
     strcat( path, io.MatNam);
