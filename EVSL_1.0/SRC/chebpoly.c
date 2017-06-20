@@ -273,11 +273,10 @@ int indexofSmallestElement(double *array, int size){
  * @param m   degree of polynomial
  * @param v difference between cosines on left and right [(3.12) in paper] 
  * @param jac   damping coefficients 
- * @param thcIn   initial value of theta_c [refer to paper]
  * @param tha    theta_a [refer to paper]
  * @param thb    theta_b [refer to paper]
  * @param mu     expansion coefficients. 
- * @param[out] thc  value of theta_c  
+ * @param[out] thcOut  value of theta_c  
 **/
 int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
 	    double *thcOut){

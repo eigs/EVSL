@@ -116,7 +116,7 @@ typedef struct _ratparams {
   /** The following are output - i.e., set by find_ratf */
   complex double *omega; /**< weights allocation done by find_ratf */
   complex double *zk;    /**< locations of poles done by find_ratf */
-  EVSLASIGMABSol *ASIGBsol; /**< function and data for A-\sigma B solve 
+  EVSLASIGMABSol *ASIGBsol; /**< function and data for A-&sigma B solve 
                                  arrays of length ratparams.num */
 } ratparams;
 

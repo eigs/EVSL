@@ -46,7 +46,6 @@ void EVSLFORT(evsl_coo2csr)(int *n, int *nnz, int *ir, int *jc,
  * the pointer of CSR will be returned
  * @warning : no memory allocation inside the CSR
  * @param[in] *n   : size of A
- * @param[in] *nnz : nnz of A
  * @param[in] *ia, *ja, *a : CSR array
  * @param[out] csrf90 : CSR pointer
  */ 
@@ -65,7 +64,7 @@ void EVSLFORT(evsl_arr2csr)(int *n, int *ia, int *ja,
 }
 
 /** @brief Fortran interface to free a CSR matrix
- * @param[in] csr : CSR pointer 
+ * @param[in] csrf90 : CSR pointer 
  */
 void EVSLFORT(evsl_free_csr)(uintptr_t *csrf90) {
   csrMat *csr = (csrMat *) (*csrf90);
@@ -129,7 +128,7 @@ void EVSLFORT(evsl_set_geneig)() {
 }
 
 /** @brief Fortran interface for evsl_lanbounds 
- * @param[in] nstpes: number of steps
+ * @param[in] nsteps: number of steps
  * @param[out] lmin: lower bound
  * @param[out] lmax: upper bound
  * */
@@ -146,7 +145,7 @@ void EVSLFORT(evsl_lanbounds)(int *nsteps, double *lmin, double *lmax) {
 /** @brief Fortran interface for kpmdos and spslicer
  * @param[in] Mdeg: degree
  * @param[in] nvec: number of vectors to use
- * @param[in] intv:   an array of length 4  \n
+ * @param[in] xintv:   an array of length 4  \n
  *                 [intv[0] intv[1]] is the interval of desired eigenvalues 
  *                 that must be cut (sliced) into n_int  sub-intervals \n
  *                 [intv[2],intv[3]] is the global interval of eigenvalues 
@@ -174,6 +173,9 @@ void EVSLFORT(evsl_kpm_spslicer)(int *Mdeg, int *nvec, double *xintv,
 }
 
 /** @brief Fortran interface for find_pol 
+ * @param[in] xintv Intervals of interest
+ * @param[in]  thresh_int Threshold for accepting interior values
+ * @param[in]  thresh_ext Threshold for accepting exterior values
  * @param[out] polf90 : pointer of pol
  * @warning: The pointer will be cast to uintptr_t
  * 
@@ -198,7 +200,10 @@ void EVSLFORT(evsl_find_pol)(double *xintv, double *thresh_int,
   *polf90 = (uintptr_t) pol;
 }
 
-/** @brief Fortran interface for free_pol */
+/** @brief Fortran interface for free_pol 
+ * @param[out] polf90 : pointer of pol
+ *
+ * */
 void EVSLFORT(evsl_free_pol)(uintptr_t *polf90) {
   /* cast pointer */
   polparams *pol = (polparams *) (*polf90);
@@ -207,6 +212,7 @@ void EVSLFORT(evsl_free_pol)(uintptr_t *polf90) {
 }
 
 /** @brief Fortran interface for find_rat
+ * @param[in] intv interval of interest
  * @param[out] ratf90 : pointer of rat
  * @warning: The pointer will be cast to uintptr_t
  * 

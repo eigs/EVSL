@@ -432,6 +432,9 @@ void free_rat(ratparams *rat) {
  * w = (A-sB) \ x
  * x = L' * w
  * 
+ * @param[in] rat ratparams struct
+ * @param[in] n Length of array
+ * @param[in] b x = L * b
  * @param w6 Work array of size 4*n for standard ev problem, 
  *                         size 6*n for generalized ev problem
  *

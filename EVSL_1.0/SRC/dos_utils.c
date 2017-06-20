@@ -54,6 +54,18 @@ void SetupBsqrtSolPol(csrMat *B, BSolDataPol *data) {
 }
 
 /*
+ * Iniitalize BSolDataPol
+ */
+void SetupBPol(csrMat *B, BSolDataPol *data, const int max_deg, const int tol,
+    double (*ffun)(double)) { 
+  const int n = B->nrows;
+  double *mu_sol = (double *) calloc(max_deg, sizeof(double));
+  data->pol_sol.mu = mu_sol;
+  data->wk = (double *)malloc(3 * n * sizeof(double));
+  lsPol(&data->intv[0], max_deg, ffun, tol, &data->pol_sol);
+}
+
+/*
  * Free the BSolDataPol struct
  */
 void FreeBSolPolData(BSolDataPol *data) {
@@ -134,16 +146,16 @@ int apfun(const double c, const double h, const double *const xi,
  * This explicitly calls matvec, so it can be useful for implementing
  * user-specific matrix-vector multiplication.
  *
- * @param[in] mu Coefficents
- * @param[in] cc
- * @param[in] dd
+ * @param[in] mu Coefficents of the cheb. polynomial
+ * @param[in] cc cc member of pol struct
+ * @param[in] dd dd member of pol struct
+ * @param[in] m m member of pol struct
  * @param[in] v input vector
  *
  * @param[out] y p(A)v
  *
  * @b Workspace
- * @param w[in,out] Work vector of length 3*n [allocate before call]
- * @param v[in] is untouched
+ * @param[in,out] w Work vector of length 3*n [allocate before call
  **/
 int pnav(double *mu, const int m, const double cc, const double dd, double *v,
          double *y, double *w) {  // Really just ChebAv
