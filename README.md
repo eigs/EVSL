@@ -20,10 +20,11 @@ parallel implementations  (trivial openMP test programs  are available
 among   the test  drivers).  EVSL also  provides tools  for spectrum
 slicing, i.e.,  the technique of  subdividing a given interval  into p
 smaller subintervals and computing the eigenvalues in each subinterval
-independently.  EVSL  implements a polynomial filtered  Lanczos (thick
-restart, no  restart) a rational  filtered Lanczos (thick  restart, no
-restart), and a polynomial filtered subspace iteration for solving
-standard eigenvalue problems 
+independently, as well as Kernel Polynomial method (KPM) and Lanczos
+based density of states/spectral density estimators.  EVSL  implements
+a polynomial filtered  Lanczos (thick restart, no  restart) a rational
+filtered Lanczos (thick  restart, no restart), and a polynomial 
+filtered subspace iteration for solving standard eigenvalue problems 
 A u = &lambda;  u  and generalized eigenvalue problems
 A u = &lambda;  B u.
 
