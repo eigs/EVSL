@@ -6,6 +6,13 @@ include ../../EXTERNAL/makefile.in
 # Common flags
 FLAGS = -DUNIX -O3 -g -Wall 
 
+## NOTE: for polynomial filtering methods set "UMF_INC = " (blank)
+## and "LIB_UMF =   " (blank) here or in EXTERNAL/makefile.in
+
+UMF_INC =
+
+LIB_UMF =
+
 INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
 
 # Object files for rational filter restart lanczos
