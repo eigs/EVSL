@@ -17,7 +17,6 @@ int main () {
    * read in sparse matrix format
    *-------------------------------------------------------------*/
   int n=0, sl, i, j, mlan, nev, totcnt;
-  //int nnz;
   double a, b, ecount, xintv[4];
   double lmin, lmax; 
   double *alleigs; 
@@ -28,32 +27,28 @@ int main () {
   /*-------------------- matrix A: coo format and csr format */
   cooMat Acoo;
   csrMat Acsr;
-  /* tolerance to accept ev */
+  /*-------------------- tolerance to accept ev */
   double tol;
   /* stats */
   /* #ev computed; the computed eig val/vec, 
    * residuals of the computed eig pairs */
   int nevOut;
   //  double *lam=NULL, *Y=NULL, *res=NULL ;
-  /*-------------------- mim/max degree of  polynomial, max Lanczos steps */
-  int Mdeg, nvec;
+  /*-------------------- Max degree of polynomial, or  max Lanczos steps for DOS; numbr smpling vectors */
+  int Mdeg=80, nvec=30;
   /*-------------------- IO */
   FILE *flog = stdout, *fmat = NULL, *fstats = NULL;
   io_t io;
   int numat, mat;
   char line[MAX_LINE]; 
   /* initial vector: random */
-  double *vinit;
+  double *vinit, *xdos, *ydos;
   polparams pol;
   //-------------------- tolerance for stopping criterion
   tol = 1e-8;  
-  //-------------------- slicer parameters 
-  Mdeg = 300;
-  nvec = 60;
   /*-------------------- start EVSL */
   EVSLStart();
   //-------------------- interior eigensolver parameters  
-  double *mu = (double *) malloc((Mdeg+1)*sizeof(double));
   int *counts; 
   double *sli;
   /*------------------ file "matfile" contains paths to matrices */
@@ -98,7 +93,7 @@ int main () {
       fstats = stdout;
     }
     fprintf(fstats, "MATRIX: %s...\n", io.MatNam);
-    fprintf(fstats,"Partition the interval of interest [%f,%f] into %d slices\n", a,b,n_intv);
+    fprintf(fstats,"Partition the interval of interest [%f,%f] into %d slice (s)\n", a,b,n_intv);
     counts = malloc(n_intv*sizeof(int)); 
     sli = malloc((n_intv+1)*sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
@@ -106,7 +101,6 @@ int main () {
       ierr =read_coo_MM(io.Fname, 1, 0, &Acoo); 
       if (ierr == 0) {
         fprintf(fstats,"matrix read successfully\n");
-        //nnz = Acoo.nnz; 
         n = Acoo.nrows;
       }
       else {
@@ -135,19 +129,23 @@ int main () {
     /*-------------------- define kpmdos parameters */
     xintv[0] = a;  xintv[1] = b;
     xintv[2] = lmin; xintv[3] = lmax;
-    //-------------------- kpmdos or triv_slicer 
+    //-------------------- landos or triv_slicer 
     if (TRIV_SLICER) {
       linspace(a, b, n_intv+1,  sli);
     } else {
       double t = cheblan_timer();
-      ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
+      npts = 100*n_intv;
+      xdos = (double *) malloc((npts)*sizeof(double));
+      ydos = (double *) malloc((npts)*sizeof(double));
+
+      //fprintf(stdout," %d %d \n",npts,n_intv);
+      LanDos(nvec, Mdeg, npts, xdos, ydos, &ecount, xintv);
+      //fprintf(stdout," %f \n",ecount);
       t = cheblan_timer() - t;
-      if (ierr) {
-	printf("kpmdos error %d\n", ierr);
-	return 1;
-      }
-      fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
-      fprintf(fstats, "Step 1a: Estimated eig count: %.15e \n",ecount);
+      
+      fprintf(fstats, " Time to build DOS (Landos) was : %10.2f  \n",t);
+      fprintf(fstats, " estimated eig count in interval: %.15e \n",ecount);
+      //-------------------- call splicer to slice the spectrum
       if ((ecount <0) | (ecount > n)) {
         printf(" e-count estimate is incorrect \n ");
         exit(7);
@@ -156,13 +154,14 @@ int main () {
       if ((ecount <1) | (ecount>n))
         exit(6);
       /*-------------------- define slicer parameters */
-      npts = 10 * ecount;
-      ierr = spslicer(sli, mu, Mdeg, xintv, n_intv, npts);
-      if (ierr) {
-        printf("spslicer error %d\n", ierr);
-        return 1;
-      }
+
+      fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",
+	      Mdeg, nvec, npts);
+      spslicer2(xdos, ydos, n_intv,  npts, sli);
+      free (xdos);
+      free (ydos);
     }
+    /*-------------------- Dos determined+ slicing done */
     fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npts = %d\n",
             Mdeg, nvec, npts);
     fprintf(fstats, "Step 1b: Slices found: \n");
@@ -171,7 +170,7 @@ int main () {
     }
     //-------------------- # eigs per slice
     //-------------------- approximate number of eigenvalues wanted
-    double fac = 1.2;   // this factor insures that # of eigs per slice is slightly overestimated 
+    double fac = 1.2;   // this factor ensures that # of eigs per slice is slightly overestimated 
     nev = (int) (1 + ecount / ((double) n_intv));  // # eigs per slice
     nev = (int)(fac*nev);                        // want an overestimate of ev_int 
     fprintf(fstats,"Step 2: In each slice compute %d eigenvalues ... \n", nev);
@@ -195,11 +194,11 @@ int main () {
       set_pol_def(&pol);
       // can change default values here e.g.
       pol.damping = 2;         // use lanczos damping 
-      pol.thresh_int = 0.5;    // change thresholds for getting a sharper
-      pol.thresh_ext = 0.15;   // [higher deg] polynomial
+      pol.thresh_int = 0.8;    // change thresholds for getting a sharper
+      pol.thresh_ext = 0.35;   // [higher deg] polynomial
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);
-      //save_vec(pol.deg+1, pol.mu, "OUT/mu.txt");
+
       fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
       //-------------------- Call ChebLanNr        
       ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nevOut, &lam, &Y, 
@@ -254,7 +253,6 @@ int main () {
     /*-------------------- end matrix loop */
   }
   //-------------------- free rest of memory 
-  free(mu);
   if( flog != stdout ) fclose ( flog );
   fclose( fmat );
   /*-------------------- finalize EVSL */
