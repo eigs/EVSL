@@ -196,6 +196,8 @@ int main() {
       BSolDataPol Bsol;
       Bsol.intv[0] = lmin;
       Bsol.intv[1] = lmax;    
+      set_pol_def(&Bsol.pol_sol);
+      (Bsol.pol_sol).max_deg = degB;
       SetupBSolPol(&Bcsr, &Bsol);
       SetBSol(BSolPol, (void *) &Bsol);
 #else
