@@ -246,8 +246,21 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     }
     /*-------------------- T(k+1,k) = beta */
     eT[k] = beta;
+    /*-------------------- Reallocate memory if maxit is smaller than # of eigs */    
+    if (k == maxit-1){
+      maxit += 1 + (int) (maxit*1.2);
+      Realloc(V, (maxit+1)*n, double);
+      if (ifGenEv) {
+	Realloc(Z, (maxit+1)*n, double);
+      }
+      Realloc(dT, maxit, double);
+      Realloc(eT, maxit, double);
+      Realloc(Lam, maxit, double);
+      Realloc(res, maxit, double);    
+      Realloc(EvalT, maxit, double);
+    }  
     /*---------------------- test for Ritz vectors */
-    if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 ) {
+    if ( (k < Ntest || (k-Ntest) % cycle != 0) ) {
       continue;
     }
     /*---------------------- diagonalize  T(1:k,1:k)       
@@ -359,9 +372,9 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     }
     /*--------------------   accept (t, y) */
     if (res0 < tol) {
-       Lam[nev] = t;
-       res[nev] = res0;
-       nev++;
+      Lam[nev] = t;
+      res[nev] = res0;
+      nev++;
     }    
   }
 
