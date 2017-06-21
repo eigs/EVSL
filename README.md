@@ -80,8 +80,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - io.c          : parse command-line input parameters
 
 
- * TESTS/Gen_MM_KPM: test drivers for generalized eigenvalue problems with general matrices read from files.
-  Spectrum slicer uses KPM.
+ * TESTS/Gen_MM_KPM: test drivers for generalized eigenvalue problems with general matrices read from files.  Spectrum slicer uses KPM.
    - MMPLanN.c     : Polynomial filtering non-restart Lanczos
    - MMPLanR.c     : Polynomial filtering T-R Lanczos
    - MMRLanN.c     : Rational filtering non-restart Lanczos
