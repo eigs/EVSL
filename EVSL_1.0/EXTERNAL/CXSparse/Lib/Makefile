@@ -8,12 +8,13 @@ SO_VERSION = 3
 
 default: library
 
+include ../../../makefile.in
 #include ../../SuiteSparse_config/SuiteSparse_config.mk
 
 AR_TARGET = libcxsparse.a
 RANLIB ?= ranlib
-ARFLAGS = rv
-ARCHIVE ?= $(AR) $(ARFLAGS)
+#ARFLAGS = rv
+ARCHIVE ?= $(AR)
 
 # CXSparse depends on SuiteSparse_config
 LDLIBS += -lsuitesparseconfig
