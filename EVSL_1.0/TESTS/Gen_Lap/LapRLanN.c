@@ -156,6 +156,7 @@ int main(int argc, char *argv[]) {
     int nev2;
     double *lam, *Y, *res;
     int *ind;
+    StatsReset();
     //-------------------- 
     a = sli[sl];
     b = sli[sl+1];
@@ -216,6 +217,7 @@ int main(int argc, char *argv[]) {
     free(solshiftdata);
     free_rat(&rat);
     free(ind);
+    StatsPrint(fstats);
   } //for (sl=0; sl<nslices; sl++)
   //-------------------- free other allocated space 
   free(vinit);

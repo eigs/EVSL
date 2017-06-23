@@ -191,9 +191,11 @@ typedef struct _evslstat {
   double t_mvA;
   double t_mvB;
   double t_svB;
+  double t_svASigB;
   size_t n_mvA;
   size_t n_mvB;
   size_t n_svB;
+  size_t n_svASigB;
   /* memory */
   size_t alloced;
   size_t alloced_total;
