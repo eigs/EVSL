@@ -6,6 +6,7 @@
 #include "evsl.h"
 #include "io.h"
 #include "evsl_suitesparse.h"
+#include "evsl_cxsparse.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -54,6 +55,7 @@ int main(int argc, char *argv[]) {
   csrMat Acsr, Bcsr;
   /*-------------------- Bsol */
   BSolDataSuiteSparse Bsol;
+  BSolDataCXSparse Bsol2;
   /*-------------------- default values */
   nx   = 10;
   ny   = 10;
@@ -99,9 +101,12 @@ int main(int argc, char *argv[]) {
   SetBMatrix(&Bcsr);
   /*-------------------- use SuiteSparse as the solver for B */
   SetupBSolSuiteSparse(&Bcsr, &Bsol);
+  SetupBSolCXSparse(&Bcsr, &Bsol2);
   /*-------------------- set the solver for B  and L^{T}*/
-  SetBSol(BSolSuiteSparse, (void *) &Bsol);
-  SetLTSol(LTSolSuiteSparse, (void *) &Bsol); 
+  //SetBSol(BSolSuiteSparse, (void *) &Bsol);
+  //SetLTSol(LTSolSuiteSparse, (void *) &Bsol); 
+  SetBSol(BSolCXSparse, (void *) &Bsol2);
+  SetLTSol(LTSolCXSparse, (void *) &Bsol2);
   /*-------------------- for generalized eigenvalue problem */
   SetGenEig();
   /*-------------------- step 0: get eigenvalue bounds */
@@ -224,6 +229,7 @@ int main(int argc, char *argv[]) {
   free_coo(&Bcoo);
   free_csr(&Bcsr);
   FreeBSolSuiteSparseData(&Bsol);
+  FreeBSolCXSparseData(&Bsol2);
   free(mu);
   fclose(fstats);
   /*-------------------- finalize EVSL */
