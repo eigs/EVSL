@@ -226,18 +226,24 @@ int SetupASIGMABSolCXSparse(csrMat *A, csrMat *BB, int num,
     /* only do symbolic factorization once */
     if (i == 0) {
       /* Symbolic Factorization */
-      /* order == 2: LU, 0: not QR */
-      S = cs_ci_sqr(2, &Ccs, 0);     /* ordering and symbolic analysis */
+      /* order == 1: sym, 0: not QR */
+      S = cs_ci_sqr(1, &Ccs, 0);     /* ordering and symbolic analysis */
       if (!S) {
         return -1;
       }
     }
     /* Numerical Factorization */
-    N = cs_ci_lu(&Ccs, S, 1.0); /*  1.0 results in conventional partial pivoting. */
+    /*  1.0 results in conventional partial pivoting. */
+    /*  0.0 results in no pivoting. */
+    N = cs_ci_lu(&Ccs, S, 0.0); 
     if (!N) {
       return -2;
     }
 
+    //printf("Lnz %d %d\n", N->L->nzmax, N->L->p[N->L->n]);
+    //printf("Unz %d %d\n", N->U->nzmax, N->U->p[N->U->n]);
+    //printf("%e\n", (N->L->nzmax + N->U->nzmax + 0.0) / nnzC);
+    
     /* save the data */
     Malloc(ASBdata, 1, ASBSolDataCXSparse);
     ASBdata->n = nrow;
