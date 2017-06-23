@@ -21,7 +21,7 @@ ALLEXE = LapPLanR.ex LapPLanN.ex LapPLanN_MatFree.ex LapRLanN.ex \
 	 LapRLanR.ex LapPSI.ex
 
 LIB_CXSPARSE=-L../../EXTERNAL/CXSparse/Lib -lcxsparse
-LIB_EXT = $(LIB_CXSPARSE) -fopenmp $(LIBLAPACK) $(LIB0)
+LIB_EXT = $(LIB_CXSPARSE) $(OMP) $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: LapPLanN.ex

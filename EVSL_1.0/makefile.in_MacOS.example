@@ -11,6 +11,9 @@ LINK = $(CC) -framework accelerate
 AR = ar rv
 RANLIB = ranlib
 
+# Open MP 
+OMP = 
+
 ## libraries: blas, lapack
 LIBLAPACK = -llapack -lblas
 

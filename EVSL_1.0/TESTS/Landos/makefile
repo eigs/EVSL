@@ -14,7 +14,7 @@ OBJS_LDG = LanDosG.o exDOS.o io.o mmio.o
 
 ## not needed for pol. filtering. 
 
-LIB_EXT =   -fopenmp $(LIBLAPACK) $(LIB0)
+LIB_EXT =  $(OMP) $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: LanDos.ex LanDosG.ex

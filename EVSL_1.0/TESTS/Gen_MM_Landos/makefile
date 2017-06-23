@@ -17,7 +17,7 @@ LIB = -L../../ -levsl
 
 LIB_CXSPARSE=-L../../EXTERNAL/CXSparse/Lib -lcxsparse
 ALLEXE += MMRLanR.ex MMRLanN.ex MMPLanR.ex MMPLanN.ex
-LIB_EXT = $(LIB_CXSPARSE) -fopenmp $(LIBLAPACK) $(LIB0)
+LIB_EXT = $(LIB_CXSPARSE) $(OMP) $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: MMRLanN.ex 
@@ -35,7 +35,7 @@ MMRLanR.ex: $(OBJS_RR)
 
 MMPLanR.ex: $(OBJS_PR)
 	$(LINK) -o MMPLanR.ex $(OBJS_PR) $(LIB) $(LIB_EXT)
-	
+
 MMPLanN.ex: $(OBJS_PN)
 	$(LINK) -o MMPLanN.ex $(OBJS_PN) $(LIB) $(LIB_EXT)
 

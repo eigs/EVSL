@@ -27,7 +27,7 @@ ALLEXE = MMPLanR.ex MMPLanN.ex MMPLanR_omp.ex \
 	 MMRLanR.ex MMRLanN.ex MMPSI.ex
 
 LIB_CXSPARSE=-L../../EXTERNAL/CXSparse/Lib -lcxsparse
-LIB_EXT = $(LIB_CXSPARSE) -fopenmp $(LIBLAPACK) $(LIB0)
+LIB_EXT = $(LIB_CXSPARSE) $(OMP) $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: MMPLanN.ex 
@@ -36,7 +36,7 @@ default: MMPLanN.ex
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
 # Special rules for omp code
 MMPLanR_omp.o : MMPLanR_omp.c
-	$(CC) $(FLAGS) -I ../../INC -fopenmp -o $@ -c $<
+	$(CC) $(FLAGS) -I ../../INC $(OMP) -o $@ -c $<
 
 # Exe
 MMPLanR.ex: $(OBJS_PR)
@@ -49,7 +49,7 @@ MMPSI.ex: $(OBJS_PSI)
 	$(LINK) -o MMPSI.ex $(OBJS_PSI) $(LIB) $(LIB_EXT)
 
 MMPLanR_omp.ex: $(OBJS_PR_OMP)
-	$(LINK) -o MMPLanR_omp.ex $(OBJS_PR_OMP) $(LIB) $(LIB_EXT) -fopenmp
+	$(LINK) -o MMPLanR_omp.ex $(OBJS_PR_OMP) $(LIB) $(LIB_EXT) $(OMP)
 
 MMRLanR.ex: $(OBJS_RR) 
 	$(LINK) -o MMRLanR.ex $(OBJS_RR) $(LIB) $(LIB_EXT) 

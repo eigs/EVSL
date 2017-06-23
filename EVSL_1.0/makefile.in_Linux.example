@@ -1,14 +1,28 @@
 # Compilers (only C is needed)
 CC = gcc
+#CC = gcc
 OBJ_TIME = timing.o 
 ## 
 LIB0 = -lgfortran -lrt -lm 
 ## Linker 
+#LINK = gcc
 LINK = gcc
+
+# Common flags
+FLAGS = -DUNIX -O3 -g -Wall 
 
 # ar 
 AR = ar rv
 RANLIB = ranlib
 
+# openmp
+
+OMP = -fopenmp 
+
 ## libraries: blas, lapack
+#LIBLAPACK = -L/scratch/syphax/Rational_GEIG/lapack-3.5.0 -llapack -lrefblas
+#LIBLAPACK = -L/home/ruipeng/workspace/lapack-3.7.0 -llapack -lrefblas
+#LIBLAPACK = /home/ruipeng/workspace/OpenBLAS/libopenblas.a -lpthread
+#LIBLAPACK = -L/home/yuanzhe/Desktop/lapack-3.5.0 -llapack -lrefblas
 LIBLAPACK = -llapack -lblas
+
