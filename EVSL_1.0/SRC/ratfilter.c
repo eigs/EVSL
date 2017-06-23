@@ -488,15 +488,18 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
       /*---------------- solve shifted system */
       if (ifGenEv) {
         if (jj > k) {
-          (sol->func)(n, br, bz, yr, yz, sol->data);
+          //(sol->func)(n, br, bz, yr, yz, sol->data);
+          solve_ASigB(sol, n, br, bz, yr, yz);
           matvec_B(yr, xr);
           matvec_B(yz, xz);
         } else {
           /*------------- jj == k */
-          (sol->func)(n, br, bz, xr, xz, sol->data);
+          //(sol->func)(n, br, bz, xr, xz, sol->data);
+          solve_ASigB(sol, n, br, bz, xr, xz);
         }
       } else {
-        (sol->func)(n, br, bz, xr, xz, sol->data);
+        //(sol->func)(n, br, bz, xr, xz, sol->data);
+        solve_ASigB(sol, n, br, bz, xr, xz);
       }
     }
     /*------------------ solution (real part) */

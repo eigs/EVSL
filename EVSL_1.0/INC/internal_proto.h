@@ -146,6 +146,20 @@ static inline void solve_B(double *x, double *y) {
   evslstat.n_svB ++;
 }
 
+/**
+* @brief y = (A- sB) \ x
+* This is the solve function for the complex shifted matrix
+*/
+static inline void solve_ASigB(EVSLASIGMABSol *sol, int n,
+                               double *br, double *bz,
+                               double *xr, double *xz) {
+  double tms = cheblan_timer();
+  (sol->func)(n, br, bz, xr, xz, sol->data);
+  double tme = cheblan_timer();
+  evslstat.t_svASigB+= tme - tms;
+  evslstat.n_svASigB ++;
+}
+
 /*- - - - - - - - - - check if an interval is valid */
 static inline int check_intv(double *intv, FILE *fstats) {
   /* intv[4]: ( intv[0], intv[1] ) is the inteval of interest
