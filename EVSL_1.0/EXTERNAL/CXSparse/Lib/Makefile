@@ -91,19 +91,19 @@ CS = cs_convert.o $(CS_DI_OBJ) $(CS_CI_OBJ)
 $(CS): ../Include/cs.h Makefile
 
 cs_convert.o: ../Source/cs_convert.c
-	$(CC) $(CF) $(I) -c $< -o $@
+	$(CC) $(FLAGS) $(I) -c $< -o $@
 
 %_di.o : ../Source/%.c
-	$(CC) $(CF) $(I) -c $< -o $@
+	$(CC) $(FLAGS) $(I) -c $< -o $@
 
 %_dl.o : ../Source/%.c
-	$(CC) $(CF) $(I) -DCS_LONG -c $< -o $@
+	$(CC) $(FLAGS) $(I) -DCS_LONG -c $< -o $@
 
 %_ci.o : ../Source/%.c
-	$(CC) $(CF) $(I) -DCS_COMPLEX -c $< -o $@
+	$(CC) $(FLAGS) $(I) -DCS_COMPLEX -c $< -o $@
 
 %_cl.o : ../Source/%.c
-	$(CC) $(CF) $(I) -DCS_LONG -DCS_COMPLEX -c $< -o $@
+	$(CC) $(FLAGS) $(I) -DCS_LONG -DCS_COMPLEX -c $< -o $@
 
 static: $(AR_TARGET)
 
