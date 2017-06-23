@@ -1,11 +1,11 @@
-#include "evsl.h"
-#include "evsl_suitesparse.h"
-#include "io.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include "io.h"
+#include "evsl.h"
+#include "evsl_cxsparse.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -238,12 +238,12 @@ int main() {
       rat.beta = beta;
       // now determine rational filter
       find_ratf(intv, &rat);
-      // use the solver function from UMFPACK
+      // use the solver function from CXSparse
       void **solshiftdata = (void **)malloc(num * sizeof(void *));
       /*------------ factoring the shifted matrices and store the factors */
-      SetupASIGMABSolSuiteSparse(&Acsr, &Bcsr, num, rat.zk, solshiftdata);
+      SetupASIGMABSolCXSparse(&Acsr, &Bcsr, num, rat.zk, solshiftdata);
       /*------------ give the data to rat */
-      SetASigmaBSol(&rat, NULL, ASIGMABSolSuiteSparse, solshiftdata);
+      SetASigmaBSol(&rat, NULL, ASIGMABSolCXSparse, solshiftdata);
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int + 2;
       //-------------------- maximal Lanczos iterations
@@ -280,7 +280,7 @@ int main() {
         free(Y);
       if (res)
         free(res);
-      FreeASIGMABSolSuiteSparse(rat.num, solshiftdata);
+      FreeASIGMABSolCXSparse(rat.num, solshiftdata);
       free(solshiftdata);
       free_rat(&rat);
       free(ind);
@@ -318,3 +318,4 @@ int main() {
   EVSLFinish();
   return 0;
 }
+

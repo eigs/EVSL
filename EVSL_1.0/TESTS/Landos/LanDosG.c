@@ -1,14 +1,14 @@
-#include "evsl.h"
-#include "io.h"
-#include <fcntl.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
+#include <fcntl.h>
+#include <math.h>
 #include <unistd.h>
+#include "evsl.h"
+#include "io.h"
 
 #define BsolPol 1
 
@@ -202,11 +202,11 @@ int main() {
       SetBSol(BSolPol, (void *)&Bsol);
 #else
       /*-------------------- Use Choleksy factorization to solve B */
-      BSolDataSuiteSparse Bsol;
-      /*-------------------- use SuiteSparse as the solver for B */
-      SetupBSolSuiteSparse(&Bcsr, &Bsol);
+      BSolDataCXSparse Bsol;
+      /*-------------------- use CXSparse as the solver for B */
+      SetupBSolCXSparse(&Bcsr, &Bsol);
       /*-------------------- set the solver for B */
-      SetBSol(BSolSuiteSparse, (void *)&Bsol);
+      SetBSol(BSolCXSparse, (void *)&Bsol);
 #endif
       SetGenEig();
       rand_double(n, vinit);
@@ -219,7 +219,7 @@ int main() {
 #if BsolPol
       FreeBSolPolData(&Bsol);
 #else
-      FreeBSolSuiteSparseData(&Bsol);
+      FreeBSolCXSparseData(&Bsol);
 #endif
       /*----------------- get the bounds for (A, B) ---------*/
       intv[0] = lmin;

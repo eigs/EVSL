@@ -1,24 +1,23 @@
 .SUFFIXES : .c .o
 
 include ../../makefile.in
-include ../../EXTERNAL/makefile.in
 
 FLAGS = -DUNIX -O3 -g -Wall 
 
-INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
+INCLUDES = -I../../INC -I../../EXTERNAL 
 
 # Object files
-OBJS_PR = LapPLanR.o io.o lapl.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_cxsparse.o
-OBJS_PN = LapPLanN.o io.o lapl.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_cxsparse.o
-OBJS_RN = LapRLanN.o io.o lapl.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_cxsparse.o
-OBJS_RR = LapRLanR.o io.o lapl.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_cxsparse.o
+OBJS_PR = LapPLanR.o io.o lapl.o ../../EXTERNAL/evsl_cxsparse.o
+OBJS_PN = LapPLanN.o io.o lapl.o ../../EXTERNAL/evsl_cxsparse.o
+OBJS_RN = LapRLanN.o io.o lapl.o ../../EXTERNAL/evsl_cxsparse.o
+OBJS_RR = LapRLanR.o io.o lapl.o ../../EXTERNAL/evsl_cxsparse.o
 
 LIB = -L../../ -levsl
 
 LIB_CXSPARSE=-L../../EXTERNAL/CXSparse/Lib -lcxsparse
 
 ALLEXE += LapPLanR.ex LapPLanN.ex LapRLanN.ex LapRLanR.ex
-LIB_EXT = $(LIB_CXSPARSE) $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)
+LIB_EXT = $(LIB_CXSPARSE) -fopenmp $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: LapPLanR.ex 

@@ -4,23 +4,27 @@ include ../../EXTERNAL/makefile.in
 FC = gfortran
 FLAGS = -DUNIX -O3 -g
 
-INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
+INCLUDES = -I../../INC -I../../EXTERNAL
 
 # Object files
 OBJS_PN = LapPLanN.o functns.o genmat.o
 OBJS_PR = LapPLanR.o functns.o genmat.o
 OBJS_PN_MatFree = LapPLanN_MatFree.o functns.o genmat.o csr_module.o
-OBJS_RN = LapRLanN.o functns.o genmat.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_suitesparse_f90.o
-OBJS_RR = LapRLanR.o functns.o genmat.o ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_suitesparse_f90.o
+OBJS_RN = LapRLanN.o functns.o genmat.o ../../EXTERNAL/evsl_cxsparse.o ../../EXTERNAL/evsl_cxsparse_f90.o
+OBJS_RR = LapRLanR.o functns.o genmat.o ../../EXTERNAL/evsl_cxsparse.o ../../EXTERNAL/evsl_cxsparse_f90.o
 
 LIB = -L../../ -levsl $(LIBLAPACK)
 
+LIB_CXSPARSE=-L../../EXTERNAL/CXSparse/Lib -lcxsparse
 ALLEXE = LapPLanN.ex LapPLanR.ex LapPLanN_MatFree.ex LapRLanN.ex LapRLanR.ex
 
-LIB_EXT = $(LIB_UMF) -fopenmp $(LIB0)
+LIB_EXT = $(LIB_CXSPARSE) -fopenmp $(LIB0)
 
 #Rules
 default: LapPLanN.ex
+
+%.o : %.c
+	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
 
 LapPLanN.o: LapPLanN.f90
 	$(FC) $(FLAGS) -o $@ -c $<

@@ -1,11 +1,11 @@
-#include "evsl.h"
-#include "evsl_suitesparse.h"
-#include "io.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include "evsl.h"
+#include "io.h"
+#include "evsl_cxsparse.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -45,7 +45,7 @@ int main() {
   int numat, mat;
   char line[MAX_LINE];
   /*-------------------- Bsol by cholmod */
-  BSolDataSuiteSparse Bsol;
+  BSolDataCXSparse Bsol;
   /*-------------------- stopping tol */
   tol = 1e-5;
   /*-------------------- start EVSL */
@@ -137,12 +137,12 @@ int main() {
       exit(7);
     }
     alleigs = malloc(n * sizeof(double));
-    /*-------------------- use SuiteSparse as the solver for B  in eigenvalue
+    /*-------------------- use CXSparse as the solver for B  in eigenvalue
      * computation*/
-    SetupBSolSuiteSparse(&Bcsr, &Bsol);
+    SetupBSolCXSparse(&Bcsr, &Bsol);
     /*-------------------- set the solver for B and LT */
-    SetBSol(BSolSuiteSparse, (void *)&Bsol);
-    SetLTSol(LTSolSuiteSparse, (void *)&Bsol);
+    SetBSol(BSolCXSparse, (void *)&Bsol);
+    SetLTSol(LTSolCXSparse, (void *)&Bsol);
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
@@ -270,7 +270,7 @@ int main() {
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
-    FreeBSolSuiteSparseData(&Bsol);
+    FreeBSolCXSparseData(&Bsol);
     free(alleigs);
     free(counts);
     if (sqrtdiag)

@@ -4,8 +4,8 @@
 #include "CXSparse/Include/cs.h"
 
 /**
- * @file evsl_suitesparse.h
- * @brief Definitions used for suitesparse interface
+ * @file evsl_cxsparse.h
+ * @brief Definitions used for cxsparse interface
  */
 
 typedef struct _BSolDataCXSparse {

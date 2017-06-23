@@ -296,7 +296,7 @@ void ASIGMABSolCXSparse(int n, double *br, double *bi, double *xr,
 }
 
 /**
- * @brief free the data needed by UMFpack
+ * @brief free the data needed by CXSparse
  */ 
 void FreeASIGMABSolCXSparse(int num, void **data) {
   int i;

@@ -6,19 +6,12 @@ include ../../EXTERNAL/makefile.in
 # Common flags
 FLAGS = -DUNIX -O3 -g -Wall 
 
-## NOTE: for polynomial filtering methods set "UMF_INC = " (blank)
-## and "LIB_UMF =   " (blank) here or in EXTERNAL/makefile.in
-
-UMF_INC =
-
-LIB_UMF =
-
-INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
+INCLUDES = -I../../INC -I../../EXTERNAL
 
 # Object files for rational filter restart lanczos
-OBJS_RR = MMRLanR.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
+OBJS_RR = MMRLanR.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
 # Object files for rational filter Non-restart lanczos
-OBJS_RN = MMRLanN.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
+OBJS_RN = MMRLanN.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
 # Object files for polynomial filter restart lanczos
 OBJS_PR = MMPLanR.o io.o mmio.o 
 # Object files for polynomial filter restart lanczos (omp)
@@ -33,7 +26,8 @@ LIB = -L ../../ -levsl
 ALLEXE = MMPLanR.ex MMPLanN.ex MMPLanR_omp.ex \
 	 MMRLanR.ex MMRLanN.ex MMPSI.ex
 
-LIB_EXT = $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)
+LIB_CXSPARSE=-L../../EXTERNAL/CXSparse/Lib -lcxsparse
+LIB_EXT = $(LIB_CXSPARSE) -fopenmp $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: MMPLanN.ex 

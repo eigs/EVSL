@@ -6,7 +6,7 @@
 #include <complex.h>
 #include "evsl.h"
 #include "io.h"
-#include "evsl_suitesparse.h"
+#include "evsl_cxsparse.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -160,12 +160,12 @@ int main(int argc, char *argv[]) {
     rat.beta = beta;
     // now determine rational filter
     find_ratf(intv, &rat);
-    // use the solver function from UMFPACK
+    // use the solver function from CXsparse
     void **solshiftdata = (void **) malloc(num*sizeof(void *));
     /*------------ factoring the shifted matrices and store the factors */
-    SetupASIGMABSolSuiteSparse(&Acsr, NULL, num, rat.zk, solshiftdata);
+    SetupASIGMABSolCXSparse(&Acsr, NULL, num, rat.zk, solshiftdata);
     /*------------ give the data to rat */
-    SetASigmaBSol(&rat, NULL, ASIGMABSolSuiteSparse, solshiftdata);
+    SetASigmaBSol(&rat, NULL, ASIGMABSolCXSparse, solshiftdata);
     //-------------------- approximate number of eigenvalues wanted
     nev = ev_int+2;
     //-------------------- Dimension of Krylov subspace and maximal iterations
@@ -216,7 +216,7 @@ int main(int argc, char *argv[]) {
     if (lam) free(lam);
     if (Y) free(Y);
     if (res) free(res);
-    FreeASIGMABSolSuiteSparse(rat.num, solshiftdata);
+    FreeASIGMABSolCXSparse(rat.num, solshiftdata);
     free(solshiftdata);
     free(ind);
     free(lam_ex);

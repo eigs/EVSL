@@ -5,20 +5,13 @@ include ../../EXTERNAL/makefile.in
 
 FLAGS = -DUNIX -O3 -g -Wall 
 
-## NOTE: for polynomial filtering methods set "UMF_INC = " (blank)
-## and "LIB_UMF =   " (blank) here or in EXTERNAL/makefile.in
-
-#UMF_INC =
-
-#LIB_UMF =
-
-INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
+INCLUDES = -I../../INC -I../../EXTERNAL 
 
 # Object files
 OBJS_PN  = LapPLanN.o io.o lapl.o
 OBJS_PR  = LapPLanR.o io.o lapl.o
-OBJS_RN  = LapRLanN.o io.o lapl.o ../../EXTERNAL/evsl_suitesparse.o
-OBJS_RR  = LapRLanR.o io.o lapl.o ../../EXTERNAL/evsl_suitesparse.o
+OBJS_RN  = LapRLanN.o io.o lapl.o ../../EXTERNAL/evsl_cxsparse.o
+OBJS_RR  = LapRLanR.o io.o lapl.o ../../EXTERNAL/evsl_cxsparse.o
 OBJS_PSI = LapPSI.o io.o lapl.o
 OBJS_PN_MatFree = LapPLanN_MatFree.o io.o lapl.o
 
@@ -27,7 +20,8 @@ LIB = -L../../ -levsl
 ALLEXE = LapPLanR.ex LapPLanN.ex LapPLanN_MatFree.ex LapRLanN.ex \
 	 LapRLanR.ex LapPSI.ex
 
-LIB_EXT = $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)
+LIB_CXSPARSE=-L../../EXTERNAL/CXSparse/Lib -lcxsparse
+LIB_EXT = $(LIB_CXSPARSE) -fopenmp $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: LapPLanN.ex
@@ -51,7 +45,7 @@ LapPLanN_MatFree.ex: $(OBJS_PN_MatFree)
 
 ## rational
 LapRLanR.ex: $(OBJS_RR)
-	$(LINK) $(UMF_INC) -o LapRLanR.ex $(OBJS_RR) $(LIB) $(LIB_EXT)
+	$(LINK) -o LapRLanR.ex $(OBJS_RR) $(LIB) $(LIB_EXT)
 
 LapRLanN.ex: $(OBJS_RN)
 	$(LINK) -o LapRLanN.ex $(OBJS_RN) $(LIB) $(LIB_EXT)

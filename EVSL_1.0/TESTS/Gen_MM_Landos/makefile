@@ -5,18 +5,19 @@ include ../../EXTERNAL/makefile.in
 
 FLAGS = -DUNIX -O3 -g -Wall 
 
-INCLUDES = -I../../INC -I../../EXTERNAL $(UMF_INC)
+INCLUDES = -I../../INC -I../../EXTERNAL 
 
 # Object files
-OBJS_RN = MMRLanN.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
-OBJS_RR = MMRLanR.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
-OBJS_PR = MMPLanR.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
-OBJS_PN = MMPLanN.o io.o mmio.o ../../EXTERNAL/evsl_suitesparse.o
+OBJS_RN = MMRLanN.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
+OBJS_RR = MMRLanR.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
+OBJS_PR = MMPLanR.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
+OBJS_PN = MMPLanN.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
 
 LIB = -L../../ -levsl
 
+LIB_CXSPARSE=-L../../EXTERNAL/CXSparse/Lib -lcxsparse
 ALLEXE += MMRLanR.ex MMRLanN.ex MMPLanR.ex MMPLanN.ex
-LIB_EXT = $(LIB_UMF) -fopenmp $(LIBLAPACK) $(LIB0)
+LIB_EXT = $(LIB_CXSPARSE) -fopenmp $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: MMRLanN.ex 
