@@ -76,6 +76,8 @@ int SetupBSolCXSparse(csrMat *B, BSolDataCXSparse *Bsol_data) {
     return -2;
   }
 
+  //printf("Lnz %d %d\n", N->L->nzmax, N->L->p[N->L->n]);
+
   /* free */
   cs_di_spfree(Bsym);
   free(csp);
@@ -224,6 +226,7 @@ int SetupASIGMABSolCXSparse(csrMat *A, csrMat *BB, int num,
     /* only do symbolic factorization once */
     if (i == 0) {
       /* Symbolic Factorization */
+      /* order == 2: LU, 0: not QR */
       S = cs_ci_sqr(2, &Ccs, 0);     /* ordering and symbolic analysis */
       if (!S) {
         return -1;
