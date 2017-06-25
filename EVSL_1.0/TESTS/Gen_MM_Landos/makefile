@@ -1,23 +1,30 @@
 .SUFFIXES : .c .o
 
 include ../../makefile.in
-include ../../EXTERNAL/makefile.in
 
 FLAGS = -DUNIX -O3 -g -Wall 
 
 INCLUDES = -I../../INC -I../../EXTERNAL 
 
+ifeq ($(DIRECTSOL), SUITESPARSE)
+  OBJ_DIRSOL = evsl_suitesparse.o
+  include ../../EXTERNAL/makefile_suitesparse.in
+  LIB_DIRSOL = $(LIB_UMF)
+else
+  OBJ_DIRSOL = evsl_cxsparse.o
+  LIB_DIRSOL = -L../../EXTERNAL/CXSparse/Lib -lcxsparse
+endif
+
 # Object files
-OBJS_RN = MMRLanN.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
-OBJS_RR = MMRLanR.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
-OBJS_PR = MMPLanR.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
-OBJS_PN = MMPLanN.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
+OBJS_RN = MMRLanN.o io.o mmio.o ../../EXTERNAL/$(OBJ_DIRSOL)
+OBJS_RR = MMRLanR.o io.o mmio.o ../../EXTERNAL/$(OBJ_DIRSOL)
+OBJS_PR = MMPLanR.o io.o mmio.o ../../EXTERNAL/$(OBJ_DIRSOL)
+OBJS_PN = MMPLanN.o io.o mmio.o ../../EXTERNAL/$(OBJ_DIRSOL)
 
 LIB = -L../../ -levsl
+LIB_EXT = $(LIB_DIRSOL) $(OMP) $(LIBLAPACK) $(LIB0)
 
-LIB_CXSPARSE=-L../../EXTERNAL/CXSparse/Lib -lcxsparse
 ALLEXE += MMRLanR.ex MMRLanN.ex MMPLanR.ex MMPLanN.ex
-LIB_EXT = $(LIB_CXSPARSE) $(OMP) $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: MMRLanN.ex 

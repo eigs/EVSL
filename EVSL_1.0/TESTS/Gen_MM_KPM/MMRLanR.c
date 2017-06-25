@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include "io.h"
 #include "evsl.h"
-#include "evsl_cxsparse.h"
+#include "evsl_direct.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -244,9 +244,9 @@ int main() {
       // use the solver function from CXSparse
       void **solshiftdata = (void **)malloc(num * sizeof(void *));
       /*------------ factoring the shifted matrices and store the factors */
-      SetupASIGMABSolCXSparse(&Acsr, &Bcsr, num, rat.zk, solshiftdata);
+      SetupASIGMABSolDirect(&Acsr, &Bcsr, num, rat.zk, solshiftdata);
       /*------------ give the data to rat */
-      SetASigmaBSol(&rat, NULL, ASIGMABSolCXSparse, solshiftdata);
+      SetASigmaBSol(&rat, NULL, ASIGMABSolDirect, solshiftdata);
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int + 2;
       //-------------------- Dimension of Krylov subspace and maximal iterations
@@ -284,7 +284,7 @@ int main() {
         free(Y);
       if (res)
         free(res);
-      FreeASIGMABSolCXSparse(rat.num, solshiftdata);
+      FreeASIGMABSolDirect(rat.num, solshiftdata);
       free(solshiftdata);
       free_rat(&rat);
       free(ind);

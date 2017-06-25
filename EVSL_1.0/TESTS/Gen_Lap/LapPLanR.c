@@ -5,7 +5,7 @@
 #include <math.h>
 #include "evsl.h"
 #include "io.h"
-#include "evsl_cxsparse.h"
+#include "evsl_direct.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
   /*-------------------- Bsol */
-  BSolDataCXSparse Bsol;
+  void *Bsol;
   /*-------------------- default values */
   nx   = 10;
   ny   = 10;
@@ -97,11 +97,11 @@ int main(int argc, char *argv[]) {
   SetAMatrix(&Acsr);
   /*-------------------- set the right-hand side matrix B */
   SetBMatrix(&Bcsr);
-  /*-------------------- use CXSparse as the solver for B */
-  SetupBSolCXSparse(&Bcsr, &Bsol);
+  /*-------------------- use direct solver as the solver for B */
+  SetupBSolDirect(&Bcsr, &Bsol);
   /*-------------------- set the solver for B  and L^{T}*/
-  SetBSol(BSolCXSparse, (void *) &Bsol);
-  SetLTSol(LTSolCXSparse, (void *) &Bsol);  
+  SetBSol(BSolDirect, Bsol);
+  SetLTSol(LTSolDirect, Bsol);  
   /*-------------------- for generalized eigenvalue problem */
   SetGenEig();
   /*-------------------- step 0: get eigenvalue bounds */
@@ -221,7 +221,7 @@ int main(int argc, char *argv[]) {
   free_csr(&Acsr);
   free_coo(&Bcoo);
   free_csr(&Bcsr);
-  FreeBSolCXSparseData(&Bsol);
+  FreeBSolDirectData(Bsol);
   free(mu);
   fclose(fstats);
   /*-------------------- finalize EVSL */

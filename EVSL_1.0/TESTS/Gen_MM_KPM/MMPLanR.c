@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include "io.h"
 #include "evsl.h"
-#include "evsl_cxsparse.h"
+#include "evsl_direct.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -44,8 +44,8 @@ int main() {
   io_t io;
   int numat, mat;
   char line[MAX_LINE];
-  /*-------------------- Bsol using cholmod*/
-  BSolDataCXSparse Bsol;
+  /*-------------------- Bsol */
+  void *Bsol;
   /*-------------------- stopping tol */
   tol = 1e-5;
   /*-------------------- start EVSL */
@@ -137,11 +137,11 @@ int main() {
       exit(7);
     }
     alleigs = malloc(n * sizeof(double));
-    /*-------------------- use CXSparse as the solver for B */
-    SetupBSolCXSparse(&Bcsr, &Bsol);
+    /*-------------------- use direct solver for B */
+    SetupBSolDirect(&Bcsr, &Bsol);
     /*-------------------- set the solver for B*/
-    SetBSol(BSolCXSparse, (void *)&Bsol);
-    SetLTSol(LTSolCXSparse, (void *)&Bsol);
+    SetBSol(BSolDirect, Bsol);
+    SetLTSol(LTSolDirect, Bsol);
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
@@ -270,7 +270,7 @@ int main() {
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
-    FreeBSolCXSparseData(&Bsol);
+    FreeBSolDirectData(Bsol);
     free(alleigs);
     free(counts);
     free(sqrtdiag);

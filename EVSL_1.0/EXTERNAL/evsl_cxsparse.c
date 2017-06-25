@@ -3,8 +3,37 @@
 #include <string.h>
 #include "def.h"
 #include "struct.h"
+#include "CXSparse/Include/cs.h"
 #include "internal_proto.h"
-#include "evsl_cxsparse.h"
+#include "evsl_direct.h"
+
+/**
+ * @file evsl_cxsparse.h
+ * @brief Definitions used for cxsparse interface
+ */
+
+typedef struct _BSolDataDirect {
+  /* problem size */
+  int n;
+  /* symbolic factor */
+  cs_dis *S;
+  /* numeric factor */
+  cs_din *N;
+  /* workspace for solve, of size n */
+  double *w;
+} BSolDataDirect;
+
+typedef struct _ASBSolDataDirect {
+  /* problem size */
+  int n;
+  /* symbolic factor */
+  cs_cis *S;
+  /* numeric factor */
+  cs_cin *N;
+  /* workspace for solve, of size n */
+  cs_complex_t *b, *x;
+} ASBSolDataDirect;
+
 
 /* true for off-diagonal entries */
 static int dropdiag_di (int i, int j, double aij, void *other) { return (i != j) ;}
@@ -25,7 +54,9 @@ static cs_di *make_sym_di (cs_di *A)
  * @param B         matrix B
  * @param Bsol_data Struct which will be initialized 
  * */
-int SetupBSolCXSparse(csrMat *B, BSolDataCXSparse *Bsol_data) {
+int SetupBSolDirect(csrMat *B, void **data) {
+  BSolDataDirect *Bsol_data;
+  Malloc(Bsol_data, 1, BSolDataDirect);
   int i,j,k, n, nnz, *csp, *csi;
   double *csx;
   /* csparse csc matrix and the symmetrized one */
@@ -89,14 +120,16 @@ int SetupBSolCXSparse(csrMat *B, BSolDataCXSparse *Bsol_data) {
   Bsol_data->N = N;
   Malloc(Bsol_data->w, n, double);
 
+  *data = (void *) Bsol_data;
+  
   return 0;
 }
 
 /** @brief Solver function of B
  *
  * */
-void BSolCXSparse(double *b, double *x, void *data) {
-  BSolDataCXSparse *Bsol_data = (BSolDataCXSparse *) data;
+void BSolDirect(double *b, double *x, void *data) {
+  BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
   cs_dis *S = Bsol_data->S;
   cs_din *N = Bsol_data->N;
   int n = Bsol_data->n;
@@ -111,8 +144,8 @@ void BSolCXSparse(double *b, double *x, void *data) {
 /** @brief Solver function of L^{T} 
  *  x = L^{-T}*b
  * */
-void LTSolCXSparse(double *b, double *x, void *data) {
-  BSolDataCXSparse *Bsol_data = (BSolDataCXSparse *) data;
+void LTSolDirect(double *b, double *x, void *data) {
+  BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
   cs_dis *S = Bsol_data->S;
   cs_din *N = Bsol_data->N;
   int n = Bsol_data->n;
@@ -125,8 +158,8 @@ void LTSolCXSparse(double *b, double *x, void *data) {
 
 /** @brief Free solver data
  * */
-void FreeBSolCXSparseData(BSolDataCXSparse *data) {
-  BSolDataCXSparse *Bsol_data = (BSolDataCXSparse *) data;
+void FreeBSolDirectData(void *data) {
+  BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
   cs_dis *S = Bsol_data->S;
   cs_din *N = Bsol_data->N;
   double *w = Bsol_data->w;
@@ -134,6 +167,7 @@ void FreeBSolCXSparseData(BSolDataCXSparse *data) {
   cs_di_sfree(S);
   cs_di_nfree(N);
   free(w);
+  free(data);
 }
 
 /** @brief setup CXsparse solver for A - SIGMA B 
@@ -149,8 +183,8 @@ void FreeBSolCXSparseData(BSolDataCXSparse *data) {
  * @param zk       array of SIGMA's of length num
  * @param data    all data that are needed for solving the system
  * */
-int SetupASIGMABSolCXSparse(csrMat *A, csrMat *BB, int num,
-                            complex double *zk, void **data) {
+int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
+                          complex double *zk, void **data) {
   int i, j, nrow, ncol, nnzB, nnzC, *map;
   csrMat *B, C, eye;
   /* the shifted matrix 
@@ -164,7 +198,7 @@ int SetupASIGMABSolCXSparse(csrMat *A, csrMat *BB, int num,
   /* csparse factors: symbolic and numeric */
   cs_cis *S = NULL;
   cs_cin *N = NULL;
-  ASBSolDataCXSparse *ASBdata;
+  ASBSolDataDirect *ASBdata;
   
   nrow = A->nrows;
   ncol = A->ncols;
@@ -245,7 +279,7 @@ int SetupASIGMABSolCXSparse(csrMat *A, csrMat *BB, int num,
     //printf("%e\n", (N->L->nzmax + N->U->nzmax + 0.0) / nnzC);
     
     /* save the data */
-    Malloc(ASBdata, 1, ASBSolDataCXSparse);
+    Malloc(ASBdata, 1, ASBSolDataDirect);
     ASBdata->n = nrow;
     ASBdata->S = S;
     ASBdata->N = N;
@@ -279,10 +313,10 @@ int SetupASIGMABSolCXSparse(csrMat *A, csrMat *BB, int num,
  * @warning: This function MUST be of this prototype
  *
  *------------------------------------------------------------------*/
-void ASIGMABSolCXSparse(int n, double *br, double *bi, double *xr, 
-                        double *xz, void *data) {
+void ASIGMABSolDirect(int n, double *br, double *bi, double *xr, 
+                      double *xz, void *data) {
  
-  ASBSolDataCXSparse *sol_data = (ASBSolDataCXSparse *) data;
+  ASBSolDataDirect *sol_data = (ASBSolDataDirect *) data;
   int i;
   CHKERR(n != sol_data->n);
   cs_cis *S = sol_data->S;
@@ -307,10 +341,10 @@ void ASIGMABSolCXSparse(int n, double *br, double *bi, double *xr,
 /**
  * @brief free the data needed by CXSparse
  */ 
-void FreeASIGMABSolCXSparse(int num, void **data) {
+void FreeASIGMABSolDirect(int num, void **data) {
   int i;
   for (i=0; i<num; i++) {
-    ASBSolDataCXSparse *soldata = (ASBSolDataCXSparse *) data[i];
+    ASBSolDataDirect *soldata = (ASBSolDataDirect *) data[i];
     if (i == 0) {
       cs_ci_sfree(soldata->S);
     }

@@ -1,7 +1,10 @@
+include makefile.in
 ll:
 	( cd SRC                    ; make )
 	( cd EXTERNAL               ; make )
+ifeq ($(DIRECTSOL), CXSPARSE)
 	( cd EXTERNAL/CXSparse      ; make )
+endif
 	( cd TESTS/MM      ; mkdir -p OUT  ; make all)
 	( cd TESTS/Lap     ; mkdir -p OUT  ; make all)
 	( cd TESTS/Gen_Lap ; mkdir -p OUT  ; make all)
@@ -12,7 +15,9 @@ ll:
 clean:
 	( cd SRC                 ; make clean )
 	( cd EXTERNAL            ; make clean )
+ifeq ($(DIRECTSOL), CXSPARSE)
 	( cd EXTERNAL/CXSparse   ; make clean )
+endif
 	( cd TESTS/Gen_Lap       ; make cleanall)
 	( cd TESTS/Gen_MM_KPM    ; make cleanall)	
 	( cd TESTS/Gen_MM_Landos ; make cleanall)	

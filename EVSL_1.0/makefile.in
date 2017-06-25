@@ -5,7 +5,6 @@ OBJ_TIME = timing.o
 ## 
 LIB0 = -lgfortran -lrt -lm 
 ## Linker 
-#LINK = gcc
 LINK = gcc
 
 # Common flags
@@ -15,14 +14,19 @@ FLAGS = -DUNIX -O3 -g -Wall
 AR = ar rv
 RANLIB = ranlib
 
-# openmp
-
+# OpenMP
 OMP = -fopenmp 
 
 ## libraries: blas, lapack
 #LIBLAPACK = -L/scratch/syphax/Rational_GEIG/lapack-3.5.0 -llapack -lrefblas
+LIBLAPACK = /home/ruipeng/workspace/OpenBLAS/libopenblas.a -lpthread
 #LIBLAPACK = -L/home/ruipeng/workspace/lapack-3.7.0 -llapack -lrefblas
-#LIBLAPACK = /home/ruipeng/workspace/OpenBLAS/libopenblas.a -lpthread
 #LIBLAPACK = -L/home/yuanzhe/Desktop/lapack-3.5.0 -llapack -lrefblas
-LIBLAPACK = -llapack -lblas
+#LIBLAPACK = -llapack -lblas
 
+# direct solver: CXSPARSE, SUITESPARSE
+# CXSPARSE    : distributed with EVSL, no need to be provided
+# SUITESPARSE : not distributed with EVSL, path need to be provided 
+#               in EXTERNAL/makefile.in
+#DIRECTSOL = SUITESPARSE
+DIRECTSOL = CXSPARSE

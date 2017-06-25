@@ -177,9 +177,9 @@ program driver
 
         ! Get the factorizations of A-\sigma*B
         ! matrix B is not present
-        call SETUP_ASIGMABSOL_CXSPARSE_F90(csr, zero, dummy, rat, asigbss)
-        ! Set the solver function to use CXsparse
-        call SET_ASIGMABSOL_CXSPARSE_F90(rat, asigbss)
+        call SETUP_ASIGMABSOL_DIRECT_F90(csr, zero, dummy, rat, asigbss)
+        ! Set the direct solver function
+        call SET_ASIGMABSOL_DIRECT_F90(rat, asigbss)
 
         ! Necessary paramters
         nev = ev_int + 2
@@ -204,8 +204,8 @@ program driver
         ! The eigenvalues are stored in eigval and eigenvectors are in eigvec
 
         ! Be sure to deallocate the rational filter as well as the solve data
-        call FREE_ASIGMABSOL_CXSPARSE_F90(rat, asigbss)
-        ! this must be done after FREE_ASIGMABSOL_CXSPARSE_F90
+        call FREE_ASIGMABSOL_DIRECT_F90(rat, asigbss)
+        ! this must be done after FREE_ASIGMABSOL_DIRECT_F90
         call EVSL_FREE_RAT_F90(rat)
         deallocate(eigval)
         deallocate(eigvec)

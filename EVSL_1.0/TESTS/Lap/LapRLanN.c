@@ -6,7 +6,7 @@
 #include <complex.h>
 #include "evsl.h"
 #include "io.h"
-#include "evsl_cxsparse.h"
+#include "evsl_direct.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -160,12 +160,12 @@ int main(int argc, char *argv[]) {
     rat.beta = beta;
     // now determine rational filter
     find_ratf(intv, &rat);
-    /*------------ use the solver function from CXSparse */
+    /*------------ use direct solver function  */
     void **solshiftdata = (void **) malloc(rat.num*sizeof(void *));
     /*------------ factoring the shifted matrices and store the factors */
-    SetupASIGMABSolCXSparse(&Acsr, NULL, rat.num, rat.zk, solshiftdata);
+    SetupASIGMABSolDirect(&Acsr, NULL, rat.num, rat.zk, solshiftdata);
     /*------------ give the data to rat */
-    SetASigmaBSol(&rat, NULL, ASIGMABSolCXSparse, solshiftdata);
+    SetASigmaBSol(&rat, NULL, ASIGMABSolDirect, solshiftdata);
     //-------------------- approximate number of eigenvalues wanted
     nev = ev_int+2;
     //-------------------- maximal Lanczos iterations   
@@ -217,7 +217,7 @@ int main(int argc, char *argv[]) {
     if (res) free(res);
     free(ind);
     free(lam_ex);
-    FreeASIGMABSolCXSparse(rat.num, solshiftdata);
+    FreeASIGMABSolDirect(rat.num, solshiftdata);
     free(solshiftdata);
     free_rat(&rat);
   } //for (sl=0; sl<nslices; sl++)

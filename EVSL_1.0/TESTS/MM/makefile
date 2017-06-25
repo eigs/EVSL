@@ -1,17 +1,25 @@
 .SUFFIXES : .f .c .o
 
 include ../../makefile.in
-include ../../EXTERNAL/makefile.in
 
 # Common flags
 FLAGS = -DUNIX -O3 -g -Wall 
 
 INCLUDES = -I../../INC -I../../EXTERNAL
 
+ifeq ($(DIRECTSOL), SUITESPARSE)
+  OBJ_DIRSOL = evsl_suitesparse.o
+  include ../../EXTERNAL/makefile_suitesparse.in
+  LIB_DIRSOL = $(LIB_UMF)
+else
+  OBJ_DIRSOL = evsl_cxsparse.o
+  LIB_DIRSOL = -L../../EXTERNAL/CXSparse/Lib -lcxsparse
+endif
+
 # Object files for rational filter restart lanczos
-OBJS_RR = MMRLanR.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
+OBJS_RR = MMRLanR.o io.o mmio.o ../../EXTERNAL/$(OBJ_DIRSOL)
 # Object files for rational filter Non-restart lanczos
-OBJS_RN = MMRLanN.o io.o mmio.o ../../EXTERNAL/evsl_cxsparse.o
+OBJS_RN = MMRLanN.o io.o mmio.o ../../EXTERNAL/$(OBJ_DIRSOL)
 # Object files for polynomial filter restart lanczos
 OBJS_PR = MMPLanR.o io.o mmio.o 
 # Object files for polynomial filter restart lanczos (omp)
@@ -22,12 +30,10 @@ OBJS_PN = MMPLanN.o io.o mmio.o
 OBJS_PSI = MMPSI.o io.o mmio.o
 
 LIB = -L ../../ -levsl
+LIB_EXT = $(LIB_DIRSOL) $(OMP) $(LIBLAPACK) $(LIB0)
 
 ALLEXE = MMPLanR.ex MMPLanN.ex MMPLanR_omp.ex \
 	 MMRLanR.ex MMRLanN.ex MMPSI.ex
-
-LIB_CXSPARSE=-L../../EXTERNAL/CXSparse/Lib -lcxsparse
-LIB_EXT = $(LIB_CXSPARSE) $(OMP) $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: MMPLanN.ex 

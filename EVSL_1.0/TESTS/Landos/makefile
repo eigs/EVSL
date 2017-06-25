@@ -10,7 +10,7 @@ INCLUDES = -I../../INC
 OBJS_LD = LanDos.o exDOS.o 
 OBJS_LDG = LanDosG.o exDOS.o io.o mmio.o 
 
- LIB = -L../../ -levsl
+LIB = -L../../ -levsl
 
 ## not needed for pol. filtering. 
 
@@ -23,13 +23,11 @@ default: LanDos.ex LanDosG.ex
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
 
 # Exe
-
 LanDos.ex: $(OBJS_LD)
 	$(LINK) -o LanDos.ex $(OBJS_LD) $(LIB) $(LIB_EXT)
 
 LanDosG.ex: $(OBJS_LDG)
 	$(LINK) -o LanDosG.ex $(OBJS_LDG) $(LIB) $(LIB_EXT)
-
 
 clean:
 	rm -f *.o *.ex

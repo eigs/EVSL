@@ -1,8 +1,15 @@
 include ../makefile.in
-include makefile.in
 
-OBJ += evsl_cxsparse.o
-INCLUDES = -I../INC -I. -ICXSparse/Include
+INCLUDES = -I../INC -I.
+
+ifeq ($(DIRECTSOL), SUITESPARSE)
+  include makefile_suitesparse.in
+  OBJ = evsl_suitesparse.o evsl_direct_f90.o
+  INCLUDES += $(UMF_INC)
+else
+  OBJ = evsl_cxsparse.o evsl_direct_f90.o
+  INCLUDES += -ICXSparse/Include
+endif
 
 %.o : %.c
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
@@ -10,4 +17,4 @@ INCLUDES = -I../INC -I. -ICXSparse/Include
 all : $(OBJ)
 
 clean:
-	rm -f $(OBJ)
+	rm -f *.o
