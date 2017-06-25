@@ -247,18 +247,21 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- T(k+1,k) = beta */
     eT[k] = beta;
     /*-------------------- Reallocate memory if maxit is smaller than # of eigs */    
-    if (k == maxit-1){
-      maxit += 1 + (int) (maxit*1.2);
+    if (k == maxit-1) {
+      maxit = 1 + (int) (maxit * 1.5);
       Realloc(V, (maxit+1)*n, double);
       if (ifGenEv) {
 	Realloc(Z, (maxit+1)*n, double);
+      } else {
+        /* make sure Z == V since V may be changed in the Realloc above */
+        Z = V;
       }
-      Realloc(dT, maxit, double);
-      Realloc(eT, maxit, double);
-      Realloc(Lam, maxit, double);
-      Realloc(res, maxit, double);    
+      Realloc(dT,    maxit, double);
+      Realloc(eT,    maxit, double);
+      Realloc(Lam,   maxit, double);
+      Realloc(res,   maxit, double);    
       Realloc(EvalT, maxit, double);
-    }  
+    }
     /*---------------------- test for Ritz vectors */
     if ( (k < Ntest || (k-Ntest) % cycle != 0) ) {
       continue;

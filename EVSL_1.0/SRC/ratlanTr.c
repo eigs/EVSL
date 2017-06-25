@@ -430,7 +430,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
         jl = 0;
         tr = 0.0;
         for (i=0; i<k; i++) {
-          if (Rval[i] +DBL_EPSILON >= bar) {
+          if (Rval[i] + DBL_EPSILON >= bar) {
             jl++;
             tr += Rval[i];
           }
@@ -511,6 +511,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     prtrlen = trlen; 
     trlen = 0;
     for (i=0; i<jl; i++) {
+      /* NOTE: Bvec (from Z) contains the B-ortho vectors we want */
       double *q = Rvec + i*n;
       double *y = Bvec + i*n;
       double *w = work;
@@ -569,6 +570,9 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
             Realloc(Y, nev*n, double);
             if (ifGenEv) {
               Realloc(Q, nev*n, double);
+            } else {
+              /* make sure Q == Y since Y may be changed in the Realloc above */
+              Q = Y;
             }
             Realloc(Lam, nev, double);
             Realloc(res, nev, double);
