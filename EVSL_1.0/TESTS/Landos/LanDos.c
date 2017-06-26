@@ -1,4 +1,4 @@
-#include "evsl.h"
+#include <errno.h>
 #include <fcntl.h>
 #include <math.h>
 #include <stdio.h>
@@ -6,8 +6,10 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/utsname.h>
 #include <time.h>
 #include <unistd.h>
+#include "evsl.h"
 
 /*-------------------- protos */
 int exDOS(double *vals, int n, int npts, double *x, double *y, double *intv);
@@ -55,6 +57,7 @@ int readDiagMat(const char *filename, cooMat *mat) {
  *-----------------------------------------------------------------------
  */
 int main() {
+  int ierr;
   srand(time(NULL));
   cooMat cooMat;
   csrMat csrMat;
@@ -63,49 +66,38 @@ int main() {
   cooMat_to_csrMat(0, &cooMat, &csrMat);
 
   //-------------------- Define some constants to test with
-  const int msteps = 40; // Steps to perform
-  const int npts = 200;  // Number of points
-  const int nvec = 100;  // Number of random vectors to generate
+  const int msteps = 40;  // Steps to perform
+  const int npts = 200;   // Number of points
+  const int nvec = 100;   // Number of random vectors to generate
   double intv[6] = {-2.448170338612495,
                     11.868902203167497,
                     0,
                     0,
                     5,
-                    8};    // Interval of interest
-  const int degB = 1;      // Positive value to work with landosG
-  const double tau = 1e-4; // Tolerance
-  //-------------------- reset to whole interval
+                    8}; /* Interval of interest */
+  /*-------------------- reset to whole interval */
   intv[2] = intv[0];
   intv[3] = intv[1];
   int i, ret;
-  double neig, neig2; // Number eigenvalues
+  double neig;  // Number eigenvalues
   //-------------------- exact histogram and computed DOS
-  double *xHist = (double *)malloc(npts * sizeof(double)); // Exact DOS x values
-  double *yHist = (double *)malloc(npts * sizeof(double)); // Exact DOS y values
+  double *xHist =
+      (double *)malloc(npts * sizeof(double));  // Exact DOS x values
+  double *yHist =
+      (double *)malloc(npts * sizeof(double));             // Exact DOS y values
   double *xdos = (double *)malloc(npts * sizeof(double));  // Calculated DOS x
-                                                           // vals
+  // vals
   double *ydos = (double *)malloc(npts * sizeof(double));  // Calculated DOS y
-  double *xdos2 = (double *)malloc(npts * sizeof(double)); // Calculated DOS x
-                                                           // vals
-  double *ydos2 = (double *)malloc(npts * sizeof(double)); // Calculated DOS y
-                                                           // vals
 
   SetStdEig();
   EVSLStart();
   SetAMatrix(&csrMat);
-  double t0 = cheblan_timer();
-  ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv,
-                tau); // Calculate DOS
-  double t1 = cheblan_timer();
+  /* Calculate approximate DOS */
+  ret = LanDos(nvec, msteps, npts, xdos, ydos, &neig, intv);
   fprintf(stdout, " LanDos ret %d \n", ret);
-  double t2 = cheblan_timer();
-  ret = LanDos(nvec, msteps, npts, xdos2, ydos2, &neig2, intv); // Calculate DOS
-  double t3 = cheblan_timer();
-  fprintf(stdout, " LanDos ret %d \n", ret);
-  printf("neig1: %f, neig2: %f \n", neig, neig2);
-  printf("1: %f, 2: %f \n", t1 - t0, t3 - t2);
 
-  ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv); // Exact DOS
+  /* Calculate the exact DOS */
+  ret = exDOS(cooMat.vv, cooMat.ncols, npts, xHist, yHist, intv);
   EVSLFinish();
   free_coo(&cooMat);
   fprintf(stdout, " exDOS ret %d \n", ret);
@@ -116,31 +108,50 @@ int main() {
   }
 
   //-------------------- Write to  output files
-  FILE *ofp = fopen("OUT/myydos.txt", "w");
-  FILE *ofp2 = fopen("OUT/myydos2.txt", "w");
+  FILE *ofp = fopen("OUT/LanDos_Approx_DOS.txt", "w");
   for (i = 0; i < npts; i++) {
     fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
-    fprintf(ofp2, " %10.4f  %10.4f\n", xdos2[i], ydos2[i]);
   }
   fclose(ofp);
-  fclose(ofp2);
 
   //-------------------- save exact DOS
-  ofp = fopen("OUT/Exydos.txt", "w");
+  ofp = fopen("OUT/LanDos_Exact_DOS.txt", "w");
   for (i = 0; i < npts; i++)
     fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
   fclose(ofp);
+  printf("The data output is located in  OUT/ \n");
+  struct utsname buffer;
+  errno = 0;
+  if (uname(&buffer) != 0) {
+    perror("uname");
+    exit(EXIT_FAILURE);
+  }
+
   //-------------------- invoke gnuplot for plotting ...
-  system("gnuplot < tester.gnuplot");
-  //-------------------- and gv for visualizing /
-  system("gv tester.eps");
-  //-------------------- done
+  ierr = system("gnuplot < tester.gnuplot");
+  if (ierr) {
+    fprintf(stderr,
+            "Error using 'gnuplot < tester.gnuplot', \n"
+            "postscript plot could not be generated \n");
+  } else {
+    printf("A postscript graph has been placed in OUT/tester.eps \n");
+    //-------------------- and gv for visualizing /
+    if (!strcmp(buffer.sysname, "Linux")) {
+      ierr = system("gv OUT/tester.eps");
+      if (ierr) {
+        fprintf(stderr, "Error using 'gv OUT/tester.eps' \n");
+      }
+
+      //-------------------- done
+    } else {
+      printf(
+          "To view the postscript graph use a postcript viewer such as  "
+          "gv \n");
+    }
+  }
   free(xHist);
   free(yHist);
   free(xdos);
   free(ydos);
-  free(xdos2);
-  free(ydos2);
-  free_csr(&csrMat);
   return 0;
 }

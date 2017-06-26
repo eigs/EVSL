@@ -1,11 +1,13 @@
+#include <errno.h>
+#include <fcntl.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/utsname.h>
 #include <time.h>
-#include <fcntl.h>
-#include <math.h>
 #include <unistd.h>
 #include "evsl.h"
 #include "io.h"
@@ -47,11 +49,11 @@ int readVec(const char *filename, int *npts, double **vec) {
  */
 int main() {
   srand(time(NULL));
-  const int msteps = 30;   // Number of steps
-  const int degB = 40;     // Degree to aproximate B with
-  const int npts = 200;    // Number of points
-  const int nvec = 30;     // Number of random vectors to use
-  const double tau = 1e-4; // Tolerance in polynomial approximation
+  const int msteps = 30;    // Number of steps
+  const int degB = 40;      // Degree to aproximate B with
+  const int npts = 200;     // Number of points
+  const int nvec = 30;      // Number of random vectors to use
+  const double tau = 1e-4;  // Tolerance in polynomial approximation
   // ---------------- Intervals of interest
   // intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
   // intv[2] and intv[3] are the input interval of interest [a. b]
@@ -66,8 +68,8 @@ int main() {
   int n = 0, i, nslices, ierr;
   double a, b;
 
-  cooMat Acoo, Bcoo; // A, B
-  csrMat Acsr, Bcsr; // A, B
+  cooMat Acoo, Bcoo;  // A, B
+  csrMat Acsr, Bcsr;  // A, B
   double *sqrtdiag = NULL;
 
   FILE *flog = stdout, *fmat = NULL;
@@ -102,13 +104,13 @@ int main() {
     /*----------------input matrix and interval information -*/
     fprintf(flog, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(flog, "MATRIX B: %s...\n", io.MatNam2);
-    a = io.a; // left endpoint of input interval
-    b = io.b; // right endpoint of input interval
+    a = io.a;  // left endpoint of input interval
+    b = io.b;  // right endpoint of input interval
     nslices = io.n_intv;
-    char path[1024]; // path to write the output files
+    char path[1024];  // path to write the output files
     strcpy(path, "OUT/MMPLanR_");
     strcat(path, io.MatNam1);
-    fstats = fopen(path, "w"); // write all the output to the file io.MatNam
+    fstats = fopen(path, "w");  // write all the output to the file io.MatNam
     if (!fstats) {
       printf(" failed in opening output file in OUT/\n");
       fstats = stdout;
@@ -273,25 +275,46 @@ int main() {
     }
 
     //-------------------- Write to  output files
-    FILE *ofp = fopen("OUT/myydosG.txt", "w");
+    FILE *ofp = fopen("OUT/LanDosG_Approx_DOS.txt", "w");
     for (i = 0; i < npts; i++)
       fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
     fclose(ofp);
 
     //-------------------- save exact DOS
-    ofp = fopen("OUT/ExydosG.txt", "w");
+    ofp = fopen("OUT/LanDosG_Exact_DOS.txt", "w");
     for (i = 0; i < npts; i++)
       fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
     fclose(ofp);
+    printf("The data output is located in  OUT/ \n");
+    struct utsname buffer;
+    errno = 0;
+    if (uname(&buffer) != 0) {
+      perror("uname");
+      exit(EXIT_FAILURE);
+    }
+
     //-------------------- invoke gnuplot for plotting ...
     ierr = system("gnuplot < testerG.gnuplot");
     if (ierr) {
-      printf("Could not run gnuplot: %i", ierr);
-    }
-    //-------------------- and gv for visualizing /
-    ierr = system("gv testerG.eps");
-    if (ierr) {
-      printf("Could not run gv: %i", ierr);
+      fprintf(stderr,
+              "Error using 'gnuplot < testerG.gnuplot', \n"
+              "postscript plot could not be generated \n");
+    } else {
+      printf("A postscript graph has been placed in OUT/testerG.eps \n");
+      //-------------------- and gv for visualizing /
+      if (!strcmp(buffer.sysname, "Linux")) {
+        ierr = system("gv OUT/testerG.eps");
+        if (ierr) {
+          fprintf(stderr, "Error using 'gv OUT/testerG.eps' \n");
+          printf(
+              "To view the postscript graph use a postcript viewer such as  "
+              "gv \n");
+        }
+      } else {
+        printf(
+            "To view the postscript graph use a postcript viewer such as  "
+            "gv \n");
+      }
     }
     free(xHist);
     free(yHist);
@@ -299,8 +322,7 @@ int main() {
     free(ydos);
     free(ev);
     fclose(fstats);
-    if (sqrtdiag)
-      free(sqrtdiag);
+    if (sqrtdiag) free(sqrtdiag);
   }
   fclose(fmat);
   EVSLFinish();
