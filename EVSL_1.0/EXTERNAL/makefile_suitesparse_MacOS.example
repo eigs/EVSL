@@ -5,7 +5,7 @@
 #SUITESPARSE_DIR = /home/yuanzhe/Desktop/SuiteSparse
 SUITESPARSE_DIR = /home/Yuanzhe/Documents/SuiteSparse-1
 
-LIB_METIS_5_1 = $(SUITESPARSE_DIR)/metis-5.1.0/build/Darwin-x86_64 /libmetis
+LIB_METIS_5_1 = $(SUITESPARSE_DIR)/metis-5.1.0/build/Darwin-x86_64/libmetis
 LIB_UMF = -L$(SUITESPARSE_DIR)/UMFPACK/Lib -lumfpack \
           -L$(SUITESPARSE_DIR)/SuiteSparse_config -lsuitesparseconfig \
           -L$(SUITESPARSE_DIR)/CHOLMOD/Lib -lcholmod \
