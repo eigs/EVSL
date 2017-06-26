@@ -31,7 +31,7 @@ int readDiagMat(const char *filename, cooMat *mat) {
     exit(1);
   }
   fscanf(ifp, "%i", &width);
-  // Setup cooMat
+  /* Setup cooMat */
   mat->ncols = width;
   mat->nrows = width;
   mat->nnz = width;
@@ -61,14 +61,14 @@ int main() {
   srand(time(NULL));
   cooMat cooMat;
   csrMat csrMat;
-  //-------------------- Read in a test matrix
+  /*-------------------- Read in a test matrix */
   readDiagMat("testmat.dat", &cooMat);
   cooMat_to_csrMat(0, &cooMat, &csrMat);
 
-  //-------------------- Define some constants to test with
-  const int msteps = 40;  // Steps to perform
-  const int npts = 200;   // Number of points
-  const int nvec = 100;   // Number of random vectors to generate
+  /*-------------------- Define some constants to test with */
+  const int msteps = 40; /* Steps to perform */
+  const int npts = 200;  /* Number of points */
+  const int nvec = 100;  /* Number of random vectors to generate */
   double intv[6] = {-2.448170338612495,
                     11.868902203167497,
                     0,
@@ -79,20 +79,20 @@ int main() {
   intv[2] = intv[0];
   intv[3] = intv[1];
   int i, ret;
-  double neig;  // Number eigenvalues
-  //-------------------- exact histogram and computed DOS
+  double neig; /* Number eigenvalues */
+  /*-------------------- exact histogram and computed DOS */
   double *xHist =
-      (double *)malloc(npts * sizeof(double));  // Exact DOS x values
+      (double *)malloc(npts * sizeof(double)); /*Exact DOS x values */
   double *yHist =
-      (double *)malloc(npts * sizeof(double));             // Exact DOS y values
-  double *xdos = (double *)malloc(npts * sizeof(double));  // Calculated DOS x
-  // vals
-  double *ydos = (double *)malloc(npts * sizeof(double));  // Calculated DOS y
+      (double *)malloc(npts * sizeof(double)); /* Exact DOS y values */
+  double *xdos =
+      (double *)malloc(npts * sizeof(double)); /* Calculated DOS x vals */
+  double *ydos = (double *)malloc(npts * sizeof(double)); /* Calculated DOS y */
 
   SetStdEig();
   EVSLStart();
   SetAMatrix(&csrMat);
-  /* Calculate approximate DOS */
+  /* Calculate computed DOS */
   ret = LanDos(nvec, msteps, npts, xdos, ydos, &neig, intv);
   fprintf(stdout, " LanDos ret %d \n", ret);
 
@@ -101,20 +101,20 @@ int main() {
   EVSLFinish();
   free_coo(&cooMat);
   fprintf(stdout, " exDOS ret %d \n", ret);
-  //--------------------Make OUT dir if it does'nt exist
+  /* --------------------Make OUT dir if it doesn't exist */
   struct stat st = {0};
   if (stat("OUT", &st) == -1) {
     mkdir("OUT", 0750);
   }
 
-  //-------------------- Write to  output files
+  /*-------------------- Write to  output files */
   FILE *ofp = fopen("OUT/LanDos_Approx_DOS.txt", "w");
   for (i = 0; i < npts; i++) {
     fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
   }
   fclose(ofp);
 
-  //-------------------- save exact DOS
+  /*-------------------- save exact DOS */
   ofp = fopen("OUT/LanDos_Exact_DOS.txt", "w");
   for (i = 0; i < npts; i++)
     fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
@@ -127,7 +127,7 @@ int main() {
     exit(EXIT_FAILURE);
   }
 
-  //-------------------- invoke gnuplot for plotting ...
+  /*-------------------- invoke gnuplot for plotting ... */
   ierr = system("gnuplot < tester.gnuplot");
   if (ierr) {
     fprintf(stderr,
@@ -135,14 +135,13 @@ int main() {
             "postscript plot could not be generated \n");
   } else {
     printf("A postscript graph has been placed in OUT/tester.eps \n");
-    //-------------------- and gv for visualizing /
+    /*-------------------- and gv for visualizing */
     if (!strcmp(buffer.sysname, "Linux")) {
       ierr = system("gv OUT/tester.eps");
       if (ierr) {
         fprintf(stderr, "Error using 'gv OUT/tester.eps' \n");
       }
 
-      //-------------------- done
     } else {
       printf(
           "To view the postscript graph use a postcript viewer such as  "

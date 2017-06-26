@@ -43,22 +43,22 @@ int readVec(const char *filename, int *npts, double **vec) {
 
 /*
  *-----------------------------------------------------------------------
- * Tests landosG.c , the Lanczos DOS approximate for the general eigenvalue
+ * Tests landosG.c , the Lanczos DOS computed for the general eigenvalue
  * problem. Includes graphical comparison of calculated vs exact DOS
  *-----------------------------------------------------------------------
  */
 int main() {
   srand(time(NULL));
-  const int msteps = 30;    // Number of steps
-  const int degB = 40;      // Degree to aproximate B with
-  const int npts = 200;     // Number of points
-  const int nvec = 30;      // Number of random vectors to use
-  const double tau = 1e-4;  // Tolerance in polynomial approximation
-  // ---------------- Intervals of interest
-  // intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
-  // intv[2] and intv[3] are the input interval of interest [a. b]
-  // intv[4] and intv[5] are the smallest and largest eigenvalues of B after
-  // diagonal scaling
+  const int msteps = 30;   /* Number of steps */
+  const int degB = 40;     /* Degree to aproximate B with */
+  const int npts = 200;    /* Number of points */
+  const int nvec = 30;     /* Number of random vectors to use */
+  const double tau = 1e-4; /* Tolerance in polynomial approximation */
+  /* ---------------- Intervals of interest
+     intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
+     intv[2] and intv[3] are the input interval of interest [a. b]
+     intv[4] and intv[5] are the smallest and largest eigenvalues of B after
+     diagonal scaling */
   double intv[6] = {-2.739543872224533e-13,
                     0.0325,
                     -2.739543872224533e-13,
@@ -68,8 +68,8 @@ int main() {
   int n = 0, i, nslices, ierr;
   double a, b;
 
-  cooMat Acoo, Bcoo;  // A, B
-  csrMat Acsr, Bcsr;  // A, B
+  cooMat Acoo, Bcoo; /* A, B */
+  csrMat Acsr, Bcsr; /* A, B */
   double *sqrtdiag = NULL;
 
   FILE *flog = stdout, *fmat = NULL;
@@ -104,13 +104,13 @@ int main() {
     /*----------------input matrix and interval information -*/
     fprintf(flog, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(flog, "MATRIX B: %s...\n", io.MatNam2);
-    a = io.a;  // left endpoint of input interval
-    b = io.b;  // right endpoint of input interval
+    a = io.a; /* left endpoint of input interval */
+    b = io.b; /* right endpoint of input interval */
     nslices = io.n_intv;
-    char path[1024];  // path to write the output files
-    strcpy(path, "OUT/MMPLanR_");
+    char path[1024]; /* path to write the output files */
+    strcpy(path, "OUT/LanDosG_");
     strcat(path, io.MatNam1);
-    fstats = fopen(path, "w");  // write all the output to the file io.MatNam
+    fstats = fopen(path, "w"); /* write all the output to the file io.MatNam */
     if (!fstats) {
       printf(" failed in opening output file in OUT/\n");
       fstats = stdout;
@@ -125,15 +125,15 @@ int main() {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
       if (ierr == 0) {
         fprintf(fstats, "matrix read successfully\n");
-        // nnz = Acoo.nnz;
+        /* nnz = Acoo.nnz; */
         n = Acoo.nrows;
         if (n <= 0) {
           fprintf(stderr, "non-positive number of rows");
           exit(7);
         }
 
-        // printf("size of A is %d\n", n);
-        // printf("nnz of  A is %d\n", nnz);
+        /* printf("size of A is %d\n", n);
+           printf("nnz of  A is %d\n", nnz); */
       } else {
         fprintf(flog, "read_coo error for A = %d\n", ierr);
         exit(6);
@@ -144,10 +144,6 @@ int main() {
         if (Bcoo.nrows != n) {
           return 1;
         }
-        // nnz = Bcoo.nnz;
-        // n = Bcoo.nrows;
-        // printf("size of B is %d\n", n);
-        // printf("nnz of  B is %d\n", nnz);
       } else {
         fprintf(flog, "read_coo error for B = %d\n", ierr);
         exit(6);
@@ -156,7 +152,6 @@ int main() {
       sqrtdiag = (double *)calloc(n, sizeof(double));
       extractDiag(&Bcoo, sqrtdiag);
       diagScaling(&Acoo, &Bcoo, sqrtdiag);
-      // save_vec(n, diag, "OUT/diag.txt");
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       if (ierr) {
@@ -173,6 +168,9 @@ int main() {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
+    /* Finish with input */
+
+    /* Start with actual driver */
     if (1) {
       /*----------------  compute the range of the spectrum of B */
       SetStdEig();
@@ -236,30 +234,26 @@ int main() {
       SetBMatrix(&Bcsr);
       SetGenEig();
     }
-    // printf("%lf, %lf, %lf, %lf \n", lmin, lmax, intv[0], intv[1]);
-    //-------------------- Read in the eigenvalues
+    /*-------------------- Read in the eigenvalues */
     double *ev;
     int numev;
     readVec("NM1AB_eigenvalues.dat", &numev, &ev);
 
-    //-------------------- Define some constants to test with
-    //-------------------- reset to whole interval
     int ret;
     double neig;
-    //-------------------- exact histogram and computed DOS
+    /*-------------------- exact histogram and computed DOS */
     double *xHist = (double *)calloc(npts, sizeof(double));
     double *yHist = (double *)calloc(npts, sizeof(double));
     double *xdos = (double *)calloc(npts, sizeof(double));
     double *ydos = (double *)calloc(npts, sizeof(double));
 
-    // ------------------- Calculate the approximate DOS
-
     double t0 = cheblan_timer();
+    /* ------------------- Calculate the computed DOS */
     ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv, tau);
     double t1 = cheblan_timer();
     fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1 - t0);
 
-    // -------------------- Calculate the exact DOS
+    /* -------------------- Calculate the exact DOS */
     ret = exDOS(ev, numev, npts, xHist, yHist, intv);
 
     free_coo(&Acoo);
@@ -268,19 +262,19 @@ int main() {
     free_csr(&Bcsr);
     fprintf(stdout, " exDOS ret %d \n", ret);
 
-    //--------------------Make OUT dir if it doesn't exist
+    /*--------------------Make OUT dir if it doesn't exist */
     struct stat st = {0};
     if (stat("OUT", &st) == -1) {
       mkdir("OUT", 0750);
     }
 
-    //-------------------- Write to  output files
+    /*-------------------- Write to  output files */
     FILE *ofp = fopen("OUT/LanDosG_Approx_DOS.txt", "w");
     for (i = 0; i < npts; i++)
       fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
     fclose(ofp);
 
-    //-------------------- save exact DOS
+    /*-------------------- save exact DOS */
     ofp = fopen("OUT/LanDosG_Exact_DOS.txt", "w");
     for (i = 0; i < npts; i++)
       fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
@@ -293,7 +287,7 @@ int main() {
       exit(EXIT_FAILURE);
     }
 
-    //-------------------- invoke gnuplot for plotting ...
+    /*-------------------- invoke gnuplot for plotting ... */
     ierr = system("gnuplot < testerG.gnuplot");
     if (ierr) {
       fprintf(stderr,
@@ -301,7 +295,7 @@ int main() {
               "postscript plot could not be generated \n");
     } else {
       printf("A postscript graph has been placed in OUT/testerG.eps \n");
-      //-------------------- and gv for visualizing /
+      /*-------------------- and gv for visualizing / */
       if (!strcmp(buffer.sysname, "Linux")) {
         ierr = system("gv OUT/testerG.eps");
         if (ierr) {
@@ -326,6 +320,5 @@ int main() {
   }
   fclose(fmat);
   EVSLFinish();
-  //-------------------- done
   return 0;
 }
