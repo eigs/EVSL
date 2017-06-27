@@ -1,0 +1,17 @@
+1
+../../MATRICES/A.mtx stiff1 MM1  0.1 0.3 5  
+../MATRICES/A.mtx stiff1 MM1  0.1 0.1387 1  
+../MATRICES/A.mtx stiff1 MM1  28.617629  1746.952 2
+
+First line  is the number  of matrices to  be tested [called  numat in
+drivers]. 2nd  line contains  the path  to the  matrix, followed  by a
+short name  for the  matrix, the  datatype of  the input  matrix, left
+endpoint  of  the  target  interval,  right  endpoint  of  the  target
+interval, and  the number of  slices in  which to divide  the interval
+This 2nd line is repeated for as many matrices as indicated by numat
+
+Datatype:
+
+MM0 = matrix market with indexing starting at 0 (as in C)
+
+MM1 = matrix market with indexing starting at 1 (as in Fortran)

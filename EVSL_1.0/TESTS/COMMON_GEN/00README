@@ -1,0 +1,13 @@
+
+----------------------------------------
+ COMMON FILES FOR TEST DRIVERS (GENERAL)
+----------------------------------------
+This folder contains files that are needed by multiple test drivers for
+the general eigenvalue problem.
+
+io contains io routines,
+
+mmio contains io routines for the matrix market format
+
+lapl contains routines for laplacian matrices
+

@@ -1,0 +1,39 @@
+This  directory  contains  drivers  for testing  a  few  routines  for
+computing eigenvalues  of general sparse (symmetric  real) matrix pair
+(A, B), where B has to  be positive definite.  
+
+The drivers are split into three groups, Lan_MM, KPM_MM, Lan_.
+Lan_MM reads the matrices from matrix market files (matfile), and uses
+  Lanczos to compute the density of states.
+
+KPM_MM reads the matrices from matrix market files (matfile), and uses
+  KPM to compute the density of states.
+
+Lap_ Uses laplician routines for matrices, and uses
+  KPM to compute the density of states.
+
+The second part of the name indicates the following:
+
+R:Rational filtering
+P:Polynomial filtering
+
+Lan: Lanczos
+
+R: Restarting
+N: Non-Restarting
+
+
+matfile : input file containing the path to the matrix to be read by Gen*.c
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+	  1                                                 %% number of matrices
+          MatrixFile_A  MatrixFile_B MatrixName_A MatrixName_B  MatrixFormat  a  b  nslices
+          MatrixFormat: coordinate format (matrix market format)
+            MM0: matrix format indexing starts at 0 
+            MM1: matrix format indexing starts at 1
+          a, b : interval [a, b] of interest
+          nslices: number of slices for spectrum slicing
+          Example:
+          /MATRICES/A.mtx /MATRICES/B.mtx stiff1 mass1 MM1  28.617629  1746.952 2
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+The computed eigenvalues are saved in OUT/ folder. 

@@ -1,0 +1,44 @@
+This directory  contains drivers for testing  a few routines
+for computing eigenvalues of general sparse (symmetric real)
+matrices. 
+
+Spcifically these are testing [R]ational filtering [Lan]czos
+[R]estarting spectrum slicing.
+
+LapRLanR.c :  
+    driver for testing spectrum slicing -- with 
+    Rational Filter Lanczos with thick Restart
+    make LapRLanR.ex --> executable LapRLanR.ex
+
+MMRLanR.c : 
+    driver for testing spectrum slicing -- with 
+    Rational Filter Lanczos with thick Restart
+    make MMRLanR.ex--> executable MMRLanR.ex
+
+
+matfile : input file containing the path to the matrix to be read by Gen*.c
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+	  1                                                 %% number of matrices
+          MatrixFile  MatrixName  MatrixFormat  a  b  nslices
+          MatrixFormat: coordinate format (matrix market format)
+            MM0: matrix format indexing starts at 0 
+            MM1: matrix format indexing starts at 1
+          a, b : interval [a, b] of interest
+          nslices: number of slices for spectrum slicing
+          Example:
+          MATRICES/test.COO TestMat MM1 0.1 0.4 2
+          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+The computed eigenvalues are saved in OUT/ folder. 
+ 
+Run:
+
+./MM*.ex 
+
+To compute all the eigenvalues of a Laplacian discretized on
+an N1*N2*N3  grid, located in  the interval [D1, D2]  with K
+slices:
+
+./Lap*.ex -nx N1 -ny N2 -nz N3 -a D1 -b D2 -nslices K
+

@@ -3,14 +3,14 @@
  DRIVERS FOR STANDARD PROBLEMS
 ----------------------------------------
 
-Lap*
+Lap
  
  Drivers for testing a few  methods on simple Laplacean matrices.  You
  will also find here a driver for a matrix-free test whereby no matrix
  is passed  but the  matrix vector-product is  done via  function (and
  set-up as a function pointer).
 
-MM*
+MM 
  
  Drivers for testing a few  routines to compute eigenvalues of general
  sparse (symmetric real) matrices. These matrices are read from a file
@@ -21,40 +21,26 @@ MM*
  DRIVERS FOR GENERALIZED PROBLEMS
 ---------------------------------------- 
 
-Gen/
+Gen_Lap
 
-  Test drivers  are for  testing  a  few routines for computing
-  eigenvalues of general sparse (symmetric real) matrix pair (A, B),
-  where B has to be positive definite. 
+  Test drivers  are for  testing  a  few methods  on  simple
+  (artificial) Laplacean matrix pair (A, B).  
   
-----------------------------------------
- DOS METHODS
-----------------------------------------
+Gen_MM_Landos
+ 
+ Drivers  for testing  a  few routines  for  computing eigenvalues  of
+ general sparse (symmetric real) matrix pair (A, B), where B has to be
+ positive definite.  These matrices are read from a file in the matrix
+ market format. Uses Lanczo's to compute DOS.
+ Note: The HB matrix format is not supported.
 
-Two methods for computing the density of states are used
-
-KPM
-  
-  Uses the Kernel Polynomial Method to compute the DOS
-
-Lan(dos)
-  
-  Uses Lanczo's to compute the DOS
-
-----------------------------------------
-Filtering
-----------------------------------------
-Two types of filtering are available
-
-Rational
-  
-  Uses rational filtering. Built in includes embedded CXsparse. For
-  better performance install SutieSparse and change the makefile.in
-  accordingly
-
-Polynomial
-  
-  Uses Chebyshev Polynomial filtering.
+Gen_MM_KPM
+ 
+ Drivers  for testing  a  few routines  for  computing eigenvalues  of
+ general sparse (symmetric real) matrix pair (A, B), where B has to be
+ positive definite.  These matrices are read from a file in the matrix
+ market format.  Uses kpm to compute DOS.
+ Note: The HB matrix format is not supported.
 
 
 ----------------------------------------
