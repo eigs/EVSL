@@ -18,6 +18,7 @@ LIB_EXT =  $(OMP) $(LIBLAPACK) $(LIB0)
 
 # Rules
 default: LanDos.ex LanDosG.ex
+all: LanDos.ex LanDosG.ex
 
 %.o : %.c
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<

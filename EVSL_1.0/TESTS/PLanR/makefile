@@ -33,7 +33,7 @@ default: LapPLanR.ex
 %.o : %.c
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
 MMPLanR_omp.o : MMPLanR_omp.c
-	$(CC) $(FLAGS) $(OMP) -I ../../INC  -o $@ -c $<
+	$(CC) $(FLAGS) $(INCLUDES) $(OMP) -I ../../INC  -o $@ -c $<
 
 # Exe
 ## polynomial
