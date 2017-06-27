@@ -48,6 +48,6 @@
 *.swo
 
 # Output files
+OUT
 *.out
-
 *.mod
