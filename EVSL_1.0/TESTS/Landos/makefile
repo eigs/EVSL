@@ -4,15 +4,16 @@ include ../../makefile.in
 
 FLAGS = -DUNIX -O3 -g -Wall
 
-INCLUDES = -I../../INC 
+INCLUDES = -I../../INC  -I ../COMMON_GEN
+
+EXTRA = ../COMMON_GEN/io.o ../COMMON_GEN/mmio.o ../COMMON_GEN/lapl.o
 
 # Object files
-OBJS_LD = LanDos.o exDOS.o 
-OBJS_LDG = LanDosG.o exDOS.o io.o mmio.o 
+OBJS_LD = LanDos.o exDOS.o  $(EXTRA)
+OBJS_LDG = LanDosG.o exDOS.o  $(EXTRA)
 
 LIB = -L../../ -levsl
 
-## not needed for pol. filtering. 
 
 LIB_EXT =  $(OMP) $(LIBLAPACK) $(LIB0)
 
