@@ -7,4 +7,5 @@ set xlabel '{/Symbol l}'
 set ylabel 'Spectral Density (DOS)'
 set parametric
 
-plot 'OUT/LanDosG_Approx_DOS.txt' lt rgb "red" with line title 'Lanczos DOS ~{/Symbol  f}{.4\~}({/Symbol l})'
+plot 'OUT/LanDosG_Approx_DOS.txt' lt rgb "red" with line title 'Lanczos DOS ~{/Symbol  f}{.4\~}({/Symbol l})', \
+     'OUT/LanDosG_Exact_DOS.txt' with line title 'Exact Histogram {/Symbol f}({/Symbol l})', \

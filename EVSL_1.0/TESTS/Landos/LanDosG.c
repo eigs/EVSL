@@ -16,6 +16,8 @@
 int exDOS(double *vals, int n, int npts, double *x, double *y, double *intv);
 int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
 int get_matrix_info(FILE *fmat, io_t *pio);
+int findarg(const char *argname, ARG_TYPE type, void *val, int argc,
+            char **argv);
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -43,9 +45,11 @@ int readVec(const char *filename, int *npts, double **vec) {
  *-----------------------------------------------------------------------
  * Tests landosG.c , the Lanczos DOS computed for the general eigenvalue
  * problem. Includes graphical comparison of calculated vs exact DOS
+ *
+ * use -graph_exact_dos 1 to enable graphing the exact DOS
  *-----------------------------------------------------------------------
  */
-int main() {
+int main(int argc, char *argv[]) {
   srand(time(NULL));
   const int msteps = 30;   /* Number of steps */
   const int degB = 40;     /* Degree to aproximate B with */
@@ -75,6 +79,9 @@ int main() {
   io_t io;
   int numat, mat;
   char line[MAX_LINE];
+  int graph_exact_dos_tmp = 0;
+  findarg("graph_exact_dos", INT, &graph_exact_dos_tmp, argc, argv);
+  const int graph_exact_dos = graph_exact_dos_tmp;
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
@@ -226,9 +233,13 @@ int main() {
 
     int ret;
     double neig;
+    double *xHist;
+    double *yHist;
     /*-------------------- exact histogram and computed DOS */
-    double *xHist = (double *)malloc(npts * sizeof(double));
-    double *yHist = (double *)malloc(npts * sizeof(double));
+    if (graph_exact_dos) {
+      xHist = (double *)malloc(npts * sizeof(double));
+      yHist = (double *)malloc(npts * sizeof(double));
+    }
     double *xdos = (double *)malloc(npts * sizeof(double));
     double *ydos = (double *)malloc(npts * sizeof(double));
 
@@ -239,13 +250,15 @@ int main() {
     fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1 - t0);
 
     /* -------------------- Calculate the exact DOS */
-    ret = exDOS(ev, numev, npts, xHist, yHist, intv);
+    if (graph_exact_dos) {
+      ret = exDOS(ev, numev, npts, xHist, yHist, intv);
+      fprintf(stdout, " exDOS ret %d \n", ret);
+    }
 
     free_coo(&Acoo);
     free_coo(&Bcoo);
     free_csr(&Acsr);
     free_csr(&Bcsr);
-    fprintf(stdout, " exDOS ret %d \n", ret);
 
     /*--------------------Make OUT dir if it doesn't exist */
     struct stat st = {0};
@@ -259,11 +272,14 @@ int main() {
       fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
     fclose(ofp);
 
-    /*-------------------- save exact DOS */
-    ofp = fopen("OUT/LanDosG_Exact_DOS.txt", "w");
-    for (i = 0; i < npts; i++)
-      fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
-    fclose(ofp);
+    if (graph_exact_dos) {
+      /*-------------------- save exact DOS */
+      ofp = fopen("OUT/LanDosG_Exact_DOS.txt", "w");
+      for (i = 0; i < npts; i++)
+        fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
+      fclose(ofp);
+    }
+
     printf("The data output is located in  OUT/ \n");
     struct utsname buffer;
     errno = 0;
@@ -273,7 +289,12 @@ int main() {
     }
 
     /*-------------------- invoke gnuplot for plotting ... */
-    ierr = system("gnuplot < testerG.gnuplot");
+    if (graph_exact_dos) {
+      ierr = system("gnuplot < testerG_ex.gnuplot");
+    } else {
+      ierr = system("gnuplot < testerG.gnuplot");
+    }
+
     if (ierr) {
       fprintf(stderr,
               "Error using 'gnuplot < testerG.gnuplot', \n"
@@ -295,8 +316,10 @@ int main() {
             "gv \n");
       }
     }
-    free(xHist);
-    free(yHist);
+    if (graph_exact_dos) {
+      free(xHist);
+      free(yHist);
+    }
     free(xdos);
     free(ydos);
     free(ev);
