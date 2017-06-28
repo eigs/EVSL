@@ -69,45 +69,61 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
  * libevsl.a       : library
 
- * TESTS/Fortran   : Fortran test drivers
+ * TESTS/          : Test drivers
 
- * TESTS/Gen_Lap   : test drivers for generalized eigenvalue problems with Laplacians
-   - LapPLanN.c    : Polynomial filtering Lanczos
-   - LapPLanR.c    : Polynomial filtering T-R Lanczos
-   - LapRLanN.c    : Rational filtering Lanczos
-   - LapRLanR.c    : Rational filtering T-R Lanczos
-   - lapl.c        : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
-   - io.c          : parse command-line input parameters
+   - Fortran/   : Fortran test drivers
+
+   - PLanR         : Polynomial Filtered Thick Restart Lanczos test drivers
+    - LapPLanR.c         : Polynomial filtering T-R Lanczos (Lapliacian)
+    - MMPLanR.c     : Polynomial filtering T-R Lanczos (Matrix Market)
+    - MMPLanR_omp.c : Polynomial filtering T-R Lanczos (parallelized with OMP for slices) (Matrix Market)
+
+   - RLanR         : Rational Filtered Thick Restart Lanczos test drivers
+    - LapRLanR.c         : Rational filtering T-R Lanczos (Laplacian)
+    - MMRLanR.c     : Rational filtering T-R Lanczos (Matrix Market)
+
+   - PLanN         : Polynomial Filtered No-Restart Lanczos test drivers
+    - MMPLanN.c     : Polynomial filtering non-restart Lanczos (Matrix Market)
+    - LapPLanN.c         : Polynomial filtering non-restart Lanczos (Laplacian)
+    - LapPLanN_MatFree.c : "matrix-free" version: not forming matrix but passing mat-vec function (Laplacian)
+
+   - RLanN         : Rational Filtered No-Restart Lanczos test drivers
+    - LapRLanN.c         : Rational filtering non-restart Lanczos (Laplacian)
+    - MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market)
+
+   - GEN           : Test drivers for the general eigenvalue problem
+    - Lap_PLanN.c    : Polynomial filtering Lanczos (Laplacian)
+    - Lap_PLanR.c    : Polynomial filtering T-R Lanczos (Laplacian)
+    - Lap_RLanN.c    : Rational filtering Lanczos (Laplacian)
+    - Lap_RLanR.c    : Rational filtering T-R Lanczos (Laplacian)
+    - KPM_MMPLanN.c     : Polynomial filtering non-restart Lanczos (Matrix Market) (KPM)
+    - KPM_MMPLanR.c     : Polynomial filtering T-R Lanczos (Matrix Market) (KPM)
+    - KPM_MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market) (KPM)
+    - KPM_MMRLanR.c     : Rational filtering T-R Lanczos (Matrix Market) (KPM)
+    - Lan_MMPLanN.c     : Polynomial filtering non-restart Lanczos (Matrix Market) (Lanczos DOS)
+    - Lan_MMPLanR.c     : Polynomial filtering T-R Lanczos (Matrix Market) (Lanczos DOS)
+    - Lan_MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market) (Lanczos DOS)
+    - Lan_MMRLanR.c     : Rational filtering T-R Lanczos (Matrix Market) (Lanczos DOS)
+
+   * PSI           : Test drivers for polynomial filter subspace iteration
+    - LapPSI.c     : Polynomial filtering subspace iterations (Laplacian)
+    - MMPSI.c      : Polynomial filtering subspace iterations (Matrix Market)
 
 
- * TESTS/Gen_MM_KPM: test drivers for generalized eigenvalue problems with general matrices read from files.  Spectrum slicer uses KPM.
-   - MMPLanN.c     : Polynomial filtering non-restart Lanczos
-   - MMPLanR.c     : Polynomial filtering T-R Lanczos
-   - MMRLanN.c     : Rational filtering non-restart Lanczos
-   - MMRLanR.c     : Rational filtering T-R Lanczos
-   - mmio.c        : IO routines for the matrix market format
 
- * TESTS/Gen_MM_LAN : same as above but spectrum slicing based on the  Lanczos method
+   * COMMON        : Routines common to the test drivers
+     - io.c        : parse command-line input parameters
+     - lapl.c      : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
+     - mmio.c        : IO routines for the matrix market format
 
- * TEST/Lap             : test drivers for standard eigenvalue problems with Laplacian matrices
-   - LapPLanN.c         : Polynomial filtering non-restart Lanczos
-   - LapPLanN_MatFree.c : "matrix-free" version: not forming matrix but passing mat-vec function
-   - LapPLanR.c         : Polynomial filtering T-R Lanczos
-   - LapPSI.c           : Polynomial filtering subspace iterations
-   - LapRLanN.c         : Rational filtering non-restart Lanczos
-   - LapRLanR.c         : Rational filtering T-R Lanczos
+   * COMMON_GEN    : Routines common to the test drivers for the general eigenvalue problem
+     - io.c        : parse command-line input parameters
+     - lapl.c      : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
+     - mmio.c        : IO routines for the matrix market format
 
  * TESTS/Landos    : test drivers for the lanDOS related functions.
    - LanDos.c      : Standard eigenvalue problem DOS using Lancco's
    - LanDosG.c     : General eigenvalue problem DOS using Lancco's
-
- * TESTS/MM        : general matrices in sparse format read from files
-   - MMPLanN.c     : Polynomial filtering non-restart Lanczos
-   - MMPLanR.c     : Polynomial filtering T-R Lanczos
-   - MMPLanR_omp.c : Polynomial filtering T-R Lanczos (parallelized with OMP for slices)
-   - MMPSI.c       : Polynomial filtering subspace iterations
-   - MMRLanN.c     : Rational filtering non-restart Lanczos
-   - MMRLanR.c     : Rational filtering T-R Lanczos
 
  * EXTERNAL             : direct solver (SuiteSparse) interface for generalized eigenvalue problems
    - evsl_suitesparse.c : suitesparse UMFPACK and CHOLMOD interface
