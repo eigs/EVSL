@@ -71,27 +71,27 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
  * TESTS/          : Test drivers
 
-   - Fortran/   : Fortran test drivers
+   * Fortran/   : Fortran test drivers
 
-   - PLanR         : Polynomial Filtered Thick Restart Lanczos test drivers
+   * PLanR         : Polynomial Filtered Thick Restart Lanczos test drivers
     - LapPLanR.c         : Polynomial filtering T-R Lanczos (Lapliacian)
     - MMPLanR.c     : Polynomial filtering T-R Lanczos (Matrix Market)
     - MMPLanR_omp.c : Polynomial filtering T-R Lanczos (parallelized with OMP for slices) (Matrix Market)
 
-   - RLanR         : Rational Filtered Thick Restart Lanczos test drivers
+   * RLanR         : Rational Filtered Thick Restart Lanczos test drivers
     - LapRLanR.c         : Rational filtering T-R Lanczos (Laplacian)
     - MMRLanR.c     : Rational filtering T-R Lanczos (Matrix Market)
 
-   - PLanN         : Polynomial Filtered No-Restart Lanczos test drivers
+   * PLanN         : Polynomial Filtered No-Restart Lanczos test drivers
     - MMPLanN.c     : Polynomial filtering non-restart Lanczos (Matrix Market)
     - LapPLanN.c         : Polynomial filtering non-restart Lanczos (Laplacian)
     - LapPLanN_MatFree.c : "matrix-free" version: not forming matrix but passing mat-vec function (Laplacian)
 
-   - RLanN         : Rational Filtered No-Restart Lanczos test drivers
+   * RLanN         : Rational Filtered No-Restart Lanczos test drivers
     - LapRLanN.c         : Rational filtering non-restart Lanczos (Laplacian)
     - MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market)
 
-   - GEN           : Test drivers for the general eigenvalue problem
+   * GEN           : Test drivers for the general eigenvalue problem
     - Lap_PLanN.c    : Polynomial filtering Lanczos (Laplacian)
     - Lap_PLanR.c    : Polynomial filtering T-R Lanczos (Laplacian)
     - Lap_RLanN.c    : Rational filtering Lanczos (Laplacian)
