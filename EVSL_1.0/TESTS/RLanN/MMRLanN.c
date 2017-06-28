@@ -58,6 +58,11 @@ int main () {
   double *mu = malloc((Mdeg+1)*sizeof(double)); // coeff. for kpmdos
   int *counts; // #ev computed in each slice
   double *sli; // endpoints of partitioned slices
+#if CXSPARSE == 1
+  printf("-----------------------------------------\n");
+  printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times \n");
+  printf("-----------------------------------------\n");
+#endif
   /*------------------ file "matfile" contains paths to matrices */
   if( NULL == ( fmat = fopen( "matfile", "r" ) ) ) {
     fprintf( flog, "Can't open matfile...\n" );

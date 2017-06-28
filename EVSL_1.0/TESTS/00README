@@ -49,7 +49,7 @@ Two types of filtering are available
 Rational
   
   Uses rational filtering. Built in includes embedded CXsparse. For
-  better performance install SutieSparse and change the makefile.in
+  better performance install SuiteSpasre and change the makefile.in
   accordingly
 
 Polynomial

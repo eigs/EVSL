@@ -12,8 +12,6 @@
 #include "evsl.h"
 #include "io.h"
 
-#define BsolPol 1
-
 /*-------------------- protos */
 int exDOS(double *vals, int n, int npts, double *x, double *y, double *intv);
 int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
@@ -191,7 +189,6 @@ int main() {
       SetAMatrix(&Acsr);
       /*-------------------- set the right-hand side matrix B */
       SetBMatrix(&Bcsr);
-#if BsolPol
       /*-------------------- Use polynomial to solve B */
       BSolDataPol Bsol;
       Bsol.intv[0] = lmin;
@@ -200,14 +197,6 @@ int main() {
       (Bsol.pol_sol).max_deg = degB;
       SetupBSolPol(&Bcsr, &Bsol);
       SetBSol(BSolPol, (void *)&Bsol);
-#else
-      /*-------------------- Use Choleksy factorization to solve B */
-      BSolDataCXSparse Bsol;
-      /*-------------------- use CXSparse as the solver for B */
-      SetupBSolCXSparse(&Bcsr, &Bsol);
-      /*-------------------- set the solver for B */
-      SetBSol(BSolCXSparse, (void *)&Bsol);
-#endif
       SetGenEig();
       rand_double(n, vinit);
       ierr = LanTrbounds(40, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
@@ -216,11 +205,7 @@ int main() {
         exit(10);
       }
       free(vinit);
-#if BsolPol
       FreeBSolPolData(&Bsol);
-#else
-      FreeBSolCXSparseData(&Bsol);
-#endif
       /*----------------- get the bounds for (A, B) ---------*/
       intv[0] = lmin;
       intv[1] = lmax;

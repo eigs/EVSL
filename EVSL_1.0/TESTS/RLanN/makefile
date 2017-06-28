@@ -13,6 +13,7 @@ ifeq ($(DIRECTSOL), SUITESPARSE)
 else
   OBJ_DIRSOL = evsl_cxsparse.o
   LIB_DIRSOL = -L../../EXTERNAL/CXSparse/Lib -lcxsparse
+  FLAGS += -DCXSPARSE=1
 endif
 
 EXTRA =  ../COMMON/io.o ../COMMON/mmio.o ../COMMON/lapl.o

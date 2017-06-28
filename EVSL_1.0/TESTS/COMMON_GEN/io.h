@@ -11,7 +11,6 @@
 
 #include "evsl.h"
 
-#ifdef GEN_MM
 typedef struct _io_t {
     FILE *fout;                 /* output file handle              */
     char outfile[MAX_LINE];     /* output filename                 */
@@ -28,22 +27,6 @@ typedef struct _io_t {
     double a;                 /*  [a, b]  interval of interest  */
     double b;
 } io_t;
-#else
-
-typedef struct _io_t {
-    FILE *fout;                 /* output file handle              */
-    char outfile[MAX_LINE];     /* output filename                 */
-    char Fname[MAX_LINE];       /* full matrix path name           */
-    char MatNam[MaxNamLen];     /* short name                      */
-    char type[4];               /* type for HB matrices            */
-    int Fmt;                    /* matrix format type              */
-    int ndim;                   /* matrix size                     */
-    int nnz;                    /* number of nonzero               */
-    int n_intv;                 /* number of slices                */
-    double a;                   /* [a, b]  interval of interest    */
-    double b;
-} io_t;
-#endif
 
 int get_matrix_info( FILE *fmat, io_t *pio );
 

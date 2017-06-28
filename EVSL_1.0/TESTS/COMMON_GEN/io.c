@@ -18,7 +18,6 @@ char *mybasename (const char *name) {
   return (char *) base;
 }
 
-#ifdef GEN_MM
 /*-----------------------------------------------*/
 int get_matrix_info( FILE *fmat, io_t *pio ){
 //  char path[MAX_LINE],  MatNam[MaxNamLen], Fmt[4], ca[2], cb[2], cn_intv[2];  eugene comment
@@ -65,49 +64,6 @@ int get_matrix_info( FILE *fmat, io_t *pio ){
   /* debug  printf(" Echo: %s %s %s \n", pio->Fname, pio->MatNam, Fmt); */
   return(0);
 }
-#else
-
-/*-----------------------------------------------*/
-int get_matrix_info( FILE *fmat, io_t *pio ){
-//  char path[MAX_LINE],  MatNam[MaxNamLen], Fmt[4], ca[2], cb[2], cn_intv[2];  
-  char path[MAX_LINE],  MatNam[MaxNamLen], Fmt[4], ca[100], cb[100], cn_intv[100];
-  int count, n_intv;
-  double a, b;
-  /*-------------------- READ LINE */
-  if (6 != fscanf(fmat,"%s %s %s %s %s %s\n",path,MatNam,Fmt, ca, cb, cn_intv)) {
-    printf("warning: fscanf may not be successfully done\n");
-  }
-  /*-------------------- file pathname */
-  count = strlen(path);
-  memset(pio->Fname,0,MAX_LINE*sizeof(char));
-  memcpy(pio->Fname,path,count*sizeof(char));
-  /*-------------------- file short name */
-  count = strlen(MatNam);
-  memset(pio->MatNam,0,MaxNamLen*sizeof(char));
-  memcpy(pio->MatNam,MatNam,count*sizeof(char));
-  /*-------------------- matrix format */
-  if (strcmp(Fmt,"HB")==0) 
-    pio->Fmt = 1;
-  else 
-    if (strcmp(Fmt,"MM0")==0) 
-      pio->Fmt = MM0;
-    else 
-      if (strcmp(Fmt,"MM1")==0) 
-        pio->Fmt = MM1;
-      else 
-	/*-------------------- UNKNOWN_FORMAT */
-	return(ERR_IO+2);
-  /*-------------------- interval information */
-  a = atof(ca);
-  b = atof(cb);
-  pio->a = a;
-  pio->b = b;
-  n_intv = atoi(cn_intv);
-  pio->n_intv = n_intv;
-  /* debug  printf(" Echo: %s %s %s \n", pio->Fname, pio->MatNam, Fmt); */
-  return(0);
-}
-#endif
 
 /*---------------------------------------------*
  *             READ COO Matrix Market          *

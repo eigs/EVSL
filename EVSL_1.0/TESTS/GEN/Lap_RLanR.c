@@ -57,6 +57,11 @@ int main(int argc, char *argv[]) {
   csrMat Acsr, Bcsr;
   /*-------------------- Bsol */
   void *Bsol;
+#if CXSPARSE == 1
+  printf("-----------------------------------------\n");
+  printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times \n");
+  printf("-----------------------------------------\n");
+#endif
   /*-------------------- default values */
   nx   = 10;
   ny   = 10;

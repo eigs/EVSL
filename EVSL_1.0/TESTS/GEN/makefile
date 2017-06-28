@@ -2,7 +2,7 @@
 
 include ../../makefile.in
 
-FLAGS = -DUNIX -O3 -g -Wall -DGEN_MM
+FLAGS = -DUNIX -O3 -g -Wall
 
 INCLUDES = -I../../INC -I../../EXTERNAL   -I ../COMMON_GEN
 
@@ -13,6 +13,7 @@ ifeq ($(DIRECTSOL), SUITESPARSE)
 else
   OBJ_DIRSOL = evsl_cxsparse.o
   LIB_DIRSOL = -L../../EXTERNAL/CXSparse/Lib -lcxsparse
+  FLAGS += -DCXSPARSE=1
 endif
 
 EXTRA =  ../COMMON_GEN/io.o ../COMMON_GEN/mmio.o ../COMMON_GEN/lapl.o

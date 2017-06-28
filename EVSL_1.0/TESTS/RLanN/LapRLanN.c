@@ -55,6 +55,11 @@ int main(int argc, char *argv[]) {
   /*-------------------- matrix A: coo format and csr format */
   cooMat Acoo;
   csrMat Acsr;
+#if CXSPARSE == 1
+  printf("-----------------------------------------\n");
+  printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times \n");
+  printf("-----------------------------------------\n");
+#endif
   /*-------------------- default values */
   nx   = 41;
   ny   = 53;

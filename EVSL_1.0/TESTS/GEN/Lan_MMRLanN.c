@@ -51,6 +51,11 @@ int main() {
   char line[MAX_LINE];
   /*-------------------- Bsol for B and B^{1/2} */
   BSolDataPol Bsol, Bsqrtsol;
+#if CXSPARSE == 1
+  printf("-----------------------------------------\n");
+  printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times \n");
+  printf("-----------------------------------------\n");
+#endif
   /*-------------------- stopping tol */
   tol = 1e-6;
   /*-------------------- start EVSL */
