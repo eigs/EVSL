@@ -26,6 +26,7 @@ endif
 	( cd TESTS/RLanN ; make cleanall)
 	( cd TESTS/PLanN ; make cleanall)
 	( cd TESTS/PSI ; make cleanall)
+	( cd TESTS/GEN ; make cleanall)
 
 docs:
 	 ( doxygen Documentation/Doxyfile 2> Documentation/Doxygen-Errors.txt )
