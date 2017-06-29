@@ -115,6 +115,7 @@ int main(int argc, char *argv[]) {
     char path[1024]; /* path to write the output files */
     strcpy(path, "OUT/LanDosG_");
     strcat(path, io.MatNam1);
+    strcat(path, ".log");
     fstats = fopen(path, "w"); /* write all the output to the file io.MatNam */
     if (!fstats) {
       printf(" failed in opening output file in OUT/\n");
@@ -267,14 +268,20 @@ int main(int argc, char *argv[]) {
     }
 
     /*-------------------- Write to  output files */
-    FILE *ofp = fopen("OUT/LanDosG_Approx_DOS.txt", "w");
+    char computed_path[1024];
+    strcpy(computed_path, "OUT/LanDosG_Approx_DOS_");
+    strcat(computed_path, io.MatNam1);
+    FILE *ofp = fopen(computed_path, "w");
     for (i = 0; i < npts; i++)
       fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
     fclose(ofp);
+    printf("Wrote to:%s \n", computed_path);
 
     if (graph_exact_dos) {
       /*-------------------- save exact DOS */
-      ofp = fopen("OUT/LanDosG_Exact_DOS.txt", "w");
+      strcpy(path, "OUT/LanDosG_Exact_DOS_");
+      strcat(path, io.MatNam1);
+      ofp = fopen(path, "w");
       for (i = 0; i < npts; i++)
         fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
       fclose(ofp);
@@ -289,10 +296,19 @@ int main(int argc, char *argv[]) {
     }
 
     /*-------------------- invoke gnuplot for plotting ... */
+    char command[1024];
+    strcpy(command, "gnuplot ");
+    strcat(command, " -e \"filename='");
+    strcat(command, computed_path);
+
     if (graph_exact_dos) {
-      ierr = system("gnuplot < testerG_ex.gnuplot");
+      strcat(command, "';exact_dos='");
+      strcat(command, path);
+      strcat(command, "'\" testerG_ex.gnuplot");
+      ierr = system(command);
     } else {
-      ierr = system("gnuplot < testerG.gnuplot");
+      strcat(command, "'\" testerG.gnuplot");
+      ierr = system(command);
     }
 
     if (ierr) {
@@ -300,12 +316,16 @@ int main(int argc, char *argv[]) {
               "Error using 'gnuplot < testerG.gnuplot', \n"
               "postscript plot could not be generated \n");
     } else {
-      printf("A postscript graph has been placed in OUT/testerG.eps \n");
+      printf("A postscript graph has been placed in %s%s\n", computed_path,
+             ".eps");
       /*-------------------- and gv for visualizing / */
       if (!strcmp(buffer.sysname, "Linux")) {
-        ierr = system("gv OUT/testerG.eps");
+        strcpy(command, "gv ");
+        strcat(command, computed_path);
+        strcat(command, ".eps &");
+        ierr = system(command);
         if (ierr) {
-          fprintf(stderr, "Error using 'gv OUT/testerG.eps' \n");
+          fprintf(stderr, "Error using 'gv %s' \n", command);
           printf(
               "To view the postscript graph use a postcript viewer such as  "
               "gv \n");
