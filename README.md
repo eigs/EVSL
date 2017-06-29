@@ -126,8 +126,11 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
       * LanDos.c      : Standard eigenvalue problem DOS using Lancco's
       * LanDosG.c     : General eigenvalue problem DOS using Lancco's
 
- * EXTERNAL             : direct solver (SuiteSparse) interface for generalized eigenvalue problems
+ * EXTERNAL             : direct solver  interface for generalized eigenvalue problems
    - evsl_suitesparse.c : suitesparse UMFPACK and CHOLMOD interface
+   - evsl_cxsparse.c    : cxsparse interface
+   - evsl_direct.h      : Direct solver interface
+
 
  * FORTRAN         : Fortran interface
    - evsl_f90.c    : Fortran interface
@@ -146,20 +149,33 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
     make clean; make
 
 **Test programs**:
-      In the directories under TESTS/, you will find makefiles to 
-      build sample drivers that test a few different situations.
-      For building the drivers for rational filtering solvers and all drivers for 
-      generalized eigenvalue problems in TESTS/Gen_* directories, you will also need to
-      modify EXTERNAL/makefile.in, where SUITESPARSE path needs to be provided.
+   In the directories under TESTS/, you will find a number of
+   directories which contain makefiles to 
+   build sample drivers that test a few different situations.
+
+**CXSparse**
+   SuiteSparse is the default direct linear solver of EVSL, for the
+   rational filtering and generalized eigenvalue problems.
+   CXSparse is included to allow brief tests. However, know that it
+   is unstable (can result in incorrect results), and is
+   significantly slower than other direct solvers such as SuiteSparse
+   (see below).
+>  NOTE: CXSparse IS distributed with EVSL, and is Copyrighted by
+>  Timothy Davis. It should be noted that much better performance can be
+>  achieved by other direct solvers. 
+>  Refer to CXSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
 
 **SuiteSparse**:
-      SuiteSparse is the default direct linear solver of EVSL, for the
-      rational filtering and generalized eigenvalue problems.
-      EVSL uses SuiteSparse to solve linear systems with (A-SIGMA I) or (A-SIGMA B),
-      and  CHOLMOD for  solving linear systems with B.
+   As an replacement for CXSparse, SuiteSparse bindings are provided.
+   Once SuiteSparse is installed, simply swich the DIRECTSOL variable
+   in the makefile.in, and add the path to
+   EXTERNAL/makefile_suitesparse.in.
 
-      Users can use other solvers by providing the same interface as done for SuiteSparse.
-      Follow the examples implemented in EXTERNAL/evsl_suitesparse.c
+   EVSL uses SuiteSparse to solve linear systems with (A-SIGMA I) or (A-SIGMA B),
+   and  CHOLMOD for  solving linear systems with B.
+
+   Users can use other solvers by providing the same interface as done for SuiteSparse.
+   Follow the examples implemented in EXTERNAL/evsl_suitesparse.c
  
 >  NOTE:  SuiteSparse is NOT distributed with EVSL, and is Copyrighted by Timothy Davis.  
 >  Refer to SuiteSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
