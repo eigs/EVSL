@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
       "Note: You are using CXSparse for the direct solver. \n We recommend a "
       "more performance based direct solver for anything more than basic "
       "tests. \n SuiteSparse is supported with a makefile change. \n Using "
-      "SuiteSparse can result in magnitudes faster times \n");
+      "SuiteSparse can result in magnitudes faster times. \n ==Additionaly, CXSparse has been known to result in incorrect calculations.== \n\n ");
   printf("-----------------------------------------\n");
 #endif
   /*-------------------- default values */

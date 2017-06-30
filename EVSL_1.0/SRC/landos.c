@@ -144,28 +144,25 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
         bet[j] = 0;
       }
     }
-    //-------------------- end Lanczos loop for this vector
-    //-------------------- diagonalize tridiagonal matrix
+    /*-------------------- end Lanczos loop for this vector 
+      -------------------- diagonalize tridiagonal matrix */
     SymmTridEig(ritzVal, S, msteps, alp, bet);
-    // S = -eigvec
-    // ritzVal = diags of D
-    //---------------------------------------
-    // End of bulk of lanbound.c code
-    //---------------------------------------
+    /* S = -eigvec
+     ritzVal = diags of D */
 
-    // theta = ritzVal = sorted eigenvalues IN ASCENDING ORDER
+    /* theta = ritzVal = sorted eigenvalues IN ASCENDING ORDER */
     for (i = 0; i < msteps; i++) {
-      //-------------------- weights for Lanczos quadrature
-      // Gamma2(i) = elementwise square of top entry of i-th eginvector
+      /*-------------------- weights for Lanczos quadrature
+       Gamma2(i) = elementwise square of top entry of i-th eginvector*/
       gamma2[i] = S[i * msteps] * S[i * msteps];
     }
-    //-------------------- dos curve parameters
-    // Generate DOS from small gaussians centered at the ritz values
+    /*-------------------- dos curve parameters
+     Generate DOS from small gaussians centered at the ritz values */
     for (i = 0; i < msteps; i++) {
-      // As msteps is width of ritzVal -> we get msteps eigenvectors
+      /* As msteps is width of ritzVal -> we get msteps eigenvectors */
       const double t = ritzVal[i];
       int numPlaced = 0;
-      //-------------------- Place elements close to t in ind
+      /*-------------------- Place elements close to t in ind */
       for (j = 0; j < npts; j++) {
         if (abs(xdos[j] - t) < width) ind[numPlaced++] = j;
       }
@@ -174,11 +171,11 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
         y[ind[j]] += gamma2[i] *
                      exp(-((xdos[ind[j]] - t) * (xdos[ind[j]] - t)) / sigma2);
     }
-    //-------------------- end vector loop
+    /*-------------------- end vector loop */
   }
 
   double scaling = 1.0 / (nvec * sqrt(sigma2 * PI));
-  // y = ydos * scaling
+  /* y = ydos * scaling */
   DSCAL(&npts, &scaling, y, &one);
   DCOPY(&npts, y, &one, ydos, &one);
   simpson(xdos, y, npts);

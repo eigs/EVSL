@@ -20,11 +20,11 @@ int findarg(const char *argname, ARG_TYPE type, void *val, int argc,
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-/*
+/**
  * Reads in a diag matrix.
  *
- * @parm[in,out] mat UNallocated cooMat to read into.
- * @parm[in] filename file to read from, where the first line contains number
+ * @param[in,out] mat UNallocated cooMat to read into.
+ * @param[in] filename file to read from, where the first line contains number
  * of elements/width/height of matrix, and the rest of the lines contain the
  * values. */
 int readDiagMat(const char *filename, cooMat *mat) {
@@ -55,7 +55,7 @@ int readDiagMat(const char *filename, cooMat *mat) {
   return 0;
 }
 
-/*
+/**
  *-----------------------------------------------------------------------
  * Tests landos.c -- Includes graphical comparison of exact DOS and calculated.
  *

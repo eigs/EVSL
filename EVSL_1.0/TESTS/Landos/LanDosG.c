@@ -21,7 +21,7 @@ int findarg(const char *argname, ARG_TYPE type, void *val, int argc,
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
-/*
+/**
  * Reads in a vector as an nx1 matrix.
  *
  * @parm[out] npts pointer to an int to store # of points
@@ -41,7 +41,7 @@ int readVec(const char *filename, int *npts, double **vec) {
   return 0;
 }
 
-/*
+/**
  *-----------------------------------------------------------------------
  * Tests landosG.c , the Lanczos DOS computed for the general eigenvalue
  * problem. Includes graphical comparison of calculated vs exact DOS

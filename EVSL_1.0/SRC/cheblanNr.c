@@ -19,15 +19,15 @@
 /**-----------------------------------------------------------------------
  *  @brief Chebyshev polynomial filtering Lanczos process [NON-restarted version]
  *
- *  @param intv     An array of length 4 \n
+ *  @param[in] intv     An array of length 4 \n
  *          [intv[0], intv[1]] is the interval of desired eigenvalues \n
  *          [intv[2], intv[3]] is the global interval of all eigenvalues \n
  *          Must contain all eigenvalues of A
  *  
- *  @param maxit    Max number of outer Lanczos steps  allowed --[max dim of Krylov 
+ *  @param[in] maxit    Max number of outer Lanczos steps  allowed --[max dim of Krylov 
  *          subspace]
  *  
- *  @param tol       
+ *  @param[in] tol       
  *          Tolerance for convergence. The code uses a stopping criterion based
  *          on the convergence of the restricted trace. i.e., the sum of the
  *          eigenvalues of T_k that  are in the desired interval. This test  is
@@ -37,9 +37,9 @@
  *          - *but* the actual residual norm associated with the original
  *          matrix A is returned
  *  
- *  @param vinit  initial  vector for Lanczos -- [optional]
+ *  @param[in] vinit  initial  vector for Lanczos -- [optional]
  * 
- *  @param pol       A struct containing the parameters of the polynomial..
+ *  @param[in] pol       A struct containing the parameters of the polynomial..
  *  This is set up by a call to find_deg prior to calling chenlanNr 
  * 
  *  @b Modifies:
