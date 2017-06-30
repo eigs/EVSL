@@ -19,7 +19,7 @@ OMP = -fopenmp
 
 ## libraries: blas, lapack
 #LIBLAPACK = -L/scratch/syphax/Rational_GEIG/lapack-3.5.0 -llapack -lrefblas
-LIBLAPACK = /home/ruipeng/workspace/OpenBLAS/libopenblas.a -lpthread
+LIBLAPACK = /home/yuanzhe/Documents/lib/libopenblas.a -lpthread
 #LIBLAPACK = -L/home/ruipeng/workspace/lapack-3.7.0 -llapack -lrefblas
 #LIBLAPACK = -L/home/yuanzhe/Desktop/lapack-3.5.0 -llapack -lrefblas
 #LIBLAPACK = -llapack -lblas
@@ -28,5 +28,5 @@ LIBLAPACK = /home/ruipeng/workspace/OpenBLAS/libopenblas.a -lpthread
 # CXSPARSE    : distributed with EVSL, no need to be provided
 # SUITESPARSE : not distributed with EVSL, path need to be provided 
 #               in EXTERNAL/makefile_suitesparse.in
-#DIRECTSOL = SUITESPARSE
-DIRECTSOL = CXSPARSE
+DIRECTSOL = SUITESPARSE
+#DIRECTSOL = CXSPARSE
