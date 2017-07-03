@@ -95,7 +95,6 @@ int main(int argc, char *argv[]) {
   double *yHist;
   if (graph_exact_dos) {
     xHist = (double *)malloc(npts * sizeof(double)); /*Exact DOS x values */
-
     yHist = (double *)malloc(npts * sizeof(double)); /* Exact DOS y values */
   }
   double *xdos =

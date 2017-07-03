@@ -123,9 +123,7 @@ int main(int argc, char *argv[]) {
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats,
-            "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
-            nslices);
+    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", a, b, nslices);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
@@ -234,8 +232,8 @@ int main(int argc, char *argv[]) {
 
     int ret;
     double neig;
-    double *xHist;
-    double *yHist;
+    double *xHist = NULL;
+    double *yHist = NULL;
     /*-------------------- exact histogram and computed DOS */
     if (graph_exact_dos) {
       xHist = (double *)malloc(npts * sizeof(double));
