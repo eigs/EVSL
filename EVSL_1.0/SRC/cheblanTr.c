@@ -116,7 +116,9 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   double gamB=pol->gam, bar=pol->bar;
   /*-------------------- gamB must be within [-1, 1] */
   if (gamB > 1.0 || gamB < -1.0) {
-    fprintf(fstats, "gamB error %.15e\n", gamB);
+    if (fstats) {
+      fprintf(fstats, "gamB error %.15e\n", gamB);
+    }
     return -1;
   }
   /*-----------------------------------------------------------------------* 
@@ -210,7 +212,9 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     /* ! add a test if dimension exceeds (m+1) 
      * (trlen + 1) + min_inner_step <= lanm + 1 */
     if (k+min_inner_step > lanm1) {
-      fprintf(fstats, "Krylov dim too small for this problem. Try a larger dim\n");
+      if (fstats) {
+        fprintf(fstats, "Krylov dim too small for this problem. Try a larger dim\n");
+      }
       exit(1);
     }
     /*-------------------- thick restart special step */
@@ -437,12 +441,16 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           }
         }
         if (fabs(tr-last_tr) <= tol * fabs(tr) && jl == last_jl) {
-          fprintf(fstats,"break: [it %d, k %d]: last_tr %.15e, tr %.15e, last_jl %d  jl %d\n",
-                  it, k, last_tr, tr, last_jl, jl);
+          if (fstats) {
+            fprintf(fstats,"break: [it %d, k %d]: last_tr %.15e, tr %.15e, last_jl %d  jl %d\n",
+                    it, k, last_tr, tr, last_jl, jl);
+          }
           break;
         }
-        fprintf(fstats,"[it %d, k %d] testing: last_tr %.15e, tr %.15e, last_jl %d  jl %d\n",
-                it, k, last_tr, tr, last_jl, jl);
+        if (fstats) {
+          fprintf(fstats,"[it %d, k %d] testing: last_tr %.15e, tr %.15e, last_jl %d  jl %d\n",
+                  it, k, last_tr, tr, last_jl, jl);
+        }
         last_tr = tr;
         last_jl = jl;
 #else
