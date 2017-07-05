@@ -27,8 +27,7 @@
  *          in the order as elements in eigVal. If NULL, then no eigenvector
  *          will be computed
  *  @return The flag returned by the
- *  LAPACK routine DSTEV() (if double  is double) or stev_() (if double
- *  is float)
+ *  LAPACK routine DSTEV() (if double) or stev_() (if float)
  * --------------------------------------------------------------------- */
 
 int SymmTridEig(double *eigVal, double *eigVec, int n, 
@@ -58,6 +57,9 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
   }
   if (info) {
     printf("DSTEV ERROR: INFO %d\n", info);
+    save_vec(n, diag, "alp");
+    save_vec(n-1, sdiag, "bet");
+    exit(0);
   }
   // return info
   return info;
