@@ -3,9 +3,6 @@
 #include "blaslapack.h"
 #include "struct.h"
 #include "internal_proto.h"
-#ifdef USE_MKL
-#include "mkl.h"
-#endif
 
 /**
  * @file spmat.c
@@ -229,6 +226,11 @@ void matvec_csr(double *x, double *y, void *data) {
   csrMat *A = (csrMat *) data;
 #ifdef USE_MKL
   char cN = 'N';
+  /*
+  double alp = 1.0, bet = 0.0;
+  mkl_dcsrmv(&cN, &(A->nrows), &(A->ncols), &alp, "GXXCXX", 
+             A->a, A->ja, A->ia, A->ia+1, x, &bet, y);
+  */
   mkl_cspblas_dcsrgemv(&cN, &A->nrows, A->a, A->ia, A->ja, x, y);
 #else
   dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);

@@ -2,7 +2,10 @@
 
 include ../makefile.in
 
-INCLUDES = -I../INC -ISRC 
+INCLUDES = -I../INC -ISRC
+ifeq ($(INTEL), 1)
+INCLUDES += -I${MKLROOT}/include
+endif
 
 # Object files
 OBJS = 	evsl.o dumps.o cheblanNr.o cheblanTr.o chebpoly.o lanbounds.o \
