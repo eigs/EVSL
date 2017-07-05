@@ -41,7 +41,7 @@ void savemat(csrMat *A, const char *fn);
 //
 void savedensemat(double *A, int lda, int m, int n, const char *fn);
 //
-void save_vec(int n, double *x, const char fn[]);
+void save_vec(int n, const double *x, const char fn[]);
 
 /*- - - - - - - - - evsl.c */
 //
@@ -169,13 +169,17 @@ static inline int check_intv(double *intv, FILE *fstats) {
    */
   double a=intv[0], b=intv[1], lmin=intv[2], lmax=intv[3];
   if (a >= b) {
-    fprintf(fstats, " error: invalid interval (%e, %e)\n", a, b);
+    if (fstats) {
+      fprintf(fstats, " error: invalid interval (%e, %e)\n", a, b);
+    }
     return -1;
   }
   
   if (a >= lmax || b <= lmin) {
-    fprintf(fstats, " error: interval (%e, %e) is outside (%e %e) \n", 
-            a, b, lmin, lmax);
+    if (fstats) {
+      fprintf(fstats, " error: interval (%e, %e) is outside (%e %e) \n", 
+              a, b, lmin, lmax);
+    }
     return -2;
   } 
   

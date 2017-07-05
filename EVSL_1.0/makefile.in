@@ -30,6 +30,9 @@ endif
 
 # Common flags
 FLAGS = -DUNIX -O3 -g -Wall 
+ifeq ($(INTEL), 1)
+FLAGS += -DUSE_MKL
+endif
 
 # ar 
 AR = ar rv
