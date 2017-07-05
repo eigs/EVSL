@@ -3,7 +3,7 @@ all:
 	+ make -C SRC
 	+ make -C EXTERNAL
 ifeq ($(DIRECTSOL), CXSPARSE)
-	+ make -C EXTRENAL/CXSparse
+	+ make -C EXTERNAL/CXSparse
 endif
 	+ make all -C TESTS/Landos
 	+ make all -C TESTS/GEN
@@ -28,6 +28,8 @@ endif
 	( cd TESTS/PLanN ; make cleanall)
 	( cd TESTS/PSI ; make cleanall)
 	( cd TESTS/GEN ; make cleanall)
+	( cd TESTS/COMMON ; make clean)
+	( cd TESTS/COMMON_GEN ; make clean)
 
 docs:
 	 ( doxygen Documentation/Doxyfile 2> Documentation/Doxygen-Errors.txt )

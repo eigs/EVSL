@@ -114,7 +114,8 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   }
 
   //-------------------- allocate storage for computation
-  logical tryrac = 1;
+  //logical tryrac = 1;
+  int tryrac = 1;
   double t0 = vl;
   double t1 = vu;
 

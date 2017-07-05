@@ -1,12 +1,14 @@
 include ../../makefile.in
 #include ../../EXTERNAL/makefile.in
 
-FC = gfortran
-FLAGS = -DUNIX -O3 -g
 ifeq ($(INTEL), 1)
-LINK = ifort
 FC = ifort
+else
+FC = gfortran
 endif
+
+LINK = $(FC)
+FLAGS = -DUNIX -O3 -g
 
 INCLUDES = -I../../INC -I../../EXTERNAL
 

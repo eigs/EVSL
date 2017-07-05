@@ -3,6 +3,13 @@
 
 #include <complex.h>
 
+#ifdef USE_MKL
+
+#define MKL_Complex16 complex
+#include "mkl.h"
+
+#else
+
 #define DCOPY    dcopy_
 #define DDOT     ddot_
 #define DNRM2    dnrm2_
@@ -41,5 +48,7 @@ void DSTEMR(char *jobz, char *range, int *n, double *D, double *E, double *VL, d
 void DHSEQR(char* jobz,char* compz,int* n,int* ilo,int* ihi,double* h,int* ldh,double* wr,double* wi,
 	    double* z,int* ldz,double* work, int* lwork,int* info);
 void ZGESV(int *n, int *nrow, complex double * A, int* m, int* ipiv, complex double *rhs, int* k, int* INFO);
+
+#endif
 
 #endif

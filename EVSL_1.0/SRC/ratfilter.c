@@ -279,7 +279,7 @@ void weights(int n, complex double* zk, int* mulp, double lambda,
       mat[i+j*m] = A[(i-nf)*nf+j-nf];
     }
   } 
-  zgesv_(&m, &nrhs, mat, &m, ipiv, rhs, &m, &INFO);
+  ZGESV(&m, &nrhs, mat, &m, ipiv, rhs, &m, &INFO);
   for(i=0;i<nf;i++) {
     omega[i] = rhs[i];
   }
