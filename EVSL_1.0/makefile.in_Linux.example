@@ -1,12 +1,32 @@
+ifeq ($(INTEL),)
+	ifeq ($(MKLROOT),)
+		INTEL?=0
+	else
+		INTEL:=1
+	endif
+endif
+
 # Compilers (only C is needed)
+ifeq ($(INTEL), 1)
+CC = icc
+else
 CC = gcc
+endif
+#CC = icc
 #CC = gcc
 OBJ_TIME = timing.o 
 ## 
+ifeq ($(INTEL), 1)
+LIB0 = -lifcore -lrt -lm 
+else
 LIB0 = -lgfortran -lrt -lm 
+endif
 ## Linker 
-#LINK = gcc
+ifeq ($(INTEL), 1)
+LINK = icc
+else
 LINK = gcc
+endif
 
 # Common flags
 FLAGS = -DUNIX -O3 -g -Wall 
@@ -15,14 +35,25 @@ FLAGS = -DUNIX -O3 -g -Wall
 AR = ar rv
 RANLIB = ranlib
 
-# openmp
-
+# OpenMP
 OMP = -fopenmp 
 
 ## libraries: blas, lapack
+ifeq ($(INTEL), 1)
+LIBLAPACK = -mkl 
+else
 #LIBLAPACK = -L/scratch/syphax/Rational_GEIG/lapack-3.5.0 -llapack -lrefblas
+#LIBLAPACK = /path/to/openblas/lib/libopenblas.a -lpthread
 #LIBLAPACK = -L/home/ruipeng/workspace/lapack-3.7.0 -llapack -lrefblas
 #LIBLAPACK = /home/ruipeng/workspace/OpenBLAS/libopenblas.a -lpthread
 #LIBLAPACK = -L/home/yuanzhe/Desktop/lapack-3.5.0 -llapack -lrefblas
 LIBLAPACK = -llapack -lblas
+endif
+
+# direct solver: CXSPARSE, SUITESPARSE
+# CXSPARSE    : distributed with EVSL, no need to be provided
+# SUITESPARSE : not distributed with EVSL, path need to be provided 
+#               in EXTERNAL/makefile_suitesparse.in
+#DIRECTSOL = SUITESPARSE
+DIRECTSOL = CXSPARSE
 
