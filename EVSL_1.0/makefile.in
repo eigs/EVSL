@@ -1,11 +1,21 @@
+INTEL=1
 # Compilers (only C is needed)
+ifeq ($(INTEL), 1)
+CC = icc
+else
 CC = gcc
+endif
+#CC = icc
 #CC = gcc
 OBJ_TIME = timing.o 
 ## 
 LIB0 = -lgfortran -lrt -lm 
 ## Linker 
-LINK = gcc
+ifeq ($(INTEL), 1)
+LINK = icc
+else
+LINK = icc
+endif
 
 # Common flags
 FLAGS = -DUNIX -O3 -g -Wall 
@@ -19,10 +29,14 @@ OMP = -fopenmp
 
 ## libraries: blas, lapack
 #LIBLAPACK = -L/scratch/syphax/Rational_GEIG/lapack-3.5.0 -llapack -lrefblas
-LIBLAPACK = /home/yuanzhe/Documents/lib/libopenblas.a -lpthread
+#LIBLAPACK = /home/yuanzhe/Documents/lib/libopenblas.a -lpthread
+ifeq ($(INTEL), 1)
+LIBLAPACK = -L/soft/intel/x86_64/2013/composer_xe_2013/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -lpthread -lm -fopenmp -liomp5
+else
+LIBLAPACK = -llapack -lblas
+endif
 #LIBLAPACK = -L/home/ruipeng/workspace/lapack-3.7.0 -llapack -lrefblas
 #LIBLAPACK = -L/home/yuanzhe/Desktop/lapack-3.5.0 -llapack -lrefblas
-#LIBLAPACK = -llapack -lblas
 
 # direct solver: CXSPARSE, SUITESPARSE
 # CXSPARSE    : distributed with EVSL, no need to be provided
