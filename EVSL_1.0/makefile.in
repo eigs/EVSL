@@ -1,4 +1,4 @@
-INTEL=1
+INTEL?=1
 # Compilers (only C is needed)
 ifeq ($(INTEL), 1)
 CC = icc
