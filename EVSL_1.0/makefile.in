@@ -1,4 +1,11 @@
-INTEL?=0
+ifeq ($(INTEL),)
+	ifeq ($(MKLROOT),)
+		INTEL?=0
+	else
+		INTEL:=1
+	endif
+endif
+
 # Compilers (only C is needed)
 ifeq ($(INTEL), 1)
 CC = icc
