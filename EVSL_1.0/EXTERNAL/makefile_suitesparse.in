@@ -1,6 +1,7 @@
 ## SuiteSparse dir
 #SUITESPARSE_DIR = /home/li50/workspace/SuiteSparse-4.5.3
 SUITESPARSE_DIR = /home/ruipeng/workspace/SuiteSparse
+SUITESPARSE_DIR = /home/saady/shared/SuiteSparse
 #SUITESPARSE_DIR = /scratch/syphax/Rational_GEIG/SuiteSparse-4.5.3/SuiteSparse
 #SUITESPARSE_DIR = /home/yuanzhe/Desktop/SuiteSparse
 

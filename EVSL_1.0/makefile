@@ -1,18 +1,19 @@
 include makefile.in
 all:
-	( cd SRC                    ; make )
-	( cd EXTERNAL               ; make )
+	+ make -C SRC
+	+ make -C EXTERNAL
 ifeq ($(DIRECTSOL), CXSPARSE)
-	( cd EXTERNAL/CXSparse      ; make )
+	+ make -C EXTRENAL/CXSparse
 endif
-	( cd TESTS/Landos  ;  make all)
-	( cd TESTS/Fortran ; make all)
-	( cd TESTS/GEN ; make all)
-	( cd TESTS/PLanR ; make all)
-	( cd TESTS/RLanR ; make all)
-	( cd TESTS/RLanN ; make all)
-	( cd TESTS/PLanN ; make all)
-	( cd TESTS/PSI ; make all)
+	+ make all -C TESTS/Landos
+	+ make all -C TESTS/GEN
+	+ make all -C TESTS/PLanR
+	+ make all -C TESTS/PLanN
+	+ make all -C TESTS/RLanN
+	+ make all -C TESTS/RLanR
+	+ make all -C TESTS/PSI
+	+ make all -C TESTS/Fortran
+
 clean:
 	( cd SRC                 ; make clean )
 	( cd EXTERNAL            ; make clean )
