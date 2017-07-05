@@ -3,6 +3,10 @@ include ../../makefile.in
 
 FC = gfortran
 FLAGS = -DUNIX -O3 -g
+ifeq ($(INTEL), 1)
+LINK = ifort
+FC = ifort
+endif
 
 INCLUDES = -I../../INC -I../../EXTERNAL
 

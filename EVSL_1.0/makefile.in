@@ -9,7 +9,11 @@ endif
 #CC = gcc
 OBJ_TIME = timing.o 
 ## 
+ifeq ($(INTEL), 1)
+LIB0 = -lifcore -lrt -lm 
+else
 LIB0 = -lgfortran -lrt -lm 
+endif
 ## Linker 
 ifeq ($(INTEL), 1)
 LINK = icc
