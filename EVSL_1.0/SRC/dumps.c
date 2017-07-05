@@ -35,7 +35,7 @@ void savemat(csrMat *A, const char *fn) {
   save_mtx_basic(A->nrows, A->ncols, A->ia, A->ja, A->a, fn);
 }
 
-void save_vec(int n, double *x, const char fn[]) {
+void save_vec(int n, const double *x, const char fn[]) {
   fprintf(stdout, " * saving a vector into %s\n", fn);
   FILE *fp = fopen(fn, "w");
   fprintf(fp, "%s %d\n", "%", n);
