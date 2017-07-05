@@ -14,7 +14,7 @@ LIB0 = -lgfortran -lrt -lm
 ifeq ($(INTEL), 1)
 LINK = icc
 else
-LINK = icc
+LINK = gcc
 endif
 
 # Common flags
