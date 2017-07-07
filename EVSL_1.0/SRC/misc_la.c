@@ -180,12 +180,14 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
  * @brief Classical GS reortho with Daniel, Gragg, Kaufman, Stewart test
  **/
 void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, double *w) {
+  double tms = cheblan_timer();
   double eta = 1.0 / sqrt(2.0);
   int i, one=1;
   char cT = 'T', cN = 'N';
   double done=1.0, dmone=-1.0, dzero=0.0;
   double old_nrm = DNRM2(&n, v, &one);
   double new_nrm = 0.0;
+
   for (i=0; i<i_max; i++) {
     DGEMV(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
     DGEMV(&cN, &n, &k, &dmone, Q, &n, w, &one, &done,  v, &one);
@@ -199,6 +201,8 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
   if (nrmv) {
     *nrmv = new_nrm;
   }
+  double tme = cheblan_timer();
+  evslstat.t_reorth += tme - tms;
 }
 
 /**
@@ -207,6 +211,7 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
  **/
 void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q, 
                double *v, double *w) {
+  double tms = cheblan_timer();
   int i, one=1;
   char cT = 'T', cN = 'N';
   double done=1.0, dmone=-1.0, dzero=0.0;
@@ -214,6 +219,8 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
     DGEMV(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
     DGEMV(&cN, &n, &k, &dmone, Z, &n, w, &one, &done,  v, &one);
   }
+  double tme = cheblan_timer();
+  evslstat.t_reorth += tme - tms;
 }
 
 //  max number of reorthogonalizations 

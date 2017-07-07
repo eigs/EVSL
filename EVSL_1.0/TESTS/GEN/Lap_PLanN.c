@@ -147,6 +147,7 @@ int main(int argc, char *argv[]) {
     printf("spslicer error %d\n", ierr);
     return 1;
   }
+  StatsPrint(fstats);
   printf("====================  SLICES FOUND  ====================\n");
   for (j=0; j<nslices;j++) {
     printf(" %2d: [% .15e , % .15e]\n", j+1, sli[j],sli[j+1]);

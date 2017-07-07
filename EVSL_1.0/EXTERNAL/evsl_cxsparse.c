@@ -55,6 +55,7 @@ static cs_di *make_sym_di (cs_di *A)
  * @param Bsol_data Struct which will be initialized 
  * */
 int SetupBSolDirect(csrMat *B, void **data) {
+  double tms = cheblan_timer();
   BSolDataDirect *Bsol_data;
   Malloc(Bsol_data, 1, BSolDataDirect);
   int i,j,k, n, nnz, *csp, *csi;
@@ -122,6 +123,9 @@ int SetupBSolDirect(csrMat *B, void **data) {
 
   *data = (void *) Bsol_data;
   
+  double tme = cheblan_timer();
+  evslstat.t_setBsv += tme - tms;
+  
   return 0;
 }
 
@@ -185,6 +189,7 @@ void FreeBSolDirectData(void *data) {
  * */
 int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
                           complex double *zk, void **data) {
+  double tms = cheblan_timer();
   int i, j, nrow, ncol, nnzB, nnzC, *map;
   csrMat *B, C, eye;
   /* the shifted matrix 
@@ -298,6 +303,9 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
     free_csr(&eye);
   }
 
+  double tme = cheblan_timer();
+  evslstat.t_setASigBsv += tme - tms;
+  
   return 0;
 }
 
