@@ -198,6 +198,7 @@ int main () {
       //-------------------- 
       a = sli[sl];
       b = sli[sl+1];
+      StatsReset();
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b); 
       //-------------------- Parameters for RatLanNr
       fprintf(fstats, " Max Lanczos steps %d\n", max_its);
@@ -251,6 +252,7 @@ int main () {
       memcpy(&alleigs[totcnt],lam,nevOut*sizeof(double));
       totcnt += nevOut;
       counts[sl] = nevOut;
+      StatsPrint(stdout);
       /*-------------------- free memory within  this loop */
       if (lam)  free(lam);
       if (Y)  free(Y);
