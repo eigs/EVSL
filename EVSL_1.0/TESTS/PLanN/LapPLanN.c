@@ -229,7 +229,6 @@ int main(int argc, char *argv[]) {
     free_pol(&pol);
     free(ind);
     free(lam_ex);
-
     StatsPrint(fstats);
   }
   //-------------------- free other allocated space 
