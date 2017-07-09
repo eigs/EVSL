@@ -183,6 +183,7 @@ int main () {
       //-------------------- 
       a = sli[sl];
       b = sli[sl+1];
+      StatsReset();
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b); 
       //-------------------- Parameters for ChebLanTr
       mlan = max(4*nev,100);  mlan = min(mlan, n);
@@ -226,6 +227,7 @@ int main () {
       memcpy(&alleigs[totcnt],lam,nevOut*sizeof(double));
       totcnt += nevOut;
       counts[sl] = nevOut;
+      StatsPrint(stdout);      
       //-------------------- free memory allocated within this loop
       if (lam) free(lam);
       if (Y) free(Y);

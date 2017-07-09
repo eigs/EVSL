@@ -60,7 +60,7 @@ int main () {
   double *sli; // endpoints of partitioned slices
 #if CXSPARSE == 1
   printf("-----------------------------------------\n");
-  printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times. \n ==Additionaly, CXSparse has been known to result in incorrect calculations.== \n\n");
+  printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times. \n\n");
   printf("-----------------------------------------\n");
 #endif
   /*------------------ file "matfile" contains paths to matrices */
@@ -195,6 +195,7 @@ int main () {
       //-------------------- 
       a = sli[sl];
       b = sli[sl+1];
+      StatsReset();
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b); 
       //-------------------- Parameters for RatLanNr
       fprintf(fstats, " Max Lanczos steps %d\n", max_its);
@@ -248,6 +249,7 @@ int main () {
       memcpy(&alleigs[totcnt],lam,nevOut*sizeof(double));
       totcnt += nevOut;
       counts[sl] = nevOut;
+      StatsPrint(stdout);
       /*-------------------- free memory within  this loop */
       if (lam)  free(lam);
       if (Y)  free(Y);
