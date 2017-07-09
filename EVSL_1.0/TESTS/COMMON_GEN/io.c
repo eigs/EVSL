@@ -109,10 +109,11 @@ int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo) {
    * so nnz2 <= 2*nnz 
    *-------------------------------------*/
   if (mm_is_symmetric(matcode)){
-    printf(" * * * *  matrix is symmetric * * * * \n");
-    nnz2 = 2*nnz;}
-  else
+    /*printf(" * * * *  matrix is symmetric * * * * \n");*/
+    nnz2 = 2*nnz;
+  } else {
     nnz2 = nnz;
+  }
   /*-------- Allocate mem for COO */
   int* IR = (int *)malloc(nnz2*sizeof(int));
   int* JC = (int *)malloc(nnz2*sizeof(int));

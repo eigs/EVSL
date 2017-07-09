@@ -32,8 +32,7 @@ double isqrt(const double a);
 int pnav(double *mu, const int m, const double cc, const double dd, double *v,
          double *y, double *w);  // Really just ChebAv
 //
-int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double),
-          const double npts, polparams *pol);
+int lsPol(double (*ffun)(double), BSolDataPol *pol);
 
 /*- - - - - - - - - dump.c */
 //
@@ -144,6 +143,19 @@ static inline void solve_B(double *x, double *y) {
   double tme = cheblan_timer();
   evslstat.t_svB += tme - tms;
   evslstat.n_svB ++;
+}
+
+/**
+* @brief y = LT \ x or y = SQRT(B) \ x
+* This is the solve function for the matrix B in evsldata
+*/
+static inline void solve_LT(double *x, double *y) {
+  CHKERR(!evsldata.LTsol);
+  double tms = cheblan_timer();
+  evsldata.LTsol->func(x, y, evsldata.LTsol->data);
+  double tme = cheblan_timer();
+  evslstat.t_svLT += tme - tms;
+  evslstat.n_svLT ++;
 }
 
 /**

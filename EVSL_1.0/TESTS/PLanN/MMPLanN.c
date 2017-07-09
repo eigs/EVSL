@@ -126,8 +126,8 @@ int main () {
     /*-------------------- define [a b] now so we can get estimates now    
                            on number of eigenvalues in [a b] from kpmdos */
     fprintf(fstats," --> interval: a  %9.3e  b %9.3e \n",a, b);
-    /*-------------------- define kpmdos parameters */
-    xintv[0] = a;  xintv[1] = b;
+    /*-------------------- define LanczosDOS parameters */
+    xintv[0] = a;    xintv[1] = b;
     xintv[2] = lmin; xintv[3] = lmax;
     //-------------------- landos or triv_slicer 
     if (TRIV_SLICER) {

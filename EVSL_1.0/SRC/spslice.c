@@ -81,8 +81,8 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
       rand_double(n, v);
       t = 1.0 / DNRM2(&n, v, &one);
       DSCAL(&n, &t, v, &one);  
-      /*  w = L^{-T}v */
-      evsldata.LTsol->func(v, w, evsldata.LTsol->data);
+      /*  w = L^{-T}*v */
+      solve_LT(v, w);
       /* v = B*w */
       matvec_B(w, v);
       t = DDOT(&n, v, &one, w, &one);

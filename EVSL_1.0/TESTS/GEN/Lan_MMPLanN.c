@@ -24,7 +24,7 @@ int main() {
   int n = 0, i, j, npts, nslices, nvec, nev, mlan, ev_int, sl, ierr, totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli;
-  double xintv[6];
+  double xintv[4];
   double *alleigs;
   int *counts; // #ev computed in each slice
   /* initial vector: random */
@@ -33,15 +33,12 @@ int main() {
   /*-------------------- matrices A, B: coo format and csr format */
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
-  double *sqrtdiag = NULL;
   /* slicer parameters */
   int msteps = 40;
   nvec = 10;
   npts = 200;
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
-  const int degB = 200;    // Max degree to aproximate B with
-  const double tau = 1e-4; // Tolerance in polynomial approximation
   io_t io;
   int numat, mat;
   char line[MAX_LINE];
@@ -82,13 +79,14 @@ int main() {
     a = io.a; // left endpoint of input interval
     b = io.b; // right endpoint of input interval
     nslices = io.n_intv;
+
     struct stat st = {0}; /* Make sure OUT directory exists */
     if (stat("OUT", &st) == -1) {
       mkdir("OUT", 0750);
     }
 
     char path[1024]; // path to write the output files
-    strcpy(path, "OUT/MMPLanR_");
+    strcpy(path, "OUT/Lan_MMPLanN_");
     strcat(path, io.MatNam1);
     fstats = fopen(path, "w"); // write all the output to the file io.MatNam
     if (!fstats) {
@@ -97,9 +95,8 @@ int main() {
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats,
-            "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
-            nslices);
+    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", 
+            a, b, nslices);
     counts = malloc(nslices * sizeof(int));
     sli = malloc((nslices + 1) * sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
@@ -121,38 +118,19 @@ int main() {
         if (Bcoo.nrows != n) {
           return 1;
         }
-        // nnz = Bcoo.nnz;
-        // n = Bcoo.nrows;
-        // printf("size of B is %d\n", n);
-        // printf("nnz of  B is %d\n", nnz);
       } else {
         fprintf(flog, "read_coo error for B = %d\n", ierr);
         exit(6);
       }
-      /*------------------ diagonal scaling for Acoo and Bcoo */
-      sqrtdiag = (double *)calloc(n, sizeof(double));
-      extractDiag(&Bcoo, sqrtdiag);
-      diagScaling(&Acoo, &Bcoo, sqrtdiag);
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
-    }
-    if (io.Fmt == HB) {
+    } else if (io.Fmt == HB) {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
     alleigs = malloc(n * sizeof(double));
-    /*----------------  compute the range of the spectrum of B */
-    SetStdEig();
-    SetAMatrix(&Bcsr);
-    vinit = (double *)malloc(n * sizeof(double));
-    rand_double(n, vinit);
-    ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
-    /*------------- get the bounds for B ------*/
-    xintv[4] = lmin;
-    xintv[5] = lmax;
-    /*-------------------- use CXSparse as the solver for B  in eigenvalue
-     * computation*/
+    /*-------------------- use direct solver as the solver for B */
     SetupBSolDirect(&Bcsr, &Bsol);
     /*-------------------- set the solver for B and LT */
     SetBSol(BSolDirect, Bsol);
@@ -165,23 +143,22 @@ int main() {
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
     //-------------------- initial vector
+    vinit = (double *)malloc(n * sizeof(double));
     rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-12, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n",
             lmin, lmax);
     /*-------------------- interval and eig bounds */
-    xintv[0] = lmin;
-    xintv[1] = lmax;
-    xintv[2] = a;
-    xintv[3] = b;
-    /*-------------------- call kpmdos to get the DOS for dividing the
-     * spectrum*/
+    xintv[0] = a;
+    xintv[1] = b;
+    xintv[2] = lmin;
+    xintv[3] = lmax;
+    /*-------------------- call LanczosDOS for spectrum slicing */
     /*-------------------- define landos parameters */
-    //-------------------- call landos
     double t = cheblan_timer();
     double *xdos = (double *)calloc(npts, sizeof(double));
     double *ydos = (double *)calloc(npts, sizeof(double));
-    ierr = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &ecount, xintv, tau);
+    ierr = LanDosG(nvec, msteps, npts, xdos, ydos, &ecount, xintv);
     t = cheblan_timer() - t;
     if (ierr) {
       printf("Landos error %d\n", ierr);
@@ -255,7 +232,6 @@ int main() {
       memcpy(&alleigs[totcnt], lam, nev2 * sizeof(double));
       totcnt += nev2;
       counts[sl] = nev2;
-      ierr = scalEigVec(n, nev2, Y, sqrtdiag);
       //-------------------- free allocated space withing this scope
       if (lam)
         free(lam);
@@ -268,7 +244,7 @@ int main() {
     } // for (sl=0; sl<nslices; sl++)
     //-------------------- free other allocated space
     fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
-    sprintf(path, "OUT/EigsOut_PLanR_(%s_%s)", io.MatNam1, io.MatNam2);
+    sprintf(path, "OUT/EigsOut_Lan_MMPLanN_(%s_%s)", io.MatNam1, io.MatNam2);
     FILE *fmtout = fopen(path, "w");
     if (fmtout) {
       for (j = 0; j < totcnt; j++)
@@ -286,16 +262,17 @@ int main() {
     free(counts);
     free(xdos);
     free(ydos);
-    if (sqrtdiag)
-      free(sqrtdiag);
-    if (fstats != stdout)
+    if (fstats != stdout) {
       fclose(fstats);
+    }
     /*-------------------- end matrix loop */
   }
-  if (flog != stdout)
+  if (flog != stdout) {
     fclose(flog);
+  }
   fclose(fmat);
   /*-------------------- finalize EVSL */
   EVSLFinish();
   return 0;
 }
+

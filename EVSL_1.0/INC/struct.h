@@ -50,7 +50,7 @@ typedef struct _polparams {
   int damping;        /**< 0 = no damping, 1 = Jackson, 2 = Lanczos */
   double thresh_ext;  /**< threshold for accepting polynom. for end intervals */
   double thresh_int;  /**< threshold for interior intervals */
-  double tol;    /**< tolerance for LS approxiamtion */
+  double tol;         /**< tolerance for LS approxiamtion */
   /**@}*/
   
   /** @name output from find_pol */
@@ -165,15 +165,21 @@ typedef struct _evsldata {
   EVSLMatvec *Bmv;          /**< matvec routine and the associated data for B */
   EVSLBSol *Bsol;           /**< function and data for B solve */
   EVSLLTSol *LTsol;         /**< function and data for LT solve */
+  double *ds;               /**< diagonal scaling matrix D,
+                                 D^{-1}*A*D^{-1} = \lambda * D^{-1}*B*D^{-1} */
 } evslData;
 
 /*
- * Define a struct for using polynomial to solve B
+ * Define a struct for L-S polynomial approximation to a matrix function
  */
 typedef struct _BSolDataPol {
-  polparams pol_sol; // polynomial for approximating B^{-1}
-  double *wk; // working array for performing matvec
-  double intv[2]; // spectrum range of B 
+  int max_deg;    /**< max degree set by user */
+  int deg;        /**< actual degree of the polynomial */
+  double intv[2]; /**< spectrum bounds of the matrix */
+  double cc, dd;  /**< center and half-width */
+  double tol;     /**< approx. tolerance */
+  double *mu;     /**< polyno. coeff */
+  double *wk;     /**< working array for applying */
 } BSolDataPol;
 
 
@@ -193,11 +199,13 @@ typedef struct _evslstat {
   double t_mvA;
   double t_mvB;
   double t_svB;
+  double t_svLT;
   double t_svASigB;
   double t_reorth;
   size_t n_mvA;
   size_t n_mvB;
   size_t n_svB;
+  size_t n_svLT;
   size_t n_svASigB;
   /* memory */
   size_t alloced;

@@ -17,56 +17,34 @@ double rec(const double a) { return 1.0 / a; }  // Reciprocal
 double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
 
 /*
- * Extract the square root of diagonal entries of the mass matrix B
- *
- * @param[in] B Matrix to extract the square root of the diagonals
- * @param[out] sqrtdiag preallocated vector of lengeth B.ncols to put the sqrt
- * of diagonals into
+ * Initalize BSolDataPol: use L-S polynomial to approximate a function 'ffun'
  */
-void extractDiag(cooMat *B, double *sqrtdiag) {
-  const int nnz = B->nnz;
-  int i, row, col;
-  for (i = 0; i < nnz; i++) { /* Iterate over all elements looking for diags */
-    row = B->ir[i];
-    col = B->jc[i];
-    if (row == col) {
-      sqrtdiag[col] = sqrt(B->vv[i]);
-    }
-  }
+void SetupBPol(int n, int max_deg, double tol, double lmin, double lmax, 
+               double (*ffun)(double), BSolDataPol *data) {
+  data->max_deg = max_deg;
+  data->intv[0] = lmin;
+  data->intv[1] = lmax;
+  data->tol = tol;
+  Calloc(data->mu, max_deg, double);
+  Malloc(data->wk, 3*n, double);
+  /* determine degree and compute poly coeff */
+  lsPol(ffun, data);
 }
 
 /*
- * Initialize the member of BSolDataPol struct for solving B
+ * Initialize the member of BSolDataPol struct for solving B^{-1}
  */
-void SetupBSolPol(csrMat *B, BSolDataPol *data) {
-  const int n = B->nrows;
-  double *mu_sol = (double *)calloc(data->pol_sol.max_deg, sizeof(double));
-  data->pol_sol.mu = mu_sol;
-  data->wk = (double *)malloc(3 * n * sizeof(double));
-  lsPol(&data->intv[0], data->pol_sol.max_deg, rec, data->pol_sol.tol, &data->pol_sol);
+void SetupPolRec(int n, int max_deg, double tol, double lmin, double lmax, 
+                 BSolDataPol *data) {
+  SetupBPol(n, max_deg, tol, lmin, lmax, rec, data);
 }
 
 /*
  * Initialize the member of BSolDataPol struct for solving B^{1/2}
  */
-void SetupBsqrtSolPol(csrMat *B, BSolDataPol *data) {
-  const int n = B->nrows;
-  double *mu_sol = (double *)calloc(data->pol_sol.max_deg, sizeof(double));
-  data->pol_sol.mu = mu_sol;
-  data->wk = (double *)malloc(3 * n * sizeof(double));
-  lsPol(&data->intv[0], data->pol_sol.max_deg, isqrt, data->pol_sol.tol, &data->pol_sol);
-}
-
-/*
- * Iniitalize BSolDataPol
- */
-void SetupBPol(csrMat *B, BSolDataPol *data, const int max_deg, const int tol,
-    double (*ffun)(double)) { 
-  const int n = B->nrows;
-  double *mu_sol = (double *) calloc(max_deg, sizeof(double));
-  data->pol_sol.mu = mu_sol;
-  data->wk = (double *)malloc(3 * n * sizeof(double));
-  lsPol(&data->intv[0], max_deg, ffun, tol, &data->pol_sol);
+void SetupPolSqrt(int n, int max_deg, double tol, double lmin, double lmax, 
+                  BSolDataPol *data) {
+  SetupBPol(n, max_deg, tol, lmin, lmax, isqrt, data);
 }
 
 /*
@@ -74,48 +52,15 @@ void SetupBPol(csrMat *B, BSolDataPol *data, const int max_deg, const int tol,
  */
 void FreeBSolPolData(BSolDataPol *data) {
   free(data->wk);
-  free_pol(&data->pol_sol);
+  free(data->mu);
 }
 
 /*
  * Setup the function pointer for evsl struct to call B_sol function
  */
 void BSolPol(double *b, double *x, void *data) {
-  BSolDataPol *Bsol_data = (BSolDataPol *)data;
-  double *wk = Bsol_data->wk;
-  polparams pol = Bsol_data->pol_sol;
-  pnav(pol.mu, pol.deg, pol.cc, pol.dd, b, x, wk);
-}
-
-/*
- * Diagonal scaling for A and B such that A(i,j) =
- * A(i,j)/(sqrtdiag(i)*sqrtdiag(j)) and B(i,j) =
- * B(i,j)/(sqrtdiag(i)*sqrtdiag(j))
- *
- * @param[in,out] A Matrix to scale using sqrtdiag
- * @param[in,out] B Matrix to scale using sqrtdiag
- * @param[in] sqrtdiag The vector contating the square root of the diagonal
- *  elements of B obtained via extractDiag
- */
-void diagScaling(cooMat *A, cooMat *B, double *sqrtdiag) {
-  int i, row, col, nnz;
-  double tmp;
-  // diagonal scaling for A
-  nnz = A->nnz;
-  for (i = 0; i < nnz; i++) {
-    row = A->ir[i];
-    col = A->jc[i];
-    tmp = 1.0 / (sqrtdiag[row] * sqrtdiag[col]);
-    A->vv[i] = A->vv[i] * tmp;
-  }
-  // diagonal scaling for B
-  nnz = B->nnz;
-  for (i = 0; i < nnz; i++) {
-    row = B->ir[i];
-    col = B->jc[i];
-    tmp = 1.0 / (sqrtdiag[row] * sqrtdiag[col]);
-    B->vv[i] = B->vv[i] * tmp;
-  }
+  BSolDataPol *pol = (BSolDataPol *)data;
+  pnav(pol->mu, pol->deg, pol->cc, pol->dd, b, x, pol->wk);
 }
 
 /**----------------------------------------------------------------------
@@ -150,7 +95,7 @@ int apfun(const double c, const double h, const double *const xi,
  * This explicitly calls matvec, so it can be useful for implementing
  * user-specific matrix-vector multiplication.
  *
- * @param[in] mu Coefficents of the cheb. polynomial
+ * @param[in] mu Coefficents of the cheb. polynomial (size m+1)
  * @param[in] cc cc member of pol struct
  * @param[in] dd dd member of pol struct
  * @param[in] m m member of pol struct
@@ -224,18 +169,17 @@ int pnav(double *mu, const int m, const double cc, const double dd, double *v,
  *
  *----------------------------------------------------------------------*/
 
-int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double),
-          const double tol, polparams *pol) {
-  const double a = intv[0];
-  const double b = intv[1];
+int lsPol(double (*ffun)(double), BSolDataPol *pol) {
+  const double a = pol->intv[0];
+  const double b = pol->intv[1];
   pol->cc = (a + b) / 2;
   pol->dd = (b - a) / 2;
-  //------------------------- Number of points for Gauss-Chebyshev
-  // integration
+  /*------------------------- Number of points for Gauss-Chebyshev integration */
+  int maxDeg = pol->max_deg;
   const int npts = maxDeg * 4;
-
   double *theti;
   Malloc(theti, npts, double);
+
   int i = 0;
   for (i = 0; i < npts * 2; i += 2) {
     theti[i / 2] = (i + 1) * (PI / (2 * npts));
@@ -253,15 +197,13 @@ int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double),
   apfun(pol->cc, pol->dd, xi, ffun, npts, gi);
   free(xi);
 
-  // ----------------------- Degree loop
-  // ----------------------- Each coefficient generated by gauss-Chebyshev
-  // quadature.
+  /* ----------------------- Degree loop
+   * ----------------------- Each coefficient generated by gauss-Chebyshev quadature */
   const int ptsNrm = 50 * maxDeg;  // Number of points for norm infinity
   Malloc(xi, ptsNrm, double);
   linspace(-1, 1, ptsNrm, xi);
 
-  // Compute f(x) once
-
+  /* Compute f(x) once */
   double *yx;
   Malloc(yx, ptsNrm, double);
   apfun(pol->cc, pol->dd, xi, ffun, ptsNrm, yx);
@@ -277,6 +219,8 @@ int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double),
   int k = 0;
   const double t1 = 1.0 / npts;
   const double t2 = 2.0 / npts;
+
+  /* degree loop */
   for (k = 0; k < maxDeg; k++) {
     for (i = 0; i < npts; i++) {
       yi[i] = cos(k * theti[i]);
@@ -293,16 +237,43 @@ int lsPol(const double *const intv, const int maxDeg, double (*ffun)(double),
       na = (ya[i] - yx[i]) / yx[i];
       nrm += fabs(na);
     }
-    if (nrm < tol) {
-      pol->deg = k + 1;
+    if (nrm < pol->tol) {
+      k++;
       break;
     }
   }
+  /* mu is of size k, so deg = k - 1 */
+  pol->deg = k - 1;
+
   free(xi);
   free(yi);
   free(ya);
   free(yx);
   free(theti);
   free(gi);
+
   return 0;
 }
+
+#if 0
+/*
+ * Recover the eigenvectors This is needed for GEN_MM folder only not DOS folder
+ */
+int scalEigVec(int n, int nev, double *Y, double* sqrtdiag) {
+  // Formula (2.19) in the paper.  Y(:,i) is x in the paper and D^{1/2} is sqrtdiag here
+  // n: matrix size
+  // nev: number of eigenvectors V: n*nev
+  // V: computed eigenvectors
+  // sqrtdiag: square root of diagonal entries of B
+  int i, j;
+  double *v;
+  for (i=0; i<nev; i++){
+    v = &Y[i*n];
+    for (j=0; j<n; j++) {
+      v[j] = v[j]*sqrtdiag[j];
+    }
+  }
+  return 0;
+}
+#endif
+

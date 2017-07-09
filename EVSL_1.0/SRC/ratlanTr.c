@@ -427,6 +427,8 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
           break;
         }
 #if 1
+        /* we change the convergence test to be simple:
+         * we test if the sum and the number of the Ritz values that are >= bar no longer change */
         jl = 0;
         tr = 0.0;
         for (i=0; i<k; i++) {
@@ -549,14 +551,21 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
         if (ifGenEv) {
           /* w = w - t3*w2, w2 = B*y,  (w=A*y-t3*B*y) */
           DAXPY(&n, &nt3, w2, &one, w, &one);
-          /* res0 = 2-norm of w */
-          res0 = DNRM2(&n, w, &one);
         } else {
           /*-------------------- w = w - t3*y, (w=A*y-t3*y) */
           DAXPY(&n, &nt3, y, &one, w, &one);
-          /*-------------------- res0 = norm(w) */
-          res0 = DNRM2(&n, w, &one);
         }
+        /*-------------------- if diag scaling is present */
+        if (evsldata.ds) {
+          /* scale the residual */
+          int j;
+          for (j=0; j<n; j++) {
+            /* NOTE that we saved reciprocal of the diag scaling */
+            w[j] /= evsldata.ds[j];
+          }
+        }
+        /*-------------------- res0 = 2-norm of w */
+        res0 = DNRM2(&n, w, &one);
         /*-------------------- test res. of this Ritz pair against tol */
         /* r = resi[i];*/
         r = res0;

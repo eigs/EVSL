@@ -21,10 +21,11 @@ int main() {
    * read in matrix format -- using
    * Thick-Restarted Lanczos with polynomial filtering.
    *-------------------------------------------------------------*/
-  int n = 0, i, j, npts, nslices, nvec, nev, mlan, ev_int, sl, ierr, totcnt;
+  int n = 0, i, j, npts, nslices, nvec, Mdeg, nev, mlan, ev_int, sl, 
+      ierr, totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
-  double xintv[6];
+  double xintv[4];
   double *alleigs;
   int *counts; // #ev computed in each slice
   /* initial vector: random */
@@ -33,18 +34,16 @@ int main() {
   /*-------------------- matrices A, B: coo format and csr format */
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
-  double *sqrtdiag = NULL;
   /* slicer parameters */
-  int Mdeg = 50;
+  Mdeg = 50;
   nvec = 40;
-  npts = 200;
   mu = malloc((Mdeg + 1) * sizeof(double));
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
   io_t io;
   int numat, mat;
   char line[MAX_LINE];
-  /*-------------------- Bsol by cholmod */
+  /*-------------------- Bsol */
   void *Bsol;
 #if CXSPARSE == 1
   printf("-----------------------------------------\n");
@@ -89,7 +88,7 @@ int main() {
     }
 
     char path[1024]; // path to write the output files
-    strcpy(path, "OUT/MMPLanR_");
+    strcpy(path, "OUT/KPM_MMPLanN_");
     strcat(path, io.MatNam1);
     fstats = fopen(path, "w"); // write all the output to the file io.MatNam
     if (!fstats) {
@@ -98,9 +97,8 @@ int main() {
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats,
-            "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
-            nslices);
+    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", 
+            a, b, nslices);
     counts = malloc(nslices * sizeof(int));
     sli = malloc((nslices + 1) * sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
@@ -130,10 +128,6 @@ int main() {
         fprintf(flog, "read_coo error for B = %d\n", ierr);
         exit(6);
       }
-      /*------------------ diagonal scaling for Acoo and Bcoo */
-      sqrtdiag = (double *)calloc(n, sizeof(double));
-      extractDiag(&Bcoo, sqrtdiag);
-      diagScaling(&Acoo, &Bcoo, sqrtdiag);
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
@@ -143,8 +137,8 @@ int main() {
       exit(7);
     }
     alleigs = malloc(n * sizeof(double));
-    /*-------------------- use CXSparse as the solver for B  in eigenvalue
-     * computation*/
+    /*-------------------- use direct solve as the solver for B  in eigenvalue
+     *                     computation*/
     SetupBSolDirect(&Bcsr, &Bsol);
     /*-------------------- set the solver for B and LT */
     SetBSol(BSolDirect, Bsol);
@@ -168,14 +162,13 @@ int main() {
     xintv[2] = lmin;
     xintv[3] = lmax;
     /*-------------------- call kpmdos to get the DOS for dividing the
-     * spectrum*/
-    /*-------------------- define landos parameters */
-    //-------------------- call landos
+     *                     spectrum*/
+    /*-------------------- define kpmdos parameters */
     double t = cheblan_timer();
     ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
     t = cheblan_timer() - t;
     if (ierr) {
-      printf("Landos error %d\n", ierr);
+      printf("kpmdos error %d\n", ierr);
       return 1;
     }
     fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n", t);
@@ -196,7 +189,7 @@ int main() {
     //-------------------- # eigs per slice
     ev_int = (int)(1 + ecount / ((double)nslices));
     totcnt = 0;
-    //-------------------- For each slice call RatLanrNr
+    //-------------------- For each slice call ChebLanNr
     for (sl = 0; sl < nslices; sl++) {
       printf("======================================================\n");
       int nev2;
@@ -216,6 +209,7 @@ int main() {
       pol.damping = 2;
       pol.thresh_int = 0.5;
       pol.thresh_ext = 0.5;
+      // pol.max_deg  = 300;
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);
       fprintf(fstats, " polynomial deg %d, bar %.15e gam %.15e\n", pol.deg,
@@ -226,7 +220,7 @@ int main() {
       //-------------------- Dimension of Krylov subspace and maximal iterations
       mlan = max(4 * nev, 100);
       mlan = min(mlan, n);
-      //-------------------- then call ChenLanNr
+      //-------------------- then call ChebLanNr
       ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res,
                        fstats);
       if (ierr) {
@@ -250,7 +244,6 @@ int main() {
       memcpy(&alleigs[totcnt], lam, nev2 * sizeof(double));
       totcnt += nev2;
       counts[sl] = nev2;
-      ierr = scalEigVec(n, nev2, Y, sqrtdiag);
       //-------------------- free allocated space withing this scope
       if (lam)
         free(lam);
@@ -263,7 +256,7 @@ int main() {
     } // for (sl=0; sl<nslices; sl++)
     //-------------------- free other allocated space
     fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
-    sprintf(path, "OUT/EigsOut_PLanR_(%s_%s)", io.MatNam1, io.MatNam2);
+    sprintf(path, "OUT/EigsOut_KPM_MMPLanN_(%s_%s)", io.MatNam1, io.MatNam2);
     FILE *fmtout = fopen(path, "w");
     if (fmtout) {
       for (j = 0; j < totcnt; j++)
@@ -279,17 +272,18 @@ int main() {
     FreeBSolDirectData(Bsol);
     free(alleigs);
     free(counts);
-    if (sqrtdiag)
-      free(sqrtdiag);
-    if (fstats != stdout)
+    if (fstats != stdout) {
       fclose(fstats);
+    }
     /*-------------------- end matrix loop */
   }
   free(mu);
-  if (flog != stdout)
+  if (flog != stdout) {
     fclose(flog);
+  }
   fclose(fmat);
   /*-------------------- finalize EVSL */
   EVSLFinish();
   return 0;
 }
+

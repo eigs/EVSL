@@ -19,7 +19,7 @@ int main () {
    * read in matrix format -- using
    * non-restart Lanczos with rational filtering.
    *-------------------------------------------------------------*/
-  int n=0, nnz=0, sl, i, j, mlan, nev, totcnt; 
+  int n=0, sl, i, j, mlan, nev, totcnt; 
   double a, b, ecount, xintv[4];
   double lmin, lmax; 
   double *alleigs; 
@@ -113,10 +113,7 @@ int main () {
       ierr =read_coo_MM(io.Fname, 1, 0, &Acoo); 
       if (ierr == 0) {
         fprintf(fstats,"matrix read successfully\n");
-        nnz = Acoo.nnz; 
         n = Acoo.nrows;
-        printf("size of matrix is %d\n", n);
-        printf("nnz of matrix is %d\n", nnz);
       }
       else {
         fprintf(flog, "read_coo error = %d\n", ierr);

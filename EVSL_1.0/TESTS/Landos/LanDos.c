@@ -68,9 +68,8 @@ int main(int argc, char *argv[]) {
   cooMat cooMat;
   csrMat csrMat;
 
-  int graph_exact_dos_tmp = 0;
-  findarg("graph_exact_dos", INT, &graph_exact_dos_tmp, argc, argv);
-  const int graph_exact_dos = graph_exact_dos_tmp;
+  int graph_exact_dos = 0;
+  findarg("graph_exact_dos", INT, &graph_exact_dos, argc, argv);
   /*-------------------- Read in a test matrix */
   readDiagMat("testmat.dat", &cooMat);
   cooMat_to_csrMat(0, &cooMat, &csrMat);
@@ -79,26 +78,24 @@ int main(int argc, char *argv[]) {
   const int msteps = 40; /* Steps to perform */
   const int npts = 200;  /* Number of points */
   const int nvec = 100;  /* Number of random vectors to generate */
-  double intv[6] = {-2.448170338612495,
+  /*-------------------- Intervals of interest
+     intv[0] and intv[1] are the input interval of interest [a. b]
+     intv[2] and intv[3] are the smallest and largest eigenvalues of (A,B)
+  */
+  double intv[4] = {-2.448170338612495,
                     11.868902203167497,
-                    0,
-                    0,
-                    5,
-                    8}; /* Interval of interest */
-  /*-------------------- reset to whole interval */
-  intv[2] = intv[0];
-  intv[3] = intv[1];
+                    -2.448170338612495,
+                    11.868902203167497};
   int i, ret;
   double neig; /* Number eigenvalues */
   /*-------------------- exact histogram and computed DOS */
-  double *xHist;
-  double *yHist;
+  double *xHist = NULL;
+  double *yHist = NULL;
   if (graph_exact_dos) {
     xHist = (double *)malloc(npts * sizeof(double)); /*Exact DOS x values */
     yHist = (double *)malloc(npts * sizeof(double)); /* Exact DOS y values */
   }
-  double *xdos =
-      (double *)malloc(npts * sizeof(double)); /* Calculated DOS x vals */
+  double *xdos = (double *)malloc(npts * sizeof(double)); /* Calculated DOS x vals */
   double *ydos = (double *)malloc(npts * sizeof(double)); /* Calculated DOS y */
 
   SetStdEig();
