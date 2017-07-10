@@ -156,8 +156,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 **CXSparse**
    SuiteSparse is the default direct linear solver of EVSL, for the
    rational filtering and generalized eigenvalue problems.
-   CXSparse is included to allow brief tests. However, know that it
-   is unstable (can result in incorrect results), and is
+   CXSparse is included to allow brief tests. However, know that it is
    significantly slower than other direct solvers such as SuiteSparse
    (see below).
 >  NOTE: CXSparse IS distributed with EVSL, and is Copyrighted by
