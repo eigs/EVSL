@@ -98,6 +98,28 @@ void free_csr(csrMat *csr) {
   free(csr->a);
 }
 
+/**
+ * @brief  copy a csr matrix A into B
+ * alloB: 0: will not allocate memory for B (have been alloced outside)
+ *        1: will allocate memory for B (same size as A)
+ */
+void csr_copy(csrMat *A, csrMat *B, int allocB) {
+  int nrows = A->nrows;
+  int ncols = A->ncols;
+  int nnz = A->ia[nrows];
+  if (allocB) {
+    /* allocate memory */
+    csr_resize(nrows, ncols, nnz, B);
+  } else {
+    /* just set the sizes */
+    B->nrows = nrows;
+    B->ncols = ncols;
+  }
+  memcpy(B->ia, A->ia, (nrows+1)*sizeof(int));;
+  memcpy(B->ja, A->ja, nnz*sizeof(int));
+  memcpy(B->a,  A->a,  nnz*sizeof(double));
+}
+
 /** 
  * @brief  memory deallocation for coo matrix
  */
@@ -341,5 +363,55 @@ int speye(int n, csrMat *A) {
   }
   A->ia[n] = n;
   return 0;
+}
+
+/*
+ * Diagonal scaling for A such that A = D^{-1}*A*D^{-1}, i.e.,
+ * A(i,j) = A(i,j) / (d(i)*d(j)), d = diag(D)
+ * @param[in,out] Coo Matrix to scale 
+ * @param[in] d: The vector that contains d(i)
+ */
+void diagScalCoo(cooMat *A, double *d) {
+  int i, row, col, nnz = A->nnz;
+  /* diagonal scaling for A */
+  for (i=0; i<nnz; i++) {
+    row = A->ir[i];
+    col = A->jc[i];
+    A->vv[i] /= d[row] * d[col];
+  }
+}
+
+/*
+ * Diagonal scaling for A such that A = D^{-1}*A*D^{-1}, i.e.,
+ * A(i,j) = A(i,j) / (d(i)*d(j)), d = diag(D)
+ * @param[in,out] CSR Matrix to scale 
+ * @param[in] d: The vector that contains d(i)
+ */
+void diagScalCsr(csrMat *A, double *d) {
+  int i, j;
+  /* diagonal scaling for A */
+  for (i=0; i<A->nrows; i++) {
+    for (j=A->ia[i]; j<A->ia[i+1]; j++) {
+      A->a[j] /= d[i] * d[A->ja[j]];
+    }
+  }
+}
+
+/*
+ * Extract the diagonal entries of csr matrix B
+ *
+ * @param[in] B Matrix to extract the square root of the diagonals
+ * @param[out] D preallocated vector of lengeth B.nrows
+ */
+void extrDiagCsr(csrMat *B, double *d) {
+  int i, j, nrows = B->nrows;
+  for (i=0; i<nrows; i++) {
+    d[i] = 0.0;
+    for (j=B->ia[i]; j<B->ia[i+1]; j++) {
+      if (i == B->ja[j]) {
+        d[i] = B->a[j];
+      }
+    }
+  }
 }
 

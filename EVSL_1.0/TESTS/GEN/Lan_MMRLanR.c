@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include <sys/stat.h>
+#include <math.h>
 #include "io.h"
 #include "evsl.h"
 #include "evsl_direct.h"
@@ -25,7 +25,7 @@ int main() {
       totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli;
-  double xintv[6];
+  double xintv[4];
   double *alleigs;
   int *counts; // #ev computed in each slice
   /* initial vector: random */
@@ -36,7 +36,7 @@ int main() {
   double beta = 0.01; // beta in the LS approximation
   /*-------------------- matrices A, B: coo format and csr format */
   cooMat Acoo, Bcoo;
-  csrMat Acsr, Bcsr;
+  csrMat Acsr, Bcsr, Acsr0, Bcsr0;
   double *sqrtdiag = NULL;
   /* slicer parameters */
   int msteps = 40;
@@ -49,8 +49,6 @@ int main() {
   const double tau = 1e-4; // Tolerance in polynomial approximation
   int numat, mat;
   char line[MAX_LINE];
-  /*-------------------- Bsol for B and B^{1/2} */
-  BSolDataPol Bsol, Bsqrtsol;
 #if CXSPARSE == 1
   printf("-----------------------------------------\n");
   printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times. \n\n");
@@ -58,6 +56,8 @@ int main() {
 #endif
   /*-------------------- stopping tol */
   tol = 1e-6;
+  /*-------------------- Polynomial approximation to B and sqrtB*/
+  BSolDataPol Bsol, Bsqrtsol;
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
@@ -93,7 +93,7 @@ int main() {
     }
 
     char path[1024]; // path to write the output files
-    strcpy(path, "OUT/MMRLanR_");
+    strcpy(path, "OUT/Lan_MMRLanR_");
     strcat(path, io.MatNam1);
     fstats = fopen(path, "w"); // write all the output to the file io.MatNam
     if (!fstats) {
@@ -102,20 +102,15 @@ int main() {
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats,
-            "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
-            nslices);
+    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n",
+            a, b, nslices);
     counts = malloc(nslices * sizeof(int));
-    sli = malloc((nslices + 1) * sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
       if (ierr == 0) {
         fprintf(fstats, "matrix read successfully\n");
-        // nnz = Acoo.nnz;
         n = Acoo.nrows;
-        // printf("size of A is %d\n", n);
-        // printf("nnz of  A is %d\n", nnz);
       } else {
         fprintf(flog, "read_coo error for A = %d\n", ierr);
         exit(6);
@@ -132,45 +127,47 @@ int main() {
       }
       /*------------------ diagonal scaling for Acoo and Bcoo */
       sqrtdiag = (double *)calloc(n, sizeof(double));
-      extractDiag(&Bcoo, sqrtdiag);
-      diagScaling(&Acoo, &Bcoo, sqrtdiag);
-      /*-------------------- conversion from COO to CSR format */
+      /*------------------ conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
-    }
-    if (io.Fmt == HB) {
-      fprintf(flog, "HB FORMAT  not supported (yet) * \n");
+    } else if (io.Fmt == HB) {
+      fprintf(flog, "HB FORMAT not supported (yet) * \n");
       exit(7);
     }
-    alleigs = malloc(n * sizeof(double));
-    /*----------------  compute the range of the spectrum of B */
+
+    /*-------------------- diagonal scaling for L-S poly. approx. 
+     *                     of B^{-1} and B^{-1/2},
+     *                     which will be used in the DOS */
+    /*-------------------- sqrt of diag(B) */
+    extrDiagCsr(&Bcsr, sqrtdiag);
+    for (i=0; i<n; i++) {
+      sqrtdiag[i] = sqrt(sqrtdiag[i]);
+    }
+    /*-------------------- backup A and B */
+    csr_copy(&Acsr, &Acsr0, 1); /* 1 stands for memory alloc */
+    csr_copy(&Bcsr, &Bcsr0, 1);
+    /*-------------------- Scale A and B */
+    diagScalCsr(&Acsr, sqrtdiag);
+    diagScalCsr(&Bcsr, sqrtdiag);
+    if (sqrtdiag) {
+      free(sqrtdiag);
+    }
+
+    /*---------------- Set EVSL to solve std eig problem to
+     *---------------- compute the range of the spectrum of B */
     SetStdEig();
     SetAMatrix(&Bcsr);
     vinit = (double *)malloc(n * sizeof(double));
     rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
-    /*------------- get the bounds for B ------*/
-    xintv[4] = lmin;
-    xintv[5] = lmax;
-    /*---------------  Pass the bounds to Bsol and Bsqrtsol */
-    Bsol.intv[0] = lmin;
-    Bsol.intv[1] = lmax;
-    Bsqrtsol.intv[0] = lmin;
-    Bsqrtsol.intv[1] = lmax;
-    /*--------------  Setup the Bsol and Bsqrtsol struct */
-    set_pol_def(&Bsol.pol_sol);
-    (Bsol.pol_sol).max_deg = degB;
-    (Bsol.pol_sol).tol = tau;
-    SetupBSolPol(&Bcsr, &Bsol);
-    set_pol_def(&Bsqrtsol.pol_sol);
-    (Bsqrtsol.pol_sol).max_deg = degB;
-    (Bsqrtsol.pol_sol).tol = tau;
-    SetupBsqrtSolPol(&Bcsr, &Bsqrtsol);
-    printf("The degree for LS approximations to B^{-1} and B^{-1/2} are %d and "
-           "%d\n",
-           (Bsol.pol_sol).deg, (Bsqrtsol.pol_sol).deg);
-    SetBSol(BSolPol, (void *)&Bsol);
+    /*-------------------- Use polynomial to solve B and sqrt(B) */
+    /*-------------------- Setup the Bsol and Bsqrtsol struct */
+    SetupPolRec (n, degB, tau, lmin, lmax, &Bsol);
+    SetupPolSqrt(n, degB, tau, lmin, lmax, &Bsqrtsol);
+    SetBSol (BSolPol, (void *)&Bsol);
     SetLTSol(BSolPol, (void *)&Bsqrtsol);
+    printf("The degree for LS polynomial approximations to B^{-1} and B^{-1/2} "
+           "are %d and %d\n", Bsol.deg, Bsqrtsol.deg);
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
@@ -180,22 +177,21 @@ int main() {
     /*-------------------- step 0: get eigenvalue bounds */
     //-------------------- initial vector
     rand_double(n, vinit);
-    ierr = LanTrbounds(50, 200, 1e-11, vinit, 1, &lmin, &lmax, fstats);
+    ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n",
             lmin, lmax);
     /*-------------------- interval and eig bounds */
-    xintv[0] = lmin;
-    xintv[1] = lmax;
-    xintv[2] = a;
-    xintv[3] = b;
+    xintv[0] = a;
+    xintv[1] = b;
+    xintv[2] = lmin;
+    xintv[3] = lmax;
     /*-------------------- call landos to get the DOS for dividing the
-     * spectrum*/
+     *                     spectrum*/
     /*-------------------- define landos parameters */
-    //-------------------- call landos
     double t = cheblan_timer();
     double *xdos = (double *)malloc(npts* sizeof(double));
     double *ydos = (double *)malloc(npts* sizeof(double));
-    ierr = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &ecount, xintv, tau);
+    ierr = LanDosG(nvec, msteps, npts, xdos, ydos, &ecount, xintv);
     t = cheblan_timer() - t;
     if (ierr) {
       printf("Landos error %d\n", ierr);
@@ -204,6 +200,7 @@ int main() {
     fprintf(fstats, " Time to build DOS (Landos) was : %10.2f  \n", t);
     fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
     //-------------------- call splicer to slice the spectrum
+    sli = malloc((nslices + 1) * sizeof(double));
     fprintf(fstats, "DOS parameters: msteps = %d, nvec = %d, npnts = %d\n",
             msteps, nvec, npts);
     spslicer2(xdos, ydos, nslices, npts, sli);
@@ -211,9 +208,21 @@ int main() {
     for (j = 0; j < nslices; j++) {
       printf(" %2d: [% .15e , % .15e]\n", j + 1, sli[j], sli[j + 1]);
     }
+    /*-------------------- DONE WITH DOS */
+    FreeBSolPolData(&Bsol);
+    FreeBSolPolData(&Bsqrtsol);
+
     //-------------------- # eigs per slice
     ev_int = (int)(1 + ecount / ((double)nslices));
     totcnt = 0;
+    alleigs = malloc(n * sizeof(double));
+ 
+    /* recover the original matrices A and B before scaling 
+     * Note that B-sol and sqrt(B)-sol will not be needed in RatLan,
+     * so we can recover them */
+    csr_copy(&Acsr0, &Acsr, 0); /* 0 stands for no memory alloc */
+    csr_copy(&Bcsr0, &Bcsr, 0);
+
     //-------------------- For each slice call RatLanrNr
     for (sl = 0; sl < nslices; sl++) {
       printf("======================================================\n");
@@ -239,7 +248,7 @@ int main() {
       rat.beta = beta;
       // now determine rational filter
       find_ratf(intv, &rat);
-      // use direct solver function 
+      // use direct solver function
       void **solshiftdata = (void **)malloc(num * sizeof(void *));
       /*------------ factoring the shifted matrices and store the factors */
       SetupASIGMABSolDirect(&Acsr, &Bcsr, num, rat.zk, solshiftdata);
@@ -270,13 +279,11 @@ int main() {
       for (i = 0; i < nev2; i++) {
         fprintf(fstats, "% .15e  %.1e\n", lam[i], res[ind[i]]);
       }
-      fprintf(fstats,
-              "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - "
-              "- - - - - - - - - - - - - -\n");
+      fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - "
+                      "- - - - - - - - - - - - - - - - - -\n");
       memcpy(&alleigs[totcnt], lam, nev2 * sizeof(double));
       totcnt += nev2;
       counts[sl] = nev2;
-      ierr = scalEigVec(n, nev2, Y, sqrtdiag);
       //-------------------- free allocated space withing this scope
       if (lam)
         free(lam);
@@ -288,10 +295,10 @@ int main() {
       free(solshiftdata);
       free_rat(&rat);
       free(ind);
-    }
+    } // for (sl=0; sl<nslices; sl++)
     //-------------------- free other allocated space
     fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
-    sprintf(path, "OUT/EigsOut_RLanR_(%s_%s)", io.MatNam1, io.MatNam2);
+    sprintf(path, "OUT/EigsOut_Lan_MMRLanR_(%s_%s)", io.MatNam1, io.MatNam2);
     FILE *fmtout = fopen(path, "w");
     if (fmtout) {
       for (j = 0; j < totcnt; j++)
@@ -304,20 +311,20 @@ int main() {
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
-    FreeBSolPolData(&Bsol);
-    FreeBSolPolData(&Bsqrtsol);
+    free_csr(&Acsr0);
+    free_csr(&Bcsr0);
     free(alleigs);
     free(counts);
     free(xdos);
     free(ydos);
-    if (sqrtdiag)
-      free(sqrtdiag);
-    if (fstats != stdout)
+    if (fstats != stdout) {
       fclose(fstats);
+    }
     /*-------------------- end matrix loop */
   }
-  if (flog != stdout)
+  if (flog != stdout) {
     fclose(flog);
+  }
   fclose(fmat);
   /*-------------------- finalize EVSL */
   EVSLFinish();

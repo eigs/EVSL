@@ -441,7 +441,7 @@ int find_pol(double *intv, polparams *pol) {
     for (j=0; j<min_deg; j++)
       v[j] = cos(j*thb) - cos(j*tha);
     /*-------------------- DEGREE LOOP -------------------- */
-    for (m=min_deg; m < max_deg;m++){
+    for (m=min_deg; m < max_deg; m++){
       dampcf(m, damping, jac);
       //-------------------- update v: add one more entry
       v[m] = cos(m*thb)-cos(m*tha);

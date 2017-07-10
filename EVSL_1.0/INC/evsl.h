@@ -34,17 +34,17 @@ int ChebSI(int nev, double *intv, int maxit, double tol, double *vinit,
            FILE *fstats);
 
 /*- - - - - - - - - - dos_utils.c */
-void SetupBSolPol(csrMat *B, BSolDataPol *data);
+void SetupPolRec(int n, int max_deg, double tol, double lmin, double lmax, BSolDataPol *data);
 //
-void SetupBsqrtSolPol(csrMat *B, BSolDataPol *data);
+void SetupPolSqrt(int n, int max_deg, double tol, double lmin, double lmax, BSolDataPol *data);
 //
 void FreeBSolPolData(BSolDataPol *data);
 //
 void BSolPol(double *b, double *x, void *data);
 //
-void extractDiag(cooMat *B, double *sqrtdiag);
+void extrDiagCsr(csrMat *B, double *d);
 //
-void diagScaling(cooMat *A, cooMat *B, double *sqrtdiag);
+void diagScalCsr(csrMat *A, double *d);
 
 /*- - - - - - - - - lanbounds.c */
 int LanBounds(int msteps, double *v, double *lmin, double *lmax);
@@ -55,9 +55,8 @@ int LanDos(const int nvec, int msteps, const int npts, double *xdos,
            double *ydos, double *neig, const double *const intv);
 
 //*- - - - - - - - -  landosG.c - Generalized lanDOS */
-int LanDosG(const int nvec, int msteps, const int degB, const int npts,
-            double *xdos, double *ydos, double *neig, const double *const intv,
-            const double tau);
+int LanDosG(const int nvec, int msteps, const int npts, double *xdos, double *ydos,
+            double *neig, const double *const intv);
 
 /*- - - - - - - - - lanTrbounds.c */
 int LanTrbounds(int lanm, int maxit, double tol, double *vinit, int bndtype,
@@ -91,6 +90,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit, double tol,
              double **W, double **resW, FILE *fstats);
 
 /*- - - - - - - - - spmat.c */
+void csr_copy(csrMat *A, csrMat *B, int allocB);
 // convert a COO matrix to a CSR matrix
 int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr);
 // free a CSR
@@ -118,6 +118,7 @@ int SetGenEig();
 int EVSLStart();
 /* finalize EVSL */
 int EVSLFinish();
+void SetDiagScal(double *ds);
 
 /*- - - - - - - - - spslicer.c */
 //

@@ -25,14 +25,14 @@ int exDOS(double *vals, int n, int npts,
    we have exp[-0.5 [H/sigma]^2] = 1/K. */
   int i,j=0, one=1;
   double h, xi, t, scaling;
-  const double lm = intv[0];
-  const double lM = intv[1];
+  const double lm = intv[2];
+  const double lM = intv[3];
   const double kappa = 1.25;
   const int M = min(n, 30);
   const double H = (lM - lm) / (M - 1);
   const double sigma = H / sqrt(8 * log(kappa));
-  const double a = intv[2];
-  const double b = intv[3];
+  const double a = intv[0];
+  const double b = intv[1];
   double sigma2 = 2 * sigma * sigma;
 /*-------------------- sigma related..
   -------------------- if gaussian smaller than tol ignore point. */

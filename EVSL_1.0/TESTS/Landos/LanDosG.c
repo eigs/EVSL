@@ -57,16 +57,10 @@ int main(int argc, char *argv[]) {
   const int nvec = 30;     /* Number of random vectors to use */
   const double tau = 1e-4; /* Tolerance in polynomial approximation */
   /* ---------------- Intervals of interest
-     intv[0] and intv[1] are the smallest and largest eigenvalues of (A,B)
-     intv[2] and intv[3] are the input interval of interest [a. b]
-     intv[4] and intv[5] are the smallest and largest eigenvalues of B after
-     diagonal scaling */
-  double intv[6] = {-2.739543872224533e-13,
-                    0.0325,
-                    -2.739543872224533e-13,
-                    0.0325,
-                    0.5479,
-                    2.5000};
+     intv[0] and intv[1] are the input interval of interest [a. b]
+     intv[2] and intv[3] are the smallest and largest eigenvalues of (A,B)
+     */
+  double intv[4];
   int n = 0, i, nslices, ierr;
   double a, b;
 
@@ -79,9 +73,8 @@ int main(int argc, char *argv[]) {
   io_t io;
   int numat, mat;
   char line[MAX_LINE];
-  int graph_exact_dos_tmp = 0;
-  findarg("graph_exact_dos", INT, &graph_exact_dos_tmp, argc, argv);
-  const int graph_exact_dos = graph_exact_dos_tmp;
+  int graph_exact_dos = 0;
+  findarg("graph_exact_dos", INT, &graph_exact_dos, argc, argv);
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
@@ -123,7 +116,8 @@ int main(int argc, char *argv[]) {
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", a, b, nslices);
+    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", 
+            a, b, nslices);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
@@ -154,8 +148,6 @@ int main(int argc, char *argv[]) {
       }
       /*------------------ diagonal scaling for Acoo and Bcoo */
       sqrtdiag = (double *)calloc(n, sizeof(double));
-      extractDiag(&Bcoo, sqrtdiag);
-      diagScaling(&Acoo, &Bcoo, sqrtdiag);
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       if (ierr) {
@@ -167,64 +159,62 @@ int main(int argc, char *argv[]) {
         fprintf(flog, "Could not convert matrix to csr: %i", ierr);
         exit(9);
       }
-    }
-    if (io.Fmt == HB) {
+    } else if (io.Fmt == HB) {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
-    /* Finish with input */
 
-    /* Start with actual driver */
-    if (1) {
-      /*----------------  compute the range of the spectrum of B */
-      SetStdEig();
-      SetAMatrix(&Bcsr);
-      double *vinit = (double *)malloc(n * sizeof(double));
-      rand_double(n, vinit);
-      double lmin = 0.0, lmax = 0.0;
-      ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
-      SetGenEig();
-      if (ierr) {
-        fprintf(flog, "Could not run LanTrBounds: %i", ierr);
-        exit(10);
-      }
-      /*------------- get the bounds for B ------*/
-      intv[4] = lmin;
-      intv[5] = lmax;
-      /*-------------------- set the left-hand side matrix A */
-      SetAMatrix(&Acsr);
-      /*-------------------- set the right-hand side matrix B */
-      SetBMatrix(&Bcsr);
-      /*-------------------- Use polynomial to solve B */
-      BSolDataPol Bsol;
-      Bsol.intv[0] = lmin;
-      Bsol.intv[1] = lmax;
-      set_pol_def(&Bsol.pol_sol);
-      (Bsol.pol_sol).max_deg = degB;
-      SetupBSolPol(&Bcsr, &Bsol);
-      SetBSol(BSolPol, (void *)&Bsol);
-      SetGenEig();
-      rand_double(n, vinit);
-      ierr = LanTrbounds(40, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
-      if (ierr) {
-        fprintf(flog, "Could not run LanTrBounds: %i", ierr);
-        exit(10);
-      }
-      free(vinit);
-      FreeBSolPolData(&Bsol);
-      /*----------------- get the bounds for (A, B) ---------*/
-      intv[0] = lmin;
-      intv[1] = lmax;
-      /*----------------- plotting the DOS on [a, b] ---------*/
-      intv[2] = lmin;
-      intv[3] = lmax;
-    } else {
-      /*-------------------- set the left-hand side matrix A */
-      SetAMatrix(&Acsr);
-      /*-------------------- set the right-hand side matrix B */
-      SetBMatrix(&Bcsr);
-      SetGenEig();
+    /*-------------------- diagonal scaling for L-S poly. approx. 
+     *                     of B^{-1} and B^{-1/2},
+     *                     which will be used in the DOS */
+    /*-------------------- sqrt of diag(B) */
+    extrDiagCsr(&Bcsr, sqrtdiag);
+    for (i=0; i<n; i++) {
+      sqrtdiag[i] = sqrt(sqrtdiag[i]);
     }
+    diagScalCsr(&Acsr, sqrtdiag);
+    diagScalCsr(&Bcsr, sqrtdiag);
+
+    /*---------------- Set EVSL to solve std eig problem to
+     *                 compute the range of the spectrum of B */
+    SetStdEig();
+    SetAMatrix(&Bcsr);
+    double *vinit = (double *)malloc(n * sizeof(double));
+    rand_double(n, vinit);
+    double lmin = 0.0, lmax = 0.0;
+    ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
+    if (ierr) {
+      fprintf(flog, "Could not run LanTrBounds: %i", ierr);
+      exit(10);
+    }
+    /*-------------------- Use polynomial to solve B and sqrt(B) */
+    BSolDataPol BInv, BSqrtInv;
+    /*-------------------- Setup the Bsol and Bsqrtsol struct */
+    SetupPolRec(n, degB, tau, lmin, lmax, &BInv);
+    SetupPolSqrt(n, degB, tau, lmin, lmax, &BSqrtInv);
+    SetBSol(BSolPol, (void *)&BInv);
+    SetLTSol(BSolPol, (void *)&BSqrtInv);
+    printf("The degree for LS polynomial approximations to B^{-1} and B^{-1/2} "
+           "are %d and %d\n", BInv.deg, BSqrtInv.deg);
+    /*-------------------- set the left-hand side matrix A */
+    SetAMatrix(&Acsr);
+    /*-------------------- set the right-hand side matrix B */
+    SetBMatrix(&Bcsr);
+    /*-------------------- Solve Gen Eig problem */
+    SetGenEig();
+    /*-------------------- eig bounds for B\A */
+    rand_double(n, vinit);
+    ierr = LanTrbounds(40, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
+    if (ierr) {
+      fprintf(flog, "Could not run LanTrBounds: %i", ierr);
+      exit(10);
+    }
+    /*----------------- plotting the DOS on [a, b] ---------*/
+    intv[0] = lmin;
+    intv[1] = lmax;
+    /*----------------- get the bounds for (A, B) ---------*/
+    intv[2] = lmin;
+    intv[3] = lmax;
     /*-------------------- Read in the eigenvalues */
     double *ev;
     int numev;
@@ -244,7 +234,7 @@ int main(int argc, char *argv[]) {
 
     double t0 = cheblan_timer();
     /* ------------------- Calculate the computed DOS */
-    ret = LanDosG(nvec, msteps, degB, npts, xdos, ydos, &neig, intv, tau);
+    ret = LanDosG(nvec, msteps, npts, xdos, ydos, &neig, intv);
     double t1 = cheblan_timer();
     fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1 - t0);
 
@@ -258,6 +248,9 @@ int main(int argc, char *argv[]) {
     free_coo(&Bcoo);
     free_csr(&Acsr);
     free_csr(&Bcsr);
+    free(vinit);
+    FreeBSolPolData(&BInv);
+    FreeBSolPolData(&BSqrtInv);
 
     /*--------------------Make OUT dir if it doesn't exist */
     struct stat st = {0};
@@ -342,9 +335,13 @@ int main(int argc, char *argv[]) {
     free(ydos);
     free(ev);
     fclose(fstats);
-    if (sqrtdiag) free(sqrtdiag);
-  }
+    if (sqrtdiag) {
+      free(sqrtdiag);
+    }
+  } /* matrix loop */
+
   fclose(fmat);
+
   EVSLFinish();
   return 0;
 }

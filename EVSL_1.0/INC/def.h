@@ -19,17 +19,31 @@
 #define CHKERR(ierr) assert(!(ierr))
 //#define CHKREQ(ierr) { if (ierr) { return (ierr); } }
 
-#define Malloc(base, nmem, type) {\
-  (base) = (type*) malloc((nmem)*sizeof(type)); \
-  CHKERR((base) == NULL); \
+#define Malloc(base, nmem, type) { \
+  size_t nbytes = (nmem) * sizeof(type); \
+  (base) = (type*) malloc(nbytes); \
+  if ((base) == NULL) { \
+    fprintf(stdout, "EVSL Error: out of memory [%ld bytes asked]\n", nbytes); \
+    exit(-1); \
+  } \
 }
-#define Calloc(base, nmem, type) {\
+
+#define Calloc(base, nmem, type) { \
+  size_t nbytes = (nmem) * sizeof(type); \
   (base) = (type*) calloc((nmem), sizeof(type)); \
-  CHKERR((base) == NULL); \
+  if ((base) == NULL) { \
+    fprintf(stdout, "EVSL Error: out of memory [%ld bytes asked]\n", nbytes); \
+    exit(-1); \
+  } \
 }
+
 #define Realloc(base, nmem, type) {\
-  (base) = (type*) realloc((base), (nmem)*sizeof(type)); \
-  CHKERR((base) == NULL && nmem > 0); \
+  size_t nbytes = (nmem) * sizeof(type); \
+  (base) = (type*) realloc((base), nbytes); \
+  if ((base) == NULL) { \
+    fprintf(stdout, "EVSL Error: out of memory [%ld bytes asked]\n", nbytes); \
+    exit(-1); \
+  } \
 }
 
 /*!

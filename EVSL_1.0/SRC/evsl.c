@@ -31,6 +31,7 @@ int EVSLStart() {
   evsldata.Bmv = NULL;
   evsldata.Bsol = NULL;
   evsldata.LTsol = NULL;
+  evsldata.ds = NULL;
 
   StatsReset();
   
@@ -185,5 +186,12 @@ int SetLTSol(SolFuncR func, void *data) {
   evsldata.LTsol->func = func;
   evsldata.LTsol->data = data;
   return 0;
+}
+
+/**
+ * @brief Set diagonal scaling matrix D
+ * */
+void SetDiagScal(double *ds) {
+  evsldata.ds = ds;
 }
 

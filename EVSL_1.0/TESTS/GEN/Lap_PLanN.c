@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     mkdir("OUT", 0750);
   }
 
-  if (!(fstats = fopen("OUT/LapPLanN.out","w"))) {
+  if (!(fstats = fopen("OUT/Lap_PLanN.out","w"))) {
     printf(" failed in opening output file in OUT/\n");
     fstats = stdout;
   }

@@ -26,7 +26,9 @@
  *                Must be positive. Planned feature: if non-positive use
  *                Cholsky factorization.
  *    @param[in] npts number of sample points used for the DOS curve
- *    @param[in] *intv Stores the three intervals of interest
+ *    @param[in] *intv Stores the the intervals of interest
+ *      intv[0:1] = [a b] = interval where DOS is to be computed
+ *      intv[2:3] = [lambda_min, lambda_max] \\
  *    @param[in] tau Tolerence used
  *
  *    @param[out] *xdos Length-npts long vector, x-coordinate points for
@@ -42,41 +44,14 @@
  *    landos.c/LanDos is only for the standard eigenvalue problem.
  *----------------------------------------------------------------------*/
 
-int LanDosG(const int nvec, const int msteps, const int degB, int npts,
-            double *xdos, double *ydos, double *neig, const double *const intv,
-            const double tau) {
+int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *ydos, 
+            double *neig, const double *const intv) {
 
+  int i, j, k;
   int maxit = msteps, m;  /* Max number of iterations */
   int n = evsldata.n; /* Number of elements in matrix */
-
-
   const int ifGenEv = evsldata.ifGenEv;
-
-  polparams pol_sqr;
-  polparams pol_sol;
-
-  if (ifGenEv) {
-    set_pol_def(&pol_sqr);
-    set_pol_def(&pol_sol);
-
-    double *mu_sqr;
-    double *mu_sol;
-
-    Calloc(mu_sqr, degB, double);
-    Calloc(mu_sol, degB, double);
-
-    pol_sqr.mu = mu_sqr;
-    pol_sol.mu = mu_sol;
-
-    if (degB <= 0) {
-      printf("LanDos with degB <= 0 not yet implemented");
-      exit(-1);
-    } else {
-      lsPol(&intv[4], degB, isqrt, tau, &pol_sqr);
-      lsPol(&intv[4], degB, rec, tau, &pol_sol);
-    }
-  }
-
+ 
   double *vinit;
   Malloc(vinit, n, double);
 
@@ -84,9 +59,8 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   Malloc(ind, npts, int);
   double *y;
   Calloc(y, npts, double);
-  int i, j, k;
 
-  /*--------------------   frequently used constants  */
+  /*-------------------- frequently used constants  */
   int one = 1;
   /* size of the matrix */
   maxit = min(n, maxit);
@@ -111,8 +85,8 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   double *EvalT, *EvecT;
   Malloc(EvalT, maxit, double);          /* eigenvalues of tridia. matrix  T */
   Malloc(EvecT, maxit * maxit, double);  /* Eigen vectors of T */
-  const double lm = intv[0];
-  const double lM = intv[1];
+  const double lm = intv[2];
+  const double lM = intv[3];
   const double aa = max(intv[0], intv[2]);
   const double bb = min(intv[1], intv[3]);
   const double kappa = 1.25;
@@ -125,7 +99,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   double width = sigma * sqrt(-2.0 * log(tol));
   linspace(aa, bb, npts, xdos);  // xdos = linspace(lm,lM, npts);
   /*-------------------- u  is just a pointer. wk == work space */
-  double *wk, *vrand = NULL;
+  double *wk;
   const int wk_size = ifGenEv ? 6 * n : 4 * n;
   Malloc(wk, wk_size, double);
   for (m = 0; m < nvec; m++) {
@@ -133,7 +107,7 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
     /*-------------------- copy initial vector to Z(:,1) */
     /* Filter the initial vector */
     if (ifGenEv) {
-      pnav(pol_sqr.mu, pol_sqr.deg, pol_sqr.cc, pol_sqr.dd, vinit, V, wk);
+      solve_LT(vinit, V);
     }
     /*--------------------  normalize it */
     double t;
@@ -188,15 +162,8 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
       if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, wk);
-        /* -------------- NOTE: B-matvec
-         *                vnew = B * znew */
-        if (degB <= 0) {
-          printf("LanDos with degB <= 0 not yet implemented");
-          exit(-1);
-        } else {
-          pnav(pol_sol.mu, pol_sol.deg, pol_sol.cc, pol_sol.dd, znew, vnew,
-               wk);  // Ish
-        }
+        /* vnew = B \ znew */
+        solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
       } else {
@@ -259,9 +226,10 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
       for (j = 0; j < npts; j++) {
         if (abs(xdos[j] - t) < width) ind[numPlaced++] = j;
       }
-      for (j = 0; j < numPlaced; j++)
+      for (j = 0; j < numPlaced; j++) {
         y[ind[j]] += gamma2[i] *
                      exp(-((xdos[ind[j]] - t) * (xdos[ind[j]] - t)) / sigma2);
+      }
     }
   }
   double scaling = 1.0 / (nvec * sqrt(sigma2 * PI));
@@ -281,13 +249,8 @@ int LanDosG(const int nvec, const int msteps, const int degB, int npts,
   free(wk);
   free(y);
   free(ind);
-  if (vrand) {
-    free(vrand);
-  }
   if (ifGenEv) {
     free(Z);
-    free_pol(&pol_sqr);
-    free_pol(&pol_sol);
   }
 
   return 0;

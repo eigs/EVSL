@@ -21,8 +21,8 @@
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] npts number of sample points used for the DOS curve
  *    @param[in] *intv Stores the two intervals of interest \\
- *      intv[0:1] = [lambda_min, lambda_max]\\
- *      intv[2:3] = [a b] = interval where DOS is to be computed
+ *      intv[0:1] = [a b] = interval where DOS is to be computed
+ *      intv[2:3] = [lambda_min, lambda_max]\\
  *
  *    @param[out] *xdos Length-npts long vector, x-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
@@ -66,8 +66,8 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
   Malloc(S, msteps * msteps, double);
   Malloc(gamma2, msteps, double);
   Malloc(ritzVal, msteps, double);
-  const double lm = intv[0];
-  const double lM = intv[1];
+  const double lm = intv[2];
+  const double lM = intv[3];
   const double tolBdwn = 1.e-13 * (abs(lM) + abs(lm));
   const double aa = max(intv[0], intv[2]);
   const double bb = min(intv[1], intv[3]);

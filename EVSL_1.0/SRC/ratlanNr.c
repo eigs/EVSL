@@ -365,14 +365,21 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     if (ifGenEv) {
       /*-------------------- w = w - t*B*u */
       DAXPY(&n, &nt, w2, &one, wk, &one);
-      /*-------------------- 2 norm of res */
-      res0 = DNRM2(&n, wk, &one);
     } else {
       /*-------------------- w = w - t*u */
       DAXPY(&n, &nt, u, &one, wk, &one);
-      /*-------------------- res0 = norm(w) */
-      res0 = DNRM2(&n, wk, &one); 
     }
+    /*-------------------- if diag scaling is present */
+    if (evsldata.ds) {
+      /* scale the residual */
+      int j;
+      for (j=0; j<n; j++) {
+        /* NOTE that we saved reciprocal of the diag scaling */
+        wk[j] /= evsldata.ds[j];
+      }
+    }
+    /*-------------------- res0 = 2-norm(wk) */
+    res0 = DNRM2(&n, wk, &one); 
     /*--------------------   accept (t, y) */
     if (res0 < tol) {
       Lam[nev] = t;
