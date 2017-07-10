@@ -10,6 +10,9 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/* in Gram-Schmidt, use BLAS-2 GEMV or BLAS-1 DOT/AXPY */
+#define USE_DGEMV 0
+
 /**
  * @file misc_la.c
  * @brief Miscellaneous linear algebra functions
@@ -183,14 +186,24 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
   double tms = cheblan_timer();
   double eta = 1.0 / sqrt(2.0);
   int i, one=1;
+#if USE_DGEMV
   char cT = 'T', cN = 'N';
   double done=1.0, dmone=-1.0, dzero=0.0;
+#endif
   double old_nrm = DNRM2(&n, v, &one);
   double new_nrm = 0.0;
 
   for (i=0; i<i_max; i++) {
+#if USE_DGEMV
     DGEMV(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
     DGEMV(&cN, &n, &k, &dmone, Q, &n, w, &one, &done,  v, &one);
+#else
+    int j;
+    for (j=0; j<k; j++) {
+       double t = -DDOT(&n, &Q[j*n], &one, v, &one);
+       DAXPY(&n, &t, &Q[j*n], &one, v, &one);
+    }
+#endif
     new_nrm = DNRM2(&n, v, &one);
     if (new_nrm > eta * old_nrm) {
       break;
@@ -213,11 +226,21 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
                double *v, double *w) {
   double tms = cheblan_timer();
   int i, one=1;
+#if USE_DGEMV
   char cT = 'T', cN = 'N';
   double done=1.0, dmone=-1.0, dzero=0.0;
+#endif
   for (i=0; i<i_max; i++) {
+#if USE_DGEMV
     DGEMV(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
     DGEMV(&cN, &n, &k, &dmone, Z, &n, w, &one, &done,  v, &one);
+#else
+    int j;
+    for (j=0; j<k; j++) {
+       double t = -DDOT(&n, &Q[j*n], &one, v, &one);
+       DAXPY(&n, &t, &Z[j*n], &one, v, &one);
+    }
+#endif
   }
   double tme = cheblan_timer();
   evslstat.t_reorth += tme - tms;

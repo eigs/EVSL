@@ -160,6 +160,7 @@ int main(int argc, char *argv[]) {
     double *lam, *Y, *res;
     int *ind;
     //-------------------- 
+    StatsReset();
     a = sli[sl];
     b = sli[sl+1];
     printf(" subinterval: [%.4e , %.4e]\n", a, b); 
@@ -218,6 +219,7 @@ int main(int argc, char *argv[]) {
     if (res) free(res);
     free_pol(&pol);
     free(ind);
+    StatsPrint(fstats);
   } //for (sl=0; sl<nslices; sl++)
   //-------------------- free other allocated space 
   free(vinit);
