@@ -58,12 +58,11 @@
 int ChebLanNr(double *intv, int maxit, double tol, double *vinit, 
               polparams *pol, int *nevOut, double **lamo, double **Wo, 
               double **reso, FILE *fstats) {
-  const int ifGenEv = evsldata.ifGenEv;
-  /*-------------------- for stats */
-  double tr0, tr1, tall;
-  double *y, flami; 
   //-------------------- to report timings/
-  tall = cheblan_timer();
+  double tall = cheblan_timer();
+  const int ifGenEv = evsldata.ifGenEv;
+  double tr0, tr1;
+  double *y, flami; 
   int i, k, kdim;
   // handle case where fstats is NULL. Then no output. Needed for openMP.
   int do_print = 1;   

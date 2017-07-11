@@ -202,6 +202,7 @@ typedef struct _evslstat {
   double t_svLT;
   double t_svASigB;
   double t_reorth;
+  double t_eig;
   size_t n_mvA;
   size_t n_mvB;
   size_t n_svB;
