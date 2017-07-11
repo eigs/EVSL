@@ -11,7 +11,7 @@
 #include "internal_proto.h"
 
 /* in Gram-Schmidt, use BLAS-2 GEMV or BLAS-1 DOT/AXPY */
-#define USE_DGEMV 0
+#define USE_DGEMV 1
 
 /**
  * @file misc_la.c

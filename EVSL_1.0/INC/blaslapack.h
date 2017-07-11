@@ -51,4 +51,8 @@ void ZGESV(int *n, int *nrow, complex double * A, int* m, int* ipiv, complex dou
 
 #endif
 
+/* USE SQRT(DDOT()) INSTEAD OF DNRM2, FOR BETTER PERFORMANCE */
+#undef DNRM2
+#define DNRM2(n, x, incx) sqrt(DDOT(n, x, incx, x, incx))
+
 #endif
