@@ -187,11 +187,11 @@ int main(int argc, char *argv[]) {
     set_pol_def(&pol);
     //-------------------- this is to show how you can reset some of the
     //                     parameters to determine the filter polynomial
-    pol.damping = 0;
+    pol.damping = 2;
     //-------------------- use a stricter requirement for polynomial
-    pol.thresh_int = 0.5;
-    pol.thresh_ext = 0.15;
-    pol.max_deg  = 300;
+    pol.thresh_int = 0.8;
+    pol.thresh_ext = 0.5;
+    pol.max_deg  = 3000;
     // pol.deg = 20 //<< this will force this exact degree . not recommended
     //                   it is better to change the values of the thresholds
     //                   pol.thresh_ext and plot.thresh_int
