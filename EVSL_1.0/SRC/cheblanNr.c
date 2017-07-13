@@ -59,7 +59,8 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
               polparams *pol, int *nevOut, double **lamo, double **Wo, 
               double **reso, FILE *fstats) {
   //-------------------- to report timings/
-  double tall = cheblan_timer();
+  double tall, tm1 = 0.0, tt;
+  tall = cheblan_timer();
   const int ifGenEv = evsldata.ifGenEv;
   double tr0, tr1;
   double *y, flami; 
@@ -334,7 +335,9 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     */
     /*-------------------- compute Ritz vectors */
     u = &Rvec[nev*n];
+    tt = cheblan_timer();
     DGEMV(&cN, &n, &kdim, &done, V, &n, y, &one, &dzero, u, &one);
+    tm1 += cheblan_timer() - tt;
     /*-------------------- normalize u */
     if (ifGenEv) {
       /* B-norm, w2 = B*u */
@@ -407,6 +410,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   tall = cheblan_timer() - tall;
   
   evslstat.t_iter = tall;
+  evslstat.t_blas = tm1;
 
   return 0;
 }

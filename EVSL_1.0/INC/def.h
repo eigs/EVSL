@@ -23,7 +23,8 @@
   size_t nbytes = (nmem) * sizeof(type); \
   (base) = (type*) malloc(nbytes); \
   if ((base) == NULL) { \
-    fprintf(stdout, "EVSL Error: out of memory [%ld bytes asked]\n", nbytes); \
+    fprintf(stdout, "EVSL Error: out of memory [%zu bytes asked]\n", nbytes); \
+    fprintf(stdout, "Malloc at FILE %s, LINE %d, nmem %zu\n", __FILE__, __LINE__, (size_t) nmem); \
     exit(-1); \
   } \
 }
@@ -32,7 +33,8 @@
   size_t nbytes = (nmem) * sizeof(type); \
   (base) = (type*) calloc((nmem), sizeof(type)); \
   if ((base) == NULL) { \
-    fprintf(stdout, "EVSL Error: out of memory [%ld bytes asked]\n", nbytes); \
+    fprintf(stdout, "EVSL Error: out of memory [%zu bytes asked]\n", nbytes); \
+    fprintf(stdout, "Calloc at FILE %s, LINE %d, nmem %zu\n", __FILE__, __LINE__, (size_t) nmem); \
     exit(-1); \
   } \
 }
@@ -41,7 +43,8 @@
   size_t nbytes = (nmem) * sizeof(type); \
   (base) = (type*) realloc((base), nbytes); \
   if ((base) == NULL) { \
-    fprintf(stdout, "EVSL Error: out of memory [%ld bytes asked]\n", nbytes); \
+    fprintf(stdout, "EVSL Error: out of memory [%zu bytes asked]\n", nbytes); \
+    fprintf(stdout, "Realloc at FILE %s, LINE %d, nmem %zu\n", __FILE__, __LINE__, (size_t) nmem); \
     exit(-1); \
   } \
 }

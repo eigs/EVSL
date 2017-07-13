@@ -16,6 +16,7 @@ void StatsPrint(FILE *fstats) {
   double t_svASigB = stats->t_svASigB;
   double t_reorth = stats->t_reorth;
   double t_eig = stats->t_eig;
+  double t_blas = stats->t_blas;
   size_t n_mvA = stats->n_mvA;
   size_t n_mvB = stats->n_mvB;
   size_t n_svB = stats->n_svB;
@@ -37,7 +38,8 @@ void StatsPrint(FILE *fstats) {
   if (n_svB)     { fprintf(fstats, "   Solve with B             :  %f (%8ld, avg %f)\n",  t_svB, n_svB, t_svB / n_svB); }
   if (n_svASigB) { fprintf(fstats, "   Solve with A-SIGMA*B     :  %f (%8ld, avg %f)\n",  t_svASigB, n_svASigB, t_svASigB / n_svASigB); }
   if (t_reorth)  { fprintf(fstats, "   Reorthogonalization      :  %f\n", t_reorth); }
-  if (t_eig)     { fprintf(fstats, "   Lapack eig               :  %f\n", t_eig); }
+  if (t_eig)     { fprintf(fstats, "   LAPACK eig               :  %f\n", t_eig); }
+  if (t_blas)    { fprintf(fstats, "   Other BLAS               :  %f\n", t_blas); }
   /* memory */
   /*
   if (alloced_total > 1e9) {
