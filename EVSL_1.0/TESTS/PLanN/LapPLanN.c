@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
-  double *vinit, *xdos, *ydos;
+  double *vinit;
   polparams pol;
 
   struct stat st = {0}; /* Make sure OUT directory exists */
@@ -93,8 +93,8 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
   /*-------------------- call landos to get the DOS for dividing the spectrum*/
   /*-------------------- define landos parameters */
-  Mdeg = 60;
-  nvec = 100;
+  Mdeg = 300;
+  nvec = 60;
   /*-------------------- start EVSL */
   EVSLStart();
   /*-------------------- set  matrix A */
@@ -102,8 +102,10 @@ int main(int argc, char *argv[]) {
   /*-------------------- call LanDos */
   mu = (double *) malloc((Mdeg+1)*sizeof(double));
   double t = cheblan_timer();
+#if 0
   //-------------------- number of points - determines fine-ness of slices
   npts = 100*nslices;
+  double *xdos, *ydos;
   xdos = (double *) malloc((npts)*sizeof(double));
   ydos = (double *) malloc((npts)*sizeof(double));
 
@@ -127,8 +129,24 @@ int main(int argc, char *argv[]) {
   spslicer2(xdos, ydos, nslices,  npts, sli);
   free (xdos);
   free (ydos);
-  //-------------------- slicing done 
+#else
+  ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
+  t = cheblan_timer() - t;
+  if (ierr) {
+    printf("kpmdos error %d\n", ierr);
+    return 1;
+  }
+  fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
+  fprintf(fstats, " estimated eig count in interval: %.15e \n",ecount);
+  fprintf(stdout, " estimated eig count in interval: %.15e \n",ecount);
+  //-------------------- call splicer to slice the spectrum
+  npts = 10 * ecount; 
+  sli = malloc((nslices+1)*sizeof(double));
 
+  fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",Mdeg, nvec, npts);
+  ierr = spslicer(sli, mu, Mdeg, xintv, nslices,  npts);
+#endif
+  //-------------------- slicing done 
   if (ierr) {
     printf("spslicer error %d\n", ierr);
     return 1;
