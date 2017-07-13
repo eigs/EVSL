@@ -51,8 +51,10 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
   double *alp, *bet, nbet, nalp, t, *V;
   int one = 1;
   int n, m, i, j;
+  size_t n_l;
 
   n = evsldata.n;
+  n_l = n;
   //-------------------- Variables that persist through iterations
   double *v, *y;  // v=Vector for current iteration; y Stores y values
   int *ind;
@@ -63,7 +65,8 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
                          quadrature */
   double *S, *ritzVal, *gamma2;
   // S will contain a matrix compressed into a single array.
-  Malloc(S, msteps * msteps, double);
+  size_t msteps_l = msteps;
+  Malloc(S, msteps_l * msteps_l, double);
   Malloc(gamma2, msteps, double);
   Malloc(ritzVal, msteps, double);
   const double lm = intv[2];
@@ -83,7 +86,7 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
 
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);
-  Malloc(V, (msteps + 1) * n, double);
+  Malloc(V, (msteps + 1) * n_l, double);
   //-------------------- Lanczos loop for this vector
   for (m = 0; m < nvec; m++) {
     randn_double(n, v);  // w = randn(size(A,1),1);
@@ -98,25 +101,25 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
     /*-------------------- main Lanczos loop */
     for (j = 0; j < msteps; j++) {
       // w = A*v
-      matvec_A(&V[j * n], &V[(j + 1) * n]);
+      matvec_A(&V[j * n_l], &V[(j + 1) * n_l]);
       // w = w - bet * vold
       if (j) {
         nbet = -bet[j - 1];
-        DAXPY(&n, &nbet, &V[(j - 1) * n], &one, &V[(j + 1) * n], &one);
+        DAXPY(&n, &nbet, &V[(j - 1) * n_l], &one, &V[(j + 1) * n_l], &one);
       }
       /*-------------------- alp = w' * v */
-      alp[j] = DDOT(&n, &V[(j + 1) * n], &one, &V[j * n], &one);
+      alp[j] = DDOT(&n, &V[(j + 1) * n_l], &one, &V[j * n_l], &one);
       wn += alp[j] * alp[j];
       //-------------------- w = w - alp * v
       nalp = -alp[j];
-      DAXPY(&n, &nalp, &V[j * n], &one, &V[(j + 1) * n], &one);
+      DAXPY(&n, &nalp, &V[j * n_l], &one, &V[(j + 1) * n_l], &one);
       //-------------------- full reortho
       for (i = 0; i <= j; i++) {
-        t = DDOT(&n, &V[(j + 1) * n], &one, &V[i * n], &one);
+        t = DDOT(&n, &V[(j + 1) * n_l], &one, &V[i * n_l], &one);
         double mt = -t;
-        DAXPY(&n, &mt, &V[i * n], &one, &V[(j + 1) * n], &one);
+        DAXPY(&n, &mt, &V[i * n_l], &one, &V[(j + 1) * n_l], &one);
       }
-      bet[j] = DDOT(&n, &V[(j + 1) * n], &one, &V[(j + 1) * n], &one);
+      bet[j] = DDOT(&n, &V[(j + 1) * n_l], &one, &V[(j + 1) * n_l], &one);
       if (bet[j] * (j + 1) < orthTol * wn) {
         fprintf(stdout, "lanbounds: lucky break, j=%d, beta=%e, break\n", j,
                 bet[j]);
@@ -127,20 +130,20 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
         wn += 2.0 * bet[j];
         bet[j] = sqrt(bet[j]);
         t = 1.0 / bet[j];
-        DSCAL(&n, &t, &V[(j + 1) * n], &one);
+        DSCAL(&n, &t, &V[(j + 1) * n_l], &one);
       } else {  // Otherwise generate a new vector and redo the previous
                 // calculations on it
         randn_double(n, v);  // w = randn(size(A,1),1);
         for (i = 0; i <= j; i++) {
-          t = DDOT(&n, &V[(j + 1) * n], &one, &V[i * n], &one);
+          t = DDOT(&n, &V[(j + 1) * n_l], &one, &V[i * n_l], &one);
           double mt = -t;
-          DAXPY(&n, &mt, &V[i * n], &one, &V[(j + 1) * n], &one);
+          DAXPY(&n, &mt, &V[i * n_l], &one, &V[(j + 1) * n_l], &one);
         }
-        bet[j] = DDOT(&n, &V[(j + 1) * n], &one, &V[(j + 1) * n], &one);
+        bet[j] = DDOT(&n, &V[(j + 1) * n_l], &one, &V[(j + 1) * n_l], &one);
         wn += 2.0 * bet[j];
         bet[j] = sqrt(bet[j]);
         t = 1.0 / bet[j];
-        DSCAL(&n, &t, &V[(j + 1) * n], &one);
+        DSCAL(&n, &t, &V[(j + 1) * n_l], &one);
         bet[j] = 0;
       }
     }
@@ -154,7 +157,7 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
     for (i = 0; i < msteps; i++) {
       /*-------------------- weights for Lanczos quadrature
        Gamma2(i) = elementwise square of top entry of i-th eginvector*/
-      gamma2[i] = S[i * msteps] * S[i * msteps];
+      gamma2[i] = S[i * msteps_l] * S[i * msteps_l];
     }
     /*-------------------- dos curve parameters
      Generate DOS from small gaussians centered at the ritz values */
@@ -164,7 +167,7 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
       int numPlaced = 0;
       /*-------------------- Place elements close to t in ind */
       for (j = 0; j < npts; j++) {
-        if (abs(xdos[j] - t) < width) ind[numPlaced++] = j;
+        if (fabs(xdos[j] - t) < width) ind[numPlaced++] = j;
       }
 
       for (j = 0; j < numPlaced; j++)

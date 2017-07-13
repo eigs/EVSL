@@ -76,9 +76,11 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   }
   /* size of the matrix */
   int n = evsldata.n;
+  size_t n_l = n;
   /*--------------------- adjust lanm and maxit */
   lanm = min(lanm, n);
   int lanm1=lanm+1;
+  size_t lanm1_l = lanm1;
   /*  if use full lanczos, should not do more than n iterations */
   if (lanm == n) {
     maxit = min(maxit, n);
@@ -135,49 +137,49 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   int it = 0;
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *T;
-  Malloc(V, n*lanm1, double);
+  Malloc(V, n_l*lanm1, double);
   /*-------------------- for gen eig prob, storage for Z = B * V */
   double *Z;
   if (ifGenEv) {
-    Malloc(Z, n*lanm1, double);
+    Malloc(Z, n_l*lanm1, double);
   } else {
     Z = V;
   }
   /*-------------------- T must be zeroed out initially */
-  Calloc(T, lanm1*lanm1, double);
+  Calloc(T, lanm1_l*lanm1_l, double);
   /*-------------------- Lam, Y: the converged (locked) Ritz values/vectors 
                          res: related residual norms */
   double *Y, *Lam, *res;
-  Malloc(Y, n*nev, double);
+  Malloc(Y, n_l*nev, double);
   Malloc(Lam, nev, double);
   Malloc(res, nev, double);
   double *BY = NULL;
   /*-------------------- for gen eig prob, storage for B*Y */
   if (ifGenEv) {
-    Malloc(BY, n*nev, double);
+    Malloc(BY, n_l*nev, double);
   }
   /*-------------------- lock =  number of locked vectors */
   int lock = 0;
   /*-------------------- trlen = dim. of thick restart set */
   int trlen = 0, prtrlen=-1;
   /*-------------------- Ritz values and vectors of p(A) */
-  double *Rval, *Rvec, *resi, *BRvec=NULL;
+  double *Rval, *Rvec, *resi, *BRvec = NULL;
   Malloc(Rval, lanm, double);
   Malloc(resi, lanm, double);
-  Malloc(Rvec, n*lanm, double);
+  Malloc(Rvec, n_l*lanm, double);
   if (ifGenEv) {
-    Malloc(BRvec, n*lanm, double);
+    Malloc(BRvec, n_l*lanm, double);
   }
   /*-------------------- Eigen vectors of T */
   double *EvecT;
-  Malloc(EvecT, lanm1*lanm1, double);
+  Malloc(EvecT, lanm1_l*lanm1_l, double);
   /*-------------------- s used by TR (the ``spike'' of 1st block in Tm)*/
   double *s;
   Malloc(s, lanm, double);
   /*-------------------- alloc some work space */
-  double *work, *vrand=NULL;
-  int work_size = ifGenEv ? 4*n : 3*n;
-  Malloc(work, work_size, double);  
+  double *work, *vrand = NULL;
+  size_t work_size = ifGenEv ? 4*n_l : 3*n_l;
+  Malloc(work, work_size, double);
 #if FILTER_VINIT
   /*------------------  Filter the initial vector*/
   ChebAv(pol, vinit, V, work);
@@ -206,7 +208,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     double wn = 0.0;
     int nwn = 0;
     /*  beta */
-    double beta = 0.0, r, res0/*, resB0*/;
+    double beta = 0.0, r, res0;
     /*  start with V(:,k) */
     int k = trlen > 0 ? trlen + 1 : 0;
     /* ! add a test if dimension exceeds (m+1) 
@@ -221,8 +223,8 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     if (trlen > 0) {
       int k1 = k-1;
       /*------------------ a quick reference to V(:,k) */
-      double *v = &V[k1*n];
-      double *z = &Z[k1*n];
+      double *v = &V[k1*n_l];
+      double *z = &Z[k1*n_l];
       /*------------------ next Lanczos vector */
       double *vnew = v + n;
       double *znew = z + n;
@@ -242,7 +244,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       /*-------------------- restart with 'trlen' Ritz values/vectors
                              T = diag(Rval(1:trlen)) */
       for (i=0; i<trlen; i++) {
-        T[i*lanm1+i] = Rval[i];
+        T[i*lanm1_l+i] = Rval[i];
         wn += fabs(Rval[i]);
       }
       /*--------------------- s(k) = V(:,k)'* znew */
@@ -252,11 +254,11 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       /*-------------------- expand T matrix to k-by-k, arrow-head shape
                              T = [T, s(1:k-1)] then T = [T; s(1:k)'] */
       for (i=0; i<k1; i++) {
-        T[trlen*lanm1+i] = s[i];
-        T[i*lanm1+trlen] = s[i];
+        T[trlen*lanm1_l+i] = s[i];
+        T[i*lanm1_l+trlen] = s[i];
         wn += 2.0 * fabs(s[i]);
       }
-      T[trlen*lanm1+trlen] = s[k1];
+      T[trlen*lanm1_l+trlen] = s[k1];
       wn += fabs(s[k1]);
       if (ifGenEv) {
         /*-------------------- vnew = B \ znew */
@@ -271,6 +273,9 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       nwn += 3*k;
       /*   beta ~ 0 */
       if (beta*nwn < orthTol*wn) {
+        if (do_print) {
+          fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", k, beta);
+        }    
 #if FILTER_VINIT
         /* filter random vector */
         rand_double(n, vrand);
@@ -282,13 +287,13 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           /* orthogonalize against locked vectors first, v = v - Y*(B*Y)'*v */
           CGS_DGKS2(n, lock, NGS_MAX, Y, BY, vnew, work);
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-          CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);          
+          CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
           matvec_B(vnew, znew);
           beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
-          DSCAL(&n, &ibeta, vnew, &one);        
+          DSCAL(&n, &ibeta, vnew, &one);
           DSCAL(&n, &ibeta, znew, &one);
-          beta = 0.0;            
+          beta = 0.0;
         } else {
           /* orthogonalize against locked vectors first, w = w - Y*Y'*w */
           CGS_DGKS(n, lock, NGS_MAX, Y, vnew, NULL, work);
@@ -308,8 +313,8 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         }
       }
       /*------------------- T(k+1,k) = beta; T(k,k+1) = beta; */
-      T[k1*lanm1+k] = beta;
-      T[k*lanm1+k1] = beta;
+      T[k1*lanm1_l+k] = beta;
+      T[k*lanm1_l+k1] = beta;
     } /* if (trlen > 0) */
     /*-------------------- Done with TR step. Rest of Lanczos step */
     /*-------------------- reset Ntest at each restart. */
@@ -318,15 +323,15 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     /*-------------------- regardless of trlen, *(k+1)* is the current 
      *                     number of Lanczos vectors in V */
     /*-------------------- pointer to the previous Lanczos vector */
-    double *zold = k > 0 ? Z+(k-1)*n : NULL;
+    double *zold = k > 0 ? Z+(k-1)*n_l : NULL;
     /*------------------------------------------------------*/
     /*------------------ Lanczos inner loop ----------------*/
     /*------------------------------------------------------*/
     while (k < lanm && it < maxit) {
       k++;
       /*---------------- a quick reference to V(:,k) */
-      double *v = &V[(k-1)*n];
-      double *z = &Z[(k-1)*n];
+      double *v = &V[(k-1)*n_l];
+      double *z = &Z[(k-1)*n_l];
       /*---------------- next Lanczos vector */
       double *vnew = v + n;
       double *znew = z + n;
@@ -352,7 +357,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       /*-------------------- alpha = znew'*v */
       double alpha = DDOT(&n, v, &one, znew, &one);
       /*-------------------- T(k,k) = alpha */
-      T[(k-1)*lanm1+(k-1)] = alpha;
+      T[(k-1)*lanm1_l+(k-1)] = alpha;
       wn += fabs(alpha);
       /*-------------------- znew = znew - alpha*z */
       double nalpha = -alpha;
@@ -361,7 +366,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);
-        /* vnew = B \ znew */
+        /*-------------------- vnew = B \ znew */
         solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
@@ -391,7 +396,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           /* orthogonalize against locked vectors first, w = w - Y*(B*Y)'*w */
           CGS_DGKS2(n, lock, NGS_MAX, Y, BY, vnew, work);
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-          CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);          
+          CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
           matvec_B(vnew, znew);
           beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
@@ -403,7 +408,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           CGS_DGKS(n, lock, NGS_MAX, Y, vnew, NULL, work);
           /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
           /*   beta = norm(w) */
-          CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);          
+          CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
           double ibeta = 1.0 / beta;
           DSCAL(&n, &ibeta, vnew, &one);
           beta = 0.0;
@@ -418,8 +423,8 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         }
       }
       /*-------------------- T(k,k+1) = T(k+1,k) = beta */
-      T[k*lanm1+(k-1)] = beta;
-      T[(k-1)*lanm1+k] = beta;
+      T[k*lanm1_l+(k-1)] = beta;
+      T[(k-1)*lanm1_l+k] = beta;
       /*---------------------- Restarting test */
       int k1 = k-trlen-Ntest;
       if ( ((k1>=0) && (k1 % cycle == 0)) || (k == lanm) || it == maxit) {
@@ -432,6 +437,8 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           break;
         }
 #if 1
+        /* we change the convergence test to be simple:
+         * we test if the sum and the number of the Ritz values that are >= bar no longer change */
         jl = 0;
         tr = 0.0;
         for (i=0; i<k; i++) {
@@ -508,11 +515,11 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       if (Rval[i] >= bar) {
         /* move good eigenvectors/vals to front */
         if (i != jl) {
-          DCOPY(&k, EvecT+i*lanm1, &one, EvecT+jl*lanm1, &one);
+          DCOPY(&k, EvecT+i*lanm1_l, &one, EvecT+jl*lanm1_l, &one);
           Rval[jl] = Rval[i];
           //resi[jl] = resi[i];
         }
-        resi[jl] = fabs(beta*EvecT[i*lanm1+(k-1)]);
+        resi[jl] = fabs(beta*EvecT[i*lanm1_l+(k-1)]);
         //printf("beta = %.15e, resi[%d] = %.15e\n", beta, i, resi[jl]);
         jl++;
       }
@@ -532,10 +539,10 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     prtrlen = trlen; 
     trlen = 0;
     for (i=0; i<jl; i++) {
-      double *y = Rvec + i*n;
+      double *y = Rvec + i*n_l;
       double *By = NULL;
       if (ifGenEv) {
-        By = BRvec + i*n;
+        By = BRvec + i*n_l;
       }
       double *w = work;
       double *w2 = w + n;
@@ -573,40 +580,33 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         if (ifGenEv) {
           /* w = w - t3*w2, w2 = B*y,  (w=A*y-t3*B*y) */
           DAXPY(&n, &nt3, w2, &one, w, &one);
-          /* res0 = 2-norm of w */
-          res0 = DNRM2(&n, w, &one);
-          /* res0 = B-norm of w */
-          //matvec_B(w, w2);
-          //resB0 = sqrt(DDOT(&n, w, &one, w2, &one));
         } else {
           /*-------------------- w = w - t3*y, (w=A*y-t3*y) */
           DAXPY(&n, &nt3, y, &one, w, &one);
-          /*-------------------- res0 = norm(w) */
-          res0 = DNRM2(&n, w, &one);
         }
+        /*-------------------- res0 = 2-norm of w */
+        res0 = DNRM2(&n, w, &one);
         /*-------------------- test res. of this Ritz pair against tol */
         /* r = resi[i];*/
         r = res0;
-        //fprintf(fstats, "!!! res norm: P: %.15e, 2: %.15e, B: %.15e\n", 
-        //        resi[i], r, resB0);
         if (r < tol) {
           //-------------------- check if need to realloc
-          if (lock >= nev){
+          if (lock >= nev) {
             nev += 1 + (int) (nev*nevInc);
             if (do_print) {
               fprintf(fstats, "-- More eigval found: realloc space for %d evs\n", nev);
             }
-            Realloc(Y, nev*n, double);
+            Realloc(Y, nev*n_l, double);
             if (ifGenEv) {
-              Realloc(BY, nev*n, double);
+              Realloc(BY, nev*n_l, double);
             }
             Realloc(Lam, nev, double);
             Realloc(res, nev, double);
           }
           /*--------------------   accept (t3, y) */
-          DCOPY(&n, y, &one, Y+lock*n, &one);
+          DCOPY(&n, y, &one, Y+lock*n_l, &one);
           if (ifGenEv) {
-            DCOPY(&n, By, &one, BY+lock*n, &one);
+            DCOPY(&n, By, &one, BY+lock*n_l, &one);
           }
           Lam[lock] = t3;
           res[lock] = res0;
@@ -614,13 +614,13 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         } else {
           /*-------------------- restart; move Ritz pair for TR to front */
           Rval[trlen] = Rval[i];
-          DCOPY(&n, y, &one, V+trlen*n, &one);
+          DCOPY(&n, y, &one, V+trlen*n_l, &one);
           if (ifGenEv) {
-            DCOPY(&n, By, &one, Z+trlen*n, &one);
+            DCOPY(&n, By, &one, Z+trlen*n_l, &one);
           }
           /* special vector for TR that is the bottom row of 
            * eigenvectors of Tm */
-          s[trlen] = beta * EvecT[i*lanm1+(k-1)];
+          s[trlen] = beta * EvecT[i*lanm1_l+(k-1)];
           trlen ++;
         }
       }
@@ -647,7 +647,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       }
       break;
     }
-    if (it == maxit){
+    if (it == maxit) {
       if (do_print) {
         fprintf(fstats, "--------------------------------------------------\n");
         fprintf(fstats, " --> Max its reached without convergence\n");
@@ -655,11 +655,11 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       break;
     }
     /*-------------------- prepare to restart.  First zero out all T */
-    memset(T, 0, lanm1*lanm1*sizeof(double));
+    memset(T, 0, lanm1_l*lanm1_l*sizeof(double));
     /*-------------------- move starting vector vector V(:,k+1);  V(:,trlen+1) = V(:,k+1) */
-    DCOPY(&n, V+k*n, &one, V+trlen*n, &one);
+    DCOPY(&n, V+k*n_l, &one, V+trlen*n_l, &one);
     if (ifGenEv) {
-      DCOPY(&n, Z+k*n, &one, Z+trlen*n, &one);
+      DCOPY(&n, Z+k*n_l, &one, Z+trlen*n_l, &one);
     }
   } /* outer loop (it) */
 
@@ -694,6 +694,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   tall = cheblan_timer() - tall;
   /*-------------------- print stat */
   evslstat.t_iter = tall;
+ 
   return 0;
 }
 

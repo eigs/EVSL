@@ -49,7 +49,9 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
 
   int i, j, k;
   int maxit = msteps, m;  /* Max number of iterations */
-  int n = evsldata.n; /* Number of elements in matrix */
+  /* size of the matrix */
+  int n = evsldata.n;
+  size_t n_l = n;
   const int ifGenEv = evsldata.ifGenEv;
  
   double *vinit;
@@ -62,8 +64,8 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
 
   /*-------------------- frequently used constants  */
   int one = 1;
-  /* size of the matrix */
   maxit = min(n, maxit);
+  size_t maxit_l = maxit;
   double *gamma2;
   Calloc(gamma2, maxit, double);
   /*-----------------------------------------------------------------------*
@@ -71,10 +73,10 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
    *-----------------------------------------------------------------------
    -------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
-  Calloc(V, n * (maxit + 1), double);
+  Calloc(V, n_l * (maxit + 1), double);
   if (ifGenEv) {
     /* storage for Z = B * V */
-    Calloc(Z, n * (maxit + 1), double);
+    Calloc(Z, n_l * (maxit + 1), double);
   } else {
     /* Z and V are the same */
     Z = V;
@@ -84,7 +86,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
   Malloc(eT, maxit, double);
   double *EvalT, *EvecT;
   Malloc(EvalT, maxit, double);          /* eigenvalues of tridia. matrix  T */
-  Malloc(EvecT, maxit * maxit, double);  /* Eigen vectors of T */
+  Malloc(EvecT, maxit_l * maxit_l, double);  /* Eigen vectors of T */
   const double lm = intv[2];
   const double lM = intv[3];
   const double aa = max(intv[0], intv[2]);
@@ -100,7 +102,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
   linspace(aa, bb, npts, xdos);  // xdos = linspace(lm,lM, npts);
   /*-------------------- u  is just a pointer. wk == work space */
   double *wk;
-  const int wk_size = ifGenEv ? 6 * n : 4 * n;
+  const size_t wk_size = ifGenEv ? 6 * n_l : 4 * n_l;
   Malloc(wk, wk_size, double);
   for (m = 0; m < nvec; m++) {
     randn_double(n, vinit);
@@ -135,11 +137,11 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
     /* ---------------- main Lanczos loop */
     for (k = 0; k < maxit; k++) {
       /*-------------------- quick reference to Z(:,k-1) when k>0*/
-      zold = k > 0 ? Z + (k - 1) * n : NULL;
+      zold = k > 0 ? Z + (k - 1) * n_l : NULL;
       /*-------------------- a quick reference to V(:,k) */
-      v = &V[k * n];
+      v = &V[k * n_l];
       /*-------------------- a quick reference to Z(:,k) */
-      z = &Z[k * n];
+      z = &Z[k * n_l];
       /*-------------------- next Lanczos vector V(:,k+1)*/
       vnew = v + n;
       /*-------------------- next Lanczos vector Z(:,k+1)*/
@@ -214,7 +216,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
       /*-------------------- weights for Lanczos quadrature */
       /* Gamma2(i) = elementwise square of top entry of i-th eginvector
        * */
-      gamma2[i] = EvecT[i * maxit] * EvecT[i * maxit];
+      gamma2[i] = EvecT[i * maxit_l] * EvecT[i * maxit_l];
     }
     /*-------------------- dos curve parameters
        Generate DOS from small gaussians centered at the ritz values */
@@ -224,7 +226,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
       int numPlaced = 0;
       /*-------------------- Place elements close to t in ind */
       for (j = 0; j < npts; j++) {
-        if (abs(xdos[j] - t) < width) ind[numPlaced++] = j;
+        if (fabs(xdos[j] - t) < width) ind[numPlaced++] = j;
       }
       for (j = 0; j < numPlaced; j++) {
         y[ind[j]] += gamma2[i] *
@@ -255,3 +257,4 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
 
   return 0;
 }
+

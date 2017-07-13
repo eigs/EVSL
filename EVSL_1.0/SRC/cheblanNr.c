@@ -73,7 +73,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   /*--------------------   frequently used constants  */
   char cN = 'N';   
   int one = 1;
-  double done=1.0,dzero=0.0;
+  double done = 1.0, dzero = 0.0;
   /*--------------------   Ntest = when to start testing convergence */
   int Ntest = 30; 
   /*--------------------   how often to test */
@@ -82,6 +82,13 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   int n = evsldata.n;
   /* max num of its */
   maxit = min(n, maxit);
+  /*-------------------- Caveat !!!: To prevent integer overflow, we save 
+   *                     another size_t version of n
+   *                     Note n itself may not overflow but something like 
+   *                     (maxit * n) is much more likely 
+   *                     When using size_t n, in all the multiplications 
+   *                     integer is promoted to size_t */
+  size_t n_l = n;
   /*-------------------- polynomial filter  approximates the delta
                          function centered at 'gamB'. 
                          bar: a bar value to threshold Ritz values of p(A) */
@@ -108,14 +115,15 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-----------------------------------------------------------------------* 
    * *Non-restarted* Lanczos iteration 
    *-----------------------------------------------------------------------*/
-  if (do_print) 
+  if (do_print) {
     fprintf(fstats, " ** Cheb-LanNr \n");
+  }
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
-  Malloc(V, n*(maxit+1), double);
+  Malloc(V, n_l*(maxit+1), double);
   if (ifGenEv) {
     /* storage for Z = B * V */
-    Malloc(Z, n*(maxit+1), double);
+    Malloc(Z, n_l*(maxit+1), double);
   } else {
     /* Z and V are the same */
     Z = V;
@@ -125,28 +133,28 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   Malloc(eT, maxit, double);
   double *Rvec, *Lam, *res, *EvalT, *EvecT;
   /*-------------------- Lam, Rvec: the converged (locked) Ritz values vecs*/
-  Malloc(Lam, maxit, double);         // holds computed Ritz values
-  Malloc(res, maxit, double);         // residual norms (w.r.t. ro(A))
+  Malloc(Lam,   maxit, double);       // holds computed Ritz values
+  Malloc(res,   maxit, double);       // residual norms (w.r.t. ro(A))
   Malloc(EvalT, maxit, double);       // eigenvalues of tridia. matrix  T
-  //Malloc(EvecT, maxit*maxit, double); // Eigen vectors of T
   /*-------------------- nev = current number of converged e-pairs 
                          nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
-  double *u, *wk, *w2, *vrand=NULL;
-  int wk_size = ifGenEv ? 4*n : 3*n;
+  double *u, *wk, *w2, *vrand = NULL;
+  size_t wk_size = ifGenEv ? 4*n_l : 3*n_l;
   Malloc(wk, wk_size, double);
   w2 = wk + n;
+  /*-------------------- copy initial vector to Z(:,1) */
 #if FILTER_VINIT
   /*-------------------- compute w = p[(A-cc)/dd] * v */
-  /*------------------  Filter the initial vector*/
+  /*------------------  Filter the initial vector */
   ChebAv(pol, vinit, V, wk);
   Malloc(vrand, n, double);
 #else
   /*-------------------- copy initial vector to V(:,1) */
   DCOPY(&n, vinit, &one, V, &one);
 #endif
-  /*--------------------  normalize it */
+  /*-------------------- normalize it */
   double t, nt, res0;
   if (ifGenEv) {
     /* B norm */
@@ -173,12 +181,12 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   int count = 0;
   // ---------------- main Lanczos loop 
   for (k=0; k<maxit; k++) {
-    /*-------------------- quick reference to Z(:,k-1) when k>0*/
-    zold = k > 0 ? Z+(k-1)*n : NULL;
+    /*-------------------- quick reference to Z(:,k-1) when k>0 */
+    zold = k > 0 ? Z+(k-1)*n_l : NULL;
     /*-------------------- a quick reference to V(:,k) */
-    v = &V[k*n];
+    v = &V[k*n_l];
     /*-------------------- a quick reference to Z(:,k) */
-    z = &Z[k*n];
+    z = &Z[k*n_l];
     /*-------------------- next Lanczos vector V(:,k+1)*/
     vnew = v + n;
     /*-------------------- next Lanczos vector Z(:,k+1)*/
@@ -208,8 +216,8 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       /*-------------------- beta = (vnew, znew)^{1/2} */
       beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
     } else {
-      /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
-      /*   beta = norm(vnew) */
+      /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+      /* beta = norm(vnew) */
       CGS_DGKS(n, k+1, NGS_MAX, V, vnew, &beta, wk);
     }
     wn += 2.0 * beta;
@@ -228,19 +236,24 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       rand_double(n, vnew);
 #endif
       if (ifGenEv) {
-      /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-        CGS_DGKS2(n, k+1, NGS_MAX, V, Z, vnew, wk);        
+        /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
+        CGS_DGKS2(n, k+1, NGS_MAX, V, Z, vnew, wk);
         matvec_B(vnew, znew);
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+	/*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
         DSCAL(&n, &t, vnew, &one);
+	/*-------------------- znew = znew / beta */
         DSCAL(&n, &t, znew, &one);
         beta = 0.0;
       } else {
+	/* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+	/* beta = norm(vnew) */
         CGS_DGKS(n, k+1, NGS_MAX, V, vnew, &beta, wk);
+	/*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
         DSCAL(&n, &t, vnew, &one);
-        beta = 0.0;      
+        beta = 0.0;
       }
     } else {
       /*-------------------- vnew = vnew / beta */
@@ -251,14 +264,14 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
         DSCAL(&n, &t, znew, &one);
       }
     }
-    /*-------------------- T(k+1,k) = alpha */
+    /*-------------------- T(k+1,k) = beta */
     eT[k] = beta;
     /*-------------------- Reallocate memory if maxit is smaller than # of eigs */    
     if (k == maxit-1) {
       maxit = 1 + (int) (maxit * 1.5);
-      Realloc(V, (maxit+1)*n, double);
+      Realloc(V, (maxit+1)*n_l, double);
       if (ifGenEv) {
-	Realloc(Z, (maxit+1)*n, double);
+	Realloc(Z, (maxit+1)*n_l, double);
       } else {
         /* make sure Z == V since V may be changed in the Realloc above */
         Z = V;
@@ -268,7 +281,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       Realloc(Lam,   maxit, double);
       Realloc(res,   maxit, double);    
       Realloc(EvalT, maxit, double);
-    }      
+    }
     /*---------------------- test for Ritz vectors */
     if ( (k < Ntest || (k-Ntest) % cycle != 0) ) {
       continue;
@@ -301,7 +314,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     }
 
     if (do_print) {
-      fprintf(fstats, "k %4d:   nconv %4d  tr1 %21.15e\n",
+      fprintf(fstats, "k %4d: nconv %4d  tr1 %21.15e\n",
               k, nconv,tr1);
     }
     /* -------------------- simple test because all eigenvalues
@@ -312,12 +325,13 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     tr0 = tr1;
   } /* end of the main loop */
 
-  /*-------------------- compute eig vals and vector */    
-  Malloc(EvecT, kdim*kdim, double); // Eigen vectors of T
+  /*-------------------- compute eig vals and vector */
+  size_t kdim_l = kdim; /* just in case if kdim is > 65K */
+  Malloc(EvecT, kdim_l*kdim_l, double); // Eigen vectors of T
   SymmTridEig(EvalT, EvecT, kdim, dT, eT);
   
   /*-------------------- done == compute Ritz vectors */
-  Malloc(Rvec, nconv*n, double);       // holds computed Ritz vectors
+  Malloc(Rvec, nconv*n_l, double);       // holds computed Ritz vectors
 
   nev = 0;
   for (i=0; i<count; i++) {
@@ -326,7 +340,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     if (flami < bar) {
       continue;
     }
-    y = &EvecT[i*kdim];
+    y = &EvecT[i*kdim_l];
     /*-------------------- make sure to normalize */
     /*
     t = DNRM2(&kdim, y, &one);
@@ -334,7 +348,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     DSCAL(&kdim, &t, y, &one);
     */
     /*-------------------- compute Ritz vectors */
-    u = &Rvec[nev*n];
+    u = &Rvec[nev*n_l];
     tt = cheblan_timer();
     DGEMV(&cN, &n, &kdim, &done, V, &n, y, &one, &dzero, u, &one);
     tm1 += cheblan_timer() - tt;
@@ -354,8 +368,9 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- scal u */
     t = 1.0 / t;
     DSCAL(&n, &t, u, &one);
+    /*-------------------- scal B*u */
     if (ifGenEv) {
-      /*------------------ w2 = B*u */
+      /*-------------------- w2 = B*u */
       DSCAL(&n, &t, w2, &one);
     }
     /*-------------------- w = A*u */
@@ -372,14 +387,12 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     if (ifGenEv) {
       /*-------------------- w = w - t*B*u */
       DAXPY(&n, &nt, w2, &one, wk, &one);
-      /*-------------------- res0 = norm(w) */
-      res0 = DNRM2(&n, wk, &one); 
     } else {
       /*-------------------- w = w - t*u */
       DAXPY(&n, &nt, u, &one, wk, &one);
-      /*-------------------- res0 = norm(w) */
-      res0 = DNRM2(&n, wk, &one); 
     }
+    /*-------------------- res0 = 2-norm(wk) */
+    res0 = DNRM2(&n, wk, &one); 
     /*--------------------   accept (t, y) */
     if (res0 < tol) {
       Lam[nev] = t;
@@ -408,11 +421,10 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   }
   /*-------------------- record stats */
   tall = cheblan_timer() - tall;
-  
+
   evslstat.t_iter = tall;
   evslstat.t_blas = tm1;
 
   return 0;
 }
-
 

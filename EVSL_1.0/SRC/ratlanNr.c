@@ -54,12 +54,12 @@
 int RatLanNr(double *intv, int maxit, double tol, double *vinit, 
              ratparams *rat, int *nevOut, double **lamo, double **Wo, 
              double **reso, FILE *fstats) {
-  const int ifGenEv = evsldata.ifGenEv;
-  /*-------------------- for stats */
-  double tr0, tr1, tall;
-  double *y, flami; 
   //-------------------- to report timings/
+  double tall, tm1 = 0.0, tt;
   tall = cheblan_timer();
+  const int ifGenEv = evsldata.ifGenEv;
+  double tr0, tr1;
+  double *y, flami; 
   int i, k, kdim;
   // handle case where fstats is NULL. Then no output. Needed for openMP.
   int do_print = 1;   
@@ -69,14 +69,22 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   /*--------------------   frequently used constants  */
   char cN = 'N';   
   int one = 1;
-  double done=1.0,dzero=0.0;
+  double done = 1.0, dzero = 0.0;
   /*--------------------   Ntest = when to start testing convergence */
   int Ntest = 30; 
   /*--------------------   how often to test */
   int cycle = 20; 
   /* size of the matrix */
   int n = evsldata.n;
+  /* max num of its */
   maxit = min(n, maxit);
+  /*-------------------- Caveat !!!: To prevent integer overflow, we save 
+   *                     another size_t version of n
+   *                     Note n itself may not overflow but something like 
+   *                     (maxit * n) is much more likely 
+   *                     When using size_t n, in all the multiplications 
+   *                     integer is promoted to size_t */
+  size_t n_l = n;
   /*-------------------- Rational filter with pole at ((a+b)/2,(b-a)/2) with 
     multiplicity pow, bar value equals 1/2        */
   /*-------------------- a, b, used for testing only at end */
@@ -97,10 +105,10 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   }
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
-  Malloc(V, n*(maxit+1), double);
+  Malloc(V, n_l*(maxit+1), double);
   if (ifGenEv) {
     /* storage for Z = B * V */
-    Malloc(Z, n*(maxit+1), double);
+    Malloc(Z, n_l*(maxit+1), double);
   } else {
     /* Z and V are the same */
     Z = V;
@@ -110,16 +118,15 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   Malloc(eT, maxit, double);
   double *Rvec, *Lam, *res, *EvalT, *EvecT;
   /*-------------------- Lam, Rvec: the converged (locked) Ritz values vecs*/
-  Malloc(Lam, maxit, double);         // holds computed Ritz values
-  Malloc(res, maxit, double);         // residual norms (w.r.t. ro(A))
+  Malloc(Lam,   maxit, double);       // holds computed Ritz values
+  Malloc(res,   maxit, double);       // residual norms (w.r.t. ro(A))
   Malloc(EvalT, maxit, double);       // eigenvalues of tridia. matrix  T
-  //Malloc(EvecT, maxit*maxit, double); // Eigen vectors of T
   /*-------------------- nev = current number of converged e-pairs 
-    nconv = converged eigenpairs from looking at Tk alone */
+                         nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
   double *u, *wk, *w2, *vrand = NULL;
-  int wk_size = ifGenEv ? 6*n : 4*n;
+  size_t wk_size = ifGenEv ? 6*n_l : 4*n_l;
   Malloc(wk, wk_size, double);
   w2 = wk + n;
   /*-------------------- copy initial vector to Z(:,1) */
@@ -132,8 +139,8 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   }
 #else
   DCOPY(&n, vinit, &one, Z, &one);
-#endif  
-  /*--------------------  normalize it */
+#endif
+  /*-------------------- normalize it */
   double t, nt, res0;
   if (ifGenEv) {
     /* B norm */
@@ -160,12 +167,12 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   int count = 0;
   // ---------------- main Lanczos loop 
   for (k=0; k<maxit; k++) {
-    /*-------------------- quick reference to Z(:,k-1) when k>0*/
-    zold = k > 0 ? Z+(k-1)*n : NULL;
+    /*-------------------- quick reference to Z(:,k-1) when k>0 */
+    zold = k > 0 ? Z+(k-1)*n_l : NULL;
     /*-------------------- a quick reference to V(:,k) */
-    v = &V[k*n];
+    v = &V[k*n_l];
     /*-------------------- a quick reference to Z(:,k) */
-    z = &Z[k*n];
+    z = &Z[k*n_l];
     /*-------------------- next Lanczos vector V(:,k+1)*/
     vnew = v + n;
     /*-------------------- next Lanczos vector Z(:,k+1)*/
@@ -202,18 +209,18 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     wn += 2.0 * beta;
     nwn += 3;
     /*-------------------- lucky breakdown test */
-    if (beta*nwn< orthTol*wn) {
+    if (beta*nwn < orthTol*wn) {
       if (do_print) {
         fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", k, beta);
       }
-# if FILTER_VINIT      
+#if FILTER_VINIT
       /*------------------ generate a new init vector in znew */
       rand_double(n, vrand);
       /* Filter the initial vector */
       RatFiltApply(n, rat, vrand, znew, wk);
-#else 
+#else
       rand_double(n, znew);
-#endif            
+#endif
       if (ifGenEv) {
 	/* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k+1, NGS_MAX, Z, V, znew, wk);
@@ -240,18 +247,18 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       t = 1.0 / beta;
       DSCAL(&n, &t, vnew, &one);
       if (ifGenEv) {
-	/*-------------------- znew = znew / beta */
-	DSCAL(&n, &t, znew, &one);
-      }    
+        /*-------------------- znew = znew / beta */
+        DSCAL(&n, &t, znew, &one);
+      }
     }
     /*-------------------- T(k+1,k) = beta */
     eT[k] = beta;
     /*-------------------- Reallocate memory if maxit is smaller than # of eigs */    
     if (k == maxit-1) {
       maxit = 1 + (int) (maxit * 1.5);
-      Realloc(V, (maxit+1)*n, double);
+      Realloc(V, (maxit+1)*n_l, double);
       if (ifGenEv) {
-	Realloc(Z, (maxit+1)*n, double);
+	Realloc(Z, (maxit+1)*n_l, double);
       } else {
         /* make sure Z == V since V may be changed in the Realloc above */
         Z = V;
@@ -267,7 +274,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       continue;
     }
     /*---------------------- diagonalize  T(1:k,1:k)       
-      vals in EvalT, vecs in EvecT  */
+                             vals in EvalT, vecs in EvecT  */
     kdim = k+1;
 #if 1
     /*-------------------- THIS uses dsetv, do not need eig vector */    
@@ -298,19 +305,20 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
               k, nconv,tr1);
     }
     /* -------------------- simple test because all eigenvalues
-       are between gamB and ~1. */
+                            are between gamB and ~1. */
     if ( (fabs(tr1-tr0) < 1e-10) || (fabs(tr1)+fabs(tr0)<1e-10) ) {
       break;
     }
     tr0 = tr1;
   } /* end of the main loop */
 
-  /*-------------------- compute eig vals and vector */    
-  Malloc(EvecT, kdim*kdim, double); // Eigen vectors of T
+  /*-------------------- compute eig vals and vector */
+  size_t kdim_l = kdim; /* just in case if kdim is > 65K */
+  Malloc(EvecT, kdim_l*kdim_l, double); // Eigen vectors of T
   SymmTridEig(EvalT, EvecT, kdim, dT, eT);
   
   /*-------------------- done == compute Ritz vectors */
-  Malloc(Rvec, nconv*n, double);       // holds computed Ritz vectors
+  Malloc(Rvec, nconv*n_l, double);       // holds computed Ritz vectors
 
   nev = 0;
   for (i=0; i<count; i++) {
@@ -319,17 +327,19 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     if (fabs(flami) < bar) {
       continue;
     }
-    y = &EvecT[i*kdim];
+    y = &EvecT[i*kdim_l];
     /*-------------------- make sure to normalize */
     /*
-      t = DNRM2(&kdim, y, &one);
-      t = 1.0 / t;
-      DSCAL(&kdim, &t, y, &one);
+    t = DNRM2(&kdim, y, &one);
+    t = 1.0 / t;
+    DSCAL(&kdim, &t, y, &one);
     */
     /*-------------------- compute Ritz vectors 
      *                     NOTE: use Z for gen e.v */
-    u = &Rvec[nev*n];
+    u = &Rvec[nev*n_l];
+    tt = cheblan_timer();
     DGEMV(&cN, &n, &kdim, &done, Z, &n, y, &one, &dzero, u, &one);
+    tm1 += cheblan_timer() - tt;
     /*-------------------- normalize u */
     if (ifGenEv) {
       /* B-norm, w2 = B*u */
@@ -354,7 +364,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- w = A*u */
     matvec_A(u, wk);
     /*-------------------- Ritz val: t = (u'*w)/(u'*u)
-      t = (u'*w)/(u'*B*u) */
+                                     t = (u'*w)/(u'*B*u) */
     t = DDOT(&n, wk, &one, u, &one);
     /*-------------------- if lambda (==t) is in [a,b] */
     if (t < aa - DBL_EPSILON || t > bb + DBL_EPSILON) {
@@ -385,7 +395,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       Lam[nev] = t;
       res[nev] = res0;
       nev++;
-    }    
+    }
   }
 
   /*-------------------- Done.  output : */
@@ -408,8 +418,10 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   }
   /*-------------------- record stats */
   tall = cheblan_timer() - tall;
+
   evslstat.t_iter = tall;
-  
+  evslstat.t_blas = tm1;
+
   return 0;
 }
 

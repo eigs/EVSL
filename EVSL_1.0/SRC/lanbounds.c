@@ -22,15 +22,18 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   const int ifGenEv = evsldata.ifGenEv;
   double *alp, *bet, nbet, nalp, t, *V, *Z;
   int j, one=1, n;
+  size_t n_l;
 
   n = evsldata.n;
+  n_l = n;
+  
   msteps = min(n, msteps);
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);
-  Malloc(V, (msteps+1)*n, double);
+  Malloc(V, (msteps+1)*n_l, double);
   if (ifGenEv) {
     /* storage for Z = B * V */
-    Malloc(Z, (msteps+1)*n, double);
+    Malloc(Z, (msteps+1)*n_l, double);
   } else {
     /* Z and V are the same */
     Z = V;
@@ -55,37 +58,37 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
     int i;
     /* znew = A*v */
     /* vnew = A*v */
-    matvec_A(&V[j*n], &Z[(j+1)*n]);
+    matvec_A(&V[j*n_l], &Z[(j+1)*n_l]);
     /* znew = znew - bet * zold */
     /* vnew = vnew - bet * vold */
     if (j) {
       nbet = -bet[j-1];
-      DAXPY(&n, &nbet, &Z[(j-1)*n], &one, &Z[(j+1)*n], &one);
+      DAXPY(&n, &nbet, &Z[(j-1)*n_l], &one, &Z[(j+1)*n_l], &one);
     }
     /* alpha */
     /* alp = znew' * v */
     /* alp = vnew' * v */
-    alp[j] = DDOT(&n, &Z[(j+1)*n], &one, &V[j*n], &one);
+    alp[j] = DDOT(&n, &Z[(j+1)*n_l], &one, &V[j*n_l], &one);
     wn += alp[j] * alp[j];
     /* znew = znew - alp * z */
     /* vnew = vnew - alp * v */
     nalp = -alp[j];
-    DAXPY(&n, &nalp, &Z[j*n], &one, &Z[(j+1)*n], &one);
+    DAXPY(&n, &nalp, &Z[j*n_l], &one, &Z[(j+1)*n_l], &one);
     /* full reortho for znew */
     for (i=0; i<=j; i++) {
       /* (znew, v) */
       /* (vnew, v) */
-      t = DDOT(&n, &Z[(j+1)*n], &one, &V[i*n], &one);
+      t = DDOT(&n, &Z[(j+1)*n_l], &one, &V[i*n_l], &one);
       double mt = -t;
-      DAXPY(&n, &mt, &Z[i*n], &one, &Z[(j+1)*n], &one);
+      DAXPY(&n, &mt, &Z[i*n_l], &one, &Z[(j+1)*n_l], &one);
     }
     if (ifGenEv) {
       /* vnew = B \ znew */
-      solve_B(&Z[(j+1)*n], &V[(j+1)*n]);
+      solve_B(&Z[(j+1)*n_l], &V[(j+1)*n_l]);
     }
     /* beta = (vnew, znew) */
     /* beta = (vnew, vnew) */
-    bet[j] = DDOT(&n, &V[(j+1)*n], &one, &Z[(j+1)*n], &one);
+    bet[j] = DDOT(&n, &V[(j+1)*n_l], &one, &Z[(j+1)*n_l], &one);
     if (bet[j]*(j+1) < orthTol*wn) {
       fprintf(stdout, "lanbounds: lucky break, j=%d, beta=%e, break\n", j, bet[j]);
       msteps = j + 1;
@@ -95,22 +98,23 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
     bet[j] = sqrt(bet[j]);
     t = 1.0 / bet[j];
     /* vnew = vnew / bet */
-    DSCAL(&n, &t, &V[(j+1)*n], &one);
+    DSCAL(&n, &t, &V[(j+1)*n_l], &one);
     if (ifGenEv) {
       /* znew = znew / bet */
-      DSCAL(&n, &t, &Z[(j+1)*n], &one);
+      DSCAL(&n, &t, &Z[(j+1)*n_l], &one);
     }
   } /* main loop */
 
   double bottomBeta = bet[msteps-1];
   double *S, *ritzVal;
-  Malloc(S, msteps*msteps, double);
+  size_t msteps_l = msteps;
+  Malloc(S, msteps_l*msteps_l, double);
   Malloc(ritzVal, msteps, double);
   /*-------------------- diagonalize tridiagonal matrix */
   SymmTridEig(ritzVal, S, msteps, alp, bet);
 #if 1
   *lmin = ritzVal[0]        - fabs(bottomBeta * S[msteps-1]);
-  *lmax = ritzVal[msteps-1] + fabs(bottomBeta * S[msteps*msteps-1]);
+  *lmax = ritzVal[msteps-1] + fabs(bottomBeta * S[msteps_l*msteps_l-1]);
 #else
   /*-------------------- 'safe' bounds */
   double amin, amax,  x;
