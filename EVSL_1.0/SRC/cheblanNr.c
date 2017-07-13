@@ -266,6 +266,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     }
     /*-------------------- T(k+1,k) = beta */
     eT[k] = beta;
+#if 0
     /*-------------------- Reallocate memory if maxit is smaller than # of eigs */    
     if (k == maxit-1) {
       maxit = 1 + (int) (maxit * 1.5);
@@ -282,8 +283,9 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       Realloc(res,   maxit, double);    
       Realloc(EvalT, maxit, double);
     }
+#endif
     /*---------------------- test for Ritz vectors */
-    if ( (k < Ntest || (k-Ntest) % cycle != 0) ) {
+    if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 ) {
       continue;
     }
     /*---------------------- diagonalize  T(1:k,1:k)       
@@ -324,6 +326,10 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     }
     tr0 = tr1;
   } /* end of the main loop */
+
+  if (k >= maxit) {
+     fprintf(fstats, "The max number of iterations [%d] has been reached. The eigenvalues computed may not have converged\n", maxit);
+  }
 
   /*-------------------- compute eig vals and vector */
   size_t kdim_l = kdim; /* just in case if kdim is > 65K */
@@ -370,7 +376,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     DSCAL(&n, &t, u, &one);
     /*-------------------- scal B*u */
     if (ifGenEv) {
-      /*-------------------- w2 = B*u */
+      /*------------------ w2 = B*u */
       DSCAL(&n, &t, w2, &one);
     }
     /*-------------------- w = A*u */
