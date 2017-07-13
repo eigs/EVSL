@@ -42,7 +42,7 @@
 #define Realloc(base, nmem, type) {\
   size_t nbytes = (nmem) * sizeof(type); \
   (base) = (type*) realloc((base), nbytes); \
-  if ((base) == NULL) { \
+  if ((base) == NULL && nbytes > 0) { \
     fprintf(stdout, "EVSL Error: out of memory [%zu bytes asked]\n", nbytes); \
     fprintf(stdout, "Realloc at FILE %s, LINE %d, nmem %zu\n", __FILE__, __LINE__, (size_t) nmem); \
     exit(-1); \
