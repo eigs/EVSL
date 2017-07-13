@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+
 #include <string.h>
 #include "def.h"
 #include "struct.h"
@@ -302,7 +301,6 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
    * and also can guarantee C has sorted rows 
    * map is the mapping from nnzB to nnzC */
   matadd(1.0, 0.0, A, B, &C, NULL, map);
-
   nnzC = C.ia[nrow];
   /* malloc and copy to SuiteSparse matrix */
   Malloc(Cp, nrow+1, SuiteSparse_long);
@@ -331,7 +329,6 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
       Cx[p] -= (zkr - zkr1) * v;
       Cz[p] = -zkc * v;
     }
-
     /* only do symbolic factorization once */
     if (i==0) {
       /* Symbolic Factorization */
@@ -343,7 +340,10 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
       }
     }
     /* Numerical Factorization */
-    status = umfpack_zl_numeric(Cp, Ci, Cx, Cz, Symbolic, &Numeric, NULL, NULL);
+    double Control[UMFPACK_CONTROL], Info[UMFPACK_INFO];
+    Control[UMFPACK_PRL] = 2;
+    status = umfpack_zl_numeric(Cp, Ci, Cx, Cz, Symbolic, &Numeric, Control, Info);
+    umfpack_zl_report_info(Control, Info);
     if (status < 0) {
       printf("umfpack_zl_numeric failed and exit, %d\n", status);
       return 1;
