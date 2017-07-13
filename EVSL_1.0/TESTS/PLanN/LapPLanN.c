@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   }
   /* print output on screen */
   flg = findarg("stdout", NA, NULL, argc, argv);
-  if (flag) {
+  if (flg) {
      fstats = stdout;
   }
   findarg("nx", INT, &nx, argc, argv);
