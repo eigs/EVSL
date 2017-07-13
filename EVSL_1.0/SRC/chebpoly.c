@@ -16,7 +16,7 @@
  * @brief set default values for polparams struct.
  **/
 void set_pol_def(polparams *pol){
-  pol->max_deg = 1000;     // max degree allowed
+  pol->max_deg = 10000;     // max degree allowed
   pol->min_deg = 2;        // min allowed degree
   pol->damping = 2;        // damping. 0 = no damping, 1 = Jackson, 2 = Lanczos
   pol->thresh_ext = 0.50;  // threshold for accepting polynomial for end intervals 
