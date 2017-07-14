@@ -448,13 +448,13 @@ void free_rat(ratparams *rat) {
 void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
   double tt = evsl_timer();
   const int ifGenEv = evsldata.ifGenEv;
-  int ii, jj, kk, k=0, kf;
+  int jj, kk, k=0, kf;
   int *mulp = rat->mulp;
   int num = rat->num;
   complex double *omega = rat->omega;
-  const double dtwo = 2.0;
-  const double done = 1.0;
-  const int one = 1;
+  double dtwo = 2.0;
+  double done = 1.0;
+  int one = 1;
   
   double *xr, *xz, *bz, *br, *yr=NULL, *yz=NULL;
   double zkr, zkc;

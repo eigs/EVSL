@@ -509,15 +509,15 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
   double cc = pol->cc;
   double ncc = -cc;
   int m = pol->deg;
-  const int one = 1;
-  const double dmone = -1.0;
+  int one = 1;
+  double dmone = -1.0;
   /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   double *vk   = w;
   double *vkp1 = w+n;
   double *vkm1 = vkp1+n;
   double *w2 = ifGenEv ? vkm1 + n : NULL;
   /*-------------------- */
-  int k, i;
+  int k;
   double t, s, *tmp, t1= 1.0 / dd, t2 = 2.0 / dd; 
   /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
   /* we have to do this copy, because we don't want to alter the 
