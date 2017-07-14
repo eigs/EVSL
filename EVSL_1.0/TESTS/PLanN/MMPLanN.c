@@ -133,7 +133,7 @@ int main () {
     if (TRIV_SLICER) {
       linspace(a, b, n_intv+1,  sli);
     } else {
-      double t = cheblan_timer();
+      double t = evsl_timer();
       npts = 100*n_intv;
       xdos = (double *) malloc((npts)*sizeof(double));
       ydos = (double *) malloc((npts)*sizeof(double));
@@ -141,7 +141,7 @@ int main () {
       //fprintf(stdout," %d %d \n",npts,n_intv);
       LanDos(nvec, Mdeg, npts, xdos, ydos, &ecount, xintv);
       //fprintf(stdout," %f \n",ecount);
-      t = cheblan_timer() - t;
+      t = evsl_timer() - t;
       
       fprintf(fstats, " Time to build DOS (Landos) was : %10.2f  \n",t);
       fprintf(fstats, " estimated eig count in interval: %.15e \n",ecount);

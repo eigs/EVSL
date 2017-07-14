@@ -112,9 +112,9 @@ int main(int argc, char *argv[]) {
   SetAMatrix(&Acsr);
   //-------------------- call kpmdos 
   mu = malloc((Mdeg+1)*sizeof(double));
-  double t = cheblan_timer();
+  double t = evsl_timer();
   ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
-  t = cheblan_timer() - t;
+  t = evsl_timer() - t;
   if (ierr) {
     printf("kpmdos error %d\n", ierr);
     return 1;

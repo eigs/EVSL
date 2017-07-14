@@ -34,6 +34,9 @@ int EVSLStart() {
   evsldata.ds = NULL;
 
   StatsReset();
+
+  /* do a dummy timer call to improve accuracy of timing */
+  evsl_timer();
   
   return 0;
 }

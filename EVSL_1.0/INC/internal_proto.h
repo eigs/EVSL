@@ -112,9 +112,9 @@ void vec_iperm(int n, int *p, double *x, double *y);
 */
 static inline void matvec_A(double *x, double *y) {
   CHKERR(!evsldata.Amv);
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   evsldata.Amv->func(x, y, evsldata.Amv->data);
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_mvA += tme - tms;
   evslstat.n_mvA ++;
 }
@@ -125,9 +125,9 @@ static inline void matvec_A(double *x, double *y) {
 */
 static inline void matvec_B(double *x, double *y) {
   CHKERR(!evsldata.Bmv);
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   evsldata.Bmv->func(x, y, evsldata.Bmv->data);
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_mvB += tme - tms;
   evslstat.n_mvB ++;
 }
@@ -138,9 +138,9 @@ static inline void matvec_B(double *x, double *y) {
 */
 static inline void solve_B(double *x, double *y) {
   CHKERR(!evsldata.Bsol);
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   evsldata.Bsol->func(x, y, evsldata.Bsol->data);
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_svB += tme - tms;
   evslstat.n_svB ++;
 }
@@ -151,9 +151,9 @@ static inline void solve_B(double *x, double *y) {
 */
 static inline void solve_LT(double *x, double *y) {
   CHKERR(!evsldata.LTsol);
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   evsldata.LTsol->func(x, y, evsldata.LTsol->data);
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_svLT += tme - tms;
   evslstat.n_svLT ++;
 }
@@ -165,9 +165,9 @@ static inline void solve_LT(double *x, double *y) {
 static inline void solve_ASigB(EVSLASIGMABSol *sol, int n,
                                double *br, double *bz,
                                double *xr, double *xz) {
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   (sol->func)(n, br, bz, xr, xz, sol->data);
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_svASigB+= tme - tms;
   evslstat.n_svASigB ++;
 }

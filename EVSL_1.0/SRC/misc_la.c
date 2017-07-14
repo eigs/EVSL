@@ -35,7 +35,7 @@
 
 int SymmTridEig(double *eigVal, double *eigVec, int n, 
                 const double *diag, const double *sdiag) {
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   // compute eigenvalues and eigenvectors or eigvalues only
   char jobz = eigVec ? 'V' : 'N'; 
   int nn = n;
@@ -65,7 +65,7 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
     save_vec(n-1, sdiag, "bet");
     exit(0);
   }
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
   // return info
   return info;
@@ -92,7 +92,7 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
  * ----------------------------------------------------------------------- */
 int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
                  int *nevO, const double *diag, const double *sdiag) {
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   char jobz = 'V';  // compute eigenvalues and eigenvectors
   char range = 'V'; // compute eigenvalues in an interval
 
@@ -143,7 +143,7 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   free(iwork);
   free(isuppz);
   
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
   //
   return info;
@@ -154,7 +154,7 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
  *     @brief interface to   LAPACK SYMMETRIC EIGEN-SOLVER 
  *- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) {
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   /* compute eigenvalues/vectors of A that n x n, symmetric
    * eigenvalues saved in lam: the eigenvalues in ascending order
    * eigenvectors saved in Q */
@@ -185,7 +185,7 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
     exit(0);
   }
   free(work);
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
 }
 
@@ -193,7 +193,7 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
  * @brief Classical GS reortho with Daniel, Gragg, Kaufman, Stewart test
  **/
 void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, double *w) {
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   double eta = 1.0 / sqrt(2.0);
   int i, one=1;
 #if USE_DGEMV
@@ -224,7 +224,7 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
   if (nrmv) {
     *nrmv = new_nrm;
   }
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_reorth += tme - tms;
 }
 
@@ -234,7 +234,7 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
  **/
 void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q, 
                double *v, double *w) {
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   int i, one=1;
 #if USE_DGEMV
   char cT = 'T', cN = 'N';
@@ -252,7 +252,7 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
     }
 #endif
   }
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_reorth += tme - tms;
 }
 

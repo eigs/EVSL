@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
   SetAMatrix(&Acsr);
   /*-------------------- call LanDos */
   mu = (double *) malloc((Mdeg+1)*sizeof(double));
-  double t = cheblan_timer();
+  double t = evsl_timer();
 #if 0
   //-------------------- number of points - determines fine-ness of slices
   npts = 100*nslices;
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
   //for (j=0; j<npts;j++) {
   //  printf(" %10.4f %10.4f \n",xdos[j],ydos[j]);}
   
-  t = cheblan_timer() - t;
+  t = evsl_timer() - t;
 
   fprintf(fstats, " Time to build DOS (Landos) was : %10.2f  \n",t);
   fprintf(fstats, " estimated eig count in interval: %.15e \n",ecount);
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
   free (ydos);
 #else
   ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
-  t = cheblan_timer() - t;
+  t = evsl_timer() - t;
   if (ierr) {
     printf("kpmdos error %d\n", ierr);
     return 1;

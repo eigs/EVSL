@@ -67,7 +67,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   double tall=0.0;
   //double tolP = tol;
   double tr, last_tr;
-  tall = cheblan_timer();
+  tall = evsl_timer();
   int do_print = 1;
   /* handle case where fstats is NULL. Then no output. Needed for openMP. */
   if (fstats == NULL) {
@@ -695,7 +695,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     free(Bvec);
   }
   /*-------------------- record stats */
-  tall = cheblan_timer() - tall;
+  tall = evsl_timer() - tall;
   /*-------------------- print stat */
   evslstat.t_iter = tall;
  

@@ -232,10 +232,10 @@ int main(int argc, char *argv[]) {
     double *xdos = (double *)malloc(npts * sizeof(double));
     double *ydos = (double *)malloc(npts * sizeof(double));
 
-    double t0 = cheblan_timer();
+    double t0 = evsl_timer();
     /* ------------------- Calculate the computed DOS */
     ret = LanDosG(nvec, msteps, npts, xdos, ydos, &neig, intv);
-    double t1 = cheblan_timer();
+    double t1 = evsl_timer();
     fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1 - t0);
 
     /* -------------------- Calculate the exact DOS */

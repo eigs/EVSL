@@ -133,7 +133,7 @@ void spslicer2(double *xi, double *yi, int n_int, int npts, double *sli);
 
 /*- - - - - - - - - timing.c */
 //
-double cheblan_timer();
+double evsl_timer();
 
 /*- - - - - - - - - vect.c */
 // generate a random vector

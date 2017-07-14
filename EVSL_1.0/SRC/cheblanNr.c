@@ -60,7 +60,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
               double **reso, FILE *fstats) {
   //-------------------- to report timings/
   double tall, tm1 = 0.0, tt;
-  tall = cheblan_timer();
+  tall = evsl_timer();
   const int ifGenEv = evsldata.ifGenEv;
   double tr0, tr1;
   double *y, flami; 
@@ -336,6 +336,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   Malloc(EvecT, kdim_l*kdim_l, double); // Eigen vectors of T
   SymmTridEig(EvalT, EvecT, kdim, dT, eT);
   
+  tt = evsl_timer();
   /*-------------------- done == compute Ritz vectors */
   Malloc(Rvec, nconv*n_l, double);       // holds computed Ritz vectors
 
@@ -355,9 +356,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     */
     /*-------------------- compute Ritz vectors */
     u = &Rvec[nev*n_l];
-    tt = cheblan_timer();
     DGEMV(&cN, &n, &kdim, &done, V, &n, y, &one, &dzero, u, &one);
-    tm1 += cheblan_timer() - tt;
     /*-------------------- normalize u */
     if (ifGenEv) {
       /* B-norm, w2 = B*u */
@@ -406,6 +405,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       nev++;
     }
   }
+  tm1 = evsl_timer() - tt;
 
   /*-------------------- Done.  output : */
   *nevOut = nev;
@@ -426,10 +426,10 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     free(Z);
   }
   /*-------------------- record stats */
-  tall = cheblan_timer() - tall;
+  tall = evsl_timer() - tall;
 
   evslstat.t_iter = tall;
-  evslstat.t_blas = tm1;
+  evslstat.t_ritz = tm1;
 
   return 0;
 }

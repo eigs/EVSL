@@ -188,11 +188,11 @@ int main() {
     /*-------------------- call landos to get the DOS for dividing the
      *                     spectrum*/
     /*-------------------- define landos parameters */
-    double t = cheblan_timer();
+    double t = evsl_timer();
     double *xdos = (double *)malloc(npts* sizeof(double));
     double *ydos = (double *)malloc(npts* sizeof(double));
     ierr = LanDosG(nvec, msteps, npts, xdos, ydos, &ecount, xintv);
-    t = cheblan_timer() - t;
+    t = evsl_timer() - t;
     if (ierr) {
       printf("Landos error %d\n", ierr);
       return 1;

@@ -17,10 +17,16 @@ void StatsPrint(FILE *fstats) {
   double t_reorth = stats->t_reorth;
   double t_eig = stats->t_eig;
   double t_blas = stats->t_blas;
+  double t_ritz = stats->t_ritz;
+  double t_polAv = stats->t_polAv;
+  double t_ratAv = stats->t_ratAv;
+  double t_sth = stats->t_sth;
   size_t n_mvA = stats->n_mvA;
   size_t n_mvB = stats->n_mvB;
   size_t n_svB = stats->n_svB;
   size_t n_svASigB = stats->n_svASigB;
+  size_t n_polAv = stats->n_polAv;
+  size_t n_ratAv = stats->n_ratAv;
   /* memory */
   //size_t alloced       = stats->alloced;
   //size_t alloced_total = stats->alloced_total;
@@ -33,6 +39,8 @@ void StatsPrint(FILE *fstats) {
   
   fprintf(fstats, "   - - - - - - - - - - - - - - - - -\n");
   
+  if (n_polAv)   { fprintf(fstats, "   Pol(A)*v                 :  %f (%8ld, avg %f)\n",  t_polAv, n_polAv, t_polAv / n_polAv); }
+  if (n_ratAv)   { fprintf(fstats, "   Rat(A)*v                 :  %f (%8ld, avg %f)\n",  t_ratAv, n_ratAv, t_ratAv / n_ratAv); }
   if (n_mvA)     { fprintf(fstats, "   Matvec matrix A          :  %f (%8ld, avg %f)\n",  t_mvA, n_mvA, t_mvA / n_mvA); }
   if (n_mvB)     { fprintf(fstats, "   Matvec matrix B          :  %f (%8ld, avg %f)\n",  t_mvB, n_mvB, t_mvB / n_mvB); }
   if (n_svB)     { fprintf(fstats, "   Solve with B             :  %f (%8ld, avg %f)\n",  t_svB, n_svB, t_svB / n_svB); }
@@ -40,6 +48,8 @@ void StatsPrint(FILE *fstats) {
   if (t_reorth)  { fprintf(fstats, "   Reorthogonalization      :  %f\n", t_reorth); }
   if (t_eig)     { fprintf(fstats, "   LAPACK eig               :  %f\n", t_eig); }
   if (t_blas)    { fprintf(fstats, "   Other BLAS               :  %f\n", t_blas); }
+  if (t_ritz)    { fprintf(fstats, "   Compute Ritz vectors     :  %f\n", t_ritz); }
+  if (t_sth)     { fprintf(fstats, "   Some other thing timed   :  %f\n", t_sth); }
   /* memory */
   /*
   if (alloced_total > 1e9) {

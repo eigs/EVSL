@@ -500,13 +500,17 @@ void free_pol(polparams *pol) {
  * @param v is untouched
  **/
 int ChebAv(polparams *pol, double *v, double *y, double *w) {
+  double tt = evsl_timer();
   const int ifGenEv = evsldata.ifGenEv;
   int n = evsldata.n;
   /*-------------------- unpack pol */
   double *mu = pol->mu;
   double dd = pol->dd;
   double cc = pol->cc;
+  double ncc = -cc;
   int m = pol->deg;
+  const int one = 1;
+  const double dmone = -1.0;
   /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   double *vk   = w;
   double *vkp1 = w+n;
@@ -516,13 +520,20 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
   int k, i;
   double t, s, *tmp, t1= 1.0 / dd, t2 = 2.0 / dd; 
   /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
+  /* we have to do this copy, because we don't want to alter the 
+   * elements in v */
   memcpy(vk, v, n*sizeof(double));
-  memset(vkm1, 0, n*sizeof(double));
+  //memset(vkm1, 0, n*sizeof(double));
   /*-------------------- special case: k == 0 */
   s = mu[0];
+  /*
   for (i=0; i<n; i++) {
     y[i] = s*vk[i];
   }
+  */
+  memcpy(y, v, n*sizeof(double));
+  DSCAL(&n, &s, y, &one);
+  
   /*-------------------- degree loop. k IS the degree */
   for (k=1; k<=m; k++) {
     /*-------------------- y = mu[k]*Vk + y */    
@@ -538,17 +549,29 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
       matvec_A(vk, vkp1);
     }
 
+    /*
     for (i=0; i<n; i++) {
       vkp1[i] = t*(vkp1[i]-cc*vk[i]) - vkm1[i];
-      /*-------------------- for degree 2 and up: */
       y[i] += s*vkp1[i];
     }
+    */
+    double ts = evsl_timer();
+    DAXPY(&n, &ncc, vk, &one, vkp1, &one);
+    DSCAL(&n, &t, vkp1, &one);
+    if (k > 1) {
+      DAXPY(&n, &dmone, vkm1, &one, vkp1, &one);
+    }
+    DAXPY(&n, &s, vkp1, &one, y, &one);
+    evslstat.t_sth += evsl_timer() - ts;
+
     /*-------------------- next: rotate vectors via pointer exchange */
     tmp = vkm1;
     vkm1 = vk;
     vk = vkp1;
     vkp1 = tmp;
   }
+  evslstat.n_polAv ++;
+  evslstat.t_polAv += evsl_timer() - tt;
 
   return 0;
 }

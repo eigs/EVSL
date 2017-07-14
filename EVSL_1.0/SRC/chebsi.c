@@ -46,7 +46,7 @@ int ChebSI(int nev, double *intv, int maxit,
   double tm, tall=0.0, tmv=0.0;
   int icol, nmv = 0;
   double tolP = tol*0.01;
-  tall = cheblan_timer();
+  tall = evsl_timer();
   //    int max_deg = pol->max_deg,   min_deg = pol->min_deg;
   /*-------------------   size of A */
   int n = evsldata.n;
@@ -120,11 +120,11 @@ int ChebSI(int nev, double *intv, int maxit,
   /*-------------------- orthonormalize initial V and compute PV = P(A)V */
   orth(vinit,n,nev,V,work);
 
-  tm = cheblan_timer();
+  tm = evsl_timer();
   for (icol = 0; icol<nev; icol++) {
     ChebAv(pol, V+icol*n, PV+icol*n, work);
   }     
-  tmv += cheblan_timer() - tm;
+  tmv += evsl_timer() - tm;
   nmv += deg*nev;
 
   int find_more = 1;
@@ -144,11 +144,11 @@ int ChebSI(int nev, double *intv, int maxit,
     orth(V+nnlock, n, nact, buf, work);
     DCOPY(&nnact, buf, &one, V+nnlock, &one);
     /*---  PV <- P(A)*V */
-    tm = cheblan_timer();
+    tm = evsl_timer();
     //polyfilt(A, deg, mu, dd, cc, V+nnlock, nact, PV+nnlock, work); 
     for (icol = nlock; icol<nlock+nact; icol++)
       ChebAv(pol, V+icol*n, PV+icol*n, work);
-    tmv += cheblan_timer() - tm;
+    tmv += evsl_timer() - tm;
     nmv += deg*nact;
     // orthogonalize PVact against Vlocked
     if ( nlock>0 ) { 
@@ -184,9 +184,9 @@ int ChebSI(int nev, double *intv, int maxit,
         double resP = sqrt(DDOT(&n, R+i*n, &one, R+i*n, &one));
         if (resP < tolP) {
           /*---  Compute norm of AV(:,i) - V(:,i)*Lambda(i)   */
-          tm = cheblan_timer();
+          tm = evsl_timer();
           matvec_A(V+i*n, buf);
-          tmv += cheblan_timer() - tm;
+          tmv += evsl_timer() - tm;
           nmv++;
           double rq = DDOT(&n, V+i*n, &one, buf, &one);  // Rayleigh Quotient for A
           for (j=0; j < n; j++) {
@@ -279,7 +279,7 @@ int ChebSI(int nev, double *intv, int maxit,
   free(buf);
   free(work);
   /*-------------------- record stats */
-  tall = cheblan_timer() - tall;
+  tall = evsl_timer() - tall;
   /*-------------------- print stat */
   fprintf(fstats, "------This slice consumed: \n");
   fprintf(fstats, "Matvecs :        %d\n", nmv);

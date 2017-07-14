@@ -142,7 +142,7 @@ void BSolDirect(double *b, double *x, void *data) {
  * @param Bsol_data Struct which will be initialized 
  * */
 int SetupBSolDirect(csrMat *B, void **data) {
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   BSolDataDirect *Bsol_data;
   Malloc(Bsol_data, 1, BSolDataDirect);
   cholmod_sparse *Bcholmod;
@@ -189,7 +189,7 @@ int SetupBSolDirect(csrMat *B, void **data) {
 
   *data = (void *) Bsol_data;
 
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_setBsv += tme - tms;
 
   return 0;
@@ -273,7 +273,7 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
                           complex double *zk, void **data) {
   int i, j, nrow, ncol, nnzB, nnzC, *map, status;
   csrMat *B, C, eye;
-  double tms = cheblan_timer();
+  double tms = evsl_timer();
   /* UMFPACK matrix for the shifted matrix 
    * C = A - s * B */
   SuiteSparse_long *Cp, *Ci;
@@ -368,7 +368,7 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
     free_csr(&eye);
   }
 
-  double tme = cheblan_timer();
+  double tme = evsl_timer();
   evslstat.t_setASigBsv += tme - tms;
   
   return 0;

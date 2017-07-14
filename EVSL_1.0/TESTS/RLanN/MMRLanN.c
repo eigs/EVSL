@@ -146,9 +146,9 @@ int main () {
     if (TRIV_SLICER) {
       linspace(a, b, n_intv+1,  sli);
     } else {
-      double t = cheblan_timer();
+      double t = evsl_timer();
       ierr = kpmdos(Mdeg, 0, nvec, xintv, mu, &ecount);
-      t = cheblan_timer() - t;
+      t = evsl_timer() - t;
       if (ierr) {
 	printf("kpmdos error %d\n", ierr);
 	return 1;

@@ -446,11 +446,15 @@ void free_rat(ratparams *rat) {
  * 
  */
 void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
+  double tt = evsl_timer();
   const int ifGenEv = evsldata.ifGenEv;
   int ii, jj, kk, k=0, kf;
   int *mulp = rat->mulp;
   int num = rat->num;
   complex double *omega = rat->omega;
+  const double dtwo = 2.0;
+  const double done = 1.0;
+  const int one = 1;
   
   double *xr, *xz, *bz, *br, *yr=NULL, *yz=NULL;
   double zkr, zkc;
@@ -462,18 +466,10 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
     yr = br + n;
     yz = yr + n;
   }
-  /*------------------ zero out x */
-  for (ii=0; ii<n; ii++) {
-    x[ii] = 0.0;
-  }
   /*------------------ loop through each pole */
   for (kk=0; kk<num; kk++) {
     /*---------------- solver for A-s[kk]*B */
     EVSLASIGMABSol *sol = &rat->ASIGBsol[kk];
-    /*---------------- make sure xr, xz are zero */
-    for (ii=0; ii<n; ii++){
-      xr[ii] = xz[ii] = 0.0;
-    }
     kf = k + mulp[kk];
     /*------------------ power loop */
     for (jj=kf-1; jj>=k; jj--) {
@@ -481,9 +477,13 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
       zkr = creal(omega[jj]);
       zkc = cimag(omega[jj]);
       /*---------------- initilize the right hand side */
-      for (ii=0; ii<n; ii++) {
-        br[ii] = zkr*b[ii] + xr[ii];
-        bz[ii] = zkc*b[ii] + xz[ii];
+      memcpy(br, b, n*sizeof(double));
+      memcpy(bz, b, n*sizeof(double));
+      DSCAL(&n, &zkr, br, &one);
+      DSCAL(&n, &zkc, bz, &one);
+      if (jj != kf-1) {
+        DAXPY(&n, &done, xr, &one, br, &one);
+        DAXPY(&n, &done, xz, &one, bz, &one);
       }
       /*---------------- solve shifted system */
       if (ifGenEv) {
@@ -503,10 +503,16 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
       }
     }
     /*------------------ solution (real part) */
-    for (ii=0; ii<n; ii++) {
-      x[ii] += 2*xr[ii];
+    if (kk) {
+      DAXPY(&n, &dtwo, xr, &one, x, &one);
+    } else {
+      memcpy(x, xr, n*sizeof(double));
+      DSCAL(&n, &dtwo, x, &one);
     }
     k = kf;
   }
+
+  evslstat.n_ratAv ++;
+  evslstat.t_ratAv += evsl_timer() - tt;
 }
 

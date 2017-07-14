@@ -140,9 +140,9 @@ int main () {
     if (TRIV_SLICER) {
       linspace(a, b, n_intv+1,  sli);
     } else {
-      double t = cheblan_timer();
+      double t = evsl_timer();
       ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
-      t = cheblan_timer() - t;
+      t = evsl_timer() - t;
       if (ierr) {
         printf("kpmdos error %d\n", ierr);
         return 1;
@@ -179,7 +179,7 @@ int main () {
     nev = (int)(fac*nev);                        // want an overestimate of ev_int 
     fprintf(fstats,"Step 2: In each slice compute %d eigenvalues ... \n", nev);
     /*-------------------- MAIN intv LOOP: for each sclice Do: */
-    double tsolve = cheblan_timer();
+    double tsolve = evsl_timer();
     totcnt = 0;
     mlan = max(4*nev,100);   mlan = min(n, mlan);
     max_its = 3*mlan; 
@@ -239,7 +239,7 @@ int main () {
       /*-------------------- end slice loop */
     } // end of parallel for-loop
 
-    tsolve = cheblan_timer() - tsolve;
+    tsolve = evsl_timer() - tsolve;
 
     // Now output result and move computed eigenvalues to alleigs
     for (sl=0; sl<n_intv; sl++) {

@@ -190,9 +190,9 @@ int main() {
      *                     spectrum*/
     /*-------------------- define kpmdos parameters */
     //-------------------- call kpmdos
-    double t = cheblan_timer();
+    double t = evsl_timer();
     ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
-    t = cheblan_timer() - t;
+    t = evsl_timer() - t;
     if (ierr) {
       printf("kpmdos error %d\n", ierr);
       return 1;
