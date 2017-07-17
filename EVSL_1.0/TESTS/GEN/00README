@@ -1,6 +1,6 @@
 This  directory  contains  drivers  for testing  a  few  routines  for
-computing eigenvalues  of general sparse (symmetric  real) matrix pair
-(A, B), where B has to  be positive definite.  
+computing eigenvalues of a sparse (symmetric real) matrix pair (A, B),
+where B is assumed to be positive definite.
 
 The drivers are split into three groups, Lan_MM, KPM_MM, Lan_.
 Lan_MM reads the matrices from matrix market files (matfile), and uses
