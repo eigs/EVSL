@@ -55,7 +55,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - evsl.c        :  Set EVSL solver options and data
    - lanbounds.c   :  Lanczos alg. to give bounds of spectrum
    - landos.c      :  Lanczos based DOS algorithm for the standard problem
-   - landosG.c     :  Lanczos based DOS algorithm for general and standard problems
+   - landosG.c     :  Lanczos based DOS algorithm for generalized and standard problems
    - lanTrbounds.c :  A more robust alg. to give bounds of spectrum based on TR Lanczos
    - mactime.c     :  Timer for mac iOS
    - misc_la.c     :  Miscellaneous linear algebra functions
@@ -92,7 +92,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
      * LapRLanN.c         : Rational filtering non-restart Lanczos (Laplacian)
      * MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market)
 
-   * GEN           : Test drivers for the general eigenvalue problem
+   * GEN           : Test drivers for the generalized eigenvalue problem
      * Lap_PLanN.c    : Polynomial filtering Lanczos (Laplacian)
      * Lap_PLanR.c    : Polynomial filtering T-R Lanczos (Laplacian)
      * Lap_RLanN.c    : Rational filtering Lanczos (Laplacian)
@@ -117,14 +117,14 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
       * lapl.c      : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
       * mmio.c        : IO routines for the matrix market format
 
-   * COMMON_GEN    : Routines common to the test drivers for the general eigenvalue problem
+   * COMMON_GEN    : Routines common to the test drivers for the generalized eigenvalue problem
       * io.c        : parse command-line input parameters
       * lapl.c      : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
       * mmio.c        : IO routines for the matrix market format
 
    * TESTS/Landos    : test drivers for the lanDOS related functions.
-      * LanDos.c      : Standard eigenvalue problem DOS using Lancco's
-      * LanDosG.c     : General eigenvalue problem DOS using Lancco's
+      * LanDos.c      : DOS for standard eigenvalue problem  using Lanczos 
+      * LanDosG.c     : DOS for generalized eigenvalue problem  using Lanczos 
 
  * EXTERNAL             : direct solver  interface for generalized eigenvalue problems
    - evsl_suitesparse.c : suitesparse UMFPACK and CHOLMOD interface
