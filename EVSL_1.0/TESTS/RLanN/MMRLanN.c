@@ -44,7 +44,7 @@ int main () {
   char line[MAX_LINE]; 
   /* initial vector: random */
   double *vinit;
-  tol = 1e-8;
+  tol = 1e-6;
   /* parameters for rational filter */
   int pow = 2; // multiplicity of the pole 
   double beta = 0.01; // beta in the LS approximation

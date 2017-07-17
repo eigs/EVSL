@@ -52,7 +52,7 @@ int main() {
 #endif
 
   /*-------------------- stopping tol */
-  tol = 1e-5;
+  tol = 1e-6;
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */

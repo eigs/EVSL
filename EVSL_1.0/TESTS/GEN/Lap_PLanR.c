@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- matrix size */
   n = nx * ny * nz;
   /*-------------------- stopping tol */
-  tol = 1e-8;
+  tol = 1e-6;
   /*-------------------- output the problem settings */
   fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
   fprintf(fstats, "Laplacian A : %d x %d x %d, n = %d\n", nx, ny, nz, n);

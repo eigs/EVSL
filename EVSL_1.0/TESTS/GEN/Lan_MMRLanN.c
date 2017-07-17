@@ -55,7 +55,7 @@ int main() {
   printf("-----------------------------------------\n");
 #endif
   /*-------------------- stopping tol */
-  tol = 1e-8;
+  tol = 1e-6;
   /*-------------------- Polynomial approximation to B and sqrtB*/
   BSolDataPol Bsol, Bsqrtsol;
   /*-------------------- start EVSL */

@@ -45,7 +45,7 @@ int main () {
   double *vinit, *xdos, *ydos;
   polparams pol;
   //-------------------- tolerance for stopping criterion
-  tol = 1e-8;  
+  tol = 1e-6;  
   /*-------------------- start EVSL */
   EVSLStart();
   //-------------------- interior eigensolver parameters  
