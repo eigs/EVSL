@@ -5,6 +5,12 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+/**
+ * @file evsl.c
+ * @brief Used to track various statistics (time taken by various
+ * operations).
+ */
+
 void StatsPrint(FILE *fstats) {
   evslStat *stats = &evslstat;
   double t_iter = stats->t_iter;

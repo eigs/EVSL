@@ -21,8 +21,8 @@
 /**
  * @brief RatLanTR  filtering Lanczos process [Thick restart version]
  *
- * @param lanm      Dimension of Krylov subspace [restart dimension]
- * @param nev       Estimate of number of eigenvalues in the interval --
+ * @param[in] lanm      Dimension of Krylov subspace [restart dimension]
+ * @param[in] nev       Estimate of number of eigenvalues in the interval --
  *         ideally nev == exact number or a little larger.  This is not used
  *         for testing convergence but it helps make decisions as to when to
  *         test convergence RatLanTr attempts to compute *all* eigenvalues in
@@ -30,19 +30,18 @@
  *         convergenve test is a very simple one based on the residual norm for
  *         the filtered matrix 
  *
- * @param intv   an array of length 4  \n
+ * @param[in] intv   an array of length 4  \n
  *         [intv[0], intv[1]] is the interval of desired eigenvalues \n
  *         [intv[2], intv[3]] is the global interval of all eigenvalues \n
  *         it must contain all eigenvalues of A
  * 
- * @param maxit  max Num of outer Lanczos iterations (restarts) allowed -- 
+ * @param[in] maxit  max Num of outer Lanczos iterations (restarts) allowed -- 
  *         Each restart may or use the full lanm lanczos steps or fewer.
  * 
- * @param tol       tolerance for convergence. stop when ||res||< tol
- * @param vinit     initial  vector for Lanczos -- [optional]
- * @param rat       a struct containing the parameters of the rational.
+ * @param[in] tol       tolerance for convergence. stop when ||res||< tol
+ * @param[in] vinit     initial  vector for Lanczos -- [optional]
+ * @param[in] rat       a struct containing the parameters of the rational.
  *
- * @warning RatLanTr()  Modifies the following variables
  * @param[out] nev2     Number of eigenvalues/vectors computed
  * @param[out] W        A set of eigenvectors  [n x nev2 matrix]
  *                      of unit 2-norm for standard eig prob
