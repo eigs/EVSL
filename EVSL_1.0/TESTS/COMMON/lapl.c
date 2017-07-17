@@ -5,11 +5,14 @@
 #include "internal_proto.h"
 
 /**-----------------------------------------------------------------------
+ *
  * @brief Laplacean Matrix generator 
- * @param nx  Number of points in x-direction
- * @param ny  Number of points in y-direction
- * @param nz  Number of points in z-direction
+ *
+ * @param[in] nx  Number of points in x-direction
+ * @param[in] ny  Number of points in y-direction
+ * @param[in] nz  Number of points in z-direction
  * @param[out] *Acoo matrix in coordinate format. 
+ *
  -----------------------------------------------------------------------**/
 int lapgen(int nx, int ny, int nz, cooMat *Acoo) {
   int n = nx * ny * nz;
@@ -66,6 +69,7 @@ int lapgen(int nx, int ny, int nz, cooMat *Acoo) {
 }
 
 /**-----------------------------------------------------------------------
+ *
  * @brief Exact eigenvalues of Laplacean in interval [a b]
  * @param[in] nx  Number of points in x-direction
  * @param[in] ny  Number of points in y-direction

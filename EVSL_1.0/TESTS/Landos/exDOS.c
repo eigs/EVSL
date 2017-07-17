@@ -14,6 +14,7 @@ void linspace(double a, double b, int num, double *arr);
  * @param[in] vals eigenvalues
  * @param[in] n number of eigenvalues
  * @param[in] npts number of points for dos curve
+ * @param[in] intv intervals of interests
  * @param[out] x coordinates for dos plot
  * @param[out] y y coordinates for dos plot
  * @note Both x and y are expected to be preallocated.

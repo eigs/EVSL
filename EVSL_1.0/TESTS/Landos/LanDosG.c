@@ -24,9 +24,9 @@ int findarg(const char *argname, ARG_TYPE type, void *val, int argc,
 /**
  * Reads in a vector as an nx1 matrix.
  *
- * @parm[out] npts pointer to an int to store # of points
- * @parm[out] vec UNallocated space to read vector to
- * @parm[in] filename file to read from, where the first line contains number
+ * @param[out] npts pointer to an int to store # of points
+ * @param[out] vec UNallocated space to read vector to
+ * @param[in] filename file to read from, where the first line contains number
  * of elements/width/height of matrix, and the rest of the lines contain the
  * values. */
 int readVec(const char *filename, int *npts, double **vec) {
@@ -47,6 +47,7 @@ int readVec(const char *filename, int *npts, double **vec) {
  * problem. Includes graphical comparison of calculated vs exact DOS
  *
  * use -graph_exact_dos 1 to enable graphing the exact DOS
+ *
  *-----------------------------------------------------------------------
  */
 int main(int argc, char *argv[]) {
