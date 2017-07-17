@@ -7,7 +7,7 @@
 #include "internal_proto.h"
 #include "evsl_direct.h"
 /** 
- * @file evsl_cxsparse_f90.c
+ * @file evsl_direct_f90.c
  * @brief Fortran interface definitions
  ***/
 

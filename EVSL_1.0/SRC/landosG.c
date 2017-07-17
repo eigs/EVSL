@@ -22,14 +22,10 @@
  *
  *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
- *    @param[in] degB Degree with which B should be approximated by \\
- *                Must be positive. Planned feature: if non-positive use
- *                Cholsky factorization.
  *    @param[in] npts number of sample points used for the DOS curve
  *    @param[in] *intv Stores the the intervals of interest
  *      intv[0:1] = [a b] = interval where DOS is to be computed
  *      intv[2:3] = [lambda_min, lambda_max] \\
- *    @param[in] tau Tolerence used
  *
  *    @param[out] *xdos Length-npts long vector, x-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos

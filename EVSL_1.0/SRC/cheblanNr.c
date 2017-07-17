@@ -54,6 +54,7 @@
  *
  *
  * @warning memory allocation for Wo/lamo/reso within this function 
+ *
  * ------------------------------------------------------------ */
 int ChebLanNr(double *intv, int maxit, double tol, double *vinit, 
               polparams *pol, int *nevOut, double **lamo, double **Wo, 

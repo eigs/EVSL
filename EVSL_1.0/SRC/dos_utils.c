@@ -154,17 +154,13 @@ int pnav(double *mu, const int m, const double cc, const double dd, double *v,
  *    Finds the least-square polynomial approximation to function ffun
  *    in interval given by intv
  *
- *    @param[in] *intv Stores the interval of interest \\
- *        intv[0:1] Interval of interest
- *    @param[in] maxDeg Maximum degree of the polynomial appoximation
  *    @param[in] ffun Function to generate an approximation for
- *    @param[in] tol Tolerance for approximation
  *
- *    @param[out] pol polparams struct \\
+ *    @param[in,out] pol polparams struct \\
  *      Contains: cc = (a + b) / 2 \\
  *                dd = (b - a) / 2 \\
  *                mu = coefficients \\
- *                deg = number of coefficients
+ *                max_deg = number of coefficients
  *
  *
  *----------------------------------------------------------------------*/

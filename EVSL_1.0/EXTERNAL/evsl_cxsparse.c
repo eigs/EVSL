@@ -8,7 +8,7 @@
 #include "evsl_direct.h"
 
 /**
- * @file evsl_cxsparse.h
+ * @file evsl_cxsparse.c
  * @brief Definitions used for cxsparse interface
  */
 
@@ -52,7 +52,7 @@ static cs_di *make_sym_di (cs_di *A)
 /** @brief Setup the B-sol by computing the Cholesky factorization of B
  *
  * @param B         matrix B
- * @param Bsol_data Struct which will be initialized 
+ * @param data Struct which will be initialized 
  * */
 int SetupBSolDirect(csrMat *B, void **data) {
   double tms = evsl_timer();

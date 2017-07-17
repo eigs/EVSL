@@ -139,7 +139,7 @@ void BSolDirect(double *b, double *x, void *data) {
 /** @brief Setup the B-sol by computing the Cholesky factorization of B
  *
  * @param B         matrix B
- * @param Bsol_data Struct which will be initialized 
+ * @param data Struct which will be initialized 
  * */
 int SetupBSolDirect(csrMat *B, void **data) {
   double tms = evsl_timer();
