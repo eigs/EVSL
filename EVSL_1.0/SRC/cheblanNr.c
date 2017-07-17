@@ -322,7 +322,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     }
     /* -------------------- simple test because all eigenvalues
                             are between gamB and ~1. */
-    if ( (fabs(tr1-tr0) < 1e-10) || (fabs(tr1)+fabs(tr0)<1e-10) ) {
+    if ( (fabs(tr1-tr0) < 1e-14) || (fabs(tr1)+fabs(tr0)<1e-10) ) {
       break;
     }
     tr0 = tr1;

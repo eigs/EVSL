@@ -196,7 +196,7 @@ int main () {
       // can change default values here e.g.
       pol.damping = 2;         // use lanczos damping 
       pol.thresh_int = 0.8;    // change thresholds for getting a sharper
-      pol.thresh_ext = 0.35;   // [higher deg] polynomial
+      pol.thresh_ext = 0.2;   // [higher deg] polynomial
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);
 

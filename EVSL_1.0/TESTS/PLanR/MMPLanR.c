@@ -195,7 +195,7 @@ int main () {
       //-------------------- set up default parameters for pol.
       set_pol_def(&pol);
       // can change default values here e.g.
-      pol.damping = 2;  pol.thresh_int = 0.5; 
+      pol.damping = 2;  pol.thresh_int = 0.8; 
       //pol.max_deg = 500;  
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);

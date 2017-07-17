@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
     pol.damping = 0;
     //-------------------- use a stricter requirement for polynomial
     pol.thresh_int = 0.8;
-    pol.thresh_ext = 0.5;
+    pol.thresh_ext = 0.2;
     pol.max_deg  = 10000;
     // pol.deg = 20 //<< this will force this exact degree . not recommended
     //                   it is better to change the values of the thresholds

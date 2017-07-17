@@ -19,7 +19,7 @@ void set_pol_def(polparams *pol){
   pol->max_deg = 10000;     // max degree allowed
   pol->min_deg = 2;        // min allowed degree
   pol->damping = 2;        // damping. 0 = no damping, 1 = Jackson, 2 = Lanczos
-  pol->thresh_ext = 0.50;  // threshold for accepting polynomial for end intervals 
+  pol->thresh_ext = 0.20;  // threshold for accepting polynomial for end intervals 
   pol->thresh_int = 0.8;   // threshold for accepting polynomial for interior
   pol->tol = 1e-3;         // tolerance for LS approximation
   pol-> deg = 0;           // degree =0 means determine optimal degree.
