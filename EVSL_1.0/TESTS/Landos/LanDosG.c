@@ -79,11 +79,11 @@ int main(int argc, char *argv[]) {
   /*-------------------- start EVSL */
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
-  if (NULL == (fmat = fopen("matfile", "r"))) {
-    fprintf(flog, "Can't open matfile...\n");
+  if (NULL == (fmat = fopen("matfileG", "r"))) {
+    fprintf(flog, "Can't open matfileG...\n");
     exit(2);
   } else {
-    printf("Read matfile \n");
+    printf("Read matfileG \n");
   }
   /*-------------------- read number of matrices ..*/
   memset(line, 0, MAX_LINE);
@@ -117,8 +117,9 @@ int main(int argc, char *argv[]) {
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", 
-            a, b, nslices);
+    fprintf(fstats,
+            "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
+            nslices);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
@@ -165,12 +166,12 @@ int main(int argc, char *argv[]) {
       exit(7);
     }
 
-    /*-------------------- diagonal scaling for L-S poly. approx. 
+    /*-------------------- diagonal scaling for L-S poly. approx.
      *                     of B^{-1} and B^{-1/2},
      *                     which will be used in the DOS */
     /*-------------------- sqrt of diag(B) */
     extrDiagCsr(&Bcsr, sqrtdiag);
-    for (i=0; i<n; i++) {
+    for (i = 0; i < n; i++) {
       sqrtdiag[i] = sqrt(sqrtdiag[i]);
     }
     diagScalCsr(&Acsr, sqrtdiag);
@@ -195,8 +196,10 @@ int main(int argc, char *argv[]) {
     SetupPolSqrt(n, degB, tau, lmin, lmax, &BSqrtInv);
     SetBSol(BSolPol, (void *)&BInv);
     SetLTSol(BSolPol, (void *)&BSqrtInv);
-    printf("The degree for LS polynomial approximations to B^{-1} and B^{-1/2} "
-           "are %d and %d\n", BInv.deg, BSqrtInv.deg);
+    printf(
+        "The degree for LS polynomial approximations to B^{-1} and B^{-1/2} "
+        "are %d and %d\n",
+        BInv.deg, BSqrtInv.deg);
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
@@ -219,7 +222,9 @@ int main(int argc, char *argv[]) {
     /*-------------------- Read in the eigenvalues */
     double *ev;
     int numev;
-    readVec("NM1AB_eigenvalues.dat", &numev, &ev);
+    if (graph_exact_dos) {
+      readVec("NM1AB_eigenvalues.dat", &numev, &ev);
+    }
 
     int ret;
     double neig;
