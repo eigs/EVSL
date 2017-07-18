@@ -2,7 +2,7 @@ set term post enhanced color landscape 		  # enhanced PostScript, essentially Po
   		 		  # with bounding boxes
 set out filename.'.eps'              # output file
 
-set title "LanDos Test -- General Eigenvalue Problem"
+set title "LanDos Test -- Generalized Eigenvalue Problem"
 set xlabel '{/Symbol l}'
 set ylabel 'Spectral Density (DOS)'
 set parametric

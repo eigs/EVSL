@@ -43,7 +43,7 @@ int readVec(const char *filename, int *npts, double **vec) {
 
 /**
  *-----------------------------------------------------------------------
- * Tests landosG.c , the Lanczos DOS computed for the general eigenvalue
+ * Tests landosG.c , the Lanczos DOS computed for the generalized eigenvalue
  * problem. Includes graphical comparison of calculated vs exact DOS
  *
  * use -graph_exact_dos 1 to enable graphing the exact DOS
