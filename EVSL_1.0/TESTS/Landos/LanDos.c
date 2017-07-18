@@ -55,7 +55,6 @@ int main(int argc, char *argv[]) {
   const int npts = 200;  /* Number of points */
   const int nvec = 100;  /* Number of random vectors to generate */
   double intv[4];
-  double a, b;
 
   cooMat Acoo;
   csrMat Acsr;
@@ -63,7 +62,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- IO */
   FILE *flog = stdout, *fmat = NULL, *fstats = NULL;
   io_t io;
-  int numat, mat, n_intv, ierr, n, graph_exact_dos = 0;
+  int numat, mat, ierr, n, graph_exact_dos = 0;
   char line[MAX_LINE];
 
   findarg("graph_exact_dos", INT, &graph_exact_dos, argc, argv);
@@ -94,9 +93,6 @@ int main(int argc, char *argv[]) {
     }
     /*----------------input matrix and interval information -*/
     fprintf(flog, "MATRIX: %s...\n", io.MatNam);
-    a = io.a;
-    b = io.b;
-    n_intv = io.n_intv;
 
     /*-------------------- path to write the output files*/
     char path[1024];
@@ -109,9 +105,6 @@ int main(int argc, char *argv[]) {
       fstats = stdout;
     }
     fprintf(fstats, "MATRIX: %s...\n", io.MatNam);
-    fprintf(fstats,
-            "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
-            n_intv);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname, 1, 0, &Acoo);

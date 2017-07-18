@@ -62,8 +62,7 @@ int main(int argc, char *argv[]) {
      intv[2] and intv[3] are the smallest and largest eigenvalues of (A,B)
      */
   double intv[4];
-  int n = 0, i, nslices, ierr;
-  double a, b;
+  int n = 0, i, ierr;
 
   cooMat Acoo, Bcoo; /* A, B */
   csrMat Acsr, Bcsr; /* A, B */
@@ -103,9 +102,6 @@ int main(int argc, char *argv[]) {
     /*----------------input matrix and interval information -*/
     fprintf(flog, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(flog, "MATRIX B: %s...\n", io.MatNam2);
-    a = io.a; /* left endpoint of input interval */
-    b = io.b; /* right endpoint of input interval */
-    nslices = io.n_intv;
     char path[1024]; /* path to write the output files */
     strcpy(path, "OUT/LanDosG_");
     strcat(path, io.MatNam1);
@@ -117,9 +113,6 @@ int main(int argc, char *argv[]) {
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats,
-            "Partition the interval of interest [%f,%f] into %d slices\n", a, b,
-            nslices);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
