@@ -446,7 +446,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
             tr += Rval[i];
           }
         }
-        if (fabs(tr-last_tr) <= tol * fabs(tr) && jl == last_jl) {
+        if (fabs(tr-last_tr) <= 1e-13 && jl == last_jl) {
           if (fstats) {
             fprintf(fstats,"break: [it %d, k %d]: last_tr %.15e, tr %.15e, last_jl %d  jl %d\n",
                     it, k, last_tr, tr, last_jl, jl);
