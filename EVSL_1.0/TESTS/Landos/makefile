@@ -24,12 +24,12 @@ LIB_EXT =  $(OMP) $(LIBLAPACK) $(LIB0)
 default: LanDos.ex LanDosG.ex
 all: LanDos.ex LanDosG.ex
 
+%G.o : %G.c
+	$(CC) $(FLAGS) $(GEN_INCLUDES) -o $@ -c $<
 
 %.o : %.c
 	$(CC) $(FLAGS) $(STD_INCLUDES) -o $@ -c $<
 
-%G.o : %G.c
-	$(CC) $(FLAGS) $(GEN_INCLUDES) -o $@ -c $<
 
 # Exe
 LanDos.ex: $(OBJS_LD)
