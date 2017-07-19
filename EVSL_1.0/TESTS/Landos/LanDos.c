@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
 
     /*-------------------- path to write the output files*/
     char path[1024];
-    strcpy(path, "OUT/LanDos");
+    strcpy(path, "OUT/LanDos_");
     strcat(path, io.MatNam);
     strcat(path, ".log");
     fstats = fopen(path, "w");  // write all the output to the file io.MatNam
@@ -197,7 +197,9 @@ int main(int argc, char *argv[]) {
 
     if (graph_exact_dos) {
       /*-------------------- save exact DOS */
-      ofp = fopen("OUT/LanDos_Exact_DOS.txt", "w");
+      strcpy(path, "OUT/LanDosG_Exact_DOS_");
+      strcat(path, io.MatNam);
+      ofp = fopen(path, "w");
       for (i = 0; i < npts; i++)
         fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
       fclose(ofp);
