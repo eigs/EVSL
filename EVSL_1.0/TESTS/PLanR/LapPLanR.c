@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
   xintv[1] = b;
   xintv[2] = lmin;
   xintv[3] = lmax;
-  tol  = 1e-6;
+  tol  = 1e-8;
   n = nx * ny * nz;
   /*-------------------- output the problem settings */
   fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
