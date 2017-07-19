@@ -332,7 +332,9 @@ int main(int argc, char *argv[]) {
     }
     free(xdos);
     free(ydos);
-    free(ev);
+    if (graph_exact_dos) {        
+      free(ev);
+    }
     fclose(fstats);
     if (sqrtdiag) {
       free(sqrtdiag);
