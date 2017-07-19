@@ -2,7 +2,7 @@ set term post enhanced color landscape 		  # enhanced PostScript, essentially Po
   		 		  # with bounding boxes
 set out 'OUT/tester.eps'              # output file
 
-set title "LanDos Test -- comparison with exact histogram"
+set title "LanDos Test"
 set xlabel '{/Symbol l}'
 set ylabel 'Spectral Density (DOS)'
 set parametric

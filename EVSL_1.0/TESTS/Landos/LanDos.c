@@ -217,10 +217,10 @@ int main(int argc, char *argv[]) {
     if (graph_exact_dos) {
       strcat(command, "';exact_dos='");
       strcat(command, path);
-      strcat(command, "'\" testerG_ex.gnuplot");
+      strcat(command, "'\" tester_ex.gnuplot");
       ierr = system(command);
     } else {
-      strcat(command, "'\" testerG.gnuplot");
+      strcat(command, "'\" tester.gnuplot");
       ierr = system(command);
     }
 
@@ -261,6 +261,7 @@ int main(int argc, char *argv[]) {
     }
     fclose(fstats);
   }
+  fclose(fmat);
   EVSLFinish();
   return 0;
 }
