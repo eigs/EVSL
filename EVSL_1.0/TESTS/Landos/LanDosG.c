@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
     intv[2] = lmin;
     intv[3] = lmax;
     /*-------------------- Read in the eigenvalues */
-    double *ev;
+    double *ev = NULL;
     int numev;
     if (graph_exact_dos) {
       readVec("NM1AB_eigenvalues.dat", &numev, &ev);
@@ -331,10 +331,8 @@ int main(int argc, char *argv[]) {
       free(yHist);
     }
     free(xdos);
-    free(ydos);
-    if (graph_exact_dos) {        
-      free(ev);
-    }
+    free(ydos);        
+    if (ev)  free(ev);
     fclose(fstats);
     if (sqrtdiag) {
       free(sqrtdiag);
