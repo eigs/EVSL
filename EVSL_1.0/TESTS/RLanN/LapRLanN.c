@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
     //-------------------- approximate number of eigenvalues wanted
     nev = ev_int+2;
     //-------------------- maximal Lanczos iterations   
-    max_its = max(4*nev,100);  max_its = min(max_its, n);
+    max_its = max(4*nev,300);  max_its = min(max_its, n);
     //-------------------- RationalLanNr
     ierr = RatLanNr(intv, max_its, tol, vinit, &rat, &nev2, &lam, 
                     &Y, &res, fstats);
