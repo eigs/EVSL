@@ -46,7 +46,7 @@ int main () {
   double *vinit;
   polparams pol;
   //-------------------- tolerance for stopping criterion
-  tol = 1e-6;  
+  tol = 1e-8;  
   //-------------------- slicer parameters 
   Mdeg = 300;
   nvec = 60;
