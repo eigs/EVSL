@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
 
     /*-------------------- Write to  output files */
     char computed_path[1024];
-    strcpy(computed_path, "OUT/LanDosG_Approx_DOS_");
+    strcpy(computed_path, "OUT/LanDos_Approx_DOS_");
     strcat(computed_path, io.MatNam);
     FILE *ofp = fopen(computed_path, "w");
     for (i = 0; i < npts; i++) {
@@ -226,7 +226,7 @@ int main(int argc, char *argv[]) {
 
     if (ierr) {
       fprintf(stderr,
-              "Error using 'gnuplot < testerG.gnuplot', \n"
+              "Error using 'gnuplot < tester.gnuplot', \n"
               "postscript plot could not be generated \n");
     } else {
       printf("A postscript graph has been placed in %s%s\n", computed_path,
