@@ -123,9 +123,6 @@ int main(int argc, char *argv[]) {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
-    /*-------------------- set the left-hand side matrix A */
-    SetAMatrix(&Acsr);
-    /*-------------------- Read in a test matrix */
 
     /*-------------------- Define some constants to test with */
     /*-------------------- Intervals of interest
@@ -161,7 +158,7 @@ int main(int argc, char *argv[]) {
     intv[2] = lmin;
     intv[3] = lmax;
 
-    double *ev;
+    double *ev = NULL;
     int numev;
     if (graph_exact_dos) {
       readVec("NM1AB_eigenvalues.dat", &numev, &ev);
@@ -258,7 +255,7 @@ int main(int argc, char *argv[]) {
     }
     free(xdos);
     free(ydos);
-    if(graph_exact_dos) {
+    if(ev) {
       free(ev);
     }
     fclose(fstats);
