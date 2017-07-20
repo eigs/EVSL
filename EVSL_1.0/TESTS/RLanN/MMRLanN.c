@@ -184,7 +184,7 @@ int main () {
     printf("Total number of eigenvalues estimated = %d \n", (int)(ecount));
     nev = (int) (1 + ecount / ((double) n_intv));  // # eigs per slice
     nev = (int)(fac*nev);                        // want an overestimate of ev_int 
-    max_its = max(4*nev,100);  max_its = min(max_its, n);   
+    max_its = max(4*nev,300);  max_its = min(max_its, n);   
     fprintf(fstats, "Step 2: In each slice compute %d eigenvalues ... \n", nev);
     /*-------------------- MAIN intv LOOP: for each sclice Do: */
     totcnt = 0;

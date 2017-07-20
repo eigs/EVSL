@@ -186,7 +186,7 @@ int main () {
       b = sli[sl+1];
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b); 
       //-------------------- Parameters for ChebLanTr
-      mlan = max(4*nev,100);  mlan = min(mlan, n);
+      mlan = max(4*nev,300);  mlan = min(mlan, n);
       max_its = 3*mlan;  // max number of Lanczos iterations
       //fprintf(fstats, "Thick Restarted Lanczos with dimension %d\n", mlan);
       //fprintf(fstats, "Max Lanczos steps %d\n", max_its);
