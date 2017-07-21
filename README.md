@@ -15,7 +15,7 @@
 ~~~
 
 Welcome to EVSL. EVSL is a C library for computing the eigenvalues of
-a symmetric matrix  that are located in a given  interval.  This first
+a symmetric matrix  that are located in a given  interval.  This
 release includes the routines listed above and does not yet offer full
 parallel implementations  (trivial openMP test programs  are available
 among   the test  drivers).  EVSL also  provides tools  for spectrum
@@ -53,18 +53,18 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - dumps.c       :  Miscellaneous functions for I/O and for debugging 
    - dos_utils.c   :  Miscellaneous functions used for DOS based functions.
    - evsl.c        :  Set EVSL solver options and data
-   - lanbounds.c   :  Lanczos alg. to give bounds of spectrum
+   - lanbounds.c   :  Lanczos alg. to compute bounds of spectrum
    - landos.c      :  Lanczos based DOS algorithm for the standard problem
    - landosG.c     :  Lanczos based DOS algorithm for generalized and standard problems
-   - lanTrbounds.c :  A more robust alg. to give bounds of spectrum based on TR Lanczos
+   - lanTrbounds.c :  A more robust alg. to compute bounds of spectrum based on TR Lanczos
    - mactime.c     :  Timer for mac iOS
    - misc_la.c     :  Miscellaneous linear algebra functions
    - ratfilter.c   :  Computing and applying rational filters
    - ratlanNr.c    :  Rational Filtered no-restart Lanczos
    - ratlanTr.c    :  Rational Filtered thick restart Lanczos
    - spmat.c       :  Sparse matrix routines
-   - spslice.c    :  Spectrum slicing
-   - spslice2.c   :  Spectrum slicing
+   - spslice.c    :  Spectrum slicing functions for Kernel Polynomial Method
+   - spslice2.c   :  Spectrum slicing functions for Lanczos 
    - timing.c      :  Timer
    - vect.c        :  Vector operations
 
@@ -109,8 +109,6 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    * PSI           : Test drivers for polynomial filter subspace iteration
      * LapPSI.c     : Polynomial filtering subspace iterations (Laplacian)
      * MMPSI.c      : Polynomial filtering subspace iterations (Matrix Market)
-
-
 
    * COMMON        : Routines common to the test drivers
       * io.c        : parse command-line input parameters
