@@ -4,9 +4,7 @@
 
  ![Alt](/evsl_logo3.png "EVSL-logo")
 
-
 ~~~
-
                           ChebLanNr, ChebLanTr, ChebSI, RatLanNr and RatLanTr 
                Polynomial and Rational Filtered Lanczos and subspace iteration algorithms 
                                  For Symmetric Eigenvalue problems
