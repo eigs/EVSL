@@ -1,10 +1,9 @@
 set term post enhanced color landscape 		  # enhanced PostScript, essentially PostScript
   		 		  # with bounding boxes
-set out 'OUT/tester.eps'              # output file
+set out filename.'.eps'              # output file
 
-set title "LanDos Test -- comparison with exact histogram"
+set title "LanDos Test"
 set xlabel '{/Symbol l}'
 set ylabel 'Spectral Density (DOS)'
 set parametric
-
-plot 'OUT/LanDos_Approx_DOS.txt' lt rgb "blue" with line title 'Lanczos DOS ~{/Symbol  f}{.4\~}({/Symbol l})'
+plot filename lt rgb "red" with line title 'Lanczos DOS ~{/Symbol  f}{.4\~}({/Symbol l})'

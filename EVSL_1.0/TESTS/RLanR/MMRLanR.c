@@ -44,7 +44,7 @@ int main () {
   char line[MAX_LINE]; 
   /* initial vector: random */
   double *vinit;
-  tol = 1e-6;
+  tol = 1e-8;
   /* parameters for rational filter */
   int pow = 2; // multiplicity of the pole 
   double beta = 0.01; // beta in the LS approximation
@@ -196,7 +196,7 @@ int main () {
       b = sli[sl+1];
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b); 
       //-------------------- Parameters for RatLanTr
-      mlan = max(4*nev,100); // maximal Krylov subspace dim.
+      mlan = max(4*nev,300); // maximal Krylov subspace dim.
       mlan = min(mlan, n); 
       max_its = 3*mlan;
       fprintf(fstats, "Thick Restarted Lanczos with dimension %d\n", mlan);

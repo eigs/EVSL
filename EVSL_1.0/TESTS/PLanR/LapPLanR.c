@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
   xintv[1] = b;
   xintv[2] = lmin;
   xintv[3] = lmax;
-  tol  = 1e-6;
+  tol  = 1e-8;
   n = nx * ny * nz;
   /*-------------------- output the problem settings */
   fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
     //-------------------- approximate number of eigenvalues wanted
     nev = ev_int+2;
     //-------------------- Dimension of Krylov subspace 
-    mlan = max(4*nev, 100);
+    mlan = max(4*nev, 300);
     mlan = min(mlan, n);
     max_its = 3*mlan;
     //-------------------- ChebLanTr
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
     pol.damping = 0;
     //-------------------- use a stricter requirement for polynomial
     pol.thresh_int = 0.8;
-    pol.thresh_ext = 0.5;
+    pol.thresh_ext = 0.2;
     pol.max_deg  = 10000;
     // pol.deg = 20 //<< this will force this exact degree . not recommended
     //                   it is better to change the values of the thresholds

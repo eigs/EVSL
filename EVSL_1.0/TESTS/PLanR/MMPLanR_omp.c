@@ -181,7 +181,7 @@ int main () {
     /*-------------------- MAIN intv LOOP: for each sclice Do: */
     double tsolve = evsl_timer();
     totcnt = 0;
-    mlan = max(4*nev,100);   mlan = min(n, mlan);
+    mlan = max(4*nev,300);   mlan = min(n, mlan);
     max_its = 3*mlan; 
     // shared array for storing eigenvalues and residuals for each slice 
     double *lam_global, *res_global;

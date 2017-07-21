@@ -46,7 +46,7 @@ int main () {
   double *vinit;
   polparams pol;
   //-------------------- tolerance for stopping criterion
-  tol = 1e-6;  
+  tol = 1e-8;  
   //-------------------- slicer parameters 
   Mdeg = 300;
   nvec = 60;
@@ -186,7 +186,7 @@ int main () {
       b = sli[sl+1];
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b); 
       //-------------------- Parameters for ChebLanTr
-      mlan = max(4*nev,100);  mlan = min(mlan, n);
+      mlan = max(4*nev,300);  mlan = min(mlan, n);
       max_its = 3*mlan;  // max number of Lanczos iterations
       //fprintf(fstats, "Thick Restarted Lanczos with dimension %d\n", mlan);
       //fprintf(fstats, "Max Lanczos steps %d\n", max_its);
@@ -195,7 +195,7 @@ int main () {
       //-------------------- set up default parameters for pol.
       set_pol_def(&pol);
       // can change default values here e.g.
-      pol.damping = 2;  pol.thresh_int = 0.5; 
+      pol.damping = 2;  pol.thresh_int = 0.8; 
       //pol.max_deg = 500;  
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);

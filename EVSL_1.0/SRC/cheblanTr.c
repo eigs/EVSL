@@ -20,8 +20,8 @@
 /**
  * @brief Chebyshev polynomial filtering Lanczos process [Thick restart version]
  *
- * @param lanm      Dimension of Krylov subspace [restart dimension]
- * @param nev       Estimate of number of eigenvalues in the interval --
+ * @param[in] lanm      Dimension of Krylov subspace [restart dimension]
+ * @param[in] nev       Estimate of number of eigenvalues in the interval --
  *         ideally nev == exact number or a little larger.  This is not used
  *         for testing convergence but it helps make decisions as to when to
  *         test convergence ChebLanTr attempts to compute *all* eigenvalues in
@@ -29,20 +29,19 @@
  *         convergenve test is a very simple one based on the residual norm for
  *         the filtered matrix 
  *
- * @param intv   an array of length 4  \n
+ * @param[in] intv   an array of length 4  \n
  *         [intv[0], intv[1]] is the interval of desired eigenvalues \n
  *         [intv[2], intv[3]] is the global interval of all eigenvalues \n
  *         it must contain all eigenvalues of A
  * 
- * @param maxit  max Num of outer Lanczos iterations (restarts) allowed -- 
+ * @param[in] maxit  max Num of outer Lanczos iterations (restarts) allowed -- 
  *         Each restart may or use the full lanm lanczos steps or fewer.
  * 
- * @param tol       tolerance for convergence. stop when ||res||< tol
- * @param vinit     initial  vector for Lanczos -- [optional]
- * @param pol       a struct containing the parameters of the polynomial. This 
+ * @param[in] tol       tolerance for convergence. stop when ||res||< tol
+ * @param[in] vinit     initial  vector for Lanczos -- [optional]
+ * @param[in] pol       a struct containing the parameters of the polynomial. This 
  *                  is set up by a call to find_deg prior to calling chenlanTr 
  *
- * @b Modifies:
  * @param[out] nev2     Number of eigenvalues/vectors computed
  * @param[out] W        A set of eigenvectors  [n x nev2 matrix]
  *                      of unit 2-norm for standard eig prob
@@ -447,7 +446,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
             tr += Rval[i];
           }
         }
-        if (fabs(tr-last_tr) <= tol * fabs(tr) && jl == last_jl) {
+        if (fabs(tr-last_tr) <= 1e-13 && jl == last_jl) {
           if (fstats) {
             fprintf(fstats,"break: [it %d, k %d]: last_tr %.15e, tr %.15e, last_jl %d  jl %d\n",
                     it, k, last_tr, tr, last_jl, jl);

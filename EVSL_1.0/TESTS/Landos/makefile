@@ -4,13 +4,16 @@ include ../../makefile.in
 
 FLAGS = -DUNIX -O3 -g -Wall
 
-INCLUDES = -I../../INC  -I ../COMMON_GEN
+GEN_INCLUDES = -I../../INC  -I ../COMMON_GEN
+STD_INCLUDES = -I../../INC  -I ../COMMON
 
-EXTRA = ../COMMON_GEN/io.o ../COMMON_GEN/mmio.o ../COMMON_GEN/lapl.o
+GEN_EXTRA = ../COMMON_GEN/io.o ../COMMON_GEN/mmio.o ../COMMON_GEN/lapl.o
+
+STD_EXTRA = ../COMMON/io.o ../COMMON/mmio.o ../COMMON/lapl.o
 
 # Object files
-OBJS_LD = LanDos.o exDOS.o  $(EXTRA)
-OBJS_LDG = LanDosG.o exDOS.o  $(EXTRA)
+OBJS_LD = LanDos.o exDOS.o  $(STD_EXTRA)
+OBJS_LDG = LanDosG.o exDOS.o  $(GEN_EXTRA)
 
 LIB = -L../../ -levsl
 
@@ -21,8 +24,12 @@ LIB_EXT =  $(OMP) $(LIBLAPACK) $(LIB0)
 default: LanDos.ex LanDosG.ex
 all: LanDos.ex LanDosG.ex
 
+%G.o : %G.c
+	$(CC) $(FLAGS) $(GEN_INCLUDES) -o $@ -c $<
+
 %.o : %.c
-	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
+	$(CC) $(FLAGS) $(STD_INCLUDES) -o $@ -c $<
+
 
 # Exe
 LanDos.ex: $(OBJS_LD)

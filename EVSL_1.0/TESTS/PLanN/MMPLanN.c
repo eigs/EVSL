@@ -186,7 +186,7 @@ int main () {
       StatsReset();
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b); 
       //-------------------- Parameters for ChebLanTr
-      mlan = max(4*nev,100);  mlan = min(mlan, n);
+      mlan = max(4*nev,300);  mlan = min(mlan, n);
       //mlan  = 2000;  // max number of Lanczos iterations
       fprintf(fstats, "Non-Restarted Lanczos with dimension %d\n", mlan);
       xintv[0] = a;
@@ -196,7 +196,7 @@ int main () {
       // can change default values here e.g.
       pol.damping = 2;         // use lanczos damping 
       pol.thresh_int = 0.8;    // change thresholds for getting a sharper
-      pol.thresh_ext = 0.35;   // [higher deg] polynomial
+      pol.thresh_ext = 0.2;   // [higher deg] polynomial
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);
 
