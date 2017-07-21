@@ -165,18 +165,18 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 >  Refer to CXSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
 
 **SuiteSparse**:
-   As an replacement for CXSparse, SuiteSparse bindings are provided.
+   As a replacement for CXSparse, bindings are provided for the package SuiteSparse.
    Once SuiteSparse is installed, simply swich the DIRECTSOL variable
    in the makefile.in, and add the path to
    EXTERNAL/makefile_suitesparse.in.
 
-   EVSL uses SuiteSparse to solve linear systems with (A-SIGMA I) or (A-SIGMA B),
+   EVSL invokes SuiteSparse to solve linear systems with (A-SIGMA I) or (A-SIGMA B),
    and  CHOLMOD for  solving linear systems with B.
 
-   Users can use other solvers by providing the same interface as done for SuiteSparse.
+   Other solvers can also be used by providing the same interface as done for SuiteSparse.
    Follow the examples implemented in EXTERNAL/evsl_suitesparse.c
  
->  NOTE:  SuiteSparse is NOT distributed with EVSL, and is Copyrighted by Timothy Davis.  
+>  NOTE:  SuiteSparse is NOT distributed with EVSL, and it is Copyrighted by Timothy Davis.  
 >  Refer to SuiteSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
 
 -----------------------------------------------------------------------
