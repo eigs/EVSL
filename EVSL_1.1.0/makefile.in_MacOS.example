@@ -3,7 +3,8 @@ CC = gcc
 #CC = gcc
 OBJ_TIME = mactime.o 
 ## 
-LIB0 = -lgfortran 
+## LIB0 = -lgfortran 
+LIB0 = 
 ## Linker 
 LINK = $(CC) -framework accelerate
 
