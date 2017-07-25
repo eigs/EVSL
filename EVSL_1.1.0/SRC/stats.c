@@ -41,7 +41,7 @@ void StatsPrint(FILE *fstats) {
   fprintf(fstats, " Timing (sec):\n");
   if (t_setBsv)     { fprintf(fstats, "   Setup Solver for B       :  %f\n",  t_setBsv); }
   if (t_setASigBsv) { fprintf(fstats, "   Setup Solver for A-SIG*B :  %f\n",  t_setASigBsv); }
-  if (t_iter)       { fprintf(fstats, "   Iterative solver         :  %f\n",  t_iter); }
+  if (t_iter)       { fprintf(fstats, "   Iteration time (tot)     :  %f\n",  t_iter); }
   
   fprintf(fstats, "   - - - - - - - - - - - - - - - - -\n");
   
