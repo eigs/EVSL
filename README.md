@@ -1,21 +1,17 @@
 
-## EVSL:  EigenValues Slicing Library (Version 1.0)         
+
+## EVSL:  EigenValues Slicing Library (Version 1.1.0)         
+
+ ![Alt](/evsl_logo3.png "EVSL-logo")
 
 ~~~
-
-                                      ___  __   __  ___   _    
-                                     | __| \ \ / / / __| | |   
-                                     | _|   \ V /  \__ \ | |__ 
-                                     |___|   \_/   |___/ |____|                  
-
-
-                          ChebLanTR, ChebLanNR, ChebSI, RatLanTr and RatLanNr 
+                          ChebLanNr, ChebLanTr, ChebSI, RatLanNr and RatLanTr 
                Polynomial and Rational Filtered Lanczos and subspace iteration algorithms 
                                  For Symmetric Eigenvalue problems
 ~~~
 
 Welcome to EVSL. EVSL is a C library for computing the eigenvalues of
-a symmetric matrix  that are located in a given  interval.  This first
+a symmetric matrix  that are located in a given  interval.  This
 release includes the routines listed above and does not yet offer full
 parallel implementations  (trivial openMP test programs  are available
 among   the test  drivers).  EVSL also  provides tools  for spectrum
@@ -53,18 +49,18 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    - dumps.c       :  Miscellaneous functions for I/O and for debugging 
    - dos_utils.c   :  Miscellaneous functions used for DOS based functions.
    - evsl.c        :  Set EVSL solver options and data
-   - lanbounds.c   :  Lanczos alg. to give bounds of spectrum
+   - lanbounds.c   :  Lanczos alg. to compute bounds of spectrum
    - landos.c      :  Lanczos based DOS algorithm for the standard problem
-   - landosG.c     :  Lanczos based DOS algorithm for general and standard problems
-   - lanTrbounds.c :  A more robust alg. to give bounds of spectrum based on TR Lanczos
+   - landosG.c     :  Lanczos based DOS algorithm for generalized and standard problems
+   - lanTrbounds.c :  A more robust alg. to compute bounds of spectrum based on TR Lanczos
    - mactime.c     :  Timer for mac iOS
    - misc_la.c     :  Miscellaneous linear algebra functions
    - ratfilter.c   :  Computing and applying rational filters
    - ratlanNr.c    :  Rational Filtered no-restart Lanczos
    - ratlanTr.c    :  Rational Filtered thick restart Lanczos
    - spmat.c       :  Sparse matrix routines
-   - spslice.c    :  Spectrum slicing
-   - spslice2.c   :  Spectrum slicing
+   - spslice.c    :  Spectrum slicing functions for Kernel Polynomial Method
+   - spslice2.c   :  Spectrum slicing functions for Lanczos 
    - timing.c      :  Timer
    - vect.c        :  Vector operations
 
@@ -92,7 +88,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
      * LapRLanN.c         : Rational filtering non-restart Lanczos (Laplacian)
      * MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market)
 
-   * GEN           : Test drivers for the general eigenvalue problem
+   * GEN           : Test drivers for the generalized eigenvalue problem
      * Lap_PLanN.c    : Polynomial filtering Lanczos (Laplacian)
      * Lap_PLanR.c    : Polynomial filtering T-R Lanczos (Laplacian)
      * Lap_RLanN.c    : Rational filtering Lanczos (Laplacian)
@@ -110,21 +106,19 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
      * LapPSI.c     : Polynomial filtering subspace iterations (Laplacian)
      * MMPSI.c      : Polynomial filtering subspace iterations (Matrix Market)
 
-
-
    * COMMON        : Routines common to the test drivers
       * io.c        : parse command-line input parameters
       * lapl.c      : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
       * mmio.c        : IO routines for the matrix market format
 
-   * COMMON_GEN    : Routines common to the test drivers for the general eigenvalue problem
+   * COMMON_GEN    : Routines common to the test drivers for the generalized eigenvalue problem
       * io.c        : parse command-line input parameters
       * lapl.c      : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
       * mmio.c        : IO routines for the matrix market format
 
    * TESTS/Landos    : test drivers for the lanDOS related functions.
-      * LanDos.c      : Standard eigenvalue problem DOS using Lancco's
-      * LanDosG.c     : General eigenvalue problem DOS using Lancco's
+      * LanDos.c      : DOS for standard eigenvalue problem  using Lanczos 
+      * LanDosG.c     : DOS for generalized eigenvalue problem  using Lanczos 
 
  * EXTERNAL             : direct solver  interface for generalized eigenvalue problems
    - evsl_suitesparse.c : suitesparse UMFPACK and CHOLMOD interface
@@ -154,29 +148,29 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    build sample drivers that test a few different situations.
 
 **CXSparse**
-   SuiteSparse is the default direct linear solver of EVSL, for the
-   rational filtering and generalized eigenvalue problems.
-   CXSparse is included to allow brief tests. However, know that it is
-   significantly slower than other direct solvers such as SuiteSparse
-   (see below).
->  NOTE: CXSparse IS distributed with EVSL, and is Copyrighted by
->  Timothy Davis. It should be noted that much better performance can be
->  achieved by other direct solvers. 
+   SuiteSparse is the default direct linear solver used in EVSL for the 
+   linear systems that arise in rational filtering methods and    in 
+   generalized eigenvalue problems. CXSparse is included only to allow quick 
+   testing. However, know that it is significantly slower than other direct 
+   solvers such as those in SuiteSparse  for example  (see below).
+>  NOTE: CXSparse, which is  distributed with EVSL, is Copyrighted by
+>  Timothy Davis. As noted above much better performance can be
+>  achieved by other existing direct solvers. 
 >  Refer to CXSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
 
 **SuiteSparse**:
-   As an replacement for CXSparse, SuiteSparse bindings are provided.
+   As a replacement for CXSparse, bindings are provided for the package SuiteSparse.
    Once SuiteSparse is installed, simply swich the DIRECTSOL variable
    in the makefile.in, and add the path to
    EXTERNAL/makefile_suitesparse.in.
 
-   EVSL uses SuiteSparse to solve linear systems with (A-SIGMA I) or (A-SIGMA B),
+   EVSL invokes SuiteSparse to solve linear systems with (A-SIGMA I) or (A-SIGMA B),
    and  CHOLMOD for  solving linear systems with B.
 
-   Users can use other solvers by providing the same interface as done for SuiteSparse.
+   Other solvers can also be used by providing the same interface as done for SuiteSparse.
    Follow the examples implemented in EXTERNAL/evsl_suitesparse.c
  
->  NOTE:  SuiteSparse is NOT distributed with EVSL, and is Copyrighted by Timothy Davis.  
+>  NOTE:  SuiteSparse is NOT distributed with EVSL, and it is Copyrighted by Timothy Davis.  
 >  Refer to SuiteSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
 
 -----------------------------------------------------------------------
@@ -219,18 +213,18 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   is the  complex shift.  `data`  is an array  of `(void*)` of  the same
   length,  where `data[i]`  is the  data needed  by `func[i]`.   
 
-  All "func" must be of the following prototype
+  Each "func[i]" must be of the following prototype
 
       void SolFuncC(int n, double *br, double *bz, double *xr, double *xz, void *data);
 
   where `n`  is the size  of the system,  `br`, `bz` are  the right-hand
   side (real and  imaginary parts of complex vector),  `xr`, `xz` will
-  be the  solution (complex vector),  and `data` contains  all the
+  hold the  solution (complex vector) on return,  and `data` contains  all the
   data  needed  for  the  solver.    
 
-  If all `func[i]` are the same, one can set `func==NULL` and set `allf` to the function
+  If all `func[i]` are the same, one can set `func==NULL` and set `allf` to the function   
 
-  Once `SetASigmaBSol` is done, rational filtering Lanczos methods 
+  Once `SetASigmaBSol` is executed, rational filtering Lanczos methods 
   should be ready to use.
   
 -----------------------------------------------------------------------
@@ -238,9 +232,9 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 ###  MATRIX-FREE SOLVERS
 
 -----------------------------------------------------------------------
-  All  the  iterative solvers  in  EVSL  can  be used  in  matrix-free
-  ways. Users need only to  provide the matrix-vector product function
-  of the following prototype:
+  All  the  iterative solvers  in  EVSL  can  be used  in  `matrix-free'
+  mode. In this mode, users need only to  provide a matrix-vector product 
+  function  of the following prototype:
 
       void MVFunc(double *x, double *y, void *data);
 
@@ -248,29 +242,29 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   perform the  matvec. The  `(void *)`  argument is  to provide  a uniform
   interface  to all  user-specific  functions. For  a particular  Matvec
   function, one can pack all data  needed by this function into a struct
-  and pass the  pointer of this struct  to EVSL (after cast  it to `(void
+  and pass the  pointer of this struct  to EVSL (after casting  it to `(void
   *)`). This  function needs to  be passed to EVSL  as well, so  EVSL can
-  call  this  function  to  perform  all matvecs.    The user can also
-  provide CSR  matrices to EVSL, in which case EVSL will use its internal 
-  MATVEC routine. This can be set by
+  call  it  to  perform  all matvecs.    The user can also pass needed
+ matrices in the standard CSR format to EVSL, in which case EVSL will use 
+ its internal   MATVEC routine. This can be set by
 
       SetAMatrix(csrMat *A)
       SetBMatrix(csrMat *B)
 
-  for matrices A and B
+  for the matrices A and B 
 
   
   In  TESTS/LAP,  an example  of  matvec  functions for  2D/3D  Laplacian
   matrices is  provided, where the  matrix is not explicitly  formed but
-  5pt/7pt stencil is used instead. In  this example, a struct for matvec
-  is first defined:
+  5pt/7pt stencil is used instead to perform the matvecs. 
+  In  this example, a struct for matvec is first defined:
 
       typedef struct _lapmv_t {  
         int  nx,  ny,  nz; 
         double  *stencil;  
       } lapmv_t;
 
-  and the matvec function is implemented
+  and the matvec function is implemented as: 
 
       void Lap2D3DMatvec(double  *x, double  *y,  void  *data) {  
         lapmv_t *lapmv = (lapmv_t *) data; 
@@ -281,7 +275,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
         ...  
       }
 
-  in  which   the  pointer  is  first   casted  and  all  the   data  is
+  in  which   the  pointer  is  first   cast  and  all  the   data  is
   unpacked. Once these are ready, they can be passed to EVSL by calling    
 
       SetAMatvec(n, &Lap2D3DMatvec, (void*) &lapmv) and
