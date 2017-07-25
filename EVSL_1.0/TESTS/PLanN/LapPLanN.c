@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
   findarg("b", DOUBLE, &b, argc, argv);
   findarg("nslices", INT, &nslices, argc, argv);
   fprintf(fstats,"used nx = %3d ny = %3d nz = %3d",nx,ny,nz);
-  fprintf(fstats," [a = %4.2f  b= %4.2f],  nslices=%2d \n",a,b,nslices);
+  fprintf(fstats," [a = %f  b = %f],  nslices=%2d \n",a,b,nslices);
   //-------------------- eigenvalue bounds set by hand.
   lmin = 0.0;  
   lmax = nz == 1 ? 8.0 : 12.0;
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- convert coo to csr */
   ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
   /*-------------------- step 0: get eigenvalue bounds */
-  fprintf(fstats, "Step 0: Eigenvalue bound s for A: [%.15e, %.15e]\n", lmin, lmax);
+  fprintf(fstats, "Step 0: Eigenvalue bounds for A: [%.15e, %.15e]\n", lmin, lmax);
   /*-------------------- call landos to get the DOS for dividing the spectrum*/
   /*-------------------- define landos parameters */
   Mdeg = 300;
