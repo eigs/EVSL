@@ -55,7 +55,8 @@ void StatsPrint(FILE *fstats) {
   if (t_eig)     { fprintf(fstats, "   LAPACK eig               :  %f\n", t_eig); }
   if (t_blas)    { fprintf(fstats, "   Other BLAS               :  %f\n", t_blas); }
   if (t_ritz)    { fprintf(fstats, "   Compute Ritz vectors     :  %f\n", t_ritz); }
-  if (t_sth)     { fprintf(fstats, "   Some other thing timed   :  %f\n", t_sth); }
+  /* if (t_sth)     { fprintf(fstats, "   Some other thing timed   :  %f\n", t_sth); } */
+  if (t_sth)     { fprintf(fstats, "   Other                    :  %f\n", t_sth); }
   /* memory */
   /*
   if (alloced_total > 1e9) {
