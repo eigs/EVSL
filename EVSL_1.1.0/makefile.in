@@ -46,14 +46,17 @@ ifeq ($(INTEL), 1)
 LIBLAPACK = -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_intel_thread.a ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -liomp5 -lpthread -lm -ldl
 else
 #LIBLAPACK = -L/scratch/syphax/Rational_GEIG/lapack-3.5.0 -llapack -lrefblas
-LIBLAPACK = /scratch/syphax/XYZ/Software/OpenBlas/libopenblas.a -lpthread
+#LIBLAPACK = /scratch/syphax/XYZ/Software/OpenBlas/libopenblas.a -lpthread
 #LIBLAPACK = -L/home/yuanzhe/Desktop/lapack-3.5.0 -llapack -lrefblas
 #LIBLAPACK = -llapack -lblas
+LIBLAPACK = /home/ruipeng/workspace/OpenBLAS/libopenblas.a -lpthread
 endif
 
+ifeq ($(INTEL), 0)
 # direct solver: CXSPARSE, SUITESPARSE
 # CXSPARSE    : distributed with EVSL, no need to be provided
 # SUITESPARSE : not distributed with EVSL, path need to be provided 
 #               in EXTERNAL/makefile_suitesparse.in
 DIRECTSOL = SUITESPARSE
 #DIRECTSOL = CXSPARSE
+endif

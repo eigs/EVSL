@@ -1,17 +1,22 @@
 include ../../makefile.in
 #include ../../EXTERNAL/makefile.in
 
+FLAGS = -DUNIX -O3 -g #-warn all
+
 ifeq ($(INTEL), 1)
 FC = ifort
+FLAGS += -DUSE_MKL -qopenmp
 else
 FC = gfortran
 endif
 
 LINK = $(FC)
-FLAGS = -DUNIX -O3 -g
 
 INCLUDES = -I../../INC -I../../EXTERNAL
 
+ifeq ($(INTEL), 1)
+  OBJ_DIRSOL = ../../EXTERNAL/evsl_pardiso.o ../../EXTERNAL/evsl_direct_f90.o
+else
 ifeq ($(DIRECTSOL), SUITESPARSE)
   OBJ_DIRSOL = ../../EXTERNAL/evsl_suitesparse.o ../../EXTERNAL/evsl_direct_f90.o
   include ../../EXTERNAL/makefile_suitesparse.in
@@ -19,6 +24,7 @@ ifeq ($(DIRECTSOL), SUITESPARSE)
 else
   OBJ_DIRSOL = ../../EXTERNAL/evsl_cxsparse.o ../../EXTERNAL/evsl_direct_f90.o
   LIB_DIRSOL = -L../../EXTERNAL/CXSparse/Lib -lcxsparse
+endif
 endif
 
 # Object files

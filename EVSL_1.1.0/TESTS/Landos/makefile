@@ -2,10 +2,15 @@
 
 include ../../makefile.in
 
-FLAGS = -DUNIX -O3 -g -Wall
+FLAGS ?= -DUNIX -O3 -g -Wall
 
 GEN_INCLUDES = -I../../INC  -I ../COMMON_GEN
 STD_INCLUDES = -I../../INC  -I ../COMMON
+
+ifeq ($(INTEL), 1)
+GEN_INCLUDES += -I${MKLROOT}/include
+STD_INCLUDES += -I${MKLROOT}/include
+endif
 
 GEN_EXTRA = ../COMMON_GEN/io.o ../COMMON_GEN/mmio.o ../COMMON_GEN/lapl.o
 

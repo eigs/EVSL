@@ -14,6 +14,13 @@ endif
 	+ make all -C TESTS/PSI
 	+ make all -C TESTS/Fortran
 
+lib:
+	+ make -C SRC
+	+ make -C EXTERNAL
+ifeq ($(DIRECTSOL), CXSPARSE)
+	+ make -C EXTERNAL/CXSparse
+endif
+
 clean:
 	( cd SRC                 ; make clean )
 	( cd EXTERNAL            ; make clean )

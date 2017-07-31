@@ -69,4 +69,8 @@
  */
 #define NGS_MAX 2
 
+/*! integer type of EVSL */
+#define EVSL_Int      int
+#define EVSL_Unsigned unsigned
+
 #endif

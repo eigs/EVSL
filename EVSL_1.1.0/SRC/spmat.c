@@ -400,7 +400,7 @@ void diagScalCsr(csrMat *A, double *d) {
 /*
  * Extract the diagonal entries of csr matrix B
  *
- * @param[in] B Matrix to extract the square root of the diagonals
+ * @param[in]  B Matrix to extract the diagonal
  * @param[out] D preallocated vector of lengeth B.nrows
  */
 void extrDiagCsr(csrMat *B, double *d) {
@@ -413,5 +413,39 @@ void extrDiagCsr(csrMat *B, double *d) {
       }
     }
   }
+}
+
+/*
+ * Extract the upper triangular part of csr matrix A
+ *
+ * @param[in]  A Matrix 
+ * @param[out] U Matrix
+ */
+void triuCsr(csrMat *A, csrMat *U) {
+  EVSL_Int i, j;
+  EVSL_Unsigned k = 0, nnzu = 0;
+
+  /* count nnz in U */
+  for (i = 0; i < A->nrows; i++) {
+    for (j = A->ia[i]; j < A->ia[i+1]; j++) {
+      if (i <= A->ja[j]) {
+        nnzu++;
+      }
+    }
+  }
+  /* allocate memory for U */
+  csr_resize(A->nrows, A->ncols, nnzu, U);
+  U->ia[0] = 0;
+  /* copy entries from A to U */
+  for (i = 0; i < A->nrows; i++) {
+    for (j = A->ia[i]; j < A->ia[i+1]; j++) {
+      if (i <= A->ja[j]) {
+        U->ja[k] = A->ja[j];
+        U->a[k++] = A->a[j];
+      }
+    }
+    U->ia[i+1] = k;
+  }
+  CHKERR(k != nnzu);
 }
 

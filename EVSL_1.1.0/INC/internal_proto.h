@@ -87,15 +87,12 @@ void matvec_csr(double *x, double *y, void *data);
 void csr_resize(int nrow, int ncol, int nnz, csrMat *csr);
 //
 void sortrow(csrMat *A);
-//
-//int check_tri_full_diag(char type, csrMat *A);
-//
-//int tri_sol_upper(char trans, csrMat *R, double *b, double *x);
-//
 int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
            int *mapA, int *mapB);
 /* sparse identity */
 int speye(int n, csrMat *A);
+/* extract upper triangular part of A */
+void triuCsr(csrMat *A, csrMat *U);
 
 /*- - - - - - - - - timing.c */
 int time_seeder();

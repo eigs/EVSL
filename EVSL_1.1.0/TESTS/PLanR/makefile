@@ -2,18 +2,9 @@
 
 include ../../makefile.in
 
-FLAGS = -DUNIX -O3 -g -Wall 
+FLAGS ?= -DUNIX -O3 -g -Wall 
 
 INCLUDES = -I../../INC -I../../EXTERNAL   -I ../COMMON
-
-ifeq ($(DIRECTSOL), SUITESPARSE)
-  OBJ_DIRSOL = evsl_suitesparse.o
-  include ../../EXTERNAL/makefile_suitesparse.in
-  LIB_DIRSOL = $(LIB_UMF)
-else
-  OBJ_DIRSOL = evsl_cxsparse.o
-  LIB_DIRSOL = -L../../EXTERNAL/CXSparse/Lib -lcxsparse
-endif
 
 EXTRA =  ../COMMON/io.o ../COMMON/mmio.o ../COMMON/lapl.o
 # Object files
@@ -22,7 +13,6 @@ OBJS_MM  = MMPLanR.o $(EXTRA)
 OBJS_MM_OMP = MMPLanR_omp.o $(EXTRA) 
 
 LIB = -L../../ -levsl 
-LIB_EXT = $(LIB_DIRSOL) $(OMP) $(LIBLAPACK) $(LIB0)
 
 ALLEXE = LapPLanR.ex MMPLanR_omp.ex  MMPLanR.ex
 
@@ -42,10 +32,10 @@ LapPLanR.ex: $(OBJS_L)
 
 
 MMPLanR.ex: $(OBJS_MM)
-	$(LINK) -o MMPLanR.ex $(OBJS_MM) $(LIB) $(LIB_EXT)
+	$(LINK) -o MMPLanR.ex $(OBJS_MM) $(LIB) $(LIBLAPACK) $(LIB0)
 
 MMPLanR_omp.ex: $(OBJS_MM_OMP)
-	$(LINK) -o MMPLanR_omp.ex $(OBJS_MM_OMP) $(LIB) $(LIB_EXT) $(OMP)
+	$(LINK) -o MMPLanR_omp.ex $(OBJS_MM_OMP) $(LIB) $(LIBLAPACK) $(LIB0) $(OMP)
 
 all: $(ALLEXE)
 

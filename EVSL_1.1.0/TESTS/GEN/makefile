@@ -2,10 +2,13 @@
 
 include ../../makefile.in
 
-FLAGS = -DUNIX -O3 -g -Wall
+FLAGS ?= -DUNIX -O3 -g -Wall
 
 INCLUDES = -I../../INC -I../../EXTERNAL   -I ../COMMON_GEN
 
+ifeq ($(INTEL), 1)
+  OBJ_DIRSOL = evsl_pardiso.o
+else
 ifeq ($(DIRECTSOL), SUITESPARSE)
   OBJ_DIRSOL = evsl_suitesparse.o
   include ../../EXTERNAL/makefile_suitesparse.in
@@ -14,6 +17,7 @@ else
   OBJ_DIRSOL = evsl_cxsparse.o
   LIB_DIRSOL = -L../../EXTERNAL/CXSparse/Lib -lcxsparse
   FLAGS += -DCXSPARSE=1
+endif
 endif
 
 EXTRA =  ../COMMON_GEN/io.o ../COMMON_GEN/mmio.o ../COMMON_GEN/lapl.o
