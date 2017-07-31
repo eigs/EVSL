@@ -343,7 +343,7 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
   MKL_INT maxfct = num;
   MKL_INT mnum;
   MKL_INT phase;
-  MKL_INT msglvl = 1;
+  MKL_INT msglvl = 0;
   MKL_INT error = 0;
   double ddum;
   MKL_INT idum;
@@ -504,7 +504,7 @@ void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
   ASBSolDataDirect *sol_data = (ASBSolDataDirect *) data;
   int i;
   MKL_INT mtype = 6;       /* Complex and symmetric matrix */
-  MKL_INT msglvl = 1;
+  MKL_INT msglvl = 0;
   MKL_INT error = 0;
   /* Integer dummy. */
   MKL_INT idum;
