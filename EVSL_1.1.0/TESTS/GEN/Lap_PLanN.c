@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
     //-------------------- approximate number of eigenvalues wanted
     nev = ev_int+2;
     //-------------------- Dimension of Krylov subspace 
-    mlan = max(4*nev, 100);
+    mlan = max(4*nev, 300);
     mlan = min(mlan, n);
 
     //-------------------- ChebLanNr
