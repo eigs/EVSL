@@ -218,7 +218,7 @@ int main() {
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int + 2;
       //-------------------- Dimension of Krylov subspace and maximal iterations
-      mlan = max(4 * nev, 100);
+      mlan = max(5 * nev, 100);
       mlan = min(mlan, n);
       //-------------------- then call ChebLanNr
       ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res,
