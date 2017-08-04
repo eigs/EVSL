@@ -66,18 +66,18 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   double tr0, tr1;
   double *y, flami; 
   int i, k, kdim;
-  // handle case where fstats is NULL. Then no output. Needed for openMP.
+  /* handle case where fstats is NULL. Then no output. Needed for openMP */
   int do_print = 1;   
-  if (fstats == NULL){
+  if (fstats == NULL) {
     do_print = 0;
-  }  
-  /*--------------------   frequently used constants  */
+  }
+  /*-------------------- frequently used constants  */
   char cN = 'N';   
   int one = 1;
   double done = 1.0, dzero = 0.0;
-  /*--------------------   Ntest = when to start testing convergence */
+  /*-------------------- Ntest = when to start testing convergence */
   int Ntest = 30; 
-  /*--------------------   how often to test */
+  /*-------------------- how often to test */
   int cycle = 20; 
   /* size of the matrix */
   int n = evsldata.n;
@@ -148,7 +148,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- copy initial vector to Z(:,1) */
 #if FILTER_VINIT
   /*-------------------- compute w = p[(A-cc)/dd] * v */
-  /*------------------  Filter the initial vector */
+  /*-------------------- Filter the initial vector */
   ChebAv(pol, vinit, V, wk);
   Malloc(vrand, n, double);
 #else
@@ -322,7 +322,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     }
     /* -------------------- simple test because all eigenvalues
                             are between gamB and ~1. */
-    if ( (fabs(tr1-tr0) < 1e-13) || (fabs(tr1)+fabs(tr0)<1e-10) ) {
+    if ( (fabs(tr1-tr0) < 1e-13) || (fabs(tr1)+fabs(tr0) < 1e-10) ) {
       break;
     }
     tr0 = tr1;
