@@ -186,7 +186,7 @@ int main () {
       StatsReset();
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b); 
       //-------------------- Parameters for ChebLanTr
-      mlan = max(4*nev,300);  mlan = min(mlan, n);
+      mlan = max(5*nev,300);  mlan = min(mlan, n);
       //mlan  = 2000;  // max number of Lanczos iterations
       fprintf(fstats, "Non-Restarted Lanczos with dimension %d\n", mlan);
       xintv[0] = a;

@@ -11,12 +11,13 @@
  * @file cheblanNr.c
  * @brief Polynomial Filtered no-restart Lanczos
  */
+
 /**
  * if filter the initial vector
  */ 
 #define FILTER_VINIT 1
 
-/**-----------------------------------------------------------------------
+/* -----------------------------------------------------------------------
  *  @brief Chebyshev polynomial filtering Lanczos process [NON-restarted version]
  *
  *  @param[in] intv     An array of length 4 \n
@@ -67,7 +68,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   double *y, flami; 
   int i, k, kdim;
   /* handle case where fstats is NULL. Then no output. Needed for openMP */
-  int do_print = 1;   
+  int do_print = 1;
   if (fstats == NULL) {
     do_print = 0;
   }
@@ -136,11 +137,11 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- Lam, Rvec: the converged (locked) Ritz values vecs*/
   Malloc(Lam,   maxit, double);       // holds computed Ritz values
   Malloc(res,   maxit, double);       // residual norms (w.r.t. ro(A))
-  Malloc(EvalT, maxit, double);       // eigenvalues of tridia. matrix  T
+  Malloc(EvalT, maxit, double);       // eigenvalues of tridiag matrix T
   /*-------------------- nev = current number of converged e-pairs 
                          nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
-  /*-------------------- u  is just a pointer. wk == work space */
+  /*-------------------- u is just a pointer. wk == work space */
   double *u, *wk, *w2, *vrand = NULL;
   size_t wk_size = ifGenEv ? 4*n_l : 3*n_l;
   Malloc(wk, wk_size, double);
@@ -180,7 +181,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   /*--------------------  Lanczos recurrence coefficients */
   double alpha, nalpha, beta=0.0, nbeta;
   int count = 0;
-  // ---------------- main Lanczos loop 
+  // ---------------- main Lanczos loop
   for (k=0; k<maxit; k++) {
     /*-------------------- quick reference to Z(:,k-1) when k>0 */
     zold = k > 0 ? Z+(k-1)*n_l : NULL;
@@ -193,7 +194,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- next Lanczos vector Z(:,k+1)*/
     znew = z + n;
     /*-------------------- compute w = p[(A-cc)/dd] * v */
-    /*------------------ NOTE: z is used!!! [TODO: FIX ME] */
+    /*-------------------- NOTE: z is used!!! [TODO: FIX ME] */
     ChebAv(pol, z, znew, wk);
     /*------------------ znew = znew - beta*zold */
     if (zold) {
@@ -241,17 +242,17 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
         CGS_DGKS2(n, k+1, NGS_MAX, V, Z, vnew, wk);
         matvec_B(vnew, znew);
         beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
-	/*-------------------- vnew = vnew / beta */
+        /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
         DSCAL(&n, &t, vnew, &one);
 	/*-------------------- znew = znew / beta */
         DSCAL(&n, &t, znew, &one);
         beta = 0.0;
       } else {
-	/* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
-	/* beta = norm(vnew) */
+        /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+        /* beta = norm(vnew) */
         CGS_DGKS(n, k+1, NGS_MAX, V, vnew, &beta, wk);
-	/*-------------------- vnew = vnew / beta */
+        /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
         DSCAL(&n, &t, vnew, &one);
         beta = 0.0;
@@ -322,7 +323,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     }
     /* -------------------- simple test because all eigenvalues
                             are between gamB and ~1. */
-    if ( (fabs(tr1-tr0) < 1e-13) || (fabs(tr1)+fabs(tr0) < 1e-10) ) {
+    if ( (fabs(tr1-tr0) < 2e-12) || (fabs(tr1)+fabs(tr0) < 1e-10) ) {
       break;
     }
     tr0 = tr1;
