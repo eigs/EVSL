@@ -273,13 +273,18 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npt
     err = 1;
   }
   for (ii=1; ii<=n_int; ii++) {
-    if (sli[ii] <= sli[ii-1]) {
+    if (sli[ii] < sli[ii-1]) {
       err += 2;
       break;
     }
   }
 
   if (err) {
+    printf("sli:\n");
+    for (ii=0; ii<=n_int; ii++) {
+      printf("%.15f\n", sli[ii]);
+    }
+    printf("\n");
     save_vec(npts, xi, "OUT/xi.out");
     save_vec(npts, yi, "OUT/yi.out");
   }
