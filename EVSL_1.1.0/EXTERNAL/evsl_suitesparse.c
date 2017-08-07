@@ -341,7 +341,7 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
     }
     /* Numerical Factorization */
     double Control[UMFPACK_CONTROL], Info[UMFPACK_INFO];
-    Control[UMFPACK_PRL] = 2;
+    Control[UMFPACK_PRL] = 0;
     status = umfpack_zl_numeric(Cp, Ci, Cx, Cz, Symbolic, &Numeric, Control, Info);
     umfpack_zl_report_info(Control, Info);
     if (status < 0) {
