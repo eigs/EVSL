@@ -2,17 +2,27 @@ This  directory  contains  drivers  for testing  a  few  routines  for
 computing eigenvalues of a sparse (symmetric real) matrix pair (A, B),
 where B is assumed to be positive definite.
 
-The drivers are split into three groups, Lan_MM, KPM_MM, Lan_.
-Lan_MM reads the matrices from matrix market files (matfile), and uses
-  Lanczos to compute the density of states.
+All drivers read the matrices A and B in matrix market format from a file
+(matfile) -- see below for details. There are 4 drivers provided.
 
-KPM_MM reads the matrices from matrix market files (matfile), and uses
-  KPM to compute the density of states.
+MMPLanN.c Pol. filtering Lanczos algorithm with no restarts
+	  uses Lanczos for slicing
 
-Lap_ Uses laplician routines for matrices, and uses
-  KPM to compute the density of states.
+MMPLanR.c Pol. filtering Lanczos algorithm with restarts
+	  uses KPM for slicing
 
-The second part of the name indicates the following:
+MMRLanN.c Rational filtering Lanczos algorithm with no restarts
+	  uses Lanczos for slicing
+
+MMRLanR.c Rational filtering Lanczos algorithm with no restarts
+	  uses KPM for slicing
+
+Drivers  that use  alternate spectrum  slicing for  each of  the above
+drivers are  included in the  EXTRAS sub-directory. These  can replace
+the corresponding  ones provided above if  the user wants to  test say
+KPM vs. Lanczos for spectrum  slicing (e.g., KPM_MMRLanN.c will is the
+same as MMRLanN.c above except that it uses KPM instead of Lanczos for
+spectrum slicing).
 
 R:Rational filtering
 P:Polynomial filtering
