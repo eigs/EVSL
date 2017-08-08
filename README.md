@@ -136,7 +136,8 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
 -----------------------------------------------------------------------
 
-**Library**: The user only needs to modify the file makefile.in [see makefile.in.example for samples of files makefile.in that are given for mac-os and for Linux].
+**Library**: The user only needs to modify the file makefile.in [see makefile.in.example for samples 
+  of files makefile.in that are given for mac-os and for Linux].
 
     cp makefile.in_Linux/MacOS.example makefile.in. 
     modify makefile.in [provide C compiler and BLAS/LAPACK path]
@@ -190,6 +191,11 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
 -----------------------------------------------------------------------
 
+  Binding with Pardiso as a direct solver are also provided -- see the directory EXTERNAL 
+  for details.
+
+-----------------------------------------------------------------------
+
 ###  RATIONAL FILTERING
 
 -----------------------------------------------------------------------
@@ -229,12 +235,12 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   
 -----------------------------------------------------------------------
 
-###  MATRIX-FREE SOLVERS
+###  MATRIX-FREE EIGEN-SOLVERS
 
 -----------------------------------------------------------------------
-  All  the  iterative solvers  in  EVSL  can  be used  in  `matrix-free'
-  mode. In this mode, users need only to  provide a matrix-vector product 
-  function  of the following prototype:
+  All the eigensolvers  in EVSL can be used in  `matrix-free' mode. In
+  this  mode,  users need  only  to  provide their  own  matrix-vector
+  product function of the following prototype:
 
       void MVFunc(double *x, double *y, void *data);
 
@@ -245,8 +251,8 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   and pass the  pointer of this struct  to EVSL (after casting  it to `(void
   *)`). This  function needs to  be passed to EVSL  as well, so  EVSL can
   call  it  to  perform  all matvecs.    The user can also pass needed
- matrices in the standard CSR format to EVSL, in which case EVSL will use 
- its internal   MATVEC routine. This can be set by
+  matrices in the standard CSR format to EVSL, in which case EVSL will use 
+  its internal   MATVEC routine. This can be set by
 
       SetAMatrix(csrMat *A)
       SetBMatrix(csrMat *B)
