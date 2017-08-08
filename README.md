@@ -191,7 +191,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
 -----------------------------------------------------------------------
 
-  Binding with Pardiso as a direct solver are also provided -- see the directory EXTERNAL 
+  Bindings with Pardiso as a direct solver are also provided -- see the directory EXTERNAL 
   for details.
 
 -----------------------------------------------------------------------
@@ -327,7 +327,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
 -----------------------------------------------------------------------
 
-###  Initialization and Finalization
+###  Initialization and Completion
 
 -----------------------------------------------------------------------
 * Use `EVSLStart()` and `EVSLFinish()` before and after any call to the EVSL functions 
