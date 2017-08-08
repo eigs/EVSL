@@ -24,14 +24,6 @@ KPM vs. Lanczos for spectrum  slicing (e.g., KPM_MMRLanN.c will is the
 same as MMRLanN.c above except that it uses KPM instead of Lanczos for
 spectrum slicing).
 
-R:Rational filtering
-P:Polynomial filtering
-
-Lan: Lanczos
-
-R: Restarting
-N: Non-Restarting
-
 
 matfile : input file containing the path to the matrix to be read by Gen*.c
           - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -46,4 +38,4 @@ matfile : input file containing the path to the matrix to be read by Gen*.c
           /MATRICES/A.mtx /MATRICES/B.mtx stiff1 mass1 MM1  28.617629  1746.952 2
           - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-The computed eigenvalues are saved in OUT/ folder. 
+The computed eigenvalues are saved in the OUT/ folder. 
