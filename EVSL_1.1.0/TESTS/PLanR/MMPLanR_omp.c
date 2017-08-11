@@ -210,6 +210,10 @@ int main () {
 
       set_pol_def(&pol);
       find_pol(intv, &pol);
+      
+      fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
+              pol.type, pol.deg, pol.bar, pol.gam);
+      
       ierr = ChebLanTr(mlan, nev, intv, max_its, tol, vinit,
                        &pol, &nevOut, &lam, &Y, &res, NULL);
       if (ierr) {

@@ -212,8 +212,8 @@ int main() {
       // pol.max_deg  = 300;
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);
-      fprintf(fstats, " polynomial deg %d, bar %.15e gam %.15e\n", pol.deg,
-              pol.bar, pol.gam);
+      fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
+              pol.type, pol.deg, pol.bar, pol.gam);
       // save_vec(pol.deg+1, pol.mu, "OUT/mu.txt");
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int + 2;

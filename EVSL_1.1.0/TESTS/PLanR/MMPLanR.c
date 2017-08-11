@@ -199,8 +199,8 @@ int main () {
       //pol.max_deg = 500;  
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);
-      fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",
-              pol.deg, pol.bar, pol.gam);
+      fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
+              pol.type, pol.deg, pol.bar, pol.gam);
       //-------------------- Call ChebLanTr        
       ierr = ChebLanTr(mlan, nev, xintv, max_its, tol, vinit,
                        &pol, &nevOut, &lam, &Y, &res, fstats);

@@ -24,6 +24,7 @@ void set_pol_def(polparams *pol){
   pol->tol = 1e-3;         // tolerance for LS approximation
   pol->mu = NULL;
   pol->deg = 0;            // degree =0 means determine optimal degree.
+  pol->intvtol = 1e-9;     // cut-off point of middle interval
 }
 
 /**
@@ -117,7 +118,7 @@ int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
   //-------------------- POLYNOMIAL loop
   for (k=0; k<m; k++) {
     //-------------------- generates term of degree k+1
-    scal = (k==0? 1.0 : 2.0);
+    scal = (k == 0 ? 1.0 : 2.0);
     for (j=0; j<n; j++)
       vkp1[j] = scal*xi[j]*vk[j] - vkm1[j];  
     tmp  = vkm1;
@@ -374,7 +375,8 @@ int find_pol(double *intv, polparams *pol) {
   Malloc(jac, max_deg+1, double);
   /*-------------------- A parameter for interval check */
   // double IntTol = 2*DBL_EPSILON; // If b*IntTol>1 accept [a b] extreme
-  double IntTol = 0.0005;
+  //double IntTol = 0.0005;
+  double IntTol = pol->intvtol;
   double aa, bb;
   aa = max(intv[0], intv[2]);  bb = min(intv[1], intv[3]);
   if (intv[0] < intv[2] || intv[1] > intv[3]) {
@@ -409,18 +411,21 @@ int find_pol(double *intv, polparams *pol) {
     //                      obtain bar values.
     nitv = 1;
     aa = -1.0;
-    gam = -1.0;               // set center for a
+    gam = -1.0;            // set center for a
+    pol->type = 1;
   } else if (bb + IntTol >= 1.0) {
     /*-------------------- right interval */
     thc = thb;
     nitv   = 1;
     bb = 1;
     gam = 1;               // set center for b 
+    pol->type = 2;
   } else {
     /*-------------------- middle interval */
     itv[0] = aa;
     itv[1] = bb;
     nitv = 2;
+    pol->type = 0;
   }
   /*-------------------- threshold for finding the best poly */
   if (nitv == 1) { 

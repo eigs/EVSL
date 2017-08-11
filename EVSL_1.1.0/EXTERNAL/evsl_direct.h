@@ -6,7 +6,8 @@
  * @brief Definitions used for direct solver interface
  * 
  * Note that this file is meant to be the header file
- * of both evsl_suitesparse.c and evsl_cxsparse.c.
+ * of both evsl_suitesparse.c, evsl_pardiso.c,
+ * and evsl_cxsparse.c.
  * If more direct solver options will be added later,
  * this should serve them as well.
  */
