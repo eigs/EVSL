@@ -89,18 +89,10 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
      * MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market)
 
    * GEN           : Test drivers for the generalized eigenvalue problem
-     * Lap_PLanN.c    : Polynomial filtering Lanczos (Laplacian)
-     * Lap_PLanR.c    : Polynomial filtering T-R Lanczos (Laplacian)
-     * Lap_RLanN.c    : Rational filtering Lanczos (Laplacian)
-     * Lap_RLanR.c    : Rational filtering T-R Lanczos (Laplacian)
-     * KPM_MMPLanN.c     : Polynomial filtering non-restart Lanczos (Matrix Market) (KPM)
-     * KPM_MMPLanR.c     : Polynomial filtering T-R Lanczos (Matrix Market) (KPM)
-     * KPM_MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market) (KPM)
-     * KPM_MMRLanR.c     : Rational filtering T-R Lanczos (Matrix Market) (KPM)
-     * Lan_MMPLanN.c     : Polynomial filtering non-restart Lanczos (Matrix Market) (Lanczos DOS)
-     * Lan_MMPLanR.c     : Polynomial filtering T-R Lanczos (Matrix Market) (Lanczos DOS)
-     * Lan_MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market) (Lanczos DOS)
-     * Lan_MMRLanR.c     : Rational filtering T-R Lanczos (Matrix Market) (Lanczos DOS)
+     * MMPLanN.c     : Polynomial filtering non-restart Lanczos (Matrix Market)
+     * MMPLanR.c     : Polynomial filtering T-R Lanczos (Matrix Market) 
+     * MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market) 
+     * MRLanR.c      : Rational filtering T-R Lanczos (Matrix Market) 
 
    * PSI           : Test drivers for polynomial filter subspace iteration
      * LapPSI.c     : Polynomial filtering subspace iterations (Laplacian)
