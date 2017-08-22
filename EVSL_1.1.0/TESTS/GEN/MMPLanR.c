@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include "io.h"
 #include "evsl.h"
+#include "io.h"
 #include "evsl_direct.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -21,9 +21,10 @@ int main() {
    * read in matrix format -- using
    * Thick-Restarted Lanczos with polynomial filtering.
    *-------------------------------------------------------------*/
-  int n = 0, i, j, npts, nslices, nvec, nev, mlan, ev_int, sl, ierr, totcnt;
+  int n = 0, i, j, npts, nslices, nvec, Mdeg, nev, mlan, max_its, ev_int, sl, 
+      ierr, totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
-  double a, b, lmax, lmin, ecount, tol, *sli;
+  double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
   double *alleigs;
   int *counts; // #ev computed in each slice
@@ -34,9 +35,9 @@ int main() {
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
   /* slicer parameters */
-  int msteps = 40;
-  nvec = 10;
-  npts = 200;
+  Mdeg = 50;
+  nvec = 40;
+  mu = malloc((Mdeg + 1) * sizeof(double));
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
   io_t io;
@@ -49,6 +50,7 @@ int main() {
   printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times. \n\n");
   printf("-----------------------------------------\n");
 #endif
+
   /*-------------------- stopping tol */
   tol = 1e-6;
   /*-------------------- start EVSL */
@@ -86,7 +88,7 @@ int main() {
     }
 
     char path[1024]; // path to write the output files
-    strcpy(path, "OUT/Lan_MMPLanN_");
+    strcpy(path, "OUT/KPM_MMPLanR_");
     strcat(path, io.MatNam1);
     fstats = fopen(path, "w"); // write all the output to the file io.MatNam
     if (!fstats) {
@@ -118,6 +120,10 @@ int main() {
         if (Bcoo.nrows != n) {
           return 1;
         }
+        // nnz = Bcoo.nnz;
+        // n = Bcoo.nrows;
+        // printf("size of B is %d\n", n);
+        // printf("nnz of  B is %d\n", nnz);
       } else {
         fprintf(flog, "read_coo error for B = %d\n", ierr);
         exit(6);
@@ -125,12 +131,14 @@ int main() {
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
-    } else if (io.Fmt == HB) {
+    }
+    if (io.Fmt == HB) {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
     alleigs = malloc(n * sizeof(double));
-    /*-------------------- use direct solver as the solver for B */
+    /*-------------------- use direct solve as the solver for B  in eigenvalue
+     *                     computation*/
     SetupBSolDirect(&Bcsr, &Bsol);
     /*-------------------- set the solver for B and LT */
     SetBSol(BSolDirect, Bsol);
@@ -153,23 +161,27 @@ int main() {
     xintv[1] = b;
     xintv[2] = lmin;
     xintv[3] = lmax;
-    /*-------------------- call LanczosDOS for spectrum slicing */
-    /*-------------------- define landos parameters */
+    /*-------------------- call kpmdos to get the DOS for dividing the
+     *                     spectrum*/
+    /*-------------------- define kpmdos parameters */
     double t = evsl_timer();
-    double *xdos = (double *)calloc(npts, sizeof(double));
-    double *ydos = (double *)calloc(npts, sizeof(double));
-    ierr = LanDosG(nvec, msteps, npts, xdos, ydos, &ecount, xintv);
+    ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
     t = evsl_timer() - t;
     if (ierr) {
-      printf("Landos error %d\n", ierr);
+      printf("kpmdos error %d\n", ierr);
       return 1;
     }
-    fprintf(fstats, " Time to build DOS (Landos) was : %10.2f  \n", t);
+    fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n", t);
     fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
     //-------------------- call splicer to slice the spectrum
-    fprintf(fstats, "DOS parameters: msteps = %d, nvec = %d, npnts = %d\n",
-            msteps, nvec, npts);
-    spslicer2(xdos, ydos, nslices, npts, sli);
+    npts = 10 * ecount;
+    fprintf(fstats, "DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n", Mdeg,
+            nvec, npts);
+    ierr = spslicer(sli, mu, Mdeg, xintv, nslices, npts);
+    if (ierr) {
+      printf("spslicer error %d\n", ierr);
+      return 1;
+    }
     printf("====================  SLICES FOUND  ====================\n");
     for (j = 0; j < nslices; j++) {
       printf(" %2d: [% .15e , % .15e]\n", j + 1, sli[j], sli[j + 1]);
@@ -177,7 +189,7 @@ int main() {
     //-------------------- # eigs per slice
     ev_int = (int)(1 + ecount / ((double)nslices));
     totcnt = 0;
-    //-------------------- For each slice call RatLanrNr
+    //-------------------- For each slice call ChebLanTr
     for (sl = 0; sl < nslices; sl++) {
       printf("======================================================\n");
       int nev2;
@@ -200,17 +212,18 @@ int main() {
       // pol.max_deg  = 300;
       //-------------------- Now determine polymomial
       find_pol(xintv, &pol);
-      fprintf(fstats, " polynomial deg %d, bar %.15e gam %.15e\n", pol.deg,
-              pol.bar, pol.gam);
+      fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
+              pol.type, pol.deg, pol.bar, pol.gam);
       // save_vec(pol.deg+1, pol.mu, "OUT/mu.txt");
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int + 2;
       //-------------------- Dimension of Krylov subspace and maximal iterations
-      mlan = max(5 * nev, 300);
+      mlan = max(4 * nev, 100);
       mlan = min(mlan, n);
-      //-------------------- then call ChenLanNr
-      ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res,
-                       fstats);
+      max_its = 3 * mlan;
+      //-------------------- the call ChebLanTr
+      ierr = ChebLanTr(mlan, nev, xintv, max_its, tol, vinit, &pol, &nev2, &lam,
+                       &Y, &res, fstats);
       if (ierr) {
         printf("ChebLanTr error %d\n", ierr);
         return 1;
@@ -244,7 +257,7 @@ int main() {
     } // for (sl=0; sl<nslices; sl++)
     //-------------------- free other allocated space
     fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
-    sprintf(path, "OUT/EigsOut_Lan_MMPLanN_(%s_%s)", io.MatNam1, io.MatNam2);
+    sprintf(path, "OUT/EigsOut_KPM_MMPLanR_(%s_%s)", io.MatNam1, io.MatNam2);
     FILE *fmtout = fopen(path, "w");
     if (fmtout) {
       for (j = 0; j < totcnt; j++)
@@ -260,13 +273,12 @@ int main() {
     FreeBSolDirectData(Bsol);
     free(alleigs);
     free(counts);
-    free(xdos);
-    free(ydos);
     if (fstats != stdout) {
       fclose(fstats);
     }
     /*-------------------- end matrix loop */
   }
+  free(mu);
   if (flog != stdout) {
     fclose(flog);
   }

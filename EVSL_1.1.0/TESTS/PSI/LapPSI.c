@@ -168,8 +168,8 @@ int main(int argc, char *argv[]) {
     //-------------------- get polynomial to use :
     find_pol(xintv, &pol);       
 
-    fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",
-            pol.deg,pol.bar,pol.gam);
+    fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
+            pol.type, pol.deg, pol.bar, pol.gam);
     //-------------------- then call ChenLanNr
 
     double *V0;

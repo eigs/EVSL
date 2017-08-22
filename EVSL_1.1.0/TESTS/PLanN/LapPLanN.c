@@ -203,7 +203,8 @@ int main(int argc, char *argv[]) {
     //-------------------- Now determine polymomial to use
     find_pol(xintv, &pol);       
     
-    fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
+    fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
+            pol.type, pol.deg, pol.bar, pol.gam);
     //-------------------- then call ChenLanNr
     ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {
