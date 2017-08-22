@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     fprintf(flog, "Can't open matfileG...\n");
     exit(2);
   } else {
-    printf("Read matfileG \n");
+    printf(" Read matfileG \n");
   }
   /*-------------------- read number of matrices ..*/
   memset(line, 0, MAX_LINE);
@@ -100,8 +100,8 @@ int main(int argc, char *argv[]) {
       exit(5);
     }
     /*----------------input matrix and interval information -*/
-    fprintf(flog, "MATRIX A: %s...\n", io.MatNam1);
-    fprintf(flog, "MATRIX B: %s...\n", io.MatNam2);
+    fprintf(flog, " MATRIX A: %s...\n", io.MatNam1);
+    fprintf(flog, " MATRIX B: %s...\n", io.MatNam2);
     char path[1024]; /* path to write the output files */
     strcpy(path, "OUT/LanDosG_");
     strcat(path, io.MatNam1);
@@ -189,10 +189,9 @@ int main(int argc, char *argv[]) {
     SetupPolSqrt(n, degB, tau, lmin, lmax, &BSqrtInv);
     SetBSol(BSolPol, (void *)&BInv);
     SetLTSol(BSolPol, (void *)&BSqrtInv);
-    printf(
-        "The degree for LS polynomial approximations to B^{-1} and B^{-1/2} "
-        "are %d and %d\n",
-        BInv.deg, BSqrtInv.deg);
+    printf(" The degree for LS polynomial approximations to B^{-1} and B^{-1/2} "
+           "are %d and %d\n",
+           BInv.deg, BSqrtInv.deg);
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
@@ -206,9 +205,10 @@ int main(int argc, char *argv[]) {
       fprintf(flog, "Could not run LanTrBounds: %i", ierr);
       exit(10);
     }
+    fprintf(stdout, " Eig bounds for B\\A [%e %e]\n", lmin, lmax);
     /*----------------- plotting the DOS on [a, b] ---------*/
-    intv[0] = lmin;
-    intv[1] = lmax;
+    intv[0] = io.a; //lmin;
+    intv[1] = io.b; //lmax;
     /*----------------- get the bounds for (A, B) ---------*/
     intv[2] = lmin;
     intv[3] = lmax;
@@ -233,14 +233,23 @@ int main(int argc, char *argv[]) {
 
     double t0 = evsl_timer();
     /* ------------------- Calculate the computed DOS */
+    fprintf(stdout, " Running LanDosG on [%e, %e]\n", intv[0], intv[1]);
     ret = LanDosG(nvec, msteps, npts, xdos, ydos, &neig, intv);
     double t1 = evsl_timer();
-    fprintf(stdout, " LanDos ret %d  in %0.04fs\n", ret, t1 - t0);
+    fprintf(stdout, " Estimated Eig count %f\n", neig);
+    if (ret) {
+      fprintf(stdout, " LanDosG error %d\n", ret);
+      exit(1);
+    }
+    fprintf(stdout, " LanDosG time %.2f s\n", t1 - t0);
 
     /* -------------------- Calculate the exact DOS */
     if (graph_exact_dos) {
       ret = exDOS(ev, numev, npts, xHist, yHist, intv);
-      fprintf(stdout, " exDOS ret %d \n", ret);
+      if (ret) {
+        fprintf(stdout, " exDos error %d\n", ret);
+        exit(1);
+      }
     }
 
     free_coo(&Acoo);
@@ -262,10 +271,11 @@ int main(int argc, char *argv[]) {
     strcpy(computed_path, "OUT/LanDosG_Approx_DOS_");
     strcat(computed_path, io.MatNam1);
     FILE *ofp = fopen(computed_path, "w");
-    for (i = 0; i < npts; i++)
-      fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
+    for (i = 0; i < npts; i++) {
+      fprintf(ofp, " %.15e  %.15e\n", xdos[i], ydos[i]);
+    }
     fclose(ofp);
-    printf("Wrote to:%s \n", computed_path);
+    printf(" Wrote to:%s \n", computed_path);
 
     if (graph_exact_dos) {
       /*-------------------- save exact DOS */
@@ -273,11 +283,11 @@ int main(int argc, char *argv[]) {
       strcat(path, io.MatNam1);
       ofp = fopen(path, "w");
       for (i = 0; i < npts; i++)
-        fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
+        fprintf(ofp, " %.15e  %.15e\n", xHist[i], yHist[i]);
       fclose(ofp);
     }
 
-    printf("The data output is located in  OUT/ \n");
+    printf(" The data output is located in  OUT/ \n");
     struct utsname buffer;
     errno = 0;
     if (uname(&buffer) != 0) {
@@ -295,9 +305,11 @@ int main(int argc, char *argv[]) {
       strcat(command, "';exact_dos='");
       strcat(command, path);
       strcat(command, "'\" testerG_ex.gnuplot");
+      printf("Run command %s\n", command);
       ierr = system(command);
     } else {
       strcat(command, "'\" testerG.gnuplot");
+      printf("Run command %s\n", command);
       ierr = system(command);
     }
 
@@ -306,13 +318,14 @@ int main(int argc, char *argv[]) {
               "Error using 'gnuplot < testerG.gnuplot', \n"
               "postscript plot could not be generated \n");
     } else {
-      printf("A postscript graph has been placed in %s%s\n", computed_path,
+      printf(" A postscript graph has been placed in %s%s\n", computed_path,
              ".eps");
       /*-------------------- and gv for visualizing / */
       if (!strcmp(buffer.sysname, "Linux")) {
         strcpy(command, "gv ");
         strcat(command, computed_path);
         strcat(command, ".eps &");
+        printf("Run command %s\n", command);
         ierr = system(command);
         if (ierr) {
           fprintf(stderr, "Error using 'gv %s' \n", command);
@@ -326,6 +339,7 @@ int main(int argc, char *argv[]) {
             "gv \n");
       }
     }
+
     if (graph_exact_dos) {
       free(xHist);
       free(yHist);

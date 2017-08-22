@@ -21,7 +21,6 @@ void set_pol_def(polparams *pol){
   pol->damping = 2;        // damping. 0 = no damping, 1 = Jackson, 2 = Lanczos
   pol->thresh_ext = 0.20;  // threshold for accepting polynomial for end intervals 
   pol->thresh_int = 0.8;   // threshold for accepting polynomial for interior
-  pol->tol = 1e-3;         // tolerance for LS approximation
   pol->mu = NULL;
   pol->deg = 0;            // degree =0 means determine optimal degree.
   pol->intvtol = 1e-9;     // cut-off point of middle interval
@@ -37,7 +36,7 @@ void set_pol_def(polparams *pol){
  * @param[out] jac  output array of dampened coefficients
  * @return 0
  **/
-int dampcf(int m, int damping, double *jac){
+int dampcf(int m, int damping, double *jac) {
   double thetJ = 0.0, thetL = 0.0, a1 = 0.0, a2 = 0.0, dm = (double) m;
   int k, k1;
   if (damping==1){
