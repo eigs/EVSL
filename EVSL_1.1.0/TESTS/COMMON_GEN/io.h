@@ -12,19 +12,19 @@
 #include "evsl.h"
 
 typedef struct _io_t {
-    FILE *fout;                 /* output file handle              */
-    char outfile[MAX_LINE];     /* output filename                 */
-    char Fname1[MAX_LINE];       /* full matrix path name           */
-    char MatNam1[MaxNamLen];     /* short name                      */
-    char Fname2[MAX_LINE];       /* full matrix path name           */
-    char MatNam2[MaxNamLen];     /* short name                      */
-    char PrecMeth[MAX_LINE];    /* preconditioner being tested     */
+    FILE *fout;                 /* output file handle            */
+    char outfile[MAX_LINE];     /* output filename               */
+    char Fname1[MAX_LINE];      /* full matrix path name         */
+    char MatNam1[MaxNamLen];    /* short name                    */
+    char Fname2[MAX_LINE];      /* full matrix path name         */
+    char MatNam2[MaxNamLen];    /* short name                    */
+    char PrecMeth[MAX_LINE];    /* preconditioner being tested   */
     char type[4];               /* type for HB matrices          */
-    int Fmt;                    /* matrix format type             */
-    int ndim;                   /* matrix size                         */
+    int Fmt;                    /* matrix format type            */
+    int ndim;                   /* matrix size                   */
     int nnz;                    /* number of nonzero             */
-    int n_intv;                /* number of slices                 */
-    double a;                 /*  [a, b]  interval of interest  */
+    int n_intv;                 /* number of slices              */
+    double a;                   /* [a, b]  interval of interest  */
     double b;
 } io_t;
 

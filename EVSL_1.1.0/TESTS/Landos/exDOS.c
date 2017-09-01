@@ -42,28 +42,33 @@ int exDOS(double *vals, int n, int npts,
   /* ------------------- define width of sub-intervals for DOS */
   linspace(a, b, npts, x);
   h = x[1]-x[0];
-  memset(y, 0.0, npts*sizeof(double));
+  memset(y, 0, npts*sizeof(double));
 /*-------------------- scan all relevant eigenvalues and add to its
                        interval [if any] */
-  for (i=0; i<n; i++){
+  for (i=0; i<n; i++) {
     t = vals[i];
-    if (t<a  || t>b)
+    if (t < a || t > b) {
       continue;
+    }
     /*-------------------- first point to consider  */
-    j = max((int) ((t-a-width)/h),0);
+    j = max((int) ((t-a-width)/h), 0);
     /*xi = a+j*h;
     ! check!  */
-    for  (xi = a+j*h; xi <= min(t+width,b) ; xi+=h)
-      y[j++] +=  exp(-(xi-t)*(xi-t)/sigma2);
+    for  (xi = a+j*h; xi <= min(t+width, b); xi+=h)
+      y[j++] += exp(-(xi-t)*(xi-t)/sigma2);
   }
-  if (j == 0)
+
+  if (j == 0) {
     return 1;
-/*-------------------- scale dos - [n eigenvalues in all]
+  }
+
+  /*-------------------- scale dos - [n eigenvalues in all]
     scaling 2 -- for plots due to the missing 1/sqrt[2*pi*sigma^2] factor.
     However, note that this does not guarantee that 
     sum[y] * h = the correct number of eigenvalues
     y = y / sqrt[pi*sigma2] ; */
-  scaling  = 1.0 / (n*sqrt(sigma2*PI));
+  scaling = 1.0 / (n*sqrt(sigma2*PI));
   DSCAL(&npts, &scaling, y, &one);
+  
   return 0;
 }

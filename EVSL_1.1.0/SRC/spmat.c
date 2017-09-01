@@ -168,6 +168,23 @@ int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
   return 0;
 }
 
+/** 
+ * @brief construct a csrMat copied from (ia, ja, a)
+ */
+int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a,
+                         csrMat *A) {
+  int nnz = ia[nrow];
+
+  csr_resize(nrow, ncol, nnz, A);
+  
+  memcpy(A->ia, ia, (nrow+1)*sizeof(int));
+  memcpy(A->ja, ja, nnz*sizeof(int));
+  memcpy(A->a, a, nnz*sizeof(double));
+
+  sortrow(A);
+
+  return 0;
+}
 
 #if 0
 /**-------------------------------------------*

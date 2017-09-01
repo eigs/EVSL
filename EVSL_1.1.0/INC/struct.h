@@ -45,21 +45,23 @@ typedef struct _csrMat {
 typedef struct _polparams {
   /** @name input to find_pol */
   /**@{*/ 
-  int max_deg;        /**< max allowed degree */
-  int min_deg ;       /**< min allowed degree */
-  int damping;        /**< 0 = no damping, 1 = Jackson, 2 = Lanczos */
-  double thresh_ext;  /**< threshold for accepting polynom. for end intervals */
-  double thresh_int;  /**< threshold for interior intervals */
-  double tol;         /**< tolerance for LS approxiamtion */
+  int     max_deg;     /**< max allowed degree */
+  int     min_deg ;    /**< min allowed degree */
+  int     damping;     /**< 0 = no damping, 1 = Jackson, 2 = Lanczos */
+  double  thresh_ext;  /**< threshold for accepting polynom. for end intervals */
+  double  thresh_int;  /**< threshold for interior intervals */
+  double  intvtol;     /**< cut-off point of middle interval */
   /**@}*/
   
   /** @name output from find_pol */
   /**@{*/ 
+  int     type;       /**< type of the filter: 
+                           0: middle interval, 1: left interval, 2: right interval */
   double *mu;         /**< coefficients. allocation done by set_pol */
-  double cc;          /**< center of interval - used by chebAv */
-  double dd;          /**< half-width of interval - used by chebAv */
-  double gam;         /**< center of delta function used */
-  double bar;         /**< p(theta)>=bar indicates a wanted Ritz value */
+  double  cc;         /**< center of interval - used by chebAv */
+  double  dd;         /**< half-width of interval - used by chebAv */
+  double  gam;        /**< center of delta function used */
+  double  bar;        /**< p(theta)>=bar indicates a wanted Ritz value */
   /**@}*/
   
   /** @name both input to and output from find_pol */

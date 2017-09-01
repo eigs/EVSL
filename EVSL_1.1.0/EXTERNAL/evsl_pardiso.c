@@ -53,6 +53,7 @@ int SetupBSolDirect(csrMat *B, void **data) {
   BSolDataDirect *Bsol_data;
   Malloc(Bsol_data, 1, BSolDataDirect);
 
+  /* PAPT = LLT for symmetric positive-definite matrices */
   MKL_INT mtype = 2;       /* Real SPD matrix */
   /* Maximum number of factors with identical sparsity structure that 
    * must be kept in memory at the same time. In most applications this 

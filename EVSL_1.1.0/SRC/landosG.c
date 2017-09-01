@@ -159,7 +159,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
       /*-------------------- FULL reortho to all previous Lan vectors */
       if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
-        CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, wk);
+        CGS_DGKS2(n, k + 1, NGS_MAX, Z, V, znew, wk);
         /* vnew = B \ znew */
         solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */

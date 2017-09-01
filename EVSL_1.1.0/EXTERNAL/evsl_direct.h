@@ -6,10 +6,15 @@
  * @brief Definitions used for direct solver interface
  * 
  * Note that this file is meant to be the header file
- * of both evsl_suitesparse.c and evsl_cxsparse.c.
+ * of both evsl_suitesparse.c, evsl_pardiso.c,
+ * and evsl_cxsparse.c.
  * If more direct solver options will be added later,
  * this should serve them as well.
  */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* functions for B solve */
 int  SetupBSolDirect(csrMat *B, void **data);
@@ -23,6 +28,10 @@ int  SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
 void ASIGMABSolDirect(int n, double *br, double *bi, double *xr, 
                       double *xz, void *data);
 void FreeASIGMABSolDirect(int num, void **data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
