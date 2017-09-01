@@ -102,7 +102,8 @@ void free_csr(csrMat *csr);
 // free a COO
 void free_coo(cooMat *coo);
 // matvec y = A*x
-int matvec(char trans, csrMat *A, double *x, double *y);
+//int matvec(char trans, csrMat *A, double *x, double *y);
+void matvec_csr(double *x, double *y, void *data);
 
 int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a, csrMat *A);
 /*- - - - - - - - - evsl.c */
