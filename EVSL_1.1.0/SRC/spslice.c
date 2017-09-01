@@ -100,7 +100,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
     //-------------------- for eigCount
     tcnt -= jac[0]*(beta2-beta1);  
     /*-------------------- Chebyshev (degree) loop */
-    for (k=0; k<Mdeg; k++){
+    for (k=0; k<Mdeg; k++) {
       /*-------------------- Cheb. recurrence */
       if (ifGenEv) {
         /* v_{k+1} := B \ A * v_k (partial result) */
@@ -146,11 +146,11 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   return 0;
 }
 
-  /**  
-  * @brief Computes the integrals \f$\int_{xi[0]}^{xi[j]} p(t) dt\f$
-  *  where p(t) is the approximate DOS as given in the KPM method
-  *  in the expanded form:  \f$\sum mu_i C_i /\sqrt{1-t^2}\f$
-  **/
+/**  
+ * @brief Computes the integrals \f$\int_{xi[0]}^{xi[j]} p(t) dt\f$
+ *  where p(t) is the approximate DOS as given in the KPM method
+ *  in the expanded form:  \f$\sum mu_i C_i /\sqrt{1-t^2}\f$
+ **/
 void intChx(const int Mdeg, double *mu, const int npts, double *xi, double *yi) {
   //
   int ndp1, j, k;

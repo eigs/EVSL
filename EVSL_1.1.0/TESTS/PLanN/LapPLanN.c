@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
   fprintf(fstats, " estimated eig count in interval: %.15e \n",ecount);
   fprintf(stdout, " estimated eig count in interval: %.15e \n",ecount);
-  //-------------------- call splicer to slice the spectrum
+  //-------------------- call spslicer to slice the spectrum
   npts = 10 * ecount; 
   sli = malloc((nslices+1)*sizeof(double));
 
@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
     //-------------------- Dimension of Krylov subspace 
     mlan = max(5*nev, 300);
     mlan = min(mlan, n);
-    //-------------------- ChebLanTr
+    //-------------------- Interval
     xintv[0] = a;     xintv[1] = b;
     xintv[2] = lmin;  xintv[3] = lmax;
     //-------------------- set up default parameters for pol.      
