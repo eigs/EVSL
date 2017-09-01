@@ -10,6 +10,10 @@
 #include <stdio.h>
 #include "struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*- - - - - - - - - cheblanNr.c */
 int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
               polparams *pol, int *nevOut, double **lamo, double **Wo,
@@ -100,6 +104,7 @@ void free_coo(cooMat *coo);
 // matvec y = A*x
 int matvec(char trans, csrMat *A, double *x, double *y);
 
+int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a, csrMat *A);
 /*- - - - - - - - - evsl.c */
 /* set an external matvec function */
 int SetAMatvec(int n, MVFunc func, void *data);
@@ -148,5 +153,9 @@ void linspace(double a, double b, int num, double *arr);
 void StatsPrint(FILE *fstats);
 
 void StatsReset();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

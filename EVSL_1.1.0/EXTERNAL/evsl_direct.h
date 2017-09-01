@@ -12,6 +12,10 @@
  * this should serve them as well.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* functions for B solve */
 int  SetupBSolDirect(csrMat *B, void **data);
 void BSolDirect(double *b, double *x, void *data);
@@ -24,6 +28,10 @@ int  SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
 void ASIGMABSolDirect(int n, double *br, double *bi, double *xr, 
                       double *xz, void *data);
 void FreeASIGMABSolDirect(int num, void **data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
