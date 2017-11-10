@@ -565,7 +565,7 @@ void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
 }
 
 /**
- * @brief free the data needed by CXSparse
+ * @brief free the data needed by Pardiso
  */ 
 void FreeASIGMABSolDirect(int num, void **data) {
   int i;  
