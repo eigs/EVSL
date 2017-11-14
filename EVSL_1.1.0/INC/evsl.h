@@ -155,6 +155,16 @@ void StatsPrint(FILE *fstats);
 
 void StatsReset();
 
+/*- - - - - - - - - chebiter.c */
+void EVSLChebIterFindDeg(double tol, int nvec, void *Chebdata, int *degout);
+
+int EVSLChebIterSetup(double lmin, double lmax, csrMat *A, 
+                      double tol, int deg_in, void **data);
+
+void EVSLChebIterSolv(double *b, double *x, void *data);
+
+void EVSLChebIterFree(void *vdata);
+
 #ifdef __cplusplus
 }
 #endif
