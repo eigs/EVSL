@@ -4,6 +4,7 @@
 #include <string.h>
 #include "blaslapack.h"
 #include "def.h"
+#include "blaslapack.h"
 #include "evsl.h"
 #include "internal_proto.h"
 #include "struct.h"
@@ -108,17 +109,20 @@ int apfun(const double c, const double h, const double *const xi,
  **/
 int pnav(double *mu, const int m, const double cc, const double dd, double *v,
          double *y, double *w) {  // Really just ChebAv
-  const int n = evsldata.n;
+  int n = evsldata.n;
   /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   double *vk = w;
   double *vkp1 = w + n;
   double *vkm1 = vkp1 + n;
   /*-------------------- */
-  int k, i;
-  double t, s, *tmp;
-  const double t1 = 1.0 / dd;
-  const double t2 = 2.0 / dd;
+  int k, one=1;
+  double t1 = 1.0 / dd;
+  double t2 = 2.0 / dd;
+  double ncc = -cc;
+  double dmone = -1.0;
   /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
+#if 0
+  /* LEAVE HERE IT FOR REFERENCE */
   memcpy(vk, v, n * sizeof(double));
   memset(vkm1, 0, n * sizeof(double));
   /*-------------------- special case: k == 0 */
@@ -139,8 +143,28 @@ int pnav(double *mu, const int m, const double cc, const double dd, double *v,
       /*-------------------- for degree 2 and up: */
       y[i] += s * vkp1[i];
     }
+#else
+  /* OPTIMIZATION */
+  memcpy( y, v, n * sizeof(double));
+  DSCAL(&n, mu, y, &one);
+  /*-------------------- degree loop. k IS the degree */
+  for (k = 1; k <= m; k++) {
+    double *v_cur = k == 1 ? v : vk;
+    double *v_old = k == 2 ? v : vkm1;
+    double t = k == 1 ? t1 : t2;
+
+    matvec_B(v_cur, vkp1);
+    DAXPY(&n, &ncc, v_cur, &one, vkp1, &one);
+    /*-------------------- y = mu[k]*Vk + y */
+    DSCAL(&n, &t, vkp1, &one);
+    if (k > 1) {
+      DAXPY(&n, &dmone, v_old, &one, vkp1, &one);
+    }
+    /*-------------------- for degree 2 and up: */
+    DAXPY(&n, &mu[k], vkp1, &one, y, &one);
+#endif
     /*-------------------- next: rotate vectors via pointer exchange */
-    tmp = vkm1;
+    double *tmp = vkm1;
     vkm1 = vk;
     vk = vkp1;
     vkp1 = tmp;
