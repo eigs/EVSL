@@ -157,11 +157,12 @@ int SetupBSolDirect(csrMat *B, void **data) {
     printf ("\nERROR during symbolic factorization: %d", error);
     exit (1);
   }
-  /*
+  
   printf ("\nReordering completed ... ");
+  printf ("\nNumber of nonzeros in B %d", B->ia[B->nrows]);
   printf ("\nNumber of nonzeros in factors = %d", Bsol_data->iparm[17]);
-  printf ("\nNumber of factorization MFLOPS = %d", Bsol_data->iparm[18]);
-  */
+  printf ("\nNumber of factorization MFLOPS = %d\n", Bsol_data->iparm[18]);
+  
   /* --------------------------------------------------------------- */
   /* Numerical factorization.                                        */
   /* --------------------------------------------------------------- */
