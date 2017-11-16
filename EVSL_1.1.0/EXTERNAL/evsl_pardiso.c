@@ -158,8 +158,11 @@ int SetupBSolDirect(csrMat *B, void **data) {
     exit (1);
   }
   
-  printf ("\nReordering completed ... ");
+  /* printf ("\nReordering completed ... "); */
   printf ("\nNumber of nonzeros in B %d", B->ia[B->nrows]);
+  printf ("\nPeak      Memory on symbolic  fact.           %d KB", Bsol_data->iparm[14]);
+  printf ("\nPermanent Memory on symbolic  fact.           %d KB", Bsol_data->iparm[15]);
+  printf ("\n          Memory on numerical fact. and solve %d KB", Bsol_data->iparm[16]);
   printf ("\nNumber of nonzeros in factors = %d", Bsol_data->iparm[17]);
   printf ("\nNumber of factorization MFLOPS = %d\n", Bsol_data->iparm[18]);
   
