@@ -465,6 +465,13 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
       exit (2);
     }
 
+    printf ("\nNumber of nonzeros in triu(A - sig*B)         %d",    UCp[n]);
+    printf ("\nPeak      Memory on symbolic  fact.           %d KB", ASBdata->iparm[14]);
+    printf ("\nPermanent Memory on symbolic  fact.           %d KB", ASBdata->iparm[15]);
+    printf ("\n          Memory on numerical fact. and solve %d KB", ASBdata->iparm[16]);
+    printf ("\nNumber of nonzeros in factors                 %d",    ASBdata->iparm[17]);
+    printf ("\nNumber of factorization MFLOPS                %d\n",  ASBdata->iparm[18]);
+
     /* save the data */
     ASBdata->maxfct = maxfct;
     ASBdata->mnum = mnum;
