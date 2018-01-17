@@ -35,6 +35,11 @@ typedef struct _Chebiter_Data {
 
 /** 
  * @brief Perform matrix-vector product y = A * x in Chebiter
+ *
+ * @param[in] cheb_data Struct containing data required for the
+ * matrix-vector product
+ * @param[in] x Vector input to prefrom matrix-vector product
+ * @param[out] y Result vector of matrix-vector product
  * 
  * */
 static inline void EVSLChebMatvec(Chebiter_Data   *cheb_data, 
@@ -52,8 +57,14 @@ static inline void EVSLChebMatvec(Chebiter_Data   *cheb_data,
   //cheb_data->n_chebmv ++;
 }
 
-/** @brief Setup Chebyshev iterations for a Parcsr matrix A for
+/** @brief Setup Chebyshev iterations for a csrmat matrix A for
  *         solving linear systems
+ *
+ *  @param[in] lmin Minimum bound of eigenvalues
+ *  @param[in] lmax Maximum bound of eigenvalues
+ *  @param[in] A Matrix for matrix-vector product
+ *  @param[in] A Matrix for matrix-vector product
+ *  @param[out] data A setup Chebiter_Data struct cast to void pointer
  *  @param: tol, deg_in:
  *          when tol  > 0, degree will be found based on tol and 
  *                        deg_in serves as the max degree allowed;
@@ -109,6 +120,10 @@ int EVSLChebIterSetup(double lmin, double lmax, csrMat *A,
 /** @brief Solve function for Chebyshev iterations
  * Y. Saad, ``Iterative methods for sparse linear systems (2nd edition)'', 
  * Page 399
+ *
+ * @param[in] b Vector of length data->n to be used as r_0
+ * @param[out] x Output vector of length data->n
+ * @param[in] data Chebiter_Data struct to be used
  */
 void EVSLChebIterSolv(double *b, double *x, void *data) {
   int i;
@@ -172,6 +187,9 @@ void EVSLChebIterSolv(double *b, double *x, void *data) {
   }
 }
 
+/** @brief Frees a Chebiter_Data struct 
+ *  @param[in] vdata struct to be freed
+ */
 void EVSLChebIterFree(void *vdata) {
   Chebiter_Data *data = (Chebiter_Data *) vdata;
   free(data->w);
@@ -183,6 +201,11 @@ void EVSLChebIterFree(void *vdata) {
 }
 
 /** @brief Find the Cheb poly degree for a given tolerance 
+ *
+ * @param[in] tol Tolerance
+ * @param[in] Number of random vectors to use 
+ * @param[in] data Chebiter_Data struct cast to void*
+ * @param[out] degout Cheb poly degree of the given tolerance
  */
 void EVSLChebIterFindDeg(double tol, int nvec, void *data, int *degout) {
   Chebiter_Data *Chebdata = (Chebiter_Data *) data;
