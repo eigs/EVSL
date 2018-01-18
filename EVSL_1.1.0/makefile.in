@@ -57,6 +57,6 @@ ifeq ($(INTEL), 0)
 # CXSPARSE    : distributed with EVSL, no need to be provided
 # SUITESPARSE : not distributed with EVSL, path need to be provided 
 #               in EXTERNAL/makefile_suitesparse.in
-DIRECTSOL = SUITESPARSE
-#DIRECTSOL = CXSPARSE
+#DIRECTSOL = SUITESPARSE
+DIRECTSOL = CXSPARSE
 endif
