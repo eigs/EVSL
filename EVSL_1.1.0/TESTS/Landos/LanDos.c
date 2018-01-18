@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- IO */
   FILE *flog = stdout, *fmat = NULL, *fstats = NULL;
   io_t io;
-  int numat, mat, ierr, n=0, graph_exact_dos = 0;
+  int numat, mat, ierr, n = 0, graph_exact_dos = 0;
   char line[MAX_LINE];
 
   findarg("graph_exact_dos", INT, &graph_exact_dos, argc, argv);
@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
 
     if (graph_exact_dos) {
       /*-------------------- save exact DOS */
-      strcpy(path, "OUT/LanDosG_Exact_DOS_");
+      strcpy(path, "OUT/LanDos_Exact_DOS_");
       strcat(path, io.MatNam);
       ofp = fopen(path, "w");
       for (i = 0; i < npts; i++)
@@ -254,7 +254,7 @@ int main(int argc, char *argv[]) {
     }
     free(xdos);
     free(ydos);
-    if(ev) {
+    if (ev) {
       free(ev);
     }
     fclose(fstats);

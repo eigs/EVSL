@@ -157,11 +157,15 @@ int SetupBSolDirect(csrMat *B, void **data) {
     printf ("\nERROR during symbolic factorization: %d", error);
     exit (1);
   }
-  /*
-  printf ("\nReordering completed ... ");
+  
+  /* printf ("\nReordering completed ... "); */
+  printf ("\nNumber of nonzeros in B %d", B->ia[B->nrows]);
+  printf ("\nPeak      Memory on symbolic  fact.           %d KB", Bsol_data->iparm[14]);
+  printf ("\nPermanent Memory on symbolic  fact.           %d KB", Bsol_data->iparm[15]);
+  printf ("\n          Memory on numerical fact. and solve %d KB", Bsol_data->iparm[16]);
   printf ("\nNumber of nonzeros in factors = %d", Bsol_data->iparm[17]);
-  printf ("\nNumber of factorization MFLOPS = %d", Bsol_data->iparm[18]);
-  */
+  printf ("\nNumber of factorization MFLOPS = %d\n", Bsol_data->iparm[18]);
+  
   /* --------------------------------------------------------------- */
   /* Numerical factorization.                                        */
   /* --------------------------------------------------------------- */
@@ -461,6 +465,13 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
       exit (2);
     }
 
+    printf ("\nNumber of nonzeros in triu(A - sig*B)         %d",    UCp[n]);
+    printf ("\nPeak      Memory on symbolic  fact.           %d KB", ASBdata->iparm[14]);
+    printf ("\nPermanent Memory on symbolic  fact.           %d KB", ASBdata->iparm[15]);
+    printf ("\n          Memory on numerical fact. and solve %d KB", ASBdata->iparm[16]);
+    printf ("\nNumber of nonzeros in factors                 %d",    ASBdata->iparm[17]);
+    printf ("\nNumber of factorization MFLOPS                %d\n",  ASBdata->iparm[18]);
+
     /* save the data */
     ASBdata->maxfct = maxfct;
     ASBdata->mnum = mnum;
@@ -565,7 +576,7 @@ void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
 }
 
 /**
- * @brief free the data needed by CXSparse
+ * @brief free the data needed by Pardiso
  */ 
 void FreeASIGMABSolDirect(int num, void **data) {
   int i;  

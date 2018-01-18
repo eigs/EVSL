@@ -1,4 +1,5 @@
 1
+../../MATRICES/NM1A.mtx ../../MATRICES/NM1B.mtx stiff1 mass1 MM1  -6.307973e-06  3.246069e-02 2
 ../../MATRICES/NM1A.mtx ../../MATRICES/NM1B.mtx stiff1 mass1 MM1  3.947842e-07, 8.882644e-05 1
 ../../MATRICES/NM1A.mtx ../../MATRICES/NM1B.mtx stiff1 mass1 MM1  3.947842e-07, 2e-02 1
 ../../MATRICES/NM1A.mtx ../../MATRICES/NM1B.mtx stiff1 mass1 MM1  3.947842e-07, 8.882644e-05 1

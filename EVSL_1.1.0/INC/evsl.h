@@ -102,7 +102,8 @@ void free_csr(csrMat *csr);
 // free a COO
 void free_coo(cooMat *coo);
 // matvec y = A*x
-int matvec(char trans, csrMat *A, double *x, double *y);
+//int matvec(char trans, csrMat *A, double *x, double *y);
+void matvec_csr(double *x, double *y, void *data);
 
 int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a, csrMat *A);
 /*- - - - - - - - - evsl.c */
@@ -153,6 +154,16 @@ void linspace(double a, double b, int num, double *arr);
 void StatsPrint(FILE *fstats);
 
 void StatsReset();
+
+/*- - - - - - - - - chebiter.c */
+void EVSLChebIterFindDeg(double tol, int nvec, void *Chebdata, int *degout);
+
+int EVSLChebIterSetup(double lmin, double lmax, csrMat *A, 
+                      double tol, int deg_in, void **data);
+
+void EVSLChebIterSolv(double *b, double *x, void *data);
+
+void EVSLChebIterFree(void *vdata);
 
 #ifdef __cplusplus
 }
