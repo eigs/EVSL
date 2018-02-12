@@ -20,24 +20,17 @@ int main () {
    * Thick-restart Lanczos with pol. filtering
    * this driver implements thread parallelism across slices/ 
    *-------------------------------------------------------------*/
-  int n=0, sl, i, j, mlan, nev, totcnt;
+  int n = 0, sl, i, j, mlan, nev, totcnt;
   //int nnz;
   double a, b, ecount, xintv[4];
   double lmin, lmax; 
-  double *alleigs; 
   int n_intv;      // number of subintervals (slices)  
   int npts;       // number of integration points for eigenvalue count 
-  //--------------------related to kpmdos  
-  //int Mdeg = 180,  nvec = 100;
   /*-------------------- matrix A: coo format and csr format */
   cooMat Acoo;
   csrMat Acsr;
   /* tolerance to accept ev */
   double tol;
-  /* stats */
-  /* #ev computed; the computed eig val/vec, 
-   * residuals of the computed eig pairs */
-  //  double *lam=NULL, *Y=NULL, *res=NULL ;
   /*-------------------- mim/max degree of  polynomial, max Lanczos steps */
   int max_its, Mdeg, nvec;
   /*-------------------- IO */
@@ -104,7 +97,7 @@ int main () {
     sli = malloc((n_intv+1)*sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
-      ierr =read_coo_MM(io.Fname, 1, 0, &Acoo); 
+      ierr = read_coo_MM(io.Fname, 1, 0, &Acoo); 
       if (ierr == 0) {
         fprintf(fstats,"matrix read successfully\n");
         //nnz = Acoo.nnz; 
@@ -124,7 +117,6 @@ int main () {
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);       
     /*-------------------- define ChebLanTr parameters */
-    alleigs = (double *) malloc(n*sizeof(double)); 
     vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);
     /*-------------------- get lambda_min lambda_max estimates */
@@ -176,17 +168,17 @@ int main () {
     //-------------------- approximate number of eigenvalues wanted
     double fac = 1.2;   // this factor insures that # of eigs per slice is slightly overestimated 
     nev = (int) (1 + ecount / ((double) n_intv));  // # eigs per slice
-    nev = (int)(fac*nev);                        // want an overestimate of ev_int 
+    nev = (int)(fac*nev);                          // want an overestimate of ev_int 
     fprintf(fstats,"Step 2: In each slice compute %d eigenvalues ... \n", nev);
     /*-------------------- MAIN intv LOOP: for each sclice Do: */
     double tsolve = evsl_timer();
     totcnt = 0;
     mlan = max(4*nev,300);   mlan = min(n, mlan);
     max_its = 3*mlan; 
-    // shared array for storing eigenvalues and residuals for each slice 
-    double *lam_global, *res_global;
-    lam_global = (double *) malloc(nev*n_intv*sizeof(double));
-    res_global = (double *) malloc(nev*n_intv*sizeof(double));
+    // array for storing eigenvalues and residuals for each slice 
+    double **lam_global, **res_global;
+    lam_global = (double **) malloc(n_intv*sizeof(double*));
+    res_global = (double **) malloc(n_intv*sizeof(double*));
 
 #pragma omp parallel for private(sl)
     for (sl=0; sl<n_intv; sl++) {
@@ -196,12 +188,7 @@ int main () {
       int *ind;
       double intv[4];
       polparams pol;
-      /*
-         int tmp1 = omp_get_thread_num()+1; 
-         int tmp2 = omp_get_num_threads(); 
-         #pragma omp critical
-         fprintf(flog,"Thread %d out of %d:  \n", tmp1, tmp2);
-      */
+
       //-------------------- ChebLanTr
       intv[0] = sli[sl];
       intv[1] = sli[sl+1];
@@ -211,8 +198,12 @@ int main () {
       set_pol_def(&pol);
       find_pol(intv, &pol);
       
-      fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
-              pol.type, pol.deg, pol.bar, pol.gam);
+#pragma omp critical
+      {
+         fprintf(fstats, " Thread %d out of %d:  \n", omp_get_thread_num()+1, omp_get_num_threads());
+         fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
+                 pol.type, pol.deg, pol.bar, pol.gam);
+      }
       
       ierr = ChebLanTr(mlan, nev, intv, max_its, tol, vinit,
                        &pol, &nevOut, &lam, &Y, &res, NULL);
@@ -227,11 +218,13 @@ int main () {
       res_sorted = (double *) malloc(nevOut*sizeof(double));
       for (j=0; j<nevOut; j++){
         res_sorted[j] = res[ind[j]];
-      }       
+      }
 
-      /* copy result to global arrays */
-      memcpy(&lam_global[sl*nev],lam,nevOut*sizeof(double));
-      memcpy(&res_global[sl*nev],res_sorted,nevOut*sizeof(double));
+      /* copy result to global arrays: only eigenvalues saved */
+      lam_global[sl] = (double *) malloc(nevOut*sizeof(double));
+      res_global[sl] = (double *) malloc(nevOut*sizeof(double));
+      memcpy(lam_global[sl], lam,        nevOut*sizeof(double));
+      memcpy(res_global[sl], res_sorted, nevOut*sizeof(double));
       counts[sl] = nevOut;
       //-------------------- free memory within this loop
       if (lam)  free(lam);
@@ -245,48 +238,44 @@ int main () {
 
     tsolve = evsl_timer() - tsolve;
 
-    // Now output result and move computed eigenvalues to alleigs
-    for (sl=0; sl<n_intv; sl++) {
+    // Now output results
+    for (sl = 0; sl < n_intv; sl++) {
       //-------------------- 
       a = sli[sl];
       b = sli[sl+1];
 
       fprintf(fstats,"======================================================\n");
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e ]\n", a, b); 
-      fprintf(fstats, "Thick Restarted Lanczos with dimension %d\n", mlan);
-      fprintf(fstats, "Max Lanczos steps %d\n", max_its);
+      fprintf(fstats, " Thick Restarted Lanczos with dimension %d\n", mlan);
+      fprintf(fstats, " Max Lanczos steps %d\n", max_its);
 
       /* print eigenvalues */
       fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
-      fprintf(fstats, "                                   Eigenvalues in [%f, %f]\n",a,b);
+      fprintf(fstats, "    Eigenvalues in [%f, %f]\n",a,b);
       fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
       fprintf(fstats, "    Computed [%d out of %d estimated]           ||Res||     ", counts[sl], nev);
       fprintf(fstats, "\n");
       for (i=0; i<counts[sl]; i++) {
-        fprintf(fstats, "        % .15e                 %.1e",
-                lam_global[sl*nev+i], res_global[sl*nev+i]);
-        fprintf(fstats,"\n");
+        fprintf(fstats, "        % .15e                 %.1e\n", lam_global[sl][i], res_global[sl][i]);
       }
       fprintf(fstats, "- - - -  - - - - - - - - - - - - - - - - - - - - - -\n");
 
-      memcpy(&alleigs[totcnt],&lam_global[sl*nev],counts[sl]*sizeof(double));
       totcnt += counts[sl];
     }
-    fprintf(fstats, "Solution  time :    %.2f\n", tsolve);
-    fprintf(fstats," --> Total eigenvalues found = %d\n",totcnt);
-    //FILE *fmtout = fopen("EigsOut","w");
-    //for (j=0; j<totcnt; j++)
-    //  fprintf(fmtout, "%22.15e\n", alleigs[j]);
-    //fclose(fmtout);
+    fprintf(fstats, " Solution  time :    %.2f\n", tsolve);
+    fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
     /*-------------------- free memory */
     free(counts);
     free(sli);
+    for (sl = 0; sl < n_intv; sl++) {
+      free(lam_global[sl]);
+      free(res_global[sl]);
+    }
     free(lam_global);
     free(res_global);
     free(vinit);
     free_coo(&Acoo);
     free_csr(&Acsr);
-    free(alleigs);
     if (fstats != stdout) fclose(fstats);
     /*-------------------- end matrix loop */
   }

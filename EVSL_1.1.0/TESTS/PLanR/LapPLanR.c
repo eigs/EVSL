@@ -116,6 +116,8 @@ int main(int argc, char *argv[]) {
 
   fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",Mdeg, nvec, npts);
   ierr = spslicer(sli, mu, Mdeg, xintv, nslices,  npts);
+  /* trivial slicing */
+  /* linspace(a, b, nslices+1,  sli); */
   if (ierr) {
     printf("spslicer error %d\n", ierr);
     return 1;
@@ -142,6 +144,7 @@ int main(int argc, char *argv[]) {
     //-------------------- 
     a = sli[sl];
     b = sli[sl+1];
+    fprintf(fstats, " subinterval: [%.4e , %.4e]\n", a, b); 
     printf(" subinterval: [%.4e , %.4e]\n", a, b); 
     //-------------------- approximate number of eigenvalues wanted
     nev = ev_int+2;
@@ -205,7 +208,7 @@ int main(int argc, char *argv[]) {
         fprintf(fstats, "        % .1e", lam[i]-lam_ex[i]);
       }
       fprintf(fstats,"\n");
-      if (i>50) {
+      if (i > 100) {
         fprintf(fstats,"                        -- More not shown --\n");
         break;
       } 

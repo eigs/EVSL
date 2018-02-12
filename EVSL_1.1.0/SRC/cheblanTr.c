@@ -441,7 +441,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         jl = 0;
         tr = 0.0;
         for (i=0; i<k; i++) {
-          if (Rval[i] + DBL_EPSILON >= bar) {
+          if (Rval[i] + DBL_EPS_MULT * DBL_EPSILON >= bar) {
             jl++;
             tr += Rval[i];
           }
@@ -511,7 +511,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     for (i=0; i<k; i++) {
       //printf("resi[%d] = %.15e\n", i, fabs(beta*EvecT[i*lanm1+(k-1)]));
       /*--------------------   if this Ritz value is higher than ``bar'' */
-      if (Rval[i] >= bar) {
+      if (Rval[i] + DBL_EPS_MULT * DBL_EPSILON >= bar) {
         /* move good eigenvectors/vals to front */
         if (i != jl) {
           DCOPY(&k, EvecT+i*lanm1_l, &one, EvecT+jl*lanm1_l, &one);
@@ -572,7 +572,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       /*-------------------- Rayleigh quotient */
       double t3 = DDOT(&n, y, &one, w, &one);
       /*--------------------  if lambda (==t3) is in [a,b] */
-      if (t3 >= aa - DBL_EPSILON && t3 <= bb + DBL_EPSILON) {
+      if (t3 >= aa - DBL_EPS_MULT * DBL_EPSILON && t3 <= bb + DBL_EPS_MULT * DBL_EPSILON) {
         ll++;
         /*-------------------- compute residual wrt A for this pair */
         double nt3 = -t3;

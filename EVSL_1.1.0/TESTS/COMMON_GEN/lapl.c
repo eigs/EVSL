@@ -98,7 +98,7 @@ int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo) {
           tz = 0.0;
         }
         ev = 4*(tx*tx+ty*ty+tz*tz);
-        if (ev >= a - DBL_EPSILON && ev <= b + DBL_EPSILON) {
+        if (ev >= a - DBL_EPS_MULT * DBL_EPSILON && ev <= b + DBL_EPS_MULT * DBL_EPSILON) {
           v[l++] = ev;
         }
       }

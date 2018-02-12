@@ -16,6 +16,8 @@
 //3.14159265358979323846
 #define orthTol 1e-14
 
+#define DBL_EPS_MULT 10
+
 #define CHKERR(ierr) assert(!(ierr))
 //#define CHKREQ(ierr) { if (ierr) { return (ierr); } }
 

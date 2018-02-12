@@ -311,7 +311,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     nconv = 0;
     for (i=0; i<count; i++) {
       flami = EvalT[i];
-      if (flami + DBL_EPSILON >= bar) {
+      if (flami + DBL_EPS_MULT * DBL_EPSILON >= bar) {
         tr1+= flami;
         nconv++;
       }
@@ -386,7 +386,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
                                      t = (u'*w)/(u'*B*u) */
     t = DDOT(&n, wk, &one, u, &one);
     /*-------------------- if lambda (==t) is in [a,b] */
-    if (t < aa - DBL_EPSILON || t > bb + DBL_EPSILON) {
+    if (t < aa - DBL_EPS_MULT * DBL_EPSILON || t > bb + DBL_EPS_MULT * DBL_EPSILON) {
       continue;
     }
     /*-------------------- compute residual wrt A for this pair */

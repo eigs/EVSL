@@ -199,7 +199,7 @@ int ChebSI(int nev, double *intv, int maxit,
             Lam[nlock+nlock_new] = rq;
             nlock_new++;
             /*---  Determine if the newly locked eigenvalue is in [a,b] */
-            if ( rq >= aa - DBL_EPSILON && rq <= bb + DBL_EPSILON ) {
+            if ( rq >= aa - DBL_EPS_MULT * DBL_EPSILON && rq <= bb + DBL_EPS_MULT * DBL_EPSILON ) {
               nlock_ab_new++;
             }
           } else {
@@ -252,7 +252,7 @@ int ChebSI(int nev, double *intv, int maxit,
   int idx=0;
   for (i=0; i<nlock;i++) {
     double t = Lam[i];
-    if ( t >= aa - DBL_EPSILON && t <= bb + DBL_EPSILON ) {
+    if ( t >= aa - DBL_EPS_MULT * DBL_EPSILON && t <= bb + DBL_EPS_MULT * DBL_EPSILON ) {
       Lam_out[idx] = t;
       res_out[idx] = res[i];
       DCOPY(&n, V+i*n, &one, V_out+idx*n, &one);
