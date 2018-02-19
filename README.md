@@ -115,6 +115,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
  * EXTERNAL             : direct solver  interface for generalized eigenvalue problems
    - evsl_suitesparse.c : suitesparse UMFPACK and CHOLMOD interface
    - evsl_cxsparse.c    : cxsparse interface
+   - evsl_pardiso.c     : pardiso interface
    - evsl_direct.h      : Direct solver interface
 
 
@@ -141,7 +142,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    build sample drivers that test a few different situations.
 
 **CXSparse**
-   SuiteSparse is the default direct linear solver used in EVSL for the 
+   CXSparse is the default direct linear solver used in EVSL for the 
    linear systems that arise in rational filtering methods and    in 
    generalized eigenvalue problems. CXSparse is included only to allow quick 
    testing. However, know that it is significantly slower than other direct 
@@ -153,7 +154,7 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
 **SuiteSparse**:
    As a replacement for CXSparse, bindings are provided for the package SuiteSparse.
-   Once SuiteSparse is installed, simply swich the DIRECTSOL variable
+   Once SuiteSparse is installed, simply switch the DIRECTSOL variable
    in the makefile.in, and add the path to
    EXTERNAL/makefile_suitesparse.in.
 
@@ -165,6 +166,10 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
  
 >  NOTE:  SuiteSparse is NOT distributed with EVSL, and it is Copyrighted by Timothy Davis.  
 >  Refer to SuiteSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
+
+**Pardiso**
+  Pardiso bindings are provided. The Pardiso project can be viewed at 
+  [https://pardiso-project.org/]
 
 -----------------------------------------------------------------------
 
