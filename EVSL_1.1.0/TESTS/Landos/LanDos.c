@@ -20,27 +20,7 @@ int findarg(const char *argname, ARG_TYPE type, void *val, int argc,
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-/**
- * Reads in a vector as an nx1 matrix.
- *
- * @param[out] npts pointer to an int to store # of points
- * @param[out] vec UNallocated space to read vector to
- * @param[in] filename file to read from, where the first line contains number
- * of elements/width/height of matrix, and the rest of the lines contain the
- * values. */
-int readVec(const char *filename, int *npts, double **vec) {
-  int i;
-  FILE *ifp = fopen(filename, "r");
-  if (ifp) {
-    fscanf(ifp, "%i", npts);
-    *vec = (double *)malloc(sizeof(double) * *npts);
-    for (i = 0; i < (*npts); i++) {
-      fscanf(ifp, "%lf", (&(*vec)[i]));
-    }
-  }
-  fclose(ifp);
-  return 0;
-}
+
 
 /**
  *-----------------------------------------------------------------------
@@ -55,6 +35,7 @@ int main(int argc, char *argv[]) {
   const int npts = 200;  /* Number of points */
   const int nvec = 100;  /* Number of random vectors to generate */
   double intv[4];
+  const int num = 20;
 
   cooMat Acoo;
   csrMat Acsr;
@@ -87,43 +68,18 @@ int main(int argc, char *argv[]) {
   }
   /*-------------------- LOOP through matrices -*/
   for (mat = 1; mat <= numat; mat++) {
-    if (get_matrix_info(fmat, &io) != 0) {
-      fprintf(flog, "Invalid format in matfile ...\n");
-      exit(5);
-    }
-    /*----------------input matrix and interval information -*/
-    fprintf(flog, "MATRIX: %s...\n", io.MatNam);
+    lapgen(num,num,num,&Acoo);
+    cooMat_to_csrMat(0, &Acoo, &Acsr);
 
-    /*-------------------- path to write the output files*/
-    char path[1024];
-    strcpy(path, "OUT/LanDos_");
-    strcat(path, io.MatNam);
-    strcat(path, ".log");
-    fstats = fopen(path, "w");  // write all the output to the file io.MatNam
-    if (!fstats) {
-      printf(" failed in opening output file in OUT/\n");
-      fstats = stdout;
-    }
-    fprintf(fstats, "MATRIX: %s...\n", io.MatNam);
-    /*-------------------- Read matrix - case: COO/MatrixMarket formats */
-    if (io.Fmt > HB) {
-      ierr = read_coo_MM(io.Fname, 1, 0, &Acoo);
-      if (ierr == 0) {
-        fprintf(fstats, "matrix read successfully\n");
-        // nnz = Acoo.nnz;
-        n = Acoo.nrows;
-      } else {
-        fprintf(flog, "read_coo error = %d\n", ierr);
-        exit(6);
-      }
-      /*-------------------- conversion from COO to CSR format */
-      ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
-    }
-    if (io.Fmt == HB) {
-      fprintf(flog, "HB FORMAT  not supported (yet) * \n");
-      exit(7);
-    }
-
+    // /*-------------------- path to write the output files*/
+     char path[1024];
+     strcpy(path, "OUT/LanDos_lap.log");
+     fstats = fopen(path, "w");  // write all the output to the file io.MatNam
+     if (!fstats) {
+       printf(" failed in opening output file in OUT/\n");
+       fstats = stdout;
+     }
+         n = Acoo.nrows;
     /*-------------------- Define some constants to test with */
     /*-------------------- Intervals of interest
       intv[0] and intv[1] are the input interval of interest [a. b]
@@ -160,7 +116,8 @@ int main(int argc, char *argv[]) {
     double *ev = NULL;
     int numev;
     if (graph_exact_dos) {
-      readVec("NM1AB_eigenvalues.dat", &numev, &ev);
+
+      exeiglap3(num, num, num, lmin, lmax, &numev, &ev);
     }
 
     /* Calculate computed DOS */
@@ -169,7 +126,7 @@ int main(int argc, char *argv[]) {
 
     /* Calculate the exact DOS */
     if (graph_exact_dos) {
-      ret = exDOS(Acoo.vv, Acoo.ncols, npts, xHist, yHist, intv);
+      ret = exDOS(ev, numev, npts, xHist, yHist, intv);
       fprintf(stdout, " exDOS ret %d \n", ret);
     }
     free_coo(&Acoo);
