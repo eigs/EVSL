@@ -71,7 +71,7 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
   Malloc(ritzVal, msteps, double);
   const double lm = intv[2];
   const double lM = intv[3];
-  const double tolBdwn = 1.e-13 * (abs(lM) + abs(lm));
+  const double tolBdwn = 1.e-13 * (fabs(lM) + fabs(lm));
   const double aa = max(intv[0], intv[2]);
   const double bb = min(intv[1], intv[3]);
   const double kappa = 1.25;

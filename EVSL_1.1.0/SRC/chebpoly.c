@@ -310,7 +310,7 @@ int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
       d += jac[j]*j*sin(j*(thc))*v[j];
     thN = thc + fval/d;
     /*-------------------- test for stopping */ 
-   if ((fabs(fval) < tolBal) || fabs(thc - thN) < DBL_EPSILON * abs(thc)) {
+   if ((fabs(fval) < tolBal) || fabs(thc - thN) < DBL_EPSILON * fabs(thc)) {
      break;
    }
    /*-------------------- test for doing a form of bisection */
