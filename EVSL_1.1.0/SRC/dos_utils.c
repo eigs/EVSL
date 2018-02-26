@@ -275,25 +275,3 @@ int lsPol(double (*ffun)(double), BSolDataPol *pol) {
   return 0;
 }
 
-#if 0
-/*
- * Recover the eigenvectors This is needed for GEN_MM folder only not DOS folder
- */
-int scalEigVec(int n, int nev, double *Y, double* sqrtdiag) {
-  // Formula (2.19) in the paper.  Y(:,i) is x in the paper and D^{1/2} is sqrtdiag here
-  // n: matrix size
-  // nev: number of eigenvectors V: n*nev
-  // V: computed eigenvectors
-  // sqrtdiag: square root of diagonal entries of B
-  int i, j;
-  double *v;
-  for (i=0; i<nev; i++){
-    v = &Y[i*n];
-    for (j=0; j<n; j++) {
-      v[j] = v[j]*sqrtdiag[j];
-    }
-  }
-  return 0;
-}
-#endif
-
