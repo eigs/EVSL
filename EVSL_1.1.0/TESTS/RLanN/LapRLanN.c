@@ -7,9 +7,17 @@
 #include "evsl.h"
 #include "io.h"
 #include "evsl_direct.h"
+#include "lapl.h"
 
+#ifdef __cplusplus
+extern "C" {
+
+#define max(a, b) std::max(a, b)
+#define min(a, b) std::min(a, b)
+#else
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
 int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv);
 int lapgen(int nx, int ny, int nz, cooMat *Acoo);
@@ -111,7 +119,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- set the left-hand side matrix A */
   SetAMatrix(&Acsr);
   //-------------------- call kpmdos 
-  mu = malloc((Mdeg+1)*sizeof(double));
+  mu = (double *) malloc((Mdeg+1)*sizeof(double));
   double t = evsl_timer();
   ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
   t = evsl_timer() - t;
@@ -123,7 +131,7 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, " estimated eig count in interval: %10.2e \n",ecount);
   //-------------------- call splicer to slice the spectrum
   npts = 10 * ecount; 
-  sli = malloc((nslices+1)*sizeof(double));
+  sli = (double *) malloc((nslices+1)*sizeof(double));
   ierr = spslicer(sli, mu, Mdeg, xintv, nslices,  npts);  
   if (ierr) {
     printf("spslicer error %d\n", ierr);
@@ -240,3 +248,6 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif

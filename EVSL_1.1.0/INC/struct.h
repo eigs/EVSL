@@ -1,8 +1,18 @@
 #ifndef STRUCT_H
 #define STRUCT_H
 
+#ifdef __cplusplus
+#include <complex>
+#else
 #include <complex.h>
+#endif
+
 #include <stddef.h>
+
+#ifdef __cplusplus
+#define complex _Complex
+extern "C" {
+#endif
 /**
  * @file struct.h
  * @brief structs used in evsl
@@ -225,4 +235,8 @@ typedef struct _evslstat {
 
 /* global variable: pevsl_stats */
 extern evslStat evslstat;
+
+#ifdef __cplusplus
+}
+#endif
 #endif

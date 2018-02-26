@@ -21,7 +21,7 @@ ALLEXE = LapPLanN.ex LapPLanN_MatFree.ex  MMPLanN.ex
 default: LapPLanN.ex
 
 %.o : %.c
-	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
+	$(CC) $(FLAGS) $(INCLUDES) -o $@ -x c -c $<
 
 # Exe
 ## polynomial

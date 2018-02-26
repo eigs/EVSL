@@ -37,7 +37,7 @@ ALLEXE = MMPLanR.ex MMPLanN.ex MMRLanR.ex MMRLanN.ex
 default: MMRLanN.ex 
 
 %.o : %.c
-	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
+	$(CC) $(FLAGS) $(INCLUDES) -o $@ -x c -c $<
 
 ##
 

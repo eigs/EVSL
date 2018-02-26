@@ -10,6 +10,11 @@
 #include "evsl.h"
 #include "struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#define complex _Complex
+#endif
+
 /*- - - - - - - - - chebpoly.c */
 //
 int chebxCoefd(int m, double gam, int damping, double *mu);
@@ -195,4 +200,7 @@ static inline int check_intv(double *intv, FILE *fstats) {
   return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif

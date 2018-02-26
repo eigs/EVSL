@@ -21,7 +21,7 @@ ALLEXE = LapPSI.ex MMPSI.ex
 default: LapPSI.ex
 
 %.o : %.c
-	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
+	$(CC) $(FLAGS) $(INCLUDES) -o $@ -x c -c $<
 
 # Exe
 ## polynomial

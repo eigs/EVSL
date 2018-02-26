@@ -19,7 +19,7 @@ endif
 OBJ += evsl_direct_f90.o
 
 %.o : %.c
-	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
+	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c -x c $<
 
 all : $(OBJ)
 

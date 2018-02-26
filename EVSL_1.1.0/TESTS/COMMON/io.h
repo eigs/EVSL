@@ -1,6 +1,12 @@
 #ifndef IO_H
 #define IO_H
 
+#include "evsl.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif 
+
 #define MAX_MAT	   100
 #define MAX_LINE 1024
 #define MaxNamLen 64
@@ -9,7 +15,6 @@
 #define MM1  3
 #define UNK  4
 
-#include "evsl.h"
 
 typedef struct _io_t {
     FILE *fout;                 /* output file handle              */
@@ -36,6 +41,10 @@ typedef enum {
   STR,
   NA
 } ARG_TYPE;
+
+#ifdef __cplusplus
+}
+#endif 
 
 #endif
 

@@ -395,7 +395,7 @@ int find_ratf(double *intv, ratparams *rat) {
     return -1;
   }
   double aa, bb;
-  aa = max(intv[0], intv[2]);  bb = min(intv[1], intv[3]);
+  aa = evsl_max(intv[0], intv[2]);  bb = evsl_min(intv[1], intv[3]);
   if (intv[0] < intv[2] || intv[1] > intv[3]) {
     fprintf(stdout, " warning [%s (%d)]: interval (%e, %e) is adjusted to (%e, %e)\n", 
 	    __FILE__, __LINE__, intv[0], intv[1], aa, bb);

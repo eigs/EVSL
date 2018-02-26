@@ -53,7 +53,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
     return -1;
   }
 
-  aa = max(intv[0], intv[2]);  bb = min(intv[1], intv[3]);
+  aa = evsl_max(intv[0], intv[2]);  bb = evsl_min(intv[1], intv[3]);
   if (intv[0] < intv[2] || intv[1] > intv[3]) {
     fprintf(stdout, " warning [%s (%d)]: interval (%e, %e) is adjusted to (%e, %e)\n",
             __FILE__, __LINE__, intv[0], intv[1], aa, bb);
@@ -61,9 +61,9 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   /*-------------------- some needed constants */
   ctr  = (intv[3]+intv[2])/2.0;
   wid  = (intv[3]-intv[2])/2.0;
-  t = max(-1.0+DBL_EPSILON, (aa-ctr)/wid);
+  t = evsl_max(-1.0+DBL_EPSILON, (aa-ctr)/wid);
   beta1 = acos(t);
-  t = min(1.0-DBL_EPSILON, (bb-ctr)/wid);
+  t = evsl_min(1.0-DBL_EPSILON, (bb-ctr)/wid);
   beta2 = acos(t);
   /*-------------------- compute damping coefs. */
   dampcf(Mdeg, damping, jac);
@@ -210,7 +210,7 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npt
   }
 
   // adjust a, b: intv[0], intv[1]
-  aa = max(intv[0], intv[2]);  bb = min(intv[1], intv[3]);
+  aa = evsl_max(intv[0], intv[2]);  bb = evsl_min(intv[1], intv[3]);
   if (intv[0] < intv[2] || intv[1] > intv[3]) {
     fprintf(stdout, " warning [%s (%d)]:  interval (%e, %e) is adjusted to (%e, %e)\n",
         __FILE__, __LINE__, intv[0], intv[1], aa, bb);
@@ -230,9 +230,9 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npt
   wid = (intv[3] - intv[2])/2;
   aL  = (aa - ctr)/wid;   // (a - ctr)/wid 
   bL  = (bb - ctr)/wid;   // (b - ctr)/wid
-  aL = max(aL,-1.0);
-  bL = min(bL,1.0);
-  npts = max(npts,2*n_int+1);
+  aL = evsl_max(aL,-1.0);
+  bL = evsl_min(bL,1.0);
+  npts = evsl_max(npts,2*n_int+1);
   double *xi, *yi;
   Malloc(xi, npts, double);
   Malloc(yi, npts, double);

@@ -378,7 +378,7 @@ int find_pol(double *intv, polparams *pol) {
   //double IntTol = 0.0005;
   double IntTol = pol->intvtol;
   double aa, bb;
-  aa = max(intv[0], intv[2]);  bb = min(intv[1], intv[3]);
+  aa = evsl_max(intv[0], intv[2]);  bb = evsl_min(intv[1], intv[3]);
   if (intv[0] < intv[2] || intv[1] > intv[3]) {
     fprintf(stdout, " warning [%s (%d)]: interval (%e, %e) is adjusted to (%e, %e)\n",
         __FILE__, __LINE__, intv[0], intv[1], aa, bb);
@@ -390,14 +390,14 @@ int find_pol(double *intv, polparams *pol) {
   pol->cc = cc;
   pol->dd = dd; 
   /*-------------------- adjust intervals just in case. */
-  //a = max(a, lmin);
-  //b = min(b, lmax);
+  //a = evsl_max(a, lmin);
+  //b = evsl_min(b, lmax);
   /*   transform [lmin, lmax] to [-1,1] by y = (x-cc) / dd
    * transform [a, b] to [aT, bT] accordingly */
   aa  = (aa - cc) / dd;
   bb  = (bb - cc) / dd;
-  aa  = max(aa, -1.0);
-  bb  = min(bb,  1.0);
+  aa  = evsl_max(aa, -1.0);
+  bb  = evsl_min(bb,  1.0);
   //printf("transformed interval [%.15e %.15e]\n", a,b);
   thb = acos(bb);
   tha = acos(aa);
@@ -434,7 +434,7 @@ int find_pol(double *intv, polparams *pol) {
   } else {
     /*-------------------- give a starting degree - around 1/(half gap) */
     min_deg = 2 + (int) 0.5/(bb-aa);
-    // min_deg = max(min_deg,2);
+    // min_deg = evsl_max(min_deg,2);
     // min_deg = 2;
     thresh = pol->thresh_int;
     //-------------------- this is a short-circuit for the 
@@ -475,7 +475,7 @@ int find_pol(double *intv, polparams *pol) {
     //-------------------- scale the polynomial
     for (j=0; j<=m; j++) 
       mu[j] /= t;
-    pol->bar = min(vals[0], vals[1])/t;
+    pol->bar = evsl_min(vals[0], vals[1])/t;
     pol->gam = gam;
     pol->deg = mbest;
   }

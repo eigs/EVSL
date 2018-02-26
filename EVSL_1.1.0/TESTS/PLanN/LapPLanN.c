@@ -6,8 +6,15 @@
 #include "evsl.h"
 #include "io.h"
 
+#ifdef __cplusplus
+extern "C" {
+
+#define max(a, b) std::max(a, b)
+#define min(a, b) std::min(a, b)
+#else
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
 int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv);
 int lapgen(int nx, int ny, int nz, cooMat *Acoo);
 int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
@@ -146,7 +153,7 @@ int main(int argc, char *argv[]) {
   fprintf(stdout, " estimated eig count in interval: %.15e \n",ecount);
   //-------------------- call spslicer to slice the spectrum
   npts = 10 * ecount; 
-  sli = malloc((nslices+1)*sizeof(double));
+  sli = (double*) malloc((nslices+1)*sizeof(double));
 
   fprintf(fstats,"DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n",Mdeg, nvec, npts);
   ierr = spslicer(sli, mu, Mdeg, xintv, nslices,  npts);
@@ -267,3 +274,6 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif

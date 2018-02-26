@@ -30,10 +30,10 @@ default: LanDos.ex LanDosG.ex
 all: LanDos.ex LanDosG.ex
 
 %G.o : %G.c
-	$(CC) $(FLAGS) $(GEN_INCLUDES) -o $@ -c $<
+	$(CC) $(FLAGS) $(GEN_INCLUDES) -o $@ -x c -c $<
 
 %.o : %.c
-	$(CC) $(FLAGS) $(STD_INCLUDES) -o $@ -c $<
+	$(CC) $(FLAGS) $(STD_INCLUDES) -o $@ -x c -c $<
 
 
 # Exe

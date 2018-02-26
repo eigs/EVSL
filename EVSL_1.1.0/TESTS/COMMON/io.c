@@ -6,6 +6,10 @@
 #include "io.h"
 #include "evsl.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ERR_IO  10
 
 char *mybasename (const char *name) {
@@ -209,3 +213,6 @@ int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv
   return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif

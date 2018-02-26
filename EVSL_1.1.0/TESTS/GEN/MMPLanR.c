@@ -7,8 +7,15 @@
 #include "io.h"
 #include "evsl_direct.h"
 
+#ifdef __cplusplus
+extern "C" {
+
+#define max(a, b) std::max(a, b)
+#define min(a, b) std::min(a, b)
+#else
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
 /*-------------------- Protos */
 int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
@@ -37,7 +44,7 @@ int main() {
   /* slicer parameters */
   Mdeg = 50;
   nvec = 40;
-  mu = malloc((Mdeg + 1) * sizeof(double));
+  mu = (double*) malloc((Mdeg + 1) * sizeof(double));
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
   io_t io;
@@ -99,8 +106,8 @@ int main() {
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
     fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", 
             a, b, nslices);
-    counts = malloc(nslices * sizeof(int));
-    sli = malloc((nslices + 1) * sizeof(double));
+    counts = (int*) malloc(nslices * sizeof(int));
+    sli = (double*) malloc((nslices + 1) * sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
@@ -136,7 +143,7 @@ int main() {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
-    alleigs = malloc(n * sizeof(double));
+    alleigs = (double*) malloc(n * sizeof(double));
     /*-------------------- use direct solve as the solver for B  in eigenvalue
      *                     computation*/
     SetupBSolDirect(&Bcsr, &Bsol);
@@ -288,3 +295,6 @@ int main() {
   return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif

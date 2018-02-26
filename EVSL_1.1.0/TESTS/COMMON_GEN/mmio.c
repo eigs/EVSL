@@ -13,6 +13,10 @@
 #include <ctype.h>
 #include "mmio.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
                 double **val_, int **I_, int **J_)
 {
@@ -450,7 +454,7 @@ char *mm_strdup(const char *s)
 char  *mm_typecode_to_str(MM_typecode matcode)
 {
     char buffer[MM_MAX_LINE_LENGTH];
-    char *types[4];
+    const char *types[4];
 	char *mm_strdup(const char *);
     //int error =0;
 
@@ -504,3 +508,7 @@ char  *mm_typecode_to_str(MM_typecode matcode)
     return mm_strdup(buffer);
 }
 
+
+#ifdef __cplusplus
+}
+#endif
