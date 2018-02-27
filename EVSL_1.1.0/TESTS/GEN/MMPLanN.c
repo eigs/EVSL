@@ -27,7 +27,7 @@ int main() {
   /*--------------------------------------------------------------
    * this tests the spectrum slicing idea for a generic matrix pair
    * read in matrix format -- using
-   * Thick-Restarted Lanczos with polynomial filtering.
+   * Non-Restart Lanczos with polynomial filtering.
    *-------------------------------------------------------------*/
   int n = 0, i, j, npts, nslices, nvec, nev, mlan, ev_int, sl, ierr, totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
@@ -57,7 +57,7 @@ int main() {
   BSolDataPol BsolPol, BsqrtsolPol;
   int         BsolDeg = 200;  /* Max degree to aproximate B with */
   double      BsolTol = 1e-6; /* Tolerance in polynomial approximation */
-  int         DiagScalB = 1;
+  int         DiagScalB = 1;  /* Use polynomials to solve B */
   double     *Sqrtdiag = NULL;
 #if CXSPARSE == 1
   if (Bsol_direct) {
