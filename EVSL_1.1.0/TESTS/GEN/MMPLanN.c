@@ -52,7 +52,7 @@ int main() {
   int numat, mat;
   char line[MAX_LINE];
   /*-------------------- Bsol */
-  int         Bsol_direct = 1; /* if using direct solver for B^{-1} */
+  int         Bsol_direct = 0; /* if using direct solver for B^{-1} */
   void       *Bsol = NULL;
   BSolDataPol BsolPol, BsqrtsolPol;
   int         BsolDeg = 200;  /* Max degree to aproximate B with */
