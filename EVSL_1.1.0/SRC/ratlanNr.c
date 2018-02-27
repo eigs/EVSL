@@ -77,7 +77,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   /* size of the matrix */
   int n = evsldata.n;
   /* max num of its */
-  maxit = min(n, maxit);
+  maxit = evsl_min(n, maxit);
   /*-------------------- Caveat !!!: To prevent integer overflow, we save 
    *                     another size_t version of n
    *                     Note n itself may not overflow but something like 

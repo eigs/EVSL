@@ -21,9 +21,9 @@ ALLEXE = LapPLanR.ex MMPLanR_omp.ex  MMPLanR.ex
 default: LapPLanR.ex
 
 %.o : %.c
-	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
+	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c -x c $<
 MMPLanR_omp.o : MMPLanR_omp.c
-	$(CC) $(FLAGS) $(INCLUDES) $(OMP) -I ../../INC  -o $@ -c $<
+	$(CC) $(FLAGS) $(INCLUDES) $(OMP) -I ../../INC  -o $@ -c -x c $<
 
 # Exe
 ## polynomial

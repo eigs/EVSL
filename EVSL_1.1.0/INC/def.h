@@ -5,6 +5,13 @@
 #include <assert.h>
 #include <math.h>
 
+
+
+#ifdef __cplusplus
+#include <algorithm>
+extern "C" {
+#endif
+
 /*! \file def.h
     \brief defs in EVSL
 */
@@ -12,6 +19,7 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
 #define PI M_PI 
 //3.14159265358979323846
 #define orthTol 1e-14
@@ -51,18 +59,34 @@
   } \
 }
 
+#ifndef __cplusplus
 /*!
   \def max(x,y)
   Computes the maximum of \a x and \a y.
 */
-#define max(a, b) ((a) > (b) ? (a) : (b))
+#define evsl_max(a, b) ((a) > (b) ? (a) : (b))
 
 /*!
   \def min(x,y)
   Computes the minimum of \a x and \a y.
 */
-#define min(a, b) ((a) < (b) ? (a) : (b))
+#define evsl_min(a, b) ((a) < (b) ? (a) : (b))
 
+#else
+
+/*!
+  \def max(x,y)
+  Computes the maximum of \a x and \a y.
+*/
+#define evsl_max(a, b) std::max(a, b)
+
+/*!
+  \def min(x,y)
+  Computes the minimum of \a x and \a y.
+*/
+#define evsl_min(a, b) std::min(a, b)
+
+#endif
 /*! Fortran interface naming convention
  */
 #define EVSLFORT(name) name ## _f90_
@@ -74,5 +98,9 @@
 /*! integer type of EVSL */
 #define EVSL_Int      int
 #define EVSL_Unsigned unsigned
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

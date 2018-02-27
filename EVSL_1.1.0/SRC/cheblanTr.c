@@ -77,12 +77,12 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   int n = evsldata.n;
   size_t n_l = n;
   /*--------------------- adjust lanm and maxit */
-  lanm = min(lanm, n);
+  lanm = evsl_min(lanm, n);
   int lanm1=lanm+1;
   size_t lanm1_l = lanm1;
   /*  if use full lanczos, should not do more than n iterations */
   if (lanm == n) {
-    maxit = min(maxit, n);
+    maxit = evsl_min(maxit, n);
   }
   /*-------------------- this is needed to increment the space when we
                          discover more than nev eigenvalues in interval */
@@ -96,7 +96,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   int one = 1;
   double done=1.0, dmone=-1.0, dzero=0.0;
   /*-------------------- Ntest = when to start testing convergence */
-  int Ntest = min(lanm, nev+50);
+  int Ntest = evsl_min(lanm, nev+50);
   /*--------------------   how often to test */
   int cycle = 50; 
   int i, ll, /* count, last_count,*/ jl, last_jl;
@@ -317,7 +317,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     } /* if (trlen > 0) */
     /*-------------------- Done with TR step. Rest of Lanczos step */
     /*-------------------- reset Ntest at each restart. */
-    Ntest = max(20,nev-lock+10);
+    Ntest = evsl_max(20,nev-lock+10);
     /*last_count = 0;*/  last_jl = 0;  last_tr = 0.0;
     /*-------------------- regardless of trlen, *(k+1)* is the current 
      *                     number of Lanczos vectors in V */

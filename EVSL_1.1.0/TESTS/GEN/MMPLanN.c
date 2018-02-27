@@ -8,8 +8,15 @@
 #include "evsl_direct.h"
 #include "blaslapack.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#define max(a, b) std::max(a, b)
+#define min(a, b) std::min(a, b)
+#else
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
 /*-------------------- Protos */
 int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
@@ -362,3 +369,6 @@ int main() {
   return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif

@@ -49,11 +49,11 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   int n = evsldata.n;
   size_t n_l = n;
   /*--------------------- adjust lanm and maxit */
-  lanm = min(lanm, n);
+  lanm = evsl_min(lanm, n);
   int lanm1=lanm+1;
   /*  if use full lanczos, should not do more than n iterations */
   if (lanm == n) {
-    maxit = min(maxit, n);
+    maxit = evsl_min(maxit, n);
   }
   size_t lanm1_l = lanm1;
   /*--------------------   some constants frequently used */

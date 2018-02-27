@@ -72,10 +72,10 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
   const double lm = intv[2];
   const double lM = intv[3];
   const double tolBdwn = 1.e-13 * (fabs(lM) + fabs(lm));
-  const double aa = max(intv[0], intv[2]);
-  const double bb = min(intv[1], intv[3]);
+  const double aa = evsl_max(intv[0], intv[2]);
+  const double bb = evsl_min(intv[1], intv[3]);
   const double kappa = 1.25;
-  const int M = min(msteps, 30);
+  const int M = evsl_min(msteps, 30);
   const double H = (lM - lm) / (M - 1);
   const double sigma = H / sqrt(8 * log(kappa));
   double sigma2 = 2 * sigma * sigma;

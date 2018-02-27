@@ -27,7 +27,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   n = evsldata.n;
   n_l = n;
   
-  msteps = min(n, msteps);
+  msteps = evsl_min(n, msteps);
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);
   Malloc(V, (msteps+1)*n_l, double);

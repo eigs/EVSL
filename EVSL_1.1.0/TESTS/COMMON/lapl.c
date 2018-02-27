@@ -4,6 +4,10 @@
 #include "struct.h"
 #include "internal_proto.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**-----------------------------------------------------------------------
  *
  * @brief Laplacean Matrix generator 
@@ -112,3 +116,6 @@ int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo) {
   return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif

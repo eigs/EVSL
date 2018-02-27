@@ -12,6 +12,10 @@
 #include "evsl.h"
 #include "io.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------------------- protos */
 int exDOS(double *vals, int n, int npts, double *x, double *y, double *intv);
 int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
@@ -358,3 +362,6 @@ int main(int argc, char *argv[]) {
   EVSLFinish();
   return 0;
 }
+#ifdef __cplusplus
+}
+#endif

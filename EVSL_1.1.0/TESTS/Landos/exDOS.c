@@ -5,6 +5,10 @@
 #include "def.h" 
 #include "string.h"  //for memset
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------------------- Protos */
 void linspace(double a, double b, int num, double *arr);
 
@@ -29,7 +33,7 @@ int exDOS(double *vals, int n, int npts,
   const double lm = intv[2];
   const double lM = intv[3];
   const double kappa = 1.25;
-  const int M = min(n, 30);
+  const int M = evsl_min(n, 30);
   const double H = (lM - lm) / (M - 1);
   const double sigma = H / sqrt(8 * log(kappa));
   const double a = intv[0];
@@ -51,10 +55,10 @@ int exDOS(double *vals, int n, int npts,
       continue;
     }
     /*-------------------- first point to consider  */
-    j = max((int) ((t-a-width)/h), 0);
+    j = evsl_max((int) ((t-a-width)/h), 0);
     /*xi = a+j*h;
     ! check!  */
-    for  (xi = a+j*h; xi <= min(t+width, b); xi+=h)
+    for  (xi = a+j*h; xi <= evsl_min(t+width, b); xi+=h)
       y[j++] += exp(-(xi-t)*(xi-t)/sigma2);
   }
 
@@ -72,3 +76,7 @@ int exDOS(double *vals, int n, int npts,
   
   return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif

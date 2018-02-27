@@ -4,6 +4,10 @@
 #include <mkl.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @file timing.c
  * @brief Timer
@@ -37,3 +41,6 @@ int time_seeder() {
   return (iseed);
 }
 
+#ifdef __cplusplus
+}
+#endif

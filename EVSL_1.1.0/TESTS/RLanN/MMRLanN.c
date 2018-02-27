@@ -8,8 +8,16 @@
 #include "io.h"
 #include "evsl_direct.h"
 
+#ifdef __cplusplus
+extern "C" {
+
+#define max(a, b) std::max(a, b)
+#define min(a, b) std::min(a, b)
+#else
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
 #define TRIV_SLICER 0
 
 int main () { 
@@ -106,8 +114,8 @@ int main () {
     fprintf(fstats, "MATRIX: %s...\n", io.MatNam);
     fprintf(fstats,"Partition the interval of interest [%f,%f] into %d slices\n",
             a,b,n_intv);
-    counts = malloc(n_intv*sizeof(int)); 
-    sli = malloc( (n_intv+1)*sizeof(double));
+    counts = (int *) malloc(n_intv*sizeof(int));
+    sli = (double *) malloc( (n_intv+1)*sizeof(double));
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB){
       ierr =read_coo_MM(io.Fname, 1, 0, &Acoo); 
@@ -129,7 +137,7 @@ int main () {
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);    
     /*-------------------- define parameters for DOS */
-    alleigs = malloc(n*sizeof(double)); 
+    alleigs = (double *) malloc(n*sizeof(double));
     vinit = (double *) malloc(n*sizeof(double));
     rand_double(n, vinit);
     /*-------------------- get lambda_min lambda_max estimates */
@@ -287,3 +295,6 @@ int main () {
   return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif

@@ -204,7 +204,7 @@ double dcsrinfnrm(csrMat *A){
       t += fabs(aa[j]);
     }
     /* take max */
-    ta = max(ta,t);
+    ta = evsl_max(ta,t);
   }
   return (ta);
 }

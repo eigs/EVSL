@@ -1,12 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "CXSparse/Include/cs.h"
 #include "def.h"
 #include "struct.h"
-#include "CXSparse/Include/cs.h"
 #include "internal_proto.h"
 #include "evsl_direct.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @file evsl_cxsparse.c
  * @brief Definitions used for cxsparse interface
@@ -363,3 +367,6 @@ void FreeASIGMABSolDirect(int num, void **data) {
   }
 }
 
+#ifdef __cplusplus
+}
+#endif

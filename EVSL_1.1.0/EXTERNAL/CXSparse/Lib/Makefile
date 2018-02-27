@@ -9,6 +9,7 @@ SO_VERSION = 3
 default: library
 
 include ../../../makefile.in
+CC=gcc
 #include ../../SuiteSparse_config/SuiteSparse_config.mk
 
 AR_TARGET = libcxsparse.a

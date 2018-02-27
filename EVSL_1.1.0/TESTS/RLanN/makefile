@@ -35,7 +35,7 @@ ALLEXE = LapRLanN.ex MMRLanN.ex
 default: LapRLanN.ex
 
 %.o : %.c
-	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
+	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c -x c $<
 
 # Exe
 ## polynomial

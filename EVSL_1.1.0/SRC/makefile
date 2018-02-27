@@ -24,7 +24,7 @@ LIB = ../libevsl.a
 default: $(LIB)
 
 %.o : %.c
-	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
+	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c -x c $<
 
 $(LIB): $(OBJS) $(OBJ_TIME) 
 	$(AR) $@ $(OBJS) $(OBJ_TIME)
