@@ -57,7 +57,7 @@ int main() {
   BSolDataPol BsolPol, BsqrtsolPol;
   int         BsolDeg = 200;  /* Max degree to aproximate B with */
   double      BsolTol = 1e-6; /* Tolerance in polynomial approximation */
-  int         DiagScalB = 1;  /* Use polynomials to solve B */
+  int         DiagScalB = 1;  /* Apply diagonal scaling to A and B */
   double     *Sqrtdiag = NULL;
 #if CXSPARSE == 1
   if (Bsol_direct) {
