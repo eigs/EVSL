@@ -21,6 +21,8 @@ extern "C" {
 int exDOS(double *vals, int n, int npts, double *x, double *y, double *intv);
 int findarg(const char *argname, ARG_TYPE type, void *val, int argc,
             char **argv);
+int lapgen(int nx, int ny, int nz, cooMat *Acoo);
+int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))

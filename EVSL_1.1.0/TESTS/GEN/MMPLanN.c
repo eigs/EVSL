@@ -6,6 +6,7 @@
 #include "io.h"
 #include "evsl.h"
 #include "evsl_direct.h"
+#include "blaslapack.h"
 
 
 #ifdef __cplusplus
@@ -40,6 +41,7 @@ int main() {
   /*-------------------- matrices A, B: coo format and csr format */
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
+  /* csrMat Acsr0, Bcsr0; */
   /* slicer parameters */
   int msteps = 40;
   nvec = 10;
@@ -50,11 +52,19 @@ int main() {
   int numat, mat;
   char line[MAX_LINE];
   /*-------------------- Bsol */
-  void *Bsol;
+  int         Bsol_direct = 1; /* if using direct solver for B^{-1} */
+  void       *Bsol = NULL;
+  BSolDataPol BsolPol, BsqrtsolPol;
+  int         BsolDeg = 200;  /* Max degree to aproximate B with */
+  double      BsolTol = 1e-6; /* Tolerance in polynomial approximation */
+  int         DiagScalB = 1;
+  double     *Sqrtdiag = NULL;
 #if CXSPARSE == 1
-  printf("-----------------------------------------\n");
-  printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times. \n\n");
-  printf("-----------------------------------------\n");
+  if (Bsol_direct) {
+    printf("-----------------------------------------\n");
+    printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times. \n\n");
+    printf("-----------------------------------------\n");
+  }
 #endif
   /*-------------------- stopping tol */
   tol = 1e-6;
@@ -137,11 +147,48 @@ int main() {
       exit(7);
     }
     alleigs = malloc(n * sizeof(double));
-    /*-------------------- use direct solver as the solver for B */
-    SetupBSolDirect(&Bcsr, &Bsol);
-    /*-------------------- set the solver for B and LT */
-    SetBSol(BSolDirect, Bsol);
-    SetLTSol(LTSolDirect, Bsol);
+    /*-------------------- initial vector */
+    vinit = (double *)malloc(n * sizeof(double));
+    rand_double(n, vinit);
+    /*-------------------- B^{-1} */
+    if (Bsol_direct) {
+      /*-------------------- use direct solver as the solver for B */
+      SetupBSolDirect(&Bcsr, &Bsol);
+      /*-------------------- set the solver for B and LT */
+      SetBSol(BSolDirect, Bsol);
+      SetLTSol(LTSolDirect, Bsol);
+    } else {
+      if (DiagScalB) {
+        /*
+        csr_copy(&Acsr, &Acsr0, 1);
+        csr_copy(&Bcsr, &Bcsr0, 1);
+        */
+        /* For FEM matrices, diagonal scaling is often found useful to 
+         * improve condition */
+        Sqrtdiag = (double *)calloc(n, sizeof(double));
+        extrDiagCsr(&Bcsr, Sqrtdiag);
+        for (i = 0; i < n; i++) {
+          Sqrtdiag[i] = sqrt(Sqrtdiag[i]);
+        }
+        diagScalCsr(&Acsr, Sqrtdiag);
+        diagScalCsr(&Bcsr, Sqrtdiag);
+      }
+      /*-------------------- use polynomial approx. to B^{-1} and B^{-1/2}
+       *                     B is assumbed to be ``well-conditioned'' */
+      /* compute eig bounds for B, set to std eig prob for now */
+      SetStdEig();
+      SetAMatrix(&Bcsr);
+      double lminB, lmaxB;
+      LanTrbounds(50, 200, 1e-10, vinit, 1, &lminB, &lmaxB, fstats);
+      fprintf(fstats, "lmin, lmax of B: %e %e (lmax/lmin = %e)\n", lminB, lmaxB, lmaxB/lminB);
+      SetupPolRec (n, BsolDeg, BsolTol, lminB, lmaxB, &BsolPol);
+      fprintf(fstats, "B-INV  Pol deg %d\n", BsolPol.deg);
+      SetupPolSqrt(n, BsolDeg, BsolTol, lminB, lmaxB, &BsqrtsolPol);
+      fprintf(fstats, "B-SQRT Pol deg %d\n", BsqrtsolPol.deg);
+      /*-------------------- set the solver for B and LT */
+      SetBSol (BSolPol, &BsolPol);
+      SetLTSol(BSolPol, &BsqrtsolPol);
+    }
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
@@ -149,9 +196,6 @@ int main() {
     /*-------------------- for generalized eigenvalue problem */
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
-    //-------------------- initial vector
-    vinit = (double *)malloc(n * sizeof(double));
-    rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-12, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n",
             lmin, lmax);
@@ -223,6 +267,36 @@ int main() {
         return 1;
       }
 
+      /* in the case of digonal scaling, recover Y and recompute residual */
+      if (Sqrtdiag) {
+        double *v1 = (double *) malloc(n*sizeof(double));
+        double *v2 = (double *) malloc(n*sizeof(double));
+        int one = 1;
+        for (i = 0; i < nev2; i++) {
+          double *yi = Y+i*n;
+          double t = -lam[i];
+          matvec_csr(yi, v1, &Acsr);
+          matvec_csr(yi, v2, &Bcsr);
+          DAXPY(&n, &t, v2, &one, v1, &one);
+          for (j = 0; j < n; j++) {
+            v1[j] *= Sqrtdiag[j];
+          }
+          res[i] = DNRM2(&n, v1, &one);
+          
+          for (j = 0; j < n; j++) {
+            yi[j] /= Sqrtdiag[j];
+          }
+          /*
+          matvec_csr(yi, v1, &Acsr0);
+          matvec_csr(yi, v2, &Bcsr0);
+          DAXPY(&n, &t, v2, &one, v1, &one);
+          res[i] = DNRM2(&n, v1, &one);
+          */
+        }
+        free(v1);
+        free(v2);
+      }
+
       /* sort the eigenvals: ascending order
        * ind: keep the orginal indices */
       ind = (int *)malloc(nev2 * sizeof(int));
@@ -232,7 +306,7 @@ int main() {
       fprintf(fstats, "    Eigenvalues in [a, b]\n");
       fprintf(fstats, "    Computed [%d]        ||Res||\n", nev2);
       for (i = 0; i < nev2; i++) {
-        fprintf(fstats, "% .15e  %.1e\n", lam[i], res[ind[i]]);
+        fprintf(fstats, "% .15e  %.15e\n", lam[i], res[ind[i]]);
       }
       fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - "
                       "- - - - - - - - - - - - - - - - - -\n");
@@ -240,12 +314,15 @@ int main() {
       totcnt += nev2;
       counts[sl] = nev2;
       //-------------------- free allocated space withing this scope
-      if (lam)
+      if (lam) {
         free(lam);
-      if (Y)
+      }
+      if (Y) {
         free(Y);
-      if (res)
+      }
+      if (res) {
         free(res);
+      }
       free_pol(&pol);
       free(ind);
     } // for (sl=0; sl<nslices; sl++)
@@ -254,8 +331,9 @@ int main() {
     sprintf(path, "OUT/EigsOut_Lan_MMPLanN_(%s_%s)", io.MatNam1, io.MatNam2);
     FILE *fmtout = fopen(path, "w");
     if (fmtout) {
-      for (j = 0; j < totcnt; j++)
+      for (j = 0; j < totcnt; j++) {
         fprintf(fmtout, "%.15e\n", alleigs[j]);
+      }
       fclose(fmtout);
     }
     free(vinit);
@@ -264,13 +342,21 @@ int main() {
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
-    FreeBSolDirectData(Bsol);
     free(alleigs);
     free(counts);
     free(xdos);
     free(ydos);
     if (fstats != stdout) {
       fclose(fstats);
+    }
+    if (Sqrtdiag) {
+      free(Sqrtdiag);
+    }
+    if (Bsol_direct) {
+      FreeBSolDirectData(Bsol);
+    } else { 
+      FreeBSolPolData(&BsolPol);
+      FreeBSolPolData(&BsqrtsolPol);
     }
     /*-------------------- end matrix loop */
   }
