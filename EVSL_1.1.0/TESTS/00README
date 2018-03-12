@@ -109,13 +109,6 @@ Here are all drivers - by directory
 
 ------------------------------ PLanN:
 
-This directory  contains drivers for testing  a few routines
-for computing eigenvalues of general sparse (symmetric real)
-matrices. 
-
-Specifically these are testing [P]olynomial filtering [Lan]czos
-[N]on-restarting spectrum slicing.
-
 LapPLanN.c :   
     driver for testing spectrum slicing -- with 
     Polynomial Filter non-restarting Lanczos 
@@ -123,8 +116,7 @@ LapPLanN.c :
 LapPLanN_MatFree.c :  
     driver for testing spectrum slicing -- with 
     Polynomial Filter non-restart Lanczos
-    [This example is to illustrate the use of Matrix-free solvers]
-    make LapPLanN_MatFree.ex --> executable LapPLanN_MatFree.ex
+    This example is to illustrate the use of Matrix-free solvers
 
 MMPLanN.c :  
     driver for testing spectrum slicing -- with 
@@ -137,7 +129,6 @@ LapPLanR.c :
     driver for testing spectrum slicing -- with 
     Polynomial Filter Lanczos with thick Restart
     make LapPLanR.ex --> executable LapPLanR.ex
-
 
 MMPLanR_omp.c : 
     same as GenPLanR_omp.c but with openMP
@@ -189,6 +180,9 @@ MMPSI.c :
 
 MMPLanN.c Pol. filtering Lanczos algorithm with no restarts
 	  uses Lanczos for slicing
+         ** Note: this driver tests the case when all operations with
+          B are	  performed by a polynomial approximations - so no factorization
+          is required.
 
 MMPLanR.c Pol. filtering Lanczos algorithm with restarts
 	  uses KPM for slicing

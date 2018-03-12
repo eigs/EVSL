@@ -59,10 +59,15 @@ int main() {
   double      BsolTol = 1e-6; /* Tolerance in polynomial approximation */
   int         DiagScalB = 1;  /* Apply diagonal scaling to A and B */
   double     *Sqrtdiag = NULL;
+
 #if CXSPARSE == 1
   if (Bsol_direct) {
     printf("-----------------------------------------\n");
-    printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times. \n\n");
+    printf(" \n \
+    *** Note: You are using CXSparse for the  direct  solver.   CXSparse is  not\n \
+    recommended if you  want to obtain a reasonable performance.  See the readme\n \
+    file for options based on SuiteSparse for example.  Results with SuiteSparse\n \
+    can be orders of magnitude faster. \n\n"); 
     printf("-----------------------------------------\n");
   }
 #endif

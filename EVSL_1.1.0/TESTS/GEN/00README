@@ -6,7 +6,10 @@ All drivers read the matrices A and B in matrix market format from a file
 (matfile) -- see below for details. There are 4 drivers provided.
 
 MMPLanN.c Pol. filtering Lanczos algorithm with no restarts
-	  uses Lanczos for slicing
+	  uses Lanczos for slicing. 
+ 	  ** Note: this driver tests the case when all operations with
+	  B are performed by a polynomial approximation - so no factorization 
+	  is required.
 
 MMPLanR.c Pol. filtering Lanczos algorithm with restarts
 	  uses KPM for slicing
