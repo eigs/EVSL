@@ -2,8 +2,8 @@ This directory  contains drivers for testing  a few routines
 for computing eigenvalues of general sparse (symmetric real)
 matrices. 
 
-Specifically these are testing [P]olynomial filtering [Lan]czos
-[N]on-restarting spectrum slicing.
+Specifically these  are for  testing [P]olynomial  filtering [Lan]czos
+[N]on-restarting method with spectrum slicing.
 
 LapPLanN.c :   
     driver for testing spectrum slicing -- with 

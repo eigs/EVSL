@@ -61,8 +61,8 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    CXSparse is the default direct linear solver used in EVSL for the 
    linear systems that arise in rational filtering methods and    in 
    generalized eigenvalue problems. CXSparse is included only to allow quick 
-   testing. However, know that it is significantly slower than other direct 
-   solvers such as those in SuiteSparse  for example  (see below).
+   testing. However,  be aware that it is significantly slower than other available
+    direct solvers such as those in SuiteSparse  for example  (see below).
 
    NOTE: The compiler used to compile CXSparse is specified in the makefile
    at EXTERNAL/CXSparse/Lib/Makefile.
@@ -216,31 +216,37 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
   
 -----------------------------------------------------------------------
 
-###  GENERALIZED EIGENVALUE PROBLEM
+###  GENERALIZED EIGENVALUE PROBLEMS
 
 -----------------------------------------------------------------------
-  For solving A x = &lambda; B  x, the users must also provide a solver
-  for the B matrix by calling
+  For solving the generalized eigenproblem A x = &lambda; B  x, the users 
+  must also provide a solver  for the B matrix by calling
 
       SetBSol(SolFuncR func, void *data).
 
-  To tell EVSL to solve the generalized eigenvalue problem, one must call
+  To indicate to EVSL that a generalized eigenvalue problem is being solve, 
+  one must call
 
       SetGenEig()
 
-  since by default, EVSL assumes solving standard eigenvalue problem even
-  if B is provided. Call function
+  since by default, EVSL assumes that a  standard eigenvalue problem is being
+  solved even when a B matrix is provided. Call the function
 
       SetStdEig()
 
   for solving standard eigenvalue problem
 
-  The current version of EVSL will need solves with LT for spectrum slicing,
-  where B=L*L' is the Cholesky factorization. Call function
+  To implement spectrum slicing, the current version of EVSL requires system
+  solutions with the matrix L', where B=L*L' is the Cholesky factorization of B. 
+  Call the function
 
     SetLTSol(SolFuncR func, void *data)
 
-  to set the solver function
+  to set the solver function for L'.
+
+ Version  1.1.1   includes  drivers  for  solving   certain  types  of
+ generalized eigenvalue  problems by W polynomial filtering  by methods
+ that avoid matrix factorizations.
 
 -----------------------------------------------------------------------
 

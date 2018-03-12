@@ -1,4 +1,8 @@
-These  drivers  are for testing a few methods on simple matrices.
+This  directory  contains  drivers  for testing  a  few  routines  for
+computing eigenvalues of general sparse (symmetric real) matrices.
+
+Specifically these are for testing  the subspace iteration method with
+spectrum slicing.
 
 Lap_: Generate laplacian matrices
 MM: Read from matrix market file.
@@ -13,7 +17,6 @@ MMPSI.c :
     driver for testing spectrum slicing -- with 
     Polynomial Filter Subspace Iteration
     make MMPSI.ex--> executable MMPSI.ex
-
 
 matfile : input file containing the path to the matrix to be read by MM*.c
           - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 

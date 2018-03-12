@@ -1,5 +1,44 @@
 
 ----------------------------------------
+	EVSL TEST DRIVERS 
+----------------------------------------
+
+This  directory   provides a few   drivers  to   test  a   variety  of
+situations. For convenience it is organized mostly by `method' with an
+an additional directory devoted specifically to generalized problems.
+
+Here are  the sub-directories included  [all drivers are  for standard
+problems except those in GEN/]
+
+PLanN  : Drivers  for testing the Polynomial filtering Lanczos method
+         with No restarts 
+
+PLanR  : Drivers  for testing the Polynomial filtering Lanczos method
+         with Restarts
+
+RLanN  : Drivers  for testing the Rational   filtering Lanczos method
+         with No restarts
+
+RLanR  : Drivers  for testing the Rational   filtering Lanczos method
+         with Restarts
+
+PSI    : Drivers  for testing the subspace iteration methods [polynomial 
+         filtering only]
+
+GEN    : Drivers for Generalized eigenvalue problems
+
+Landos : Drivers for testing the estimation of spectral density 
+         calculations by the Lanczos algorithm
+
+COMMON : contains a number of functions that are called by many of the 
+         drivers for standard problems (e.g. routines for reading matrices
+         from files.. )
+
+COMMON_GEN : same thing but for the generalized problems.
+
+Fortran : contains drivers that test the wrappers for fortran 
+
+----------------------------------------
  DRIVERS FOR STANDARD PROBLEMS
 ----------------------------------------
 
@@ -31,18 +70,14 @@ Gen/
  DOS METHODS
 ----------------------------------------
 
-Two methods for computing the density of states are used
+Two methods for computing the  spectral density (aka density of state)
+are used in  EVSL: KPM (the Kernel Polynomial Method)  and the Lanczos
+method.  All drivers will use one  or the other.  The directory Landos
+provides test drivers for the method based on the Lanczos method.
 
-KPM
-  
-  Uses the Kernel Polynomial Method to compute the DOS
-
-Lan(dos)
-  
-  Uses Lanczo's to compute the DOS
 
 ----------------------------------------
-Filtering
+ Filtering
 ----------------------------------------
 Two types of filtering are available
 
@@ -66,3 +101,116 @@ Landos
  Drivers for  testing Density of  states routines. So far  the Lanczos
  method for DOS is tested.
 
+-----------------------------------------------------------------------
+Here are all drivers - by directory
+-----------------------------------------------------------------------
+
+
+
+------------------------------ PLanN:
+
+This directory  contains drivers for testing  a few routines
+for computing eigenvalues of general sparse (symmetric real)
+matrices. 
+
+Specifically these are testing [P]olynomial filtering [Lan]czos
+[N]on-restarting spectrum slicing.
+
+LapPLanN.c :   
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter non-restarting Lanczos 
+
+LapPLanN_MatFree.c :  
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter non-restart Lanczos
+    [This example is to illustrate the use of Matrix-free solvers]
+    make LapPLanN_MatFree.ex --> executable LapPLanN_MatFree.ex
+
+MMPLanN.c :  
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter non-restarting Lanczos
+    make MMPLanN.ex--> executable MMPLanN.ex
+
+------------------------------ PLanR:
+
+LapPLanR.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter Lanczos with thick Restart
+    make LapPLanR.ex --> executable LapPLanR.ex
+
+
+MMPLanR_omp.c : 
+    same as GenPLanR_omp.c but with openMP
+    parallelization across slices
+    make MMPLanR_omp.ex--> executable MMPLanR_omp.ex
+
+MMPLanR.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter Lanczos with thick Restart
+    make MMPLanR.ex--> executable MMPLanR.ex
+
+---------------------------------------- RLanN:
+
+LapRLanN.c :  
+    driver for testing spectrum slicing -- with 
+    Rational Filter non-restart Lanczos 
+    make LapRLanN.ex --> executable LapRLanN.ex
+
+MMRLanN.c : 
+    driver for testing spectrum slicing -- with 
+    Rational Filter non-restarting Lanczos 
+    make MMRLanN.ex--> executable MMRLanN.ex
+
+---------------------------------------- RLanR
+
+LapRLanR.c :  
+    driver for testing spectrum slicing -- with 
+    Rational Filter Lanczos with thick Restart
+    make LapRLanR.ex --> executable LapRLanR.ex
+
+MMRLanR.c : 
+    driver for testing spectrum slicing -- with 
+    Rational Filter Lanczos with thick Restart
+    make MMRLanR.ex--> executable MMRLanR.ex
+
+---------------------------------------- PSI:
+
+LapPSI.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter Subspace Iteration
+    make LapPSI.ex --> executable LapPSI.ex
+
+MMPSI.c : 
+    driver for testing spectrum slicing -- with 
+    Polynomial Filter Subspace Iteration
+    make MMPSI.ex--> executable MMPSI.ex
+
+---------------------------------------- GEN
+
+MMPLanN.c Pol. filtering Lanczos algorithm with no restarts
+	  uses Lanczos for slicing
+
+MMPLanR.c Pol. filtering Lanczos algorithm with restarts
+	  uses KPM for slicing
+
+MMRLanN.c Rational filtering Lanczos algorithm with no restarts
+	  uses Lanczos for slicing
+
+MMRLanR.c Rational filtering Lanczos algorithm with no restarts
+	  uses KPM for slicing
+
+Drivers  that use  alternate spectrum  slicing for  each of  the above
+drivers are  included in the  EXTRAS sub-directory. These  can replace
+the corresponding  ones provided above if  the user wants to  test say
+KPM vs. Lanczos for spectrum  slicing (e.g., KPM_MMRLanN.c will is the
+same as MMRLanN.c above except that it uses KPM instead of Lanczos for
+spectrum slicing).
+
+---------------------------------------- Landos:
+
+LanDos.c :  Density of States for a standard Laplacean by the Lanczos method
+
+LanDosG.c:  Density of States for a generalized eigenvalue problem (read from file)
+	   by the Lanczos method
+
+----------------------------------------
