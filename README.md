@@ -24,20 +24,21 @@ the matrix  or matrix  pair with either  the Kernel  Polynomial method
 (KPM) or a Lanczos based method.  This release does not yet offer full
 parallel implementations  (trivial openMP test programs  are available
 among the test drivers). 
- Version 1.1.x has much added functionality relative to
+ Versions 1.1.x have much added functionality relative to
 version 1.0. Most notably:
 
-+ EVSL now handles both standard and generalized problems
-+ Matrix-free format [user provides own matvec function]
-+ EVSL provides an interface for FORTRAN users
++ EVSL handles both standard and generalized problems
++ Matrix-free mechanism  [user provides own matvec function]
++ Interface for FORTRAN users
 + Spectrum slicing by KPM as well as Lanczos. Also effective
    spectrum slicing for Ax=&lambda; Bx
 + Interfaces to various direct solvers that are needed by the code
 + Recently added: Generalized eigenvalue problems without factorizations
   [using polynomials in B]
 
-
 For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
+
+
 -----------------------------------------------------------------------
 
 ###  INSTALLATION
@@ -84,10 +85,10 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
    Follow the examples implemented in EXTERNAL/evsl_suitesparse.c
  
 >  NOTE:  SuiteSparse is NOT distributed with EVSL, and it is Copyrighted by Timothy Davis.  
->  Refer to SuiteSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
+>  Refer to the SuiteSparse package for its license. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
 
 **Pardiso**
-  Pardiso bindings are provided. The Pardiso project can be viewed at 
+  Pardiso bindings are provided. The Pardiso web-site can be accessed at
   [https://pardiso-project.org/]
 
 -----------------------------------------------------------------------
