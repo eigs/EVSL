@@ -20,8 +20,10 @@
  *    @param[in] yi values of a function f at the xi
  *    @param[in] npts number of sample points
  *
- *    In-place version.
  *
+ *
+ *
+ *    @note In-place version.
  *----------------------------------------------------------------------*/
 
 void simpson(double* xi, double* yi, int npts) {

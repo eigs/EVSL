@@ -38,6 +38,28 @@ version 1.0. Most notably:
 
 For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
+-----------------------------------------------------------------------
+
+###  HANDBOOK
+
+-----------------------------------------------------------------------
+
+A handbook describing EVSL is available from
+[arXiv](https://arxiv.org/abs/1802.05215), which, should you wish to cite it, can be cited as follows:
+```
+@article{LiEigenvaluesSlicingLibrary2018a,
+  archivePrefix = {arXiv},
+  eprinttype = {arxiv},
+  eprint = {1802.05215},
+  primaryClass = {math},
+  title = {The {{Eigenvalues Slicing Library}} ({{EVSL}}): {{Algorithms}}, {{Implementation}}, and {{Software}}},
+  url = {http://arxiv.org/abs/1802.05215},
+  shorttitle = {The {{Eigenvalues Slicing Library}} ({{EVSL}})},
+  date = {2018-02-14},
+  keywords = {Mathematics - Numerical Analysis},
+  author = {Li, Ruipeng and Xi, Yuanzhe and Erlandson, Lucas and Saad, Yousef},
+}
+```
 
 -----------------------------------------------------------------------
 

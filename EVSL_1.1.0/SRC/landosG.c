@@ -35,6 +35,8 @@
  *
  *    @param[out] neig  estimated number of eigenvalues
  *
+ *
+ *
  *    @note This works for both the standard and generalized eigenvalue
  *    problems.
  *    landos.c/LanDos is only for the standard eigenvalue problem.

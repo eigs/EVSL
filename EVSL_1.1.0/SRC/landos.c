@@ -32,6 +32,8 @@
  *
  *    @param[out] neig  estimated number of eigenvalues
  *
+ *
+ *
  *    @note This only works with the standard eigenvalue problem. Use landosG.c
  *    /LanDosG for the generalized eigenvalue problem.
  *
