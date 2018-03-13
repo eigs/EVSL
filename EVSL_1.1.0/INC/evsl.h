@@ -66,8 +66,6 @@ int LanDosG(const int nvec, int msteps, const int npts, double *xdos, double *yd
 int LanTrbounds(int lanm, int maxit, double tol, double *vinit, int bndtype,
                 double *lammin, double *lammax, FILE *fstats);
 
-/*- - - -- - - - - - misc_la.c */
-int scalEigVec(int n, int nev, double *Y, double* sqrtdiag);
 
 
 /*- - - - - - - - - ratfilter.c */
@@ -76,8 +74,6 @@ void set_ratf_def(ratparams *rat);
 //
 int find_ratf(double *intv, ratparams *rat);
 //
-int set_ratf_solfunc(ratparams *rat, csrMat *A, csrMat *B, SolFuncC *funcs,
-                     void **data);
 //
 void free_rat(ratparams *rat);
 
@@ -111,8 +107,6 @@ int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a, csrMat
 int SetAMatvec(int n, MVFunc func, void *data);
 int SetBMatvec(int n, MVFunc func, void *data);
 /* unset an external matvec function */
-int UnsetAMatvec();
-int UnsetBMatvec();
 int SetAMatrix(csrMat *A);
 int SetBMatrix(csrMat *B);
 int SetBSol(SolFuncR func, void *data);
