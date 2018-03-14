@@ -13,12 +13,30 @@
  *  @file dos_utils.c
  *  @brief A number of utility functions related to DOS functionality
  */
+/** 
+ *  @bref Reciprocal
+ *  @param[in] a Number to take reciprocal of
+ *  @return reciprocal of a
+ */
 double rec(const double a) { return 1.0 / a; }  // Reciprocal
 
+/**
+ * @brief Inverse  square root
+ * @param[in] a number to take inverse square root of
+ * @return inverse square root of a
+ * */
 double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
 
-/*
+/**
  * Initalize BSolDataPol: use L-S polynomial to approximate a function 'ffun'
+ * @param[in] n Number
+ * @param[in] max_deg Max degree of poliynomial
+ * @param[in] tolerance Tolerance to be used
+ * @param[in] lmin Minimum eigenvalue
+ * @param[in] lmax Maximum eigenvalue
+ * @param[in] ffun Function approximate
+ * @param[in, out] data Structure to be initialized
+ *
  */
 void SetupBPol(int n, int max_deg, double tol, double lmin, double lmax, 
                double (*ffun)(double), BSolDataPol *data) {
@@ -32,24 +50,41 @@ void SetupBPol(int n, int max_deg, double tol, double lmin, double lmax,
   lsPol(ffun, data);
 }
 
-/*
+/**
  * Initialize the member of BSolDataPol struct for solving B^{-1}
+ *
+ *
+ * @param[in] n Number
+ * @param[in] max_deg Max degree of poliynomial
+ * @param[in] tolerance Tolerance to be used
+ * @param[in] lmin Minimum eigenvalue
+ * @param[in] lmax Maximum eigenvalue
+ * @param[in, out] data Structure to be initialized
  */
+
 void SetupPolRec(int n, int max_deg, double tol, double lmin, double lmax, 
                  BSolDataPol *data) {
   SetupBPol(n, max_deg, tol, lmin, lmax, rec, data);
 }
 
-/*
+/**
  * Initialize the member of BSolDataPol struct for solving B^{1/2}
+ *
+ * @param[in] n Number
+ * @param[in] max_deg Max degree of poliynomial
+ * @param[in] tolerance Tolerance to be used
+ * @param[in] lmin Minimum eigenvalue
+ * @param[in] lmax Maximum eigenvalue
+ * @param[in, out] data Structure to be initialized
  */
 void SetupPolSqrt(int n, int max_deg, double tol, double lmin, double lmax, 
                   BSolDataPol *data) {
   SetupBPol(n, max_deg, tol, lmin, lmax, isqrt, data);
 }
 
-/*
+/**
  * Free the BSolDataPol struct
+ * @param[in, out] data struct to free data
  */
 void FreeBSolPolData(BSolDataPol *data) {
   free(data->wk);
@@ -58,6 +93,10 @@ void FreeBSolPolData(BSolDataPol *data) {
 
 /*
  * Setup the function pointer for evsl struct to call B_sol function
+ *
+ * @param[in] b Input vector
+ * @param[out] x p(A)b
+ * @param[in, out] data Data to be cast to BSolDataPol
  */
 void BSolPol(double *b, double *x, void *data) {
   BSolDataPol *pol = (BSolDataPol *)data;

@@ -16,18 +16,18 @@
 /**
  * @brief Chebyshev polynomial filtering Subspace Iteration
  *
- *   @param nev         Estimate of number of eigenvalues in the interval --
+ *   @param[in] nev         Estimate of number of eigenvalues in the interval --
  *           ideally nev == exact number or a little larger.
  *           ChebSI stops when  at least nev eigenvalues are              
  *           found or when no more candidates are left in interval.
- *   @param intv        An array of length 4 
+ *   @param[in] intv        An array of length 4 
  *           [intv[0], intv[1]] is the interval of desired eigenvalues
  *           [intv[2], intv[3]] is the global interval of all eigenvalues
  *           it must contain all eigenvalues of A
- *   @param maxit       Max Num of outer subspace iterations allowed 
- *   @param tol         Tolerance for convergence. stop when ||res||< tol
- *   @param vinit       Nev initial vectors [to be made optional]
- *   @param pol         A struct containing the parameters of the polynomial..
+ *   @param[in] maxit       Max Num of outer subspace iterations allowed 
+ *   @param[in] tol         Tolerance for convergence. stop when ||res||< tol
+ *   @param[in] vinit       Nev initial vectors [to be made optional]
+ *   @param[in] pol         A struct containing the parameters of the polynomial..
  *
  *   @b Modifies:
  * @param[out] nevo     Number of eigenvalues/vectors computed

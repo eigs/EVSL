@@ -44,6 +44,7 @@ int EVSLStart() {
 /**
  * @brief Finish EVSL.
  *
+ * Frees parts of the evsldata struct
  * */
 int EVSLFinish() {
   if (evsldata.Amv) {
@@ -64,6 +65,8 @@ int EVSLFinish() {
 /** 
  * @brief Set the matrix A
  * 
+ *
+ * @param[in] A The matrix to set
  * */
 int SetAMatrix(csrMat *A) {
   evsldata.n = A->ncols;
@@ -79,6 +82,7 @@ int SetAMatrix(csrMat *A) {
 /**
  * @brief Set the B matrix.
  * 
+ * @param[in] B the matrix to set
  * */
 int SetBMatrix(csrMat *B) {
   evsldata.n = B->ncols;
@@ -96,6 +100,10 @@ int SetBMatrix(csrMat *B) {
  * Save them in evsldata
  * @warning Once this matvec func is set, matrix A will be ignored even it
  * is provided
+ *
+ * @param[in] n Size of problem
+ * @param[in] func Function to use for matvec
+ * @param[in] Data required
  * */
 int SetAMatvec(int n, MVFunc func, void *data) {
   evsldata.n = n;
@@ -113,6 +121,9 @@ int SetAMatvec(int n, MVFunc func, void *data) {
  * Save them in evsldata
  * @warning Once this matvec func is set, matrix B will be ignored even it
  * is provided
+ * @param[in] n Size of problem
+ * @param[in] func Function to use for matvec
+ * @param[in] data Data required for matvec
  * */
 int SetBMatvec(int n, MVFunc func, void *data) {
   evsldata.n = n;
@@ -128,6 +139,8 @@ int SetBMatvec(int n, MVFunc func, void *data) {
 
 /**
  * @brief Set the solve routine and the associated data for B
+ * @param[in] func Function to use for solve
+ * @param[in] data Data for solnve
  * */
 int SetBSol(SolFuncR func, void *data) {
   if (!evsldata.Bsol) {
@@ -164,6 +177,12 @@ int SetGenEig() {
 /**
  * @brief Set the solve routine and the associated data for A-SIGMA*B
  * if func == NULL, set all functions to be allf
+ *
+ * @param[in] rat Rational parameters
+ * @param[in] func function array
+ * @param[in] allf Function to be used for all solves
+ * @param[in] data data array
+ *
  * */
 int SetASigmaBSol(ratparams *rat, SolFuncC *func, SolFuncC allf, void **data) {
   int i,num;
@@ -181,6 +200,9 @@ int SetASigmaBSol(ratparams *rat, SolFuncC *func, SolFuncC allf, void **data) {
 
 /**
  * @brief Set the solve routine for LT
+ *
+ * @param[in] func Function to use
+ * @param[in] data Data to use
  * */
 int SetLTSol(SolFuncR func, void *data) {
   if (!evsldata.LTsol) {
@@ -193,6 +215,7 @@ int SetLTSol(SolFuncR func, void *data) {
 
 /**
  * @brief Set diagonal scaling matrix D
+ * @param[in] ds Sets diagonal scaling
  * */
 void SetDiagScal(double *ds) {
   evsldata.ds = ds;

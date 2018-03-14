@@ -29,11 +29,14 @@ void set_pol_def(polparams *pol){
 /**
  * @brief Computes damping coefficient for cheb. expansions.
  *
- * @param damping == 0 --> no damping \n
+ * @param[in] m         degree of the polynomial
+ * @param[in] damping == 0 --> no damping \n
  *                == 1 --> Jackson \n
  *                == 2 --> Lanczos sigma damping
- * @param m         degree of the polynomial
  * @param[out] jac  output array of dampened coefficients
+ *
+ * @warning jac must be pre allocated
+ *
  * @return 0
  **/
 int dampcf(int m, int damping, double *jac) {
@@ -69,10 +72,10 @@ int dampcf(int m, int damping, double *jac) {
  *@brief function dif_eval(v, m, thc, jac)
  * evaluates the difference between the right and left
  * values of the polynomial expressed in chebyshev expansion
- * @param v  vector of coefficients [see paper]
- * @param m  degree 
- * @param thc  angle theta corresponding to peak of polynomial
- * @param jac vector of damping coefficients
+ * @param[in] v  vector of coefficients [see paper]
+ * @param[in] m  degree 
+ * @param[in] thc  angle theta corresponding to peak of polynomial
+ * @param[in] jac vector of damping coefficients
 **/
 
 double dif_eval(double *v, int m, double thc, double *jac){
@@ -93,10 +96,10 @@ double dif_eval(double *v, int m, double thc, double *jac){
  *  Jackson (or other) dampings is not explicitly used here but
  *  is assumed to be multiplied by mu outside this routine.
 
- *  @param m         degree of the polynomial = length(mu)-1
- *  @param mu        Chev. expansion coefficients in KPM method
- *  @param npts     = number of points in xi, yi
- *  @param xi       = a vector of values where p(xi) is to be computed.
+ *  @param[in] m         degree of the polynomial = length(mu)-1
+ *  @param[in] mu        Chev. expansion coefficients in KPM method
+ *  @param[in] npts     = number of points in xi, yi
+ *  @param[in] xi       = a vector of values where p(xi) is to be computed.
  *  @warning Note xi's must be in [-1 1] 
  *
  *  @param[out] yi       = pn(xi(:) )
@@ -142,11 +145,11 @@ int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
  *  we need to express it in the same basis as in the other (middle interval)
  *  cases. This function determines this expansion 
  *
- * @param aIn The start index of the transformed interval
- * @param bIn The end index of the transformed interval
+ * @param pol[in,out] A struct containing the parameters of polynomial.
+ * @param aIn[in] The start index of the transformed interval
+ * @param bIn[in] The end index of the transformed interval
  * @note [aIn, bIn] is the transformed interval
  *
- * @param pol A struct containing the parameters of polynomial.
  *
  * @b Modifies
  * mu Expansion coefficients of best polynomial found.
@@ -260,8 +263,8 @@ void chext(polparams *pol, double aIn, double bIn){
 
 /**
  * @brief Find the indexofSmallestElement in array
- * @param array Array to find the smallest index of
- * @param size size of the arry
+ * @param[in] array Array to find the smallest index of
+ * @param[in] size size of the arry
  * @return index of smallest entry in array
 **/
 int indexofSmallestElement(double *array, int size){
@@ -275,13 +278,15 @@ int indexofSmallestElement(double *array, int size){
 
 /**
  * @brief Finds the roots of linear combination of chebyshev polynomials
- * @param m   degree of polynomial
- * @param v difference between cosines on left and right [(3.12) in paper] 
- * @param jac   damping coefficients 
- * @param tha    theta_a [refer to paper]
- * @param thb    theta_b [refer to paper]
- * @param mu     expansion coefficients. 
+ * @param[in] m   degree of polynomial
+ * @param[in] v difference between cosines on left and right [(3.12) in paper] 
+ * @param[in] jac   damping coefficients 
+ * @param[in] tha    theta_a [refer to paper]
+ * @param[in] thb    theta_b [refer to paper]
+ * @param[out] mu     expansion coefficients. 
  * @param[out] thcOut  value of theta_c  
+ *
+ * @warning mu must be preallocated
 **/
 int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
 	    double *thcOut){
@@ -337,11 +342,11 @@ int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
  *
  * @brief Sets the values in pol
  *
- * @param intv An array of length 4, [intv[0, intv[1]] is the interval of
+ * @param[in] intv An array of length 4, [intv[0, intv[1]] is the interval of
  * desired eigenvalues. [intv[2], intv[3]] is the global interval of all
  * eigenvalues it must contain all eigenvalues of A.
  *
- * @param pol The polynomial struct to set the values of.
+ * @param[in,out] pol The polynomial struct to set the values of.
  *
  * @warning Set the following values of pol \n
  *  mu Expansion coefficients of best polynomial found  \n
@@ -485,6 +490,11 @@ int find_pol(double *intv, polparams *pol) {
   return 0;
 }
 
+/** 
+ * Frees a polparams struct's mu
+ *
+ * @param[in,out] pol struct to free
+ * */
 void free_pol(polparams *pol) {
   if (pol->mu) {
     free(pol->mu);
@@ -504,8 +514,8 @@ void free_pol(polparams *pol) {
  * @param[out] y p(A)v
  *
  * @b Workspace
- * @param w Work vector of length 3*n [allocate before call]
- * @param v is untouched
+ * @param[in] w Work vector of length 3*n [allocate before call]
+ * @param[in] v is untouched
  **/
 int ChebAv(polparams *pol, double *v, double *y, double *w) {
   double tt = evsl_timer();

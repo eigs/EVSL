@@ -174,7 +174,9 @@ static inline void solve_ASigB(EVSLASIGMABSol *sol, int n,
   evslstat.n_svASigB ++;
 }
 
-/*- - - - - - - - - - check if an interval is valid */
+/**
+ * @brief check if an interval is valid 
+ * */
 static inline int check_intv(double *intv, FILE *fstats) {
   /* intv[4]: ( intv[0], intv[1] ) is the inteval of interest
    *          ( intv[2], intv[3] ) is the spectrum bounds

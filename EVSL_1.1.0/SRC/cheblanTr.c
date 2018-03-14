@@ -43,10 +43,10 @@
  *                  is set up by a call to find_deg prior to calling chenlanTr 
  *
  * @param[out] nev2     Number of eigenvalues/vectors computed
+ * @param[out] vals     Associated eigenvalues [nev2 x 1 vector]
  * @param[out] W        A set of eigenvectors  [n x nev2 matrix]
  *                      of unit 2-norm for standard eig prob
  *                      of unit B-norm for generalized eig prob
- * @param[out] vals     Associated eigenvalues [nev2 x 1 vector]
  * @param[out] resW     Associated residual norms [nev x 1 vector]
  *                      2-norm for standard eig prob
  *                      B-norm for generalized eig prob

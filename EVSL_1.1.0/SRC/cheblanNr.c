@@ -17,7 +17,7 @@
  */ 
 #define FILTER_VINIT 1
 
-/* -----------------------------------------------------------------------
+/**
  *  @brief Chebyshev polynomial filtering Lanczos process [NON-restarted version]
  *
  *  @param[in] intv     An array of length 4 \n
@@ -43,7 +43,6 @@
  *  @param[in] pol       A struct containing the parameters of the polynomial..
  *  This is set up by a call to find_deg prior to calling chenlanNr 
  * 
- *  @b Modifies:
  *  @param[out] nevOut    Number of eigenvalues/vectors computed
  *  @param[out] Wo        A set of eigenvectors  [n x nevOut matrix]
  *  @param[out] reso      Associated residual norms [nev x 1 vector]
@@ -309,6 +308,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
      *                     eigenvalues whose residual for p(A) is smaller 
      *                     than tol. */
     nconv = 0;
+    //Used for convergence test
     for (i=0; i<count; i++) {
       flami = EvalT[i];
       if (flami + DBL_EPS_MULT * DBL_EPSILON >= bar) {

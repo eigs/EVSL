@@ -191,6 +191,12 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
 
 /**
  * @brief Classical GS reortho with Daniel, Gragg, Kaufman, Stewart test
+ * @param[in] n Number of rows in Q
+ * @param[in] k Number of cols in Q
+ * @param[in] i_max Number iterations
+ * @param[in] Q matrix
+ * @param[in] v Output
+ * @param[in] w Output
  **/
 void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, double *w) {
   double tms = evsl_timer();
@@ -231,6 +237,14 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
 /**
  * @brief Classical GS reortho. No test. just do i_max times
  * used in generalized ev problems
+ *
+ * @param[in] n Number of rows in Z,Q
+ * @param[in] k Number of cols in Z,Q
+ * @param[in] i_max Number iterations
+ * @param[in] Z matrix
+ * @param[in] Q matrix
+ * @param[in] v Output
+ * @param[in] w Output
  **/
 void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q, 
                double *v, double *w) {
@@ -260,11 +274,13 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
 #define NGS_MAX 2
 /**
  * @brief Orthogonalize columns of n-by-k matrix V 
- * @param n number of rows in V
- * @param V Matrix which columns are to be orthogonalized
- * @param k number of columns in V
+ * @param[in] n number of rows in V
+ * @param[in] V Matrix which columns are to be orthogonalized
+ * @param[in] k number of columns in V
  * @param[out] Vo Output matrix
- * @param work work 
+ * @param[in, out] work work 
+ *
+ * @warning Aliasing happens in call to CGS_DGKS
  */
 void orth(double *V, int n, int k, double *Vo, double *work) {
   int i;

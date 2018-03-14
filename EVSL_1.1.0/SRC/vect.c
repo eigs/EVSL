@@ -45,6 +45,12 @@ void randn_double(int n, double *v) {
   }
 }
 
+/**
+ * Sets all elements of v to t
+ * @param[in] n Number of elements
+ * @param[in] t Value which elements should be set to
+ * @param[in] v Vector to set
+ * */
 void vecset(int n, double t, double *v) {
   int i;
   for (i=0; i<n; i++) 
