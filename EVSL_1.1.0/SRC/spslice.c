@@ -17,10 +17,10 @@
  * @brief This function  computes the  coefficients of the  density of
  * states  in  the  chebyshev   basis.   It  also  returns  the
  * estimated number of eigenvalues in the interval given by intv.
- * @param Mdeg     degree of polynomial to be used. 
- * @param damping  type of damping to be used [0=none,1=jackson,2=sigma]
- * @param nvec     number of random vectors to use for sampling
- * @param intv   an array of length 4  \n
+ * @param[in] Mdeg     degree of polynomial to be used. 
+ * @param[in] damping  type of damping to be used [0=none,1=jackson,2=sigma]
+ * @param[in] nvec     number of random vectors to use for sampling
+ * @param[in] intv   an array of length 4  \n
  *                 [intv[0] intv[1]] is the interval of desired eigenvalues 
  *                 that must be cut (sliced) into n_int  sub-intervals \n
  *                 [intv[2],intv[3]] is the global interval of eigenvalues 

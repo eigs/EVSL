@@ -23,14 +23,14 @@
  *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] npts number of sample points used for the DOS curve
- *    @param[in] *intv Stores the the intervals of interest
+ *    @param[in] intv Stores the the intervals of interest
  *      intv[0:1] = [a b] = interval where DOS is to be computed
  *      intv[2:3] = [lambda_min, lambda_max] \\
  *
- *    @param[out] *xdos Length-npts long vector, x-coordinate points for
+ *    @param[out] xdos Length-npts long vector, x-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] *ydos Length-npts long vector, y-coordinate points for
+ *    @param[out] ydos Length-npts long vector, y-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
  *    @param[out] neig  estimated number of eigenvalues

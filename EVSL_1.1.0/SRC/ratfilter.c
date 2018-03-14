@@ -15,8 +15,8 @@
 /**------------------------- Cauchy integration-based filter --------------
  * @brief Compute the locations of the poles
  *
- * @param method    0 for Guass Legendre; 1 for midpoint
- * @param n         Number of poles in the upper half plane
+ * @param[in] method    0 for Guass Legendre; 1 for midpoint
+ * @param[in] n         Number of poles in the upper half plane
  * @param[out] zk   Vector of pole locations
  *
  *----------------------------------------------------------------------*/
@@ -56,12 +56,12 @@ void contQuad(int method, int n, complex double* zk) {
 
   /**------------------Multiple pole rational filter evaluation --------------
    * @brief Compute the function value of the multiple pole rational filter at real locations 
-   * @param n      number of the pole
-   * @param mulp   multiplicity of the pole
-   * @param zk     array containing the poles.
-   * @param alp    fractional expansion coefficients
-   * @param m      number of locations to be evaluated
-   * @param z      real locations to be evaluated
+   * @param[in] n      number of the pole
+   * @param[in] mulp   multiplicity of the pole
+   * @param[in] zk     array containing the poles.
+   * @param[in] alp    fractional expansion coefficients
+   * @param[in] m      number of locations to be evaluated
+   * @param[in] z      real locations to be evaluated
    *
    * @param[out] xx    : function values at real locations z
    *
@@ -158,10 +158,10 @@ complex double integg2(complex double s1, complex double s2,
 /**
  *------------------multiple pole LS rational filter weights--------------
  * @brief Compute the LS weight for each multiple pole
- * @param n      number of poles in the upper half plane
- * @param zk     pole locations
- * @param mulp    multiplicity of each pole
- * @param lambda LS integration weight for [-1, 1]
+ * @param[in] n      number of poles in the upper half plane
+ * @param[in] zk     pole locations
+ * @param[in] mulp    multiplicity of each pole
+ * @param[in] lambda LS integration weight for [-1, 1]
  *
  * @param[out] omega LS weight for each pole
  *
@@ -302,10 +302,10 @@ void weights(int n, complex double* zk, int* mulp, double lambda,
 
   /**------------------Transform poles and weights computed on [-1, 1] to [a, b] ----------
    * @brief  Compute the weights and pole locations on [a, b]
-   * @param n     number of poles used in the upper half plane
-   * @param a,b   [a, b] is the interval of desired eigenvalues
-   * @param zk    location of the poles
-   * @param mulp   multiplicity of the poles
+   * @param[in] n     number of poles used in the upper half plane
+   * @param[in] a,b   [a, b] is the interval of desired eigenvalues
+   * @param[in,out] zk    location of the poles
+   * @param[in] mulp   multiplicity of the poles
    *
    * @param[out] omegaM: multiple LS weights
    *
@@ -356,12 +356,11 @@ void set_ratf_def(ratparams *rat) {
 }
 
 /**----------------------------------------------------------------------
- * @param intv  = an array of length 4 
+ * @param[in] intv  = an array of length 4 
  *         [intv[0], intv[1]] is the interval of desired eigenvalues
  *         [intv[2], intv[3]] is the global interval of all eigenvalues
  *         it must contain all eigenvalues of A
  *  
- * OUT:
  * @param[out] rat
  * these are set in rat struct:\n
  *   omega : expansion coefficients of rational filter \n

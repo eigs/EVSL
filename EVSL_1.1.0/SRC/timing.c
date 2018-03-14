@@ -15,6 +15,7 @@ extern "C" {
 
 /**
  * @brief cheblan timer
+ * @return Returns current time in nanoseconds
  */
 double evsl_timer() {
 #ifdef USE_MKL

@@ -17,7 +17,7 @@
  *    This function computes the integrals from xi[0] to xi[j] for j=0:npts-1
  *
  *    @param[in] xi npts equally space points
- *    @param[in] yi values of a function f at the xi
+ *    @param[in,out] yi values of a function f at the xi
  *    @param[in] npts number of sample points
  *
  *

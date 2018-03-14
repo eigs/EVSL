@@ -20,10 +20,10 @@
 /**----------------------------------------------------------------------- 
  *  @brief compute all eigenvalues and eigenvectors of a symmetric tridiagonal
  *  matrix  
- *  @param n                The  dimension of the symmetric tridiagonal  matrix
- *  @param diag[],sdiag[]   Define the symmetric tridiagonal  matrix:  the
- *          diagonal elements are diag[0,...,n-1]  in order and the subdiagonal
- *          elements are sdiag[0,...,n-2] in order  
+ *  @param[in] n                The  dimension of the symmetric tridiagonal  matrix
+ *  @param[in] diag[],sdiag[]   Define the symmetric tridiagonal  matrix:  the
+ *          diagonal elements are diag[0,...,n-1]  
+ *  @param[in] sdiag Subdiagonal elements
  *  @param[out] eigVal The output vector of length n containing all eigenvalues
  *          in ascending order 
  *  @param[out] eigVec The output n-by-n matrix with columns as eigenvectors,
@@ -74,8 +74,9 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
 /**----------------------------------------------------------------------- 
  *  @brief compute  eigenvalues and  eigenvectors of  a symmetric  tridiagonal
  *  matrix in a slice
- *  @param n The  dimension of  the  symmetric tridiagonal  matrix
- *  @param diag[],sdiag[]  define  the   symmetric  tridiagonal  matrix.  
+ *  @param[in] n The  dimension of  the  symmetric tridiagonal  matrix
+ *  @param[in] diag Diagonal elements
+ *  @param[in] sdiag Sub-diagonal elements
  *  @param[out] eigVal Total number of eigenvalues found.
  *  @param[out] eigVec The first M elements contain teh selected eigenvalues in
  *  ascending oredr
@@ -152,6 +153,12 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
 
 /**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  *     @brief interface to   LAPACK SYMMETRIC EIGEN-SOLVER 
+ *     @param[in] n Size of problem
+ *     @param[in] A Matrix
+ *     @param[in] lda Leading dimension
+ *     @param[out] Q Eigenvectors
+ *     @param[in] ldq Leading dimension q
+ *     @param[out] lam Eigenvalues
  *- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) {
   double tms = evsl_timer();
@@ -195,8 +202,9 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
  * @param[in] k Number of cols in Q
  * @param[in] i_max Number iterations
  * @param[in] Q matrix
- * @param[in] v Output
- * @param[in] w Output
+ * @param[out] nrmv
+ * @param[out] v Output
+ * @param[out] w Output
  **/
 void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, double *w) {
   double tms = evsl_timer();
@@ -243,8 +251,8 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
  * @param[in] i_max Number iterations
  * @param[in] Z matrix
  * @param[in] Q matrix
- * @param[in] v Output
- * @param[in] w Output
+ * @param[out] v Output
+ * @param[out] w Output
  **/
 void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q, 
                double *v, double *w) {

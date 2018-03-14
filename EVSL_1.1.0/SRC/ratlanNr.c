@@ -20,15 +20,15 @@
 /**-----------------------------------------------------------------------
  *  @brief Rational filtering Lanczos process [NON-restarted version]
  *
- *  @param intv   an array of length 4 
+ *  @param[in] intv   an array of length 4 
  *          [intv[0], intv[1]] is the interval of desired eigenvalues
  *          [intv[2], intv[3]] is the global interval of all eigenvalues
  *          it must contain all eigenvalues of A
  *  
- *  @param maxit  max Num of outer Lanczos steps  allowed --[max dim of Krylov 
+ *  @param[in] maxit  max Num of outer Lanczos steps  allowed --[max dim of Krylov 
  *          subspace]
  *  
- *  @param tol    tolerance  for    convergence.  The  code  uses   a  stopping
+ *  @param[in] tol    tolerance  for    convergence.  The  code  uses   a  stopping
  *          criterion  based   on  the  convergence  of   the  restricted
  *          trace. i.e.,  the sum of the  eigenvalues of T_k that  are in
  *          the desired interval. This test  is rather simple since these
@@ -38,17 +38,15 @@
  *          actual residual norm associated with the original matrix A is
  *          returned
  *  
- *  @param vinit  initial  vector for Lanczos -- [optional]
+ *  @param[in] vinit  initial  vector for Lanczos -- [optional]
  * 
  * 
- *  @warning RatLanNr() Modifies the following variables:
- *
  *  @param[out] rat      A struct containing the rational filter
  *  @param[out] nevOut   Number of eigenvalues/vectors computed
  *  @param[out] Wo       A set of eigenvectors  [n x nevOut matrix]
  *  @param[out] lamo     Associated eigenvalues [nevOut x 1 vector]
  *  @param[out] reso     Associated residual norms [nev x 1 vector]
- * @param[out] fstats   File stream which stats are printed to
+ *  @param[out] fstats   File stream which stats are printed to
  *
  * ------------------------------------------------------------ */
 int RatLanNr(double *intv, int maxit, double tol, double *vinit, 

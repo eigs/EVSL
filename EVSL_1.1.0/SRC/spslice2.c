@@ -13,10 +13,10 @@
  */
 /**----------------------------------------------------------------------
  *
- *    Interval partitioner based for Lanczos DOS output
+ *    @brief Interval partitioner based for Lanczos DOS output
  *
  *    @param[in] xi coordinates of interval [a b]
- *    @param[in] yi yi[k] = integral of the does from a to xi[k]
+ *    @param[in, out] yi yi[k] = integral of the does from a to xi[k]
  *    @param[in] n_int Number of desired sub-intervals
  *    @param[in] npts number of integration points (length of xi)
  *

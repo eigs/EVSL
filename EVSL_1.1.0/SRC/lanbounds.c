@@ -11,13 +11,16 @@
  * @brief Lanczos alg. to give bounds of spectrum
  */
 /**----------------------------------------------------------------------
-*
-*    @param msteps   number of Lanczos steps
-*    @param *v    initial vector
-*
-*    @param[out] *lmin, *lmax [lmin lmax] is the desired interval containing  
-*    all eigenvalues of matrix pair (A,B)
-*----------------------------------------------------------------------*/   
+ *    @brief Lanczos alg. to give bounds of spectrum
+ *
+ *    @param[in] msteps   number of Lanczos steps
+ *    @param[in] *v    initial vector
+ *
+ *    @param[out] *lmin left bound of the desired interval containing all
+ *    eigenvalues 
+ *    @param[out] *lmin right bound of the desired interval containing all
+ *    eigenvalues 
+ *----------------------------------------------------------------------*/
 int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   const int ifGenEv = evsldata.ifGenEv;
   double *alp, *bet, nbet, nalp, t, *V, *Z;
@@ -142,4 +145,3 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
 
   return 0;
 }
-

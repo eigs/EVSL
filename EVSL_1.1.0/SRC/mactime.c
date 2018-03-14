@@ -10,6 +10,7 @@
 
 /**
  * @brief evsl timer for mac
+ * @return Current time (in nanoseconds)
  */
 double evsl_timer() {
   double t;

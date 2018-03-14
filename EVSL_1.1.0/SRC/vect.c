@@ -6,6 +6,8 @@
 /**
  * @file vect.c
  * @brief Vector operations
+ * @param[in] n Size of vector
+ * @param[out] n vector
  */
 
 void rand_double(int n, double *v) {
@@ -16,7 +18,7 @@ void rand_double(int n, double *v) {
   }
 }
 
-/*
+/**
  * Generates a normally distributed random vector of length n
  *
  * Uses the Box-Muller transformation
@@ -49,7 +51,7 @@ void randn_double(int n, double *v) {
  * Sets all elements of v to t
  * @param[in] n Number of elements
  * @param[in] t Value which elements should be set to
- * @param[in] v Vector to set
+ * @param[out] v Vector to set
  * */
 void vecset(int n, double t, double *v) {
   int i;
@@ -57,6 +59,13 @@ void vecset(int n, double t, double *v) {
     v[i] = t; 
 }
 
+/**
+ * Creates a vector whose elements are linearly spaced
+ * @param[in] a Lower bound
+ * @param[in] b Upper bound
+ * @param[in] Number of values
+ * @param[out] arr Output vector
+ */
 void linspace(double a, double b, int num, double *arr){
   double h;
   h = (num==1? 0: (b-a)/(num-1));
@@ -69,6 +78,12 @@ void linspace(double a, double b, int num, double *arr){
 
 }
 
+/** 
+ * @brief Compares a,b as doubles
+ * @param[in] a First value
+ * @param[in] b Second value
+ * @return -1 if b>a, 0 if a==b, 1 otherwise
+ * */
 int compare1(const void *a, const void *b) {
   double *aa = (double*) a;
   double *bb = (double*) b;
@@ -84,6 +99,13 @@ typedef struct _doubleint {
   int i;
   double d;
 } doubleint;
+
+/** 
+ * @brief Compares the doubles of a,b as double/int pairs
+ * @param[in] a First value
+ * @param[in] b Second value
+ * @return -1 if b>a, 0 if a==b, 1 otherwise
+ * */
 int compare2(const void *a, const void *b) {
   const doubleint *aa = (doubleint*) a;
   const doubleint *bb = (doubleint*) b;
@@ -95,6 +117,13 @@ int compare2(const void *a, const void *b) {
     return 1;
   }
 }
+/** 
+ * @brief Sorts a vector, and potentially indices
+ * @param[in] n Number of elements
+ * @param[in, out] v Vector to sort
+ * @param[in, out] ind Indices to sort
+ *
+ * */
 void sort_double(int n, double *v, int *ind) {
   /* if sorting indices are not wanted */
   if (ind == NULL) {
@@ -116,7 +145,12 @@ void sort_double(int n, double *v, int *ind) {
   free(vv);
 }
 
-/* @brief y = x(p) */
+/** @brief y = x(p) 
+ * @param[in] n Number of points in vector
+ * @param[in] p Permutation vector
+ * @param[in] x Input vector
+ * @param[out] y Output vector
+ * */
 void vec_perm(int n, int *p, double *x, double *y) {
   if (!p) {
     memcpy(y, x, n*sizeof(double));
@@ -129,7 +163,11 @@ void vec_perm(int n, int *p, double *x, double *y) {
 }
 
 
-/* @brief y(p) = x */
+/* @brief y(p) = x 
+ * @param[in] n Number of elements in vector
+ * @param[in] p Permutation vector
+ * @param[in] x Input vector 
+ * @param[in] y Output vector */
 void vec_iperm(int n, int *p, double *x, double *y) {
   if (!p) {
     memcpy(y, x, n*sizeof(double));

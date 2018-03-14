@@ -10,6 +10,10 @@
  * @brief Used to track various statistics (time taken by various
  * operations).
  */
+/** 
+ * @brief Prints out stats
+ * @param[in] fstats FILE to print to
+ */
 
 void StatsPrint(FILE *fstats) {
   evslStat *stats = &evslstat;
@@ -79,6 +83,9 @@ void StatsPrint(FILE *fstats) {
   fflush(fstats);
 }
 
+/**
+ * @brief Resets stats
+ * */
 void StatsReset() {
   memset(&evslstat, 0, sizeof(evslStat));
 }

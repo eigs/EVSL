@@ -13,6 +13,16 @@
  * @brief convert csr to csc
  * Assume input csr is 0-based index
  * output csc 0/1 index specified by OUTINDEX      *
+ * @param[in] OUTINDEX specifies if CSC should be 0/1 index
+ * @param[in] nrow Number of rows
+ * @param[in] ncol Number of columns
+ * @param[in] job flag
+ * @param[in] a Values of input matrix
+ * @param[in] ia Input row pointers
+ * @param[in] ja Input column indices 
+ * @param[out] ao Output values
+ * @param[out] iao Output row pointers
+ * @param[out] jao Output column indices 
  */
 void csrcsc(int OUTINDEX, const int nrow, const int ncol, int job,
     double *a, int *ja, int *ia,
@@ -52,6 +62,7 @@ void csrcsc(int OUTINDEX, const int nrow, const int ncol, int job,
  * @brief  Sort each row of a csr by increasing column 
  * order
  * By double transposition
+ * @param[in] A Matrix to sort
  */
 void sortrow(csrMat *A) {
   /*-------------------------------------------*/
@@ -75,6 +86,10 @@ void sortrow(csrMat *A) {
 
 /** 
  * @brief  memory allocation for csr matrix
+ * @param[in] nrow New number of rows
+ * @param[in] ncol New number of columns
+ * @param[in] nnz New number of non zeros
+ * @param[in, out] csr the CSR matrix
  */
 void csr_resize(int nrow, int ncol, int nnz, csrMat *csr) {
   csr->owndata = 1;
@@ -87,6 +102,7 @@ void csr_resize(int nrow, int ncol, int nnz, csrMat *csr) {
 
 /**
  * @brief  memory deallocation for csr matrix
+ * @param[in,out] csr Matrix to free data
  */
 void free_csr(csrMat *csr) {
   /* if it does not own the data, do nothing */
@@ -102,6 +118,10 @@ void free_csr(csrMat *csr) {
  * @brief  copy a csr matrix A into B
  * alloB: 0: will not allocate memory for B (have been alloced outside)
  *        1: will allocate memory for B (same size as A)
+ *
+ *  @param[in] A Source matrix
+ *  @param[out] B Destination matrix
+ *  @param[in] allocB Whether or not to allocate B
  */
 void csr_copy(csrMat *A, csrMat *B, int allocB) {
   int nrows = A->nrows;
@@ -122,6 +142,7 @@ void csr_copy(csrMat *A, csrMat *B, int allocB) {
 
 /** 
  * @brief  memory deallocation for coo matrix
+ * @param[in] coo Coo matrix to free
  */
 void free_coo(cooMat *coo) {
   free(coo->ir);
@@ -131,6 +152,9 @@ void free_coo(cooMat *coo) {
 
 /** 
  * @brief convert coo to csr
+ * @param[in] cooidx Specify if 0 or 1 indexed
+ * @param[in] coo COO matrix 
+ * @param[out] csr CSR matrix 
  */
 int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
   const int nnz = coo->nnz;
@@ -170,6 +194,12 @@ int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
 
 /** 
  * @brief construct a csrMat copied from (ia, ja, a)
+ * @param[in] nrow Number of rows
+ * @param[in] ncol Number of columns
+ * @param[in] ia Row pointers
+ * @param[in] ja Column indices
+ * @param[in] a Values
+ * @param[out] A output CSR matrix
  */
 int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a,
                          csrMat *A) {
@@ -212,6 +242,14 @@ double dcsrinfnrm(csrMat *A){
 
 /**
  * @brief csr matrix matvec or transpose matvec, (ia, ja, a) form
+ * @param[in] trans Whether or not transpose
+ * @param[in] nrow Number of rows
+ * @param[in] ncol Number of columns
+ * @param[in] input Values
+ * @param[in] ia Row pointers
+ * @param[in] ja Column indices
+ * @param[in] x Input vector
+ * @param[out] y Output vector
  */
 void dcsrmv(char trans, int nrow, int ncol, double *a, 
     int *ia, int *ja, double *x, double *y) {
@@ -260,6 +298,10 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
 * @brief matvec for a CSR matrix, y = A*x. 
 * void *data points to csrMat, 
 * compatible form with EVSLMatvec (see struct.h)
+*
+* @param[in] x Input vector
+* @param[out] y Output vector
+* @param[in] data CSR matrix
 */
 void matvec_csr(double *x, double *y, void *data) {
   csrMat *A = (csrMat *) data;
@@ -370,7 +412,9 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
   return 0;
 }
 
-/** @brief return an identity matrix of dimension n */
+/** @brief return an identity matrix of dimension n 
+ * @param[in] n Row/Col size
+ * @param[in,out] Matrix*/
 int speye(int n, csrMat *A) {
   int i;
   csr_resize(n, n, n, A);
@@ -382,8 +426,8 @@ int speye(int n, csrMat *A) {
   return 0;
 }
 
-/*
- * Diagonal scaling for A such that A = D^{-1}*A*D^{-1}, i.e.,
+/**
+ * @brief Diagonal scaling for A such that A = D^{-1}*A*D^{-1}, i.e.,
  * A(i,j) = A(i,j) / (d(i)*d(j)), d = diag(D)
  * @param[in,out] Coo Matrix to scale 
  * @param[in] d: The vector that contains d(i)
@@ -398,7 +442,7 @@ void diagScalCoo(cooMat *A, double *d) {
   }
 }
 
-/*
+/**
  * Diagonal scaling for A such that A = D^{-1}*A*D^{-1}, i.e.,
  * A(i,j) = A(i,j) / (d(i)*d(j)), d = diag(D)
  * @param[in,out] CSR Matrix to scale 
@@ -414,8 +458,8 @@ void diagScalCsr(csrMat *A, double *d) {
   }
 }
 
-/*
- * Extract the diagonal entries of csr matrix B
+/**
+ * @brief Extract the diagonal entries of csr matrix B
  *
  * @param[in]  B Matrix to extract the diagonal
  * @param[out] D preallocated vector of lengeth B.nrows
@@ -432,8 +476,8 @@ void extrDiagCsr(csrMat *B, double *d) {
   }
 }
 
-/*
- * Extract the upper triangular part of csr matrix A
+/**
+ * @brief Extract the upper triangular part of csr matrix A
  *
  * @param[in]  A Matrix 
  * @param[out] U Matrix
