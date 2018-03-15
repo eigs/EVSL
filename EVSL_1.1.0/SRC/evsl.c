@@ -103,7 +103,7 @@ int SetBMatrix(csrMat *B) {
  *
  * @param[in] n Size of problem
  * @param[in] func Function to use for matvec
- * @param[in] Data required
+ * @param[in] data Data required
  * */
 int SetAMatvec(int n, MVFunc func, void *data) {
   evsldata.n = n;

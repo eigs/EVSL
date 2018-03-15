@@ -14,11 +14,11 @@
  *    @brief Lanczos alg. to give bounds of spectrum
  *
  *    @param[in] msteps   number of Lanczos steps
- *    @param[in] *v    initial vector
+ *    @param[in] v    initial vector
  *
- *    @param[out] *lmin left bound of the desired interval containing all
+ *    @param[out] lmin left bound of the desired interval containing all
  *    eigenvalues 
- *    @param[out] *lmin right bound of the desired interval containing all
+ *    @param[out] lmax right bound of the desired interval containing all
  *    eigenvalues 
  *----------------------------------------------------------------------*/
 int LanBounds(int msteps, double *v, double *lmin, double *lmax) {

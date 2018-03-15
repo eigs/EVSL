@@ -8,7 +8,7 @@
 #include "string.h"  //for memset
 #include "struct.h"
 /**
- * @file landos.c
+ * @file SRC/landos.c
  * @brief Function to use Lanczos method for approximating DOS for the
  * standard eigenvalue problem.
  */

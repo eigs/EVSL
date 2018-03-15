@@ -63,7 +63,7 @@ void vecset(int n, double t, double *v) {
  * Creates a vector whose elements are linearly spaced
  * @param[in] a Lower bound
  * @param[in] b Upper bound
- * @param[in] Number of values
+ * @param[in] num Number of values
  * @param[out] arr Output vector
  */
 void linspace(double a, double b, int num, double *arr){

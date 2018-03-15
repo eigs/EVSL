@@ -245,7 +245,7 @@ double dcsrinfnrm(csrMat *A){
  * @param[in] trans Whether or not transpose
  * @param[in] nrow Number of rows
  * @param[in] ncol Number of columns
- * @param[in] input Values
+ * @param[in] a input Values
  * @param[in] ia Row pointers
  * @param[in] ja Column indices
  * @param[in] x Input vector
@@ -414,7 +414,7 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
 
 /** @brief return an identity matrix of dimension n 
  * @param[in] n Row/Col size
- * @param[in,out] Matrix*/
+ * @param[in,out] A Matrix*/
 int speye(int n, csrMat *A) {
   int i;
   csr_resize(n, n, n, A);
@@ -429,8 +429,8 @@ int speye(int n, csrMat *A) {
 /**
  * @brief Diagonal scaling for A such that A = D^{-1}*A*D^{-1}, i.e.,
  * A(i,j) = A(i,j) / (d(i)*d(j)), d = diag(D)
- * @param[in,out] Coo Matrix to scale 
- * @param[in] d: The vector that contains d(i)
+ * @param[in,out] A Coo Matrix to scale
+ * @param[in] d The vector that contains d(i)
  */
 void diagScalCoo(cooMat *A, double *d) {
   int i, row, col, nnz = A->nnz;
@@ -445,8 +445,8 @@ void diagScalCoo(cooMat *A, double *d) {
 /**
  * Diagonal scaling for A such that A = D^{-1}*A*D^{-1}, i.e.,
  * A(i,j) = A(i,j) / (d(i)*d(j)), d = diag(D)
- * @param[in,out] CSR Matrix to scale 
- * @param[in] d: The vector that contains d(i)
+ * @param[in,out] A CSR Matrix to scale
+ * @param[in] d The vector that contains d(i)
  */
 void diagScalCsr(csrMat *A, double *d) {
   int i, j;
@@ -462,7 +462,7 @@ void diagScalCsr(csrMat *A, double *d) {
  * @brief Extract the diagonal entries of csr matrix B
  *
  * @param[in]  B Matrix to extract the diagonal
- * @param[out] D preallocated vector of lengeth B.nrows
+ * @param[out] d preallocated vector of lengeth B.nrows
  */
 void extrDiagCsr(csrMat *B, double *d) {
   int i, j, nrows = B->nrows;

@@ -145,9 +145,9 @@ int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
  *  we need to express it in the same basis as in the other (middle interval)
  *  cases. This function determines this expansion 
  *
- * @param pol[in,out] A struct containing the parameters of polynomial.
- * @param aIn[in] The start index of the transformed interval
- * @param bIn[in] The end index of the transformed interval
+ * @param[in,out] pol A struct containing the parameters of polynomial.
+ * @param[in] aIn The start index of the transformed interval
+ * @param[in] bIn The end index of the transformed interval
  * @note [aIn, bIn] is the transformed interval
  *
  *

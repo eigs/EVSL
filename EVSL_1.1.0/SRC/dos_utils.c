@@ -14,7 +14,7 @@
  *  @brief A number of utility functions related to DOS functionality
  */
 /** 
- *  @bref Reciprocal
+ *  @brief Reciprocal
  *  @param[in] a Number to take reciprocal of
  *  @return reciprocal of a
  */
@@ -31,7 +31,7 @@ double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
  * Initalize BSolDataPol: use L-S polynomial to approximate a function 'ffun'
  * @param[in] n Number
  * @param[in] max_deg Max degree of poliynomial
- * @param[in] tolerance Tolerance to be used
+ * @param[in] tol Tolerance to be used
  * @param[in] lmin Minimum eigenvalue
  * @param[in] lmax Maximum eigenvalue
  * @param[in] ffun Function approximate
@@ -56,7 +56,7 @@ void SetupBPol(int n, int max_deg, double tol, double lmin, double lmax,
  *
  * @param[in] n Number
  * @param[in] max_deg Max degree of poliynomial
- * @param[in] tolerance Tolerance to be used
+ * @param[in] tol Tolerance to be used
  * @param[in] lmin Minimum eigenvalue
  * @param[in] lmax Maximum eigenvalue
  * @param[in, out] data Structure to be initialized
@@ -72,7 +72,7 @@ void SetupPolRec(int n, int max_deg, double tol, double lmin, double lmax,
  *
  * @param[in] n Number
  * @param[in] max_deg Max degree of poliynomial
- * @param[in] tolerance Tolerance to be used
+ * @param[in] tol Tolerance to be used
  * @param[in] lmin Minimum eigenvalue
  * @param[in] lmax Maximum eigenvalue
  * @param[in, out] data Structure to be initialized

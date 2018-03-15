@@ -30,10 +30,10 @@ extern "C" {
 //#define CHKREQ(ierr) { if (ierr) { return (ierr); } }
 
 /**
- * /brief A malloc wrapper which provides basic error checking
+ * @brief A malloc wrapper which provides basic error checking
  * @param base The pointer to be allocated
  * @param nmem Number of elements to be allocated
- * /param type Type of elements to be allocated
+ * @param type Type of elements to be allocated
  */
 #define Malloc(base, nmem, type) { \
   size_t nbytes = (nmem) * sizeof(type); \
@@ -46,10 +46,10 @@ extern "C" {
 }
 
 /**
- * /brief A calloc wrapper which provides basic error checking
- * @param base The pointer to be allocated
- * @param nmem Number of elements to be allocated
- * /param type Type of elements to be allocated
+ * @brief A calloc wrapper which provides basic error checking
+ * @param[in] base The pointer to be allocated
+ * @param[in] nmem Number of elements to be allocated
+ * @param[in] type Type of elements to be allocated
  */
 #define Calloc(base, nmem, type) { \
   size_t nbytes = (nmem) * sizeof(type); \
@@ -62,10 +62,10 @@ extern "C" {
 }
 
 /**
- * /brief A realloc wrapper which provides basic error checking
+ * @brief A realloc wrapper which provides basic error checking
  * @param base The pointer to be allocated
  * @param nmem Number of elements to be allocated
- * /param type Type of elements to be allocated
+ * @param type Type of elements to be allocated
  */
 #define Realloc(base, nmem, type) {\
   size_t nbytes = (nmem) * sizeof(type); \

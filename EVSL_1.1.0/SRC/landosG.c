@@ -10,7 +10,7 @@
 #include "struct.h"
 
 /**
- * @file landosG.c
+ * @file SRC/landosG.c
  * @brief Function to use Lanczos method for approximating DOS for the
  * generalized eigenvalue problem.
  */
