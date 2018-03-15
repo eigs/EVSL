@@ -12,23 +12,23 @@
 
 Welcome to EVSL. EVSL is a  C library for computing the eigenvalues of
 a  symmetric  matrix that  are  located  in  a given  interval.   EVSL
-implements a polynomial filtered Lanczos (thick restart, no restart) a
-rational  filtered   Lanczos  (thick  restart,  no   restart),  and  a
-polynomial filtered subspace iteration for solving standard eigenvalue
-problems A  u = &lambda; u  and generalized eigenvalue problems  A u =
-&lambda; B  u.  EVSL also  provides tools for spectrum  slicing, i.e.,
-the  technique  of  subdividing  a   given  interval  into  p  smaller
-subintervals  and  computing  the   eigenvalues  in  each  subinterval
-independently. This is achieved by  estimating the spectral density of
-the matrix  or matrix  pair with either  the Kernel  Polynomial method
-(KPM) or a Lanczos based method.  This release does not yet offer full
-parallel implementations  (trivial openMP test programs  are available
-among the test drivers). 
- Versions 1.1.x have much added functionality relative to
-version 1.0. Most notably:
+implements  a polynomial  filtered Lanczos  method (thick  restart, no
+restart)  a  rational  filtered  Lanczos  method  (thick  restart,  no
+restart),  and a  polynomial filtered  subspace iteration  for solving
+standard  eigenvalue  problems  A  u  =  &lambda;  u  and  generalized
+eigenvalue problems A u = &lambda;  B u.  EVSL also provides tools for
+spectrum slicing, i.e., the technique  of subdividing a given interval
+into  p smaller  subintervals and  computing the  eigenvalues in  each
+subinterval independently. This is achieved by estimating the spectral
+density of the  matrix (or matrix pair for  generalized problems) with
+either the Kernel  Polynomial method (KPM) or a  Lanczos based method.
+This release does not yet offer full parallel implementations (trivial
+openMP test programs are available  among the test drivers).  Versions
+1.1.x  have much  added functionality  relative to  version 1.0.  Most
+notably:
 
-+ EVSL handles both standard and generalized problems
-+ Matrix-free mechanism  [user provides own matvec function]
++ EVSL now handles both standard and generalized problems
++ Matrix-free mechanism  [whereby user provides own matvec function]
 + Interface for FORTRAN users
 + Spectrum slicing by KPM as well as Lanczos. Also effective
    spectrum slicing for Ax=&lambda; Bx
@@ -40,12 +40,13 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 
 -----------------------------------------------------------------------
 
-###  HANDBOOK
+###  HANDBOOK AND DOCUMENTATION
 
 -----------------------------------------------------------------------
 
-A handbook describing EVSL is available from
-[arXiv](https://arxiv.org/abs/1802.05215), which, should you wish to cite it, can be cited as follows:
+An article describing EVSL is available from
+[arXiv](https://arxiv.org/abs/1802.05215), which 
+can be cited as follows [bibtex entry] 
 ```
 @article{LiEigenvaluesSlicingLibrary2018a,
   archivePrefix = {arXiv},
@@ -60,6 +61,9 @@ A handbook describing EVSL is available from
   author = {Li, Ruipeng and Xi, Yuanzhe and Erlandson, Lucas and Saad, Yousef},
 }
 ```
+
+A detailed documentation of the code can be found in the `Documentation'
+folder of the package in EVSL_1.1.x 
 
 -----------------------------------------------------------------------
 
@@ -267,7 +271,7 @@ A handbook describing EVSL is available from
   to set the solver function for L'.
 
  Version  1.1.1   includes  drivers  for  solving   certain  types  of
- generalized eigenvalue  problems by W polynomial filtering  by methods
+ generalized eigenvalue  problems by  polynomial filtering  by methods
  that avoid matrix factorizations.
 
 -----------------------------------------------------------------------
