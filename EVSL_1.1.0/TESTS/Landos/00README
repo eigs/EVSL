@@ -5,9 +5,12 @@
  provided.
 
 LanDos.c   Density of States for a standard Laplacean by the Lanczos method
+  By default shows the exact and computed DOS
 
 LanDosG.c  Density of States for a generalized eigenvalue problem (read from file)
 	   by the Lanczos method
+  By default shows the computed DOS, use -graph_exact_dos 1 to show
+  exact DOS (from precomputed eigenvalues)
 
 
  The .gnuplot files  are set-up for gnuplot invoked by  the drivers to

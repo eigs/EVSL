@@ -31,7 +31,7 @@ int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
  *-----------------------------------------------------------------------
  * Tests landos.c -- Includes graphical comparison of exact DOS and calculated.
  *
- * use -graph_exact_dos 1 to enable graphing the exact DOS
+ * use -graph_exact_dos 0 to disable graphing the exact DOS
  *-----------------------------------------------------------------------
  */
 int main(int argc, char *argv[]) {
@@ -53,7 +53,8 @@ int main(int argc, char *argv[]) {
   /* initial vector: random */
   /*-------------------- start EVSL */
   EVSLStart();
-  lapgen(num, num, num, &Acoo);
+  /*  Generate the Laplacian matrix (which we can trivially get eigenvalues for*/
+  lapgen(num, num, num, &Acoo); 
   cooMat_to_csrMat(0, &Acoo, &Acsr);
 
   // /*-------------------- path to write the output files*/
@@ -100,6 +101,7 @@ int main(int argc, char *argv[]) {
   double *ev = NULL;
   int numev;
   if (graph_exact_dos) {
+    /*  Calculate the exact eigenvalues */
     exeiglap3(num, num, num, lmin, lmax, &numev, &ev);
   }
 

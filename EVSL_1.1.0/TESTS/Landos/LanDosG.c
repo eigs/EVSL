@@ -50,7 +50,7 @@ int readVec(const char *filename, int *npts, double **vec) {
  * Tests landosG.c , the Lanczos DOS computed for the generalized eigenvalue
  * problem. Includes graphical comparison of calculated vs exact DOS
  *
- * use -graph_exact_dos 1 to enable graphing the exact DOS
+ * use -graph_exact_dos 1 to enable graphing the exact DOS (from file)
  *
  *-----------------------------------------------------------------------
  */
@@ -220,6 +220,7 @@ int main(int argc, char *argv[]) {
     double *ev = NULL;
     int numev;
     if (graph_exact_dos) {
+      /*  Read in the exact eigenvalues from the dat file */
       readVec("NM1AB_eigenvalues.dat", &numev, &ev);
     }
 
