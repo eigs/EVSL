@@ -131,7 +131,7 @@ LapPLanR.c :
     make LapPLanR.ex --> executable LapPLanR.ex
 
 MMPLanR_omp.c : 
-    same as GenPLanR_omp.c but with openMP
+    same as MMPLanR.c but with openMP
     parallelization across slices
     make MMPLanR_omp.ex--> executable MMPLanR_omp.ex
 

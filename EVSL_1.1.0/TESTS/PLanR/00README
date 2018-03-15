@@ -12,7 +12,7 @@ LapPLanR.c :
 
 
 MMPLanR_omp.c : 
-    same as GenPLanR_omp.c but with openMP
+    same as MMPlanR.c but with openMP
     parallelization across slices
     make MMPLanR_omp.ex--> executable MMPLanR_omp.ex
 
