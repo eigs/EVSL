@@ -32,10 +32,10 @@ OBJS_RR = MMRLanR.o $(EXTRA) ../../EXTERNAL/$(OBJ_DIRSOL)
 LIB = -L../../ -levsl
 LIB_EXT = $(LIB_DIRSOL) $(OMP) $(LIBLAPACK) $(LIB0)
 
-ALLEXE = MMPLanR.ex MMPLanN.ex MMRLanR.ex MMRLanN.ex 
+ALLEXE = MMPLanR.ex MMPLanN.ex MMRLanR.ex MMRLanN.ex SIMPLE.ex
 
 # Rules
-default: MMRLanN.ex 
+default: SIMPLE.ex MMPLanN.ex MMRLanN.ex 
 
 %.o : %.c
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -x c -c $<
