@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
   int         Bsol_direct = 0; /* if using direct solver for B^{-1} */
   void       *Bsol = NULL;
   BSolDataPol BsolPol, BsqrtsolPol;
-  int         BsolDeg = 200;  /* Max degree to aproximate B with */
+  int         BsolDeg = 200;  /* Max degree to approximate B with */
   double      BsolTol = 1e-6; /* Tolerance in polynomial approximation */
   int         DiagScalB = 1;  /* Apply diagonal scaling to A and B */
   double     *Sqrtdiag = NULL;
@@ -190,7 +190,7 @@ int main(int argc, char** argv) {
         diagScalCsr(&Bcsr, Sqrtdiag);
       }
       /*-------------------- use polynomial approx. to B^{-1} and B^{-1/2}
-       *                     B is assumbed to be ``well-conditioned'' */
+       *                     B is assumed to be ``well-conditioned'' */
       /* compute eig bounds for B, set to std eig prob for now */
       SetStdEig();
       SetAMatrix(&Bcsr);
@@ -221,7 +221,6 @@ int main(int argc, char** argv) {
     xintv[1] = b;
     xintv[2] = lmin;
     xintv[3] = lmax;
-    //linspace(a, b, nslices+1, sli);
 
     //-------------------- # eigs per slice
     ev_int = (int)(1 + ecount / ((double)nslices));
@@ -267,7 +266,7 @@ int main(int argc, char** argv) {
         return 1;
       }
 
-      /* in the case of digonal scaling, recover Y and recompute residual */
+      /* in the case of diagonal scaling, recover Y and recompute residual */
       if (Sqrtdiag) {
         double *v1 = (double *) malloc(n*sizeof(double));
         double *v2 = (double *) malloc(n*sizeof(double));
@@ -292,7 +291,7 @@ int main(int argc, char** argv) {
       }
 
       /* sort the eigenvals: ascending order
-       * ind: keep the orginal indices */
+       * ind: keep the original indices */
       ind = (int *)malloc(nev2 * sizeof(int));
 
       sort_double(nev2, lam, ind);
@@ -325,7 +324,7 @@ int main(int argc, char** argv) {
     } 
     //-------------------- free other allocated space
     fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
-    sprintf(path, "OUT/EigsOut_Lan_MMPLanN_(%s_%s)", io.MatNam1, io.MatNam2);
+    sprintf(path, "OUT/EigsOut_SIMPLE_(%s_%s)", io.MatNam1, io.MatNam2);
     FILE *fmtout = fopen(path, "w");
     if (fmtout) {
       for (j = 0; j < totcnt; j++) {
