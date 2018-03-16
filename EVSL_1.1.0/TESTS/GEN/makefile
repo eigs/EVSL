@@ -22,6 +22,7 @@ endif
 
 EXTRA =  ../COMMON_GEN/io.o ../COMMON_GEN/mmio.o ../COMMON_GEN/lapl.o
 # Object files
+OBJS_S = SIMPLE.o $(EXTRA) ../../EXTERNAL/$(OBJ_DIRSOL)
 OBJS_PN = MMPLanN.o $(EXTRA) ../../EXTERNAL/$(OBJ_DIRSOL)
 OBJS_PR = MMPLanR.o $(EXTRA) ../../EXTERNAL/$(OBJ_DIRSOL)
 OBJS_RN = MMRLanN.o $(EXTRA) ../../EXTERNAL/$(OBJ_DIRSOL)
@@ -52,6 +53,10 @@ MMPLanR.ex: $(OBJS_PR)
 
 MMPLanN.ex: $(OBJS_PN)
 	$(LINK) -o MMPLanN.ex $(OBJS_PN) $(LIB) $(LIB_EXT)
+
+SIMPLE.ex: $(OBJS_S)
+	$(LINK) -o SIMPLE.ex $(OBJS_S) $(LIB) $(LIB_EXT)
+
 
 all: $(ALLEXE)
 

@@ -5,6 +5,12 @@ where B is assumed to be positive definite.
 All drivers read the matrices A and B in matrix market format from a file
 (matfile) -- see below for details. There are 4 drivers provided.
 
+SIMPLE.c A stripped down driver. Requires no direct solves, and only requires
+      the matrix (via matfile) and number of eigenvalues (61 in NM1A, the
+      default) to be run. Run as ./SIMPLE.ex 61. Maintains the same structure
+      as the other drivers for easy interoperability, while still being
+      composed of not-overly-complex code.
+
 MMPLanN.c Pol. filtering Lanczos algorithm with no restarts
 	  uses Lanczos for slicing. 
  	  ** Note: this driver tests the case when all operations with
