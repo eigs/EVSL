@@ -28,11 +28,11 @@ double evsl_timer() {
 #endif
 }
 
-/** 
+/**
   * @brief Uses the timer to generate a seed to be used
-  * for srand.. 
+  * for srand..
   */
-int time_seeder() { 
+int time_seeder() {
   double t1,t2;
   int iseed, zero=0;
   t1   = evsl_timer();

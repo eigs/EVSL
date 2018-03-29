@@ -21,7 +21,7 @@ evslData evsldata;
 evslStat evslstat;
 
 /**
- * @brief Initialize evslData 
+ * @brief Initialize evslData
  *
  * */
 int EVSLStart() {
@@ -37,7 +37,7 @@ int EVSLStart() {
 
   /* do a dummy timer call to improve accuracy of timing */
   evsl_timer();
-  
+
   return 0;
 }
 
@@ -62,9 +62,9 @@ int EVSLFinish() {
   return 0;
 }
 
-/** 
+/**
  * @brief Set the matrix A
- * 
+ *
  *
  * @param[in] A The matrix to set
  * */
@@ -75,13 +75,13 @@ int SetAMatrix(csrMat *A) {
   }
   evsldata.Amv->func = matvec_csr;
   evsldata.Amv->data = (void *) A;
-   
+
   return 0;
 }
 
 /**
  * @brief Set the B matrix.
- * 
+ *
  * @param[in] B the matrix to set
  * */
 int SetBMatrix(csrMat *B) {
@@ -156,7 +156,7 @@ int SetBSol(SolFuncR func, void *data) {
 
 /**
  * @brief Set the problem to standard eigenvalue problem
- * 
+ *
  * */
 int SetStdEig() {
   evsldata.ifGenEv = 0;
@@ -166,7 +166,7 @@ int SetStdEig() {
 
 /**
  * @brief Set the problem to generalized eigenvalue problem
- * 
+ *
  * */
 int SetGenEig() {
   evsldata.ifGenEv = 1;

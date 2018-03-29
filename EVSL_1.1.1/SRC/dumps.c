@@ -10,8 +10,8 @@
  * @file dumps.c
  * @brief Miscellaneous functions used for DOS based functions
  */
-//-------------------- miscellaneous functions for I/O 
-//                     and for debugging 
+//-------------------- miscellaneous functions for I/O
+//                     and for debugging
 
 /**
  * @brief Saves a matrix in MatrixMarket format
@@ -19,11 +19,11 @@
  * @param[in] nrow Number of rows in matrix
  * @param[in] ncol Number of cols in matrix
  * @param[in] ia Row pointers
- * @param[in] ja Column indices 
+ * @param[in] ja Column indices
  * @param[in] a Values
  * @param[in] fn filename
  */
-void save_mtx_basic(int nrow, int ncol, int *ia, 
+void save_mtx_basic(int nrow, int ncol, int *ia,
                     int *ja, double *a, const char *fn) {
   int i,j,nnz;
   FILE *fp = fopen(fn, "w");
@@ -68,7 +68,7 @@ void save_vec(int n, const double *x, const char fn[]) {
 }
 
 /**
- * 
+ *
  * @brief Saves a dense matrix
  * @param[in] A Matrix to save
  * @param[in] lda leading dimension

@@ -19,10 +19,10 @@
  * @brief Lanczos process for eigenvalue bounds [Thick restart version]
  *
  * @param[in] lanm      Dimension of Krylov subspace [restart dimension]
- * 
- * @param[in] maxit  max Num of outer Lanczos iterations (restarts) allowed -- 
+ *
+ * @param[in] maxit  max Num of outer Lanczos iterations (restarts) allowed --
  *         Each restart may or use the full lanm lanczos steps or fewer.
- * 
+ *
  * @param[in] tol       tolerance for convergence
  * @param[in] vinit     initial  vector for Lanczos -- [optional]
  * @param[in] bndtype   Type of bound >1 for kato-temple, otherwise
@@ -32,7 +32,7 @@
  * @param[out] lammax   Upper bound of the spectrum
  * @param[out] fstats File stream which stats are printed to
  *
- * @return Returns 0 on success 
+ * @return Returns 0 on success
  *
  **/
 int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
@@ -62,14 +62,14 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   int one = 1;
   double done=1.0, dmone=-1.0, dzero=0.0;
   int i;
-  /*-----------------------------------------------------------------------* 
-   * *thick restarted* Lanczos step 
+  /*-----------------------------------------------------------------------*
+   * *thick restarted* Lanczos step
    *-----------------------------------------------------------------------*/
   if (do_print) {
     fprintf(fstats, " LanTR for bounds: dim %d, maxits %d\n", lanm, maxit);
   }
-  /*--------------------- the min number of steps to be performed for 
-   *                      each innter loop, must be >= 1 - if not, 
+  /*--------------------- the min number of steps to be performed for
+   *                      each innter loop, must be >= 1 - if not,
    *                      it means that the Krylov dim is too small */
   int min_inner_step = 5;
   /*-------------------- it = number of Lanczos steps */
@@ -104,7 +104,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   /*-------------------- alloc some work space */
   double *work;
   size_t work_size = 2*n_l;
-  Malloc(work, work_size, double);  
+  Malloc(work, work_size, double);
   /*-------------------- copy initial vector to V(:,1)   */
   DCOPY(&n, vinit, &one, V, &one);
   /*-------------------- normalize it */
@@ -129,7 +129,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
     double beta = 0.0;
     /*  start with V(:,k) */
     int k = trlen > 0 ? trlen + 1 : 0;
-    /* ! add a test if dimension exceeds (m+1) 
+    /* ! add a test if dimension exceeds (m+1)
      * (trlen + 1) + min_inner_step <= lanm + 1 */
     if (k+min_inner_step > lanm1) {
       fprintf(stderr, "Krylov dim too small for this problem. Try a larger dim\n");
@@ -181,13 +181,13 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         rand_double(n, vnew);
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-          CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);          
+          CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
           matvec_B(vnew, znew);
           beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
-          DSCAL(&n, &ibeta, vnew, &one);        
+          DSCAL(&n, &ibeta, vnew, &one);
           DSCAL(&n, &ibeta, znew, &one);
-          beta = 0.0;            
+          beta = 0.0;
         } else {
           /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
           /*   beta = norm(w) */
@@ -209,7 +209,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
       T[k*lanm1_l+k1] = beta;
     } /* if (trlen > 0) */
     /*-------------------- Done with TR step. Rest of Lanczos step */
-    /*-------------------- regardless of trlen, *(k+1)* is the current 
+    /*-------------------- regardless of trlen, *(k+1)* is the current
      *                     number of Lanczos vectors in V */
     /*-------------------- pointer to the previous Lanczos vector */
     double *zold = k > 0 ? Z+(k-1)*n_l : NULL;
@@ -266,17 +266,17 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         rand_double(n, vnew);
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-          CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);          
+          CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
           matvec_B(vnew, znew);
           beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
-          DSCAL(&n, &ibeta, vnew, &one);          
+          DSCAL(&n, &ibeta, vnew, &one);
           DSCAL(&n, &ibeta, znew, &one);
-          beta = 0.0;            
+          beta = 0.0;
         } else {
           /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
           /*   beta = norm(w) */
-          CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);          
+          CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
           double ibeta = 1.0 / beta;
           DSCAL(&n, &ibeta, vnew, &one);
           beta = 0.0;
@@ -301,7 +301,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
 
     /*-------------------- Rval is in ascending order */
     /*-------------------- Rval[0] is smallest, Rval[k-1] is largest */
-    /*-------------------- special vector for TR that is the bottom row of 
+    /*-------------------- special vector for TR that is the bottom row of
                            eigenvectors of Tm */
     s[0] = beta * EvecT[k-1];
     s[1] = beta * EvecT[(k-1)*lanm1_l+(k-1)];
@@ -317,8 +317,8 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
     }
     lmin = Rval[0]   - t1;
     lmax = Rval[k-1] + t2;
-    /*---------------------- Compute two Ritz vectors: 
-     *                       Rvec(:,1) = V(:,1:k) * EvecT(:,1) 
+    /*---------------------- Compute two Ritz vectors:
+     *                       Rvec(:,1) = V(:,1:k) * EvecT(:,1)
      *                       Rvec(:,end) = V(:,1:k) * EvecT(:,end) */
     DGEMV(&cN, &n, &k, &done, V, &n, EvecT, &one, &dzero, Rvec, &one);
     DGEMV(&cN, &n, &k, &done, V, &n, EvecT+(k-1)*lanm1_l, &one, &dzero, Rvec+n, &one);
@@ -356,14 +356,14 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         DAXPY(&n, &nt, y, &one, w1, &one);
         rr[i] = DNRM2(&n, w1, &one);
       }
-    } 
+    }
     if (do_print) {
-      fprintf(fstats,"it %4d, k %3d: ritz %.15e %.15e, t1,t2 %e %e, res %.15e %.15e, comp res %.15e %.15e\n", 
+      fprintf(fstats,"it %4d, k %3d: ritz %.15e %.15e, t1,t2 %e %e, res %.15e %.15e, comp res %.15e %.15e\n",
               it, k, Rval[0], Rval[1], t1, t2, fabs(s[0]), fabs(s[1]), rr[0], rr[1]);
     }
 #else
     if (do_print) {
-      fprintf(fstats,"it %4d, k %3d: ritz %.15e %.15e, t1,t2 %e %e, res %.15e %.15e\n", 
+      fprintf(fstats,"it %4d, k %3d: ritz %.15e %.15e, t1,t2 %e %e, res %.15e %.15e\n",
               it, k, Rval[0], Rval[1], t1, t2, fabs(s[0]), fabs(s[1]));
     }
 #endif

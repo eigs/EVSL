@@ -15,7 +15,7 @@
  */
 /**
  * if filter the initial vector
- */ 
+ */
 #define FILTER_VINIT 1
 
 /**
@@ -28,16 +28,16 @@
  *         test convergence RatLanTr attempts to compute *all* eigenvalues in
  *         the interval and stops only when no more eigenvalyes are left. The
  *         convergenve test is a very simple one based on the residual norm for
- *         the filtered matrix 
+ *         the filtered matrix
  *
  * @param[in] intv   an array of length 4  \n
  *         [intv[0], intv[1]] is the interval of desired eigenvalues \n
  *         [intv[2], intv[3]] is the global interval of all eigenvalues \n
  *         it must contain all eigenvalues of A
- * 
- * @param[in] maxit  max Num of outer Lanczos iterations (restarts) allowed -- 
+ *
+ * @param[in] maxit  max Num of outer Lanczos iterations (restarts) allowed --
  *         Each restart may or use the full lanm lanczos steps or fewer.
- * 
+ *
  * @param[in] tol       tolerance for convergence. stop when ||res||< tol
  * @param[in] vinit     initial  vector for Lanczos -- [optional]
  * @param[in] rat       a struct containing the parameters of the rational.
@@ -55,11 +55,11 @@
  * @return Returns 0 on success (or if check_intv() is non-positive), and 2 if there are no eigenvalues found.
  *
  *
- * @warning memory allocation for W/vals/resW within this function 
+ * @warning memory allocation for W/vals/resW within this function
  *
  **/
-int RatLanTr(int lanm, int nev, double *intv, int maxit, 
-             double tol, double *vinit, ratparams *rat, int *nev2, 
+int RatLanTr(int lanm, int nev, double *intv, int maxit,
+             double tol, double *vinit, ratparams *rat, int *nev2,
              double **vals, double **W, double **resW, FILE *fstats) {
   const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */
@@ -86,7 +86,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   /*-------------------- this is needed to increment the space when we
                          discover more than nev eigenvalues in interval */
   double nevInc = 0.2;   /* add 1  + 20% each time it is needed */
-  /*-------------------- if we have at least nev/ev_frac good candidate 
+  /*-------------------- if we have at least nev/ev_frac good candidate
                          eigenvalues from p(A) == then we restart to lock them in */
   //int evFrac = 2;
   /*--------------------   some constants frequently used */
@@ -97,7 +97,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   /*-------------------- Ntest = when to start testing convergence */
   int Ntest = evsl_min(lanm, nev+50);
   /*--------------------   how often to test */
-  int cycle = 30; 
+  int cycle = 30;
   int i, ll, /* count, last_count,*/ jl, last_jl;
   /*-----------------------------------------------------------------------
     -----------------------------------------------------------------------*/
@@ -111,14 +111,14 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   double bb = intv[1];
   //int deg = rat->pow;
   double bar = 0.5; // for the scaled rational filter
-  /*-----------------------------------------------------------------------* 
-   * *thick restarted* Lanczos step 
+  /*-----------------------------------------------------------------------*
+   * *thick restarted* Lanczos step
    *-----------------------------------------------------------------------*/
   if (do_print) {
     fprintf(fstats, " Rational-LanTR, dim %d  cycle %d  \n",lanm, cycle);
   }
-  /*--------------------- the min number of steps to be performed for 
-   *                      each innter loop, must be >= 1 - if not, 
+  /*--------------------- the min number of steps to be performed for
+   *                      each innter loop, must be >= 1 - if not,
    *                      it means that the Krylov dim is too small */
   int min_inner_step = 5;
   /*-------------------- it = number of Lanczos steps */
@@ -135,7 +135,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   }
   /*-------------------- T must be zeroed out initially */
   Calloc(T, lanm1_l*lanm1_l, double);
-  /*-------------------- Lam, Y: the converged (locked) Ritz values/vectors 
+  /*-------------------- Lam, Y: the converged (locked) Ritz values/vectors
                          res: related residual norms */
   double *Y, *Q, *Lam, *res;
   Malloc(Y, n_l*nev, double);
@@ -177,7 +177,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   /*-------------------- copy initial vector to Z(:,1)   */
   if(ifGenEv){
     DCOPY(&n, V, &one, Z, &one);
-  }  
+  }
 #else
   /*-------------------- copy initial vector to Z(:,1)   */
   DCOPY(&n, vinit, &one, Z, &one);
@@ -205,7 +205,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     double beta = 0.0, r, res0;
     /*  start with V(:,k) */
     int k = trlen > 0 ? trlen + 1 : 0;
-    /* ! add a test if dimension exceeds (m+1) 
+    /* ! add a test if dimension exceeds (m+1)
      * (trlen + 1) + min_inner_step <= lanm + 1 */
     if (k+min_inner_step > lanm1) {
       if (fstats) {
@@ -268,7 +268,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       if (beta*nwn < orthTol*wn) {
         if (do_print) {
           fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", k, beta);
-        }    
+        }
 #if FILTER_VINIT
         /*------------------ generate a new init vector in znew */
         rand_double(n, vrand);
@@ -314,7 +314,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     /*-------------------- reset Ntest at each restart. */
     Ntest = evsl_max(20,nev-lock+10);
     /*last_count = 0;*/  last_jl = 0;  last_tr = 0.0;
-    /*-------------------- regardless of trlen, *(k+1)* is the current 
+    /*-------------------- regardless of trlen, *(k+1)* is the current
      *                     number of Lanczos vectors in V */
     /*-------------------- pointer to the previous Lanczos vector */
     double *zold = k > 0 ? Z+(k-1)*n_l : NULL;
@@ -393,9 +393,9 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
           matvec_B(znew, vnew);
           beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
-          DSCAL(&n, &ibeta, vnew, &one);          
+          DSCAL(&n, &ibeta, vnew, &one);
           DSCAL(&n, &ibeta, znew, &one);
-          beta = 0.0;            
+          beta = 0.0;
         } else {
           /* orthogonalize against locked vectors first, w = w - Y*Y'*w */
           CGS_DGKS(n, lock, NGS_MAX, Y, vnew, NULL, work);
@@ -462,7 +462,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
         for (i=0; i<k; i++) {
           if (Rval[i]>= bar) {
             jl++;
-            /* for standard e.v prob, this is the 2-norm of A*y-lam*y 
+            /* for standard e.v prob, this is the 2-norm of A*y-lam*y
              * for gen e.v prob, this is the B-norm of B^{-1}*A*y-lam*y */
             r = fabs(beta*EvecT[i*lanm1+(k-1)]);
             resi[i] = r;
@@ -487,20 +487,20 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
           fprintf(fstats, "inner: count <= last_count && jl <= last_jl: %d <= %d && %d <= %d\n", count, last_count, jl, last_jl);
           break;
         }
-        last_count = count;  
+        last_count = count;
         last_jl = jl;
 #endif
       } /* if [Restarting test] block */
-      /*-------------------- end of inner (Lanczos) loop - Next: restart*/        
+      /*-------------------- end of inner (Lanczos) loop - Next: restart*/
     } /* while (k<mlan) loop */
 
-    
+
     //SymEigenSolver(k, T, lanm1, EvecT, lanm1, Rval);
     //savedensemat(T, lanm1, k, k, "T.txt");
     //savedensemat(EvecT, lanm1, k, k, "Evec.txt");
     //save_vec(k, Rval, "eval.txt");
     /*--------------------   TWO passes to select good candidates */
-    /*                       Pass-1: based on if ``p(Ritzvalue) > bar'' */	    
+    /*                       Pass-1: based on if ``p(Ritzvalue) > bar'' */	
     jl = 0;
     for (i=0; i<k; i++) {
       //printf("resi[%d] = %.15e\n", i, fabs(beta*EvecT[i*lanm1+(k-1)]));
@@ -519,7 +519,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     }
     //exit(0);
     //fprintf(fstats, "beta = %.1e\n", beta);
-    /*---------------------- Compute the Ritz vectors: 
+    /*---------------------- Compute the Ritz vectors:
      *                       Rvec(:,1:jl) = V(:,1:k) * EvecT(:,1:jl) */
     DGEMM(&cN, &cN, &n, &jl, &k, &done, V, &n, EvecT, &lanm1, &dzero, Rvec, &n);
     if (ifGenEv) {
@@ -529,7 +529,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     /*                     number of Ritz values in [a,b] */
     ll = 0;
     /*-------------------- trlen = # Ritz vals that will go to TR set */
-    prtrlen = trlen; 
+    prtrlen = trlen;
     trlen = 0;
     for (i=0; i<jl; i++) {
       /* NOTE: Bvec (from Z) contains the B-ortho vectors we want */
@@ -621,7 +621,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
           if (ifGenEv) {
             DCOPY(&n, q, &one, V+trlen*n_l, &one);
           }
-          /* special vector for TR that is the bottom row of 
+          /* special vector for TR that is the bottom row of
            * eigenvectors of Tm */
           s[trlen] = beta * EvecT[i*lanm1_l+(k-1)];
           trlen ++;
@@ -631,12 +631,12 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
 
     /*-------Note:   jl = #evs that passed the 1st test,
      *       ll = #evs that passed the 1st and the 2nd tests.
-     *       These ll evs are either locked (accepted) 
+     *       These ll evs are either locked (accepted)
      *       or put into trlen (candidates for next restarts)
      *       step when trlen = 0 last restart and ll=0 this time.
-     *       this is a sort of confirmation that nothing is left. 
+     *       this is a sort of confirmation that nothing is left.
      *       another test may be added later to make it more rigorous.
-     */       
+     */
     if (do_print) {
       fprintf(fstats,"it %4d:  k %3d, jl %3d, ll %3d, lock %3d, trlen %3d\n",
               it, k, jl, ll, lock, trlen);
@@ -697,7 +697,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   tall = evsl_timer() - tall;
   /*-------------------- print stat */
   evslstat.t_iter = tall;
- 
+
   return 0;
 }
 

@@ -23,7 +23,7 @@
  *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] npts number of sample points used for the DOS curve
- *    @param[in] intv Stores the the intervals of interest
+ *    @param[in] intv Stores the intervals of interest
  *      intv[0:1] = [a b] = interval where DOS is to be computed
  *      intv[2:3] = [lambda_min, lambda_max] \\
  *
@@ -42,7 +42,7 @@
  *    landos.c/LanDos is only for the standard eigenvalue problem.
  *----------------------------------------------------------------------*/
 
-int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *ydos, 
+int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *ydos,
             double *neig, const double *const intv) {
 
   int i, j, k;
@@ -51,7 +51,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
   int n = evsldata.n;
   size_t n_l = n;
   const int ifGenEv = evsldata.ifGenEv;
- 
+
   double *vinit;
   Malloc(vinit, n, double);
 

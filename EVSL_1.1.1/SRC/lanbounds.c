@@ -17,9 +17,9 @@
  *    @param[in] v    initial vector
  *
  *    @param[out] lmin left bound of the desired interval containing all
- *    eigenvalues 
+ *    eigenvalues
  *    @param[out] lmax right bound of the desired interval containing all
- *    eigenvalues 
+ *    eigenvalues
  *----------------------------------------------------------------------*/
 int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   const int ifGenEv = evsldata.ifGenEv;
@@ -29,7 +29,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
 
   n = evsldata.n;
   n_l = n;
-  
+
   msteps = evsl_min(n, msteps);
   Malloc(alp, msteps, double);
   Malloc(bet, msteps, double);
@@ -125,13 +125,13 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   amin =  INFINITY;
   for (j=0; j<msteps; j++) {
     t = fabs(bottomBeta * S[(j+1)*msteps-1]);
-    x = ritzVal[j]-t; 
-    if (x<amin) amin = x; 
-    x = ritzVal[j]+t; 
-    if (x>amax) amax = x; 
+    x = ritzVal[j]-t;
+    if (x<amin) amin = x;
+    x = ritzVal[j]+t;
+    if (x>amax) amax = x;
   }
-  *lmin = amin; 
-  *lmax = amax; 
+  *lmin = amin;
+  *lmax = amax;
 #endif
   /*-------------------- done */
   free(alp);

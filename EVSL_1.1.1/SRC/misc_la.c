@@ -17,15 +17,15 @@
  * @file misc_la.c
  * @brief Miscellaneous linear algebra functions
  */
-/**----------------------------------------------------------------------- 
+/**-----------------------------------------------------------------------
  *  @brief compute all eigenvalues and eigenvectors of a symmetric tridiagonal
- *  matrix  
+ *  matrix
  *  @param[in] n                The  dimension of the symmetric tridiagonal  matrix
- *  @param[in] diag[],sdiag[]   Define the symmetric tridiagonal  matrix:  the
- *          diagonal elements are diag[0,...,n-1]  
+ *  @param[in] diag   Define the symmetric tridiagonal  matrix:  the
+ *          diagonal elements are diag[0,...,n-1]
  *  @param[in] sdiag Subdiagonal elements
  *  @param[out] eigVal The output vector of length n containing all eigenvalues
- *          in ascending order 
+ *          in ascending order
  *  @param[out] eigVec The output n-by-n matrix with columns as eigenvectors,
  *          in the order as elements in eigVal. If NULL, then no eigenvector
  *          will be computed
@@ -33,11 +33,11 @@
  *  LAPACK routine DSTEV() (if double) or stev_() (if float)
  * --------------------------------------------------------------------- */
 
-int SymmTridEig(double *eigVal, double *eigVec, int n, 
+int SymmTridEig(double *eigVal, double *eigVec, int n,
                 const double *diag, const double *sdiag) {
   double tms = evsl_timer();
   // compute eigenvalues and eigenvectors or eigvalues only
-  char jobz = eigVec ? 'V' : 'N'; 
+  char jobz = eigVec ? 'V' : 'N';
   int nn = n;
   int ldz = n;
   int info;  // output flag
@@ -71,7 +71,7 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
   return info;
 }
 
-/**----------------------------------------------------------------------- 
+/**-----------------------------------------------------------------------
  *  @brief compute  eigenvalues and  eigenvectors of  a symmetric  tridiagonal
  *  matrix in a slice
  *  @param[in] n The  dimension of  the  symmetric tridiagonal  matrix
@@ -98,9 +98,9 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   char range = 'V'; // compute eigenvalues in an interval
 
   // this does not use mwlapack for mex files
-  int info;  
+  int info;
   //int idum = 0;
-  //-------------------- isuppz not needed  
+  //-------------------- isuppz not needed
   int *isuppz;
   Malloc(isuppz, 2*n, int);
   //-------------------- real work array
@@ -113,7 +113,7 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   Calloc(iwork, liwork, int);
   //-------------------- copy diagonal + subdiagonal elements
   //                     to alp and bet
-  double *alp; 
+  double *alp;
   double *bet;
   Malloc(bet, n, double);
   Malloc(alp, n, double);
@@ -129,8 +129,8 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   double t0 = vl;
   double t1 = vu;
 
-  DSTEMR(&jobz, &range, &n, alp, bet, &t0, &t1, NULL, NULL, nevO, 
-         eigVal, eigVec, &n, &n, isuppz, &tryrac, work, &lwork, 
+  DSTEMR(&jobz, &range, &n, alp, bet, &t0, &t1, NULL, NULL, nevO,
+         eigVal, eigVec, &n, &n, isuppz, &tryrac, work, &lwork,
          iwork, &liwork, &info);
 
   if (info) {
@@ -143,7 +143,7 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   free(work);
   free(iwork);
   free(isuppz);
-  
+
   double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
   //
@@ -152,7 +152,7 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
 
 
 /**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- *     @brief interface to   LAPACK SYMMETRIC EIGEN-SOLVER 
+ *     @brief interface to   LAPACK SYMMETRIC EIGEN-SOLVER
  *     @param[in] n Size of problem
  *     @param[in] A Matrix
  *     @param[in] lda Leading dimension
@@ -254,7 +254,7 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
  * @param[out] v Output
  * @param[out] w Output
  **/
-void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q, 
+void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
                double *v, double *w) {
   double tms = evsl_timer();
   int i, one=1;
@@ -278,15 +278,15 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
   evslstat.t_reorth += tme - tms;
 }
 
-//  max number of reorthogonalizations 
+//  max number of reorthogonalizations
 #define NGS_MAX 2
 /**
- * @brief Orthogonalize columns of n-by-k matrix V 
+ * @brief Orthogonalize columns of n-by-k matrix V
  * @param[in] n number of rows in V
  * @param[in] V Matrix which columns are to be orthogonalized
  * @param[in] k number of columns in V
  * @param[out] Vo Output matrix
- * @param[in, out] work work 
+ * @param[in, out] work work
  *
  * @warning Aliasing happens in call to CGS_DGKS
  */
@@ -298,12 +298,12 @@ void orth(double *V, int n, int k, double *Vo, double *work) {
   double tt = DDOT(&n, Vo, &one, Vo, &one);
   double nrmv = sqrt(tt);
   double t = 1.0 / nrmv;
-  DSCAL(&n, &t, Vo, &one); 
+  DSCAL(&n, &t, Vo, &one);
   for (i = 1; i < k; i++) {
-    int istart = i*n;   
+    int istart = i*n;
     CGS_DGKS(n, i, NGS_MAX, Vo, Vo+istart, &nrmv, work);
     t = 1.0 / nrmv;
-    DSCAL(&n, &t, Vo+istart, &one); 
+    DSCAL(&n, &t, Vo+istart, &one);
   }
 }
 

@@ -9,11 +9,11 @@
 #include "internal_proto.h"
 #include "struct.h"
 
-/** 
+/**
  *  @file dos_utils.c
  *  @brief A number of utility functions related to DOS functionality
  */
-/** 
+/**
  *  @brief Reciprocal
  *  @param[in] a Number to take reciprocal of
  *  @return reciprocal of a
@@ -38,7 +38,7 @@ double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
  * @param[in, out] data Structure to be initialized
  *
  */
-void SetupBPol(int n, int max_deg, double tol, double lmin, double lmax, 
+void SetupBPol(int n, int max_deg, double tol, double lmin, double lmax,
                double (*ffun)(double), BSolDataPol *data) {
   data->max_deg = max_deg;
   data->intv[0] = lmin;
@@ -62,7 +62,7 @@ void SetupBPol(int n, int max_deg, double tol, double lmin, double lmax,
  * @param[in, out] data Structure to be initialized
  */
 
-void SetupPolRec(int n, int max_deg, double tol, double lmin, double lmax, 
+void SetupPolRec(int n, int max_deg, double tol, double lmin, double lmax,
                  BSolDataPol *data) {
   SetupBPol(n, max_deg, tol, lmin, lmax, rec, data);
 }
@@ -77,7 +77,7 @@ void SetupPolRec(int n, int max_deg, double tol, double lmin, double lmax,
  * @param[in] lmax Maximum eigenvalue
  * @param[in, out] data Structure to be initialized
  */
-void SetupPolSqrt(int n, int max_deg, double tol, double lmin, double lmax, 
+void SetupPolSqrt(int n, int max_deg, double tol, double lmin, double lmax,
                   BSolDataPol *data) {
   SetupBPol(n, max_deg, tol, lmin, lmax, isqrt, data);
 }

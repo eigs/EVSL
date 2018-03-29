@@ -6,11 +6,11 @@
 #include "internal_proto.h"
 
 /**
- * @file evsl.c
+ * @file stats.c
  * @brief Used to track various statistics (time taken by various
  * operations).
  */
-/** 
+/**
  * @brief Prints out stats
  * @param[in] fstats FILE to print to
  */
@@ -48,9 +48,9 @@ void StatsPrint(FILE *fstats) {
   if (t_setBsv)     { fprintf(fstats, "   Setup Solver for B       :  %f\n",  t_setBsv); }
   if (t_setASigBsv) { fprintf(fstats, "   Setup Solver for A-SIG*B :  %f\n",  t_setASigBsv); }
   if (t_iter)       { fprintf(fstats, "   Iteration time (tot)     :  %f\n",  t_iter); }
-  
+
   fprintf(fstats, "   - - - - - - - - - - - - - - - - -\n");
-  
+
   if (n_polAv)   { fprintf(fstats, "   Pol(A)*v                 :  %f (%8ld, avg %f)\n",  t_polAv, n_polAv, t_polAv / n_polAv); }
   if (n_ratAv)   { fprintf(fstats, "   Rat(A)*v                 :  %f (%8ld, avg %f)\n",  t_ratAv, n_ratAv, t_ratAv / n_ratAv); }
   if (n_mvA)     { fprintf(fstats, "   Matvec matrix A          :  %f (%8ld, avg %f)\n",  t_mvA, n_mvA, t_mvA / n_mvA); }

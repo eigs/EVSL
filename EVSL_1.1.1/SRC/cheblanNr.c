@@ -14,7 +14,7 @@
 
 /**
  * if filter the initial vector
- */ 
+ */
 #define FILTER_VINIT 1
 
 /**
@@ -24,11 +24,11 @@
  *          [intv[0], intv[1]] is the interval of desired eigenvalues \n
  *          [intv[2], intv[3]] is the global interval of all eigenvalues \n
  *          Must contain all eigenvalues of A
- *  
- *  @param[in] maxit    Max number of outer Lanczos steps  allowed --[max dim of Krylov 
+ *
+ *  @param[in] maxit    Max number of outer Lanczos steps  allowed --[max dim of Krylov
  *          subspace]
- *  
- *  @param[in] tol       
+ *
+ *  @param[in] tol
  *          Tolerance for convergence. The code uses a stopping criterion based
  *          on the convergence of the restricted trace. i.e., the sum of the
  *          eigenvalues of T_k that  are in the desired interval. This test  is
@@ -37,12 +37,12 @@
  *          than  tol.  Note that the test  performed on filtered matrix only
  *          - *but* the actual residual norm associated with the original
  *          matrix A is returned
- *  
+ *
  *  @param[in] vinit  initial  vector for Lanczos -- [optional]
- * 
+ *
  *  @param[in] pol       A struct containing the parameters of the polynomial..
- *  This is set up by a call to find_deg prior to calling chenlanNr 
- * 
+ *  This is set up by a call to find_deg prior to calling chenlanNr
+ *
  *  @param[out] nevOut    Number of eigenvalues/vectors computed
  *  @param[out] Wo        A set of eigenvectors  [n x nevOut matrix]
  *  @param[out] reso      Associated residual norms [nev x 1 vector]
@@ -53,18 +53,18 @@
  *  if |gamB| < 1
  *
  *
- * @warning memory allocation for Wo/lamo/reso within this function 
+ * @warning memory allocation for Wo/lamo/reso within this function
  *
  * ------------------------------------------------------------ */
-int ChebLanNr(double *intv, int maxit, double tol, double *vinit, 
-              polparams *pol, int *nevOut, double **lamo, double **Wo, 
+int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
+              polparams *pol, int *nevOut, double **lamo, double **Wo,
               double **reso, FILE *fstats) {
   //-------------------- to report timings/
   double tall, tm1 = 0.0, tt;
   tall = evsl_timer();
   const int ifGenEv = evsldata.ifGenEv;
   double tr0, tr1;
-  double *y, flami; 
+  double *y, flami;
   int i, k, kdim;
   /* handle case where fstats is NULL. Then no output. Needed for openMP */
   int do_print = 1;
@@ -72,26 +72,26 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     do_print = 0;
   }
   /*-------------------- frequently used constants  */
-  char cN = 'N';   
+  char cN = 'N';
   int one = 1;
   double done = 1.0, dzero = 0.0;
   /*-------------------- Ntest = when to start testing convergence */
-  int Ntest = 30; 
+  int Ntest = 30;
   /*-------------------- how often to test */
-  int cycle = 20; 
+  int cycle = 20;
   /* size of the matrix */
   int n = evsldata.n;
   /* max num of its */
   maxit = evsl_min(n, maxit);
-  /*-------------------- Caveat !!!: To prevent integer overflow, we save 
+  /*-------------------- Caveat !!!: To prevent integer overflow, we save
    *                     another size_t version of n
-   *                     Note n itself may not overflow but something like 
-   *                     (maxit * n) is much more likely 
-   *                     When using size_t n, in all the multiplications 
+   *                     Note n itself may not overflow but something like
+   *                     (maxit * n) is much more likely
+   *                     When using size_t n, in all the multiplications
    *                     integer is promoted to size_t */
   size_t n_l = n;
   /*-------------------- polynomial filter  approximates the delta
-                         function centered at 'gamB'. 
+                         function centered at 'gamB'.
                          bar: a bar value to threshold Ritz values of p(A) */
   double bar = pol->bar;
   double gamB = pol->gam;
@@ -105,7 +105,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   double bb = intv[1];
   int deg = pol->deg;
   if (do_print) {
-    fprintf(fstats, " ** Cheb Poly of deg = %d, gam = %.15e, bar: %.15e\n", 
+    fprintf(fstats, " ** Cheb Poly of deg = %d, gam = %.15e, bar: %.15e\n",
             deg, gamB, bar);
   }
   /*-------------------- gamB must be within [-1, 1] */
@@ -113,8 +113,8 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     fprintf(stdout, "gamB error %.15e\n", gamB);
     return -1;
   }
-  /*-----------------------------------------------------------------------* 
-   * *Non-restarted* Lanczos iteration 
+  /*-----------------------------------------------------------------------*
+   * *Non-restarted* Lanczos iteration
    *-----------------------------------------------------------------------*/
   if (do_print) {
     fprintf(fstats, " ** Cheb-LanNr \n");
@@ -137,7 +137,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   Malloc(Lam,   maxit, double);       // holds computed Ritz values
   Malloc(res,   maxit, double);       // residual norms (w.r.t. ro(A))
   Malloc(EvalT, maxit, double);       // eigenvalues of tridiag matrix T
-  /*-------------------- nev = current number of converged e-pairs 
+  /*-------------------- nev = current number of converged e-pairs
                          nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
   /*-------------------- u is just a pointer. wk == work space */
@@ -268,7 +268,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- T(k+1,k) = beta */
     eT[k] = beta;
 #if 0
-    /*-------------------- Reallocate memory if maxit is smaller than # of eigs */    
+    /*-------------------- Reallocate memory if maxit is smaller than # of eigs */
     if (k == maxit-1) {
       maxit = 1 + (int) (maxit * 1.5);
       Realloc(V, (maxit+1)*n_l, double);
@@ -281,7 +281,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       Realloc(dT,    maxit, double);
       Realloc(eT,    maxit, double);
       Realloc(Lam,   maxit, double);
-      Realloc(res,   maxit, double);    
+      Realloc(res,   maxit, double);
       Realloc(EvalT, maxit, double);
     }
 #endif
@@ -289,11 +289,11 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 ) {
       continue;
     }
-    /*---------------------- diagonalize  T(1:k,1:k)       
+    /*---------------------- diagonalize  T(1:k,1:k)
                              vals in EvalT, vecs in EvecT  */
     kdim = k+1;
 #if 1
-    /*-------------------- THIS uses dsetv, do not need eig vector */    
+    /*-------------------- THIS uses dsetv, do not need eig vector */
     SymmTridEig(EvalT, NULL, kdim, dT, eT);
     count = kdim;
 #else
@@ -302,10 +302,10 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     SymmTridEigS(EvalT, EvecT, kdim, vl, vu, &count, dT, eT);
 #endif
     /*-------------------- restricted trace: used for convergence test */
-    tr1 = 0;  
-    /*-------------------- get residual norms and check acceptance of Ritz 
-     *                     values for p(A). nconv records number of 
-     *                     eigenvalues whose residual for p(A) is smaller 
+    tr1 = 0;
+    /*-------------------- get residual norms and check acceptance of Ritz
+     *                     values for p(A). nconv records number of
+     *                     eigenvalues whose residual for p(A) is smaller
      *                     than tol. */
     nconv = 0;
     //Used for convergence test
@@ -337,7 +337,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   size_t kdim_l = kdim; /* just in case if kdim is > 65K */
   Malloc(EvecT, kdim_l*kdim_l, double); // Eigen vectors of T
   SymmTridEig(EvalT, EvecT, kdim, dT, eT);
-  
+
   tt = evsl_timer();
   /*-------------------- done == compute Ritz vectors */
   Malloc(Rvec, nconv*n_l, double);       // holds computed Ritz vectors
@@ -399,7 +399,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       DAXPY(&n, &nt, u, &one, wk, &one);
     }
     /*-------------------- res0 = 2-norm(wk) */
-    res0 = DNRM2(&n, wk, &one); 
+    res0 = DNRM2(&n, wk, &one);
     /*--------------------   accept (t, y) */
     if (res0 < tol) {
       Lam[nev] = t;

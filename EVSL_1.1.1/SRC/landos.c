@@ -149,7 +149,7 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
         bet[j] = 0;
       }
     }
-    /*-------------------- end Lanczos loop for this vector 
+    /*-------------------- end Lanczos loop for this vector
       -------------------- diagonalize tridiagonal matrix */
     SymmTridEig(ritzVal, S, msteps, alp, bet);
     /* S = -eigvec

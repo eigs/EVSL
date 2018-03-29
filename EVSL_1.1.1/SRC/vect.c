@@ -12,7 +12,7 @@
 
 void rand_double(int n, double *v) {
   int i;
-  double t = ((double) RAND_MAX)/2.0; 
+  double t = ((double) RAND_MAX)/2.0;
   for (i=0; i<n; i++) {
     v[i] = (rand() -t)/t;
   }
@@ -55,8 +55,8 @@ void randn_double(int n, double *v) {
  * */
 void vecset(int n, double t, double *v) {
   int i;
-  for (i=0; i<n; i++) 
-    v[i] = t; 
+  for (i=0; i<n; i++)
+    v[i] = t;
 }
 
 /**
@@ -78,7 +78,7 @@ void linspace(double a, double b, int num, double *arr){
 
 }
 
-/** 
+/**
  * @brief Compares a,b as doubles
  * @param[in] a First value
  * @param[in] b Second value
@@ -100,7 +100,7 @@ typedef struct _doubleint {
   double d;
 } doubleint;
 
-/** 
+/**
  * @brief Compares the doubles of a,b as double/int pairs
  * @param[in] a First value
  * @param[in] b Second value
@@ -117,7 +117,7 @@ int compare2(const void *a, const void *b) {
     return 1;
   }
 }
-/** 
+/**
  * @brief Sorts a vector, and potentially indices
  * @param[in] n Number of elements
  * @param[in, out] v Vector to sort
@@ -145,7 +145,7 @@ void sort_double(int n, double *v, int *ind) {
   free(vv);
 }
 
-/** @brief y = x(p) 
+/** @brief y = x(p)
  * @param[in] n Number of points in vector
  * @param[in] p Permutation vector
  * @param[in] x Input vector
@@ -163,10 +163,10 @@ void vec_perm(int n, int *p, double *x, double *y) {
 }
 
 
-/* @brief y(p) = x 
+/* @brief y(p) = x
  * @param[in] n Number of elements in vector
  * @param[in] p Permutation vector
- * @param[in] x Input vector 
+ * @param[in] x Input vector
  * @param[in] y Output vector */
 void vec_iperm(int n, int *p, double *x, double *y) {
   if (!p) {

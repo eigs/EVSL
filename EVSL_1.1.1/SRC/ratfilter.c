@@ -55,7 +55,7 @@ void contQuad(int method, int n, complex double* zk) {
 }
 
   /**------------------Multiple pole rational filter evaluation --------------
-   * @brief Compute the function value of the multiple pole rational filter at real locations 
+   * @brief Compute the function value of the multiple pole rational filter at real locations
    * @param[in] n      number of the pole
    * @param[in] mulp   multiplicity of the pole
    * @param[in] zk     array containing the poles.
@@ -92,7 +92,7 @@ void ratf2p2(int n, int *mulp, complex double *zk, complex double* alp, int m,
 /**
  * @brief Get the fraction expansion of 1/[(z-s1)^k1 (z-s2)^k2]
  * */
-void pfe2(complex double s1, complex double s2, int k1, int k2, 
+void pfe2(complex double s1, complex double s2, int k1, int k2,
           complex double* alp, complex double* bet) {
   int i;
   complex double d, xp;
@@ -126,8 +126,8 @@ void pfe2(complex double s1, complex double s2, int k1, int k2,
   /**
    * @brief Integration of 1/[(z-s1)^k1 (z-s2)^k2] from a to b
    */
-complex double integg2(complex double s1, complex double s2, 
-                       complex double* alp, int k1, complex double* bet, 
+complex double integg2(complex double s1, complex double s2,
+                       complex double* alp, int k1, complex double* bet,
                        int k2, double a, double b) {
   complex double t, t1, t0, scal;
   int k;
@@ -139,7 +139,7 @@ complex double integg2(complex double s1, complex double s2,
     if (k==0) {
       t0 = scal*clog((b-s1)/(a-s1));
     } else {
-      t = t - (scal*1.0/k) * (1.0/cpow((b-s1),k)-1.0/cpow((a-s1),k));    
+      t = t - (scal*1.0/k) * (1.0/cpow((b-s1),k)-1.0/cpow((a-s1),k));
     }
   }
   for (k=0; k<k2; k++) {
@@ -147,7 +147,7 @@ complex double integg2(complex double s1, complex double s2,
     if (k==0) {
       t1 = scal*clog((b-s2)/(a-s2));
     } else {
-      t = t - (scal*1.0/k)*(1.0/cpow((b-s2),k)-1.0/cpow((a-s2),k));    
+      t = t - (scal*1.0/k)*(1.0/cpow((b-s2),k)-1.0/cpow((a-s2),k));
     }
   }
   t = t + (t0+t1);
@@ -166,7 +166,7 @@ complex double integg2(complex double s1, complex double s2,
  * @param[out] omega LS weight for each pole
  *
  *----------------------------------------------------------------------*/
-void weights(int n, complex double* zk, int* mulp, double lambda, 
+void weights(int n, complex double* zk, int* mulp, double lambda,
              complex double* omega) {
   int INFO;
   int nrhs = 1;
@@ -278,7 +278,7 @@ void weights(int n, complex double* zk, int* mulp, double lambda,
     for (j=nf; j<m; j++) {
       mat[i+j*m] = A[(i-nf)*nf+j-nf];
     }
-  } 
+  }
   ZGESV(&m, &nrhs, mat, &m, ipiv, rhs, &m, &INFO);
   for(i=0;i<nf;i++) {
     omega[i] = rhs[i];
@@ -295,7 +295,7 @@ void weights(int n, complex double* zk, int* mulp, double lambda,
   free(A);
   free(B);
   free(rhs);
-  free(mat);  
+  free(mat);
   free(ipiv);
 }
 
@@ -310,7 +310,7 @@ void weights(int n, complex double* zk, int* mulp, double lambda,
    * @param[out] omegaM: multiple LS weights
    *
    *----------------------------------------------------------------------*/
-int scaleweigthts(int n, double a, double b, complex double *zk, int* mulp, 
+int scaleweigthts(int n, double a, double b, complex double *zk, int* mulp,
                   complex double* omegaM) {
   int i, j, k, nf=0;
   double c, h;
@@ -348,19 +348,19 @@ void set_ratf_def(ratparams *rat) {
   rat->pw = 2;             // default multplicity of each pole
   rat->method = 1;         // using poles from mid-point rule
   rat->beta = 0.01;        // beta in LS approximation
-  rat->bar  = 0.5;         // this is fixed for rational filter  
+  rat->bar  = 0.5;         // this is fixed for rational filter
   rat->aa =  -1.0;         // left endpoint of interval
-  rat->bb = 1.0;           // right endpoint of interval 
+  rat->bb = 1.0;           // right endpoint of interval
   //rat->cc = 0.0;           // center of interval
   //rat->dd = 1.0;           // width of interval
 }
 
 /**----------------------------------------------------------------------
- * @param[in] intv  = an array of length 4 
+ * @param[in] intv  = an array of length 4
  *         [intv[0], intv[1]] is the interval of desired eigenvalues
  *         [intv[2], intv[3]] is the global interval of all eigenvalues
  *         it must contain all eigenvalues of A
- *  
+ *
  * @param[out] rat
  * these are set in rat struct:\n
  *   omega : expansion coefficients of rational filter \n
@@ -396,13 +396,13 @@ int find_ratf(double *intv, ratparams *rat) {
   double aa, bb;
   aa = evsl_max(intv[0], intv[2]);  bb = evsl_min(intv[1], intv[3]);
   if (intv[0] < intv[2] || intv[1] > intv[3]) {
-    fprintf(stdout, " warning [%s (%d)]: interval (%e, %e) is adjusted to (%e, %e)\n", 
+    fprintf(stdout, " warning [%s (%d)]: interval (%e, %e) is adjusted to (%e, %e)\n",
 	    __FILE__, __LINE__, intv[0], intv[1], aa, bb);
   }
   //double lmin = intv[2], lmax = intv[3];
   /*-------------------- */
   rat->aa = aa;
-  rat->bb = bb; 
+  rat->bb = bb;
   /*-------------------- cc, rr: center and half-width of [aa, bb] */
   //double cc = 0.5 * (aa + bb);
   //double dd = 0.5 * (bb - aa);
@@ -414,7 +414,7 @@ int find_ratf(double *intv, ratparams *rat) {
   weights(n, zk, mulp, beta, omega);
   /*-------------------- compute expansion coefficients on [aa, bb]*/
   scaleweigthts(n, aa, bb, zk, mulp, omega);
-    
+
   rat->ASIGBsol = NULL;
 
   return 0;
@@ -434,15 +434,15 @@ void free_rat(ratparams *rat) {
  * x = L * b
  * w = (A-sB) \ x
  * x = L' * w
- * 
+ *
  * @param[in] rat ratparams struct
  * @param[in] n Length of array
  * @param[in] b x = L * b
- * @param w6 Work array of size 4*n for standard ev problem, 
+ * @param w6 Work array of size 4*n for standard ev problem,
  *                         size 6*n for generalized ev problem
  *
  * @param[out] x Becomes R(A)b
- * 
+ *
  */
 void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
   double tt = evsl_timer();
@@ -454,7 +454,7 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
   double dtwo = 2.0;
   double done = 1.0;
   int one = 1;
-  
+
   double *xr, *xz, *bz, *br, *yr=NULL, *yz=NULL;
   double zkr, zkc;
   xr = w6;

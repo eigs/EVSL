@@ -19,10 +19,10 @@
  * @param[in] job flag
  * @param[in] a Values of input matrix
  * @param[in] ia Input row pointers
- * @param[in] ja Input column indices 
+ * @param[in] ja Input column indices
  * @param[out] ao Output values
  * @param[out] iao Output row pointers
- * @param[out] jao Output column indices 
+ * @param[out] jao Output column indices
  */
 void csrcsc(int OUTINDEX, const int nrow, const int ncol, int job,
     double *a, int *ja, int *ia,
@@ -59,7 +59,7 @@ void csrcsc(int OUTINDEX, const int nrow, const int ncol, int job,
 }
 
 /**
- * @brief  Sort each row of a csr by increasing column 
+ * @brief  Sort each row of a csr by increasing column
  * order
  * By double transposition
  * @param[in] A Matrix to sort
@@ -84,7 +84,7 @@ void sortrow(csrMat *A) {
   free(ib);
 }
 
-/** 
+/**
  * @brief  memory allocation for csr matrix
  * @param[in] nrow New number of rows
  * @param[in] ncol New number of columns
@@ -140,7 +140,7 @@ void csr_copy(csrMat *A, csrMat *B, int allocB) {
   memcpy(B->a,  A->a,  nnz*sizeof(double));
 }
 
-/** 
+/**
  * @brief  memory deallocation for coo matrix
  * @param[in] coo Coo matrix to free
  */
@@ -150,11 +150,11 @@ void free_coo(cooMat *coo) {
   free(coo->vv);
 }
 
-/** 
+/**
  * @brief convert coo to csr
  * @param[in] cooidx Specify if 0 or 1 indexed
- * @param[in] coo COO matrix 
- * @param[out] csr CSR matrix 
+ * @param[in] coo COO matrix
+ * @param[out] csr CSR matrix
  */
 int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
   const int nnz = coo->nnz;
@@ -192,7 +192,7 @@ int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
   return 0;
 }
 
-/** 
+/**
  * @brief construct a csrMat copied from (ia, ja, a)
  * @param[in] nrow Number of rows
  * @param[in] ncol Number of columns
@@ -206,7 +206,7 @@ int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a,
   int nnz = ia[nrow];
 
   csr_resize(nrow, ncol, nnz, A);
-  
+
   memcpy(A->ia, ia, (nrow+1)*sizeof(int));
   memcpy(A->ja, ja, nnz*sizeof(int));
   memcpy(A->a, a, nnz*sizeof(double));
@@ -251,10 +251,10 @@ double dcsrinfnrm(csrMat *A){
  * @param[in] x Input vector
  * @param[out] y Output vector
  */
-void dcsrmv(char trans, int nrow, int ncol, double *a, 
+void dcsrmv(char trans, int nrow, int ncol, double *a,
     int *ia, int *ja, double *x, double *y) {
   int  len, jj=nrow;
-  if (trans == 'N') {  
+  if (trans == 'N') {
     //#pragma omp parallel for schedule(guided)
     double r;
     /*for (i=0; i<nrow; i++) {
@@ -262,23 +262,23 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
       for (j=ia[i]; j<ia[i+1]; j++) {
       r += a[j] * x[ja[j]];
       }
-      y[i] = r; 
+      y[i] = r;
       }
       */
     while (jj--) {
       len = *(ia+1) - *ia;
-      ia++; 
+      ia++;
       r = 0.0;
       while (len--)
         r += x[*ja++]*(*a++);
       *y++ = r;
     }
   } else {
-    double xi; 
+    double xi;
     int jj, len;
     jj = nrow;
     //-------------------- this is from the matvec used in FILTLAN
-    //                     column oriented - gains up to 15% in time 
+    //                     column oriented - gains up to 15% in time
     double *w = y;
     while (jj--)
       *w++ = 0.0;
@@ -288,15 +288,15 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
       len = *(ia+1) - *ia;
       ia++;
       xi = *x++;
-      while(len--)       
+      while(len--)
         y[*ja++] += xi*(*a++);
     }
   }
 }
 
 /**
-* @brief matvec for a CSR matrix, y = A*x. 
-* void *data points to csrMat, 
+* @brief matvec for a CSR matrix, y = A*x.
+* void *data points to csrMat,
 * compatible form with EVSLMatvec (see struct.h)
 *
 * @param[in] x Input vector
@@ -309,7 +309,7 @@ void matvec_csr(double *x, double *y, void *data) {
   char cN = 'N';
   /*
   double alp = 1.0, bet = 0.0;
-  mkl_dcsrmv(&cN, &(A->nrows), &(A->ncols), &alp, "GXXCXX", 
+  mkl_dcsrmv(&cN, &(A->nrows), &(A->ncols), &alp, "GXXCXX",
              A->a, A->ja, A->ia, A->ia+1, x, &bet, y);
   */
   mkl_cspblas_dcsrgemv(&cN, &A->nrows, A->a, A->ia, A->ja, x, y);
@@ -322,11 +322,11 @@ void matvec_csr(double *x, double *y, void *data) {
 /** @brief inline function used by matadd
  * insert an element pointed by j of A (times t) to location k in C (row i)
  * */
-inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k, 
+inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k,
                           int *j, int *map) {
-  /* if this entry already exists in C: 
+  /* if this entry already exists in C:
    * checking if it is the first entry of this row
-   * and if column indices match 
+   * and if column indices match
    * NOTE that pointer j or k will be modified */
   if (*k > C->ia[i] && C->ja[(*k)-1] == A->ja[*j]) {
     if (map) {
@@ -338,7 +338,7 @@ inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k,
   } else {
     if (map) {
       /* jA maps to k in C */
-      map[*j] = *k; 
+      map[*j] = *k;
     }
     /* create new entry */
     C->ja[*k] = A->ja[*j];
@@ -376,7 +376,7 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
   /* alloc C [at most has nnzC = nnzA + nnzB] */
   csr_resize(A->nrows, A->ncols, nnzA+nnzB, C);
   /* nnz counter of C */
-  k = 0; 
+  k = 0;
   C->ia[0] = 0;
   for (i=0; i<A->nrows; i++) {
     /* open row i of A and B */
@@ -412,7 +412,7 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
   return 0;
 }
 
-/** @brief return an identity matrix of dimension n 
+/** @brief return an identity matrix of dimension n
  * @param[in] n Row/Col size
  * @param[in,out] A Matrix*/
 int speye(int n, csrMat *A) {
@@ -479,7 +479,7 @@ void extrDiagCsr(csrMat *B, double *d) {
 /**
  * @brief Extract the upper triangular part of csr matrix A
  *
- * @param[in]  A Matrix 
+ * @param[in]  A Matrix
  * @param[out] U Matrix
  */
 void triuCsr(csrMat *A, csrMat *U) {

@@ -14,20 +14,20 @@
  */
 /**
  * if filter the initial vector
- */ 
+ */
 #define FILTER_VINIT 1
 
 /**-----------------------------------------------------------------------
  *  @brief Rational filtering Lanczos process [NON-restarted version]
  *
- *  @param[in] intv   an array of length 4 
+ *  @param[in] intv   an array of length 4
  *          [intv[0], intv[1]] is the interval of desired eigenvalues
  *          [intv[2], intv[3]] is the global interval of all eigenvalues
  *          it must contain all eigenvalues of A
- *  
- *  @param[in] maxit  max Num of outer Lanczos steps  allowed --[max dim of Krylov 
+ *
+ *  @param[in] maxit  max Num of outer Lanczos steps  allowed --[max dim of Krylov
  *          subspace]
- *  
+ *
  *  @param[in] tol    tolerance  for    convergence.  The  code  uses   a  stopping
  *          criterion  based   on  the  convergence  of   the  restricted
  *          trace. i.e.,  the sum of the  eigenvalues of T_k that  are in
@@ -37,10 +37,10 @@
  *          that the test  performed on filtered matrix only  - *but* the
  *          actual residual norm associated with the original matrix A is
  *          returned
- *  
+ *
  *  @param[in] vinit  initial  vector for Lanczos -- [optional]
- * 
- * 
+ *
+ *
  *  @param[out] rat      A struct containing the rational filter
  *  @param[out] nevOut   Number of eigenvalues/vectors computed
  *  @param[out] Wo       A set of eigenvectors  [n x nevOut matrix]
@@ -49,41 +49,41 @@
  *  @param[out] fstats   File stream which stats are printed to
  *
  * ------------------------------------------------------------ */
-int RatLanNr(double *intv, int maxit, double tol, double *vinit, 
-             ratparams *rat, int *nevOut, double **lamo, double **Wo, 
+int RatLanNr(double *intv, int maxit, double tol, double *vinit,
+             ratparams *rat, int *nevOut, double **lamo, double **Wo,
              double **reso, FILE *fstats) {
   //-------------------- to report timings/
   double tall, tm1 = 0.0, tt;
   tall = evsl_timer();
   const int ifGenEv = evsldata.ifGenEv;
   double tr0, tr1;
-  double *y, flami; 
+  double *y, flami;
   int i, k, kdim;
   // handle case where fstats is NULL. Then no output. Needed for openMP.
-  int do_print = 1;   
+  int do_print = 1;
   if (fstats == NULL){
     do_print = 0;
-  }  
+  }
   /*--------------------   frequently used constants  */
-  char cN = 'N';   
+  char cN = 'N';
   int one = 1;
   double done = 1.0, dzero = 0.0;
   /*--------------------   Ntest = when to start testing convergence */
-  int Ntest = 30; 
+  int Ntest = 30;
   /*--------------------   how often to test */
-  int cycle = 20; 
+  int cycle = 20;
   /* size of the matrix */
   int n = evsldata.n;
   /* max num of its */
   maxit = evsl_min(n, maxit);
-  /*-------------------- Caveat !!!: To prevent integer overflow, we save 
+  /*-------------------- Caveat !!!: To prevent integer overflow, we save
    *                     another size_t version of n
-   *                     Note n itself may not overflow but something like 
-   *                     (maxit * n) is much more likely 
-   *                     When using size_t n, in all the multiplications 
+   *                     Note n itself may not overflow but something like
+   *                     (maxit * n) is much more likely
+   *                     When using size_t n, in all the multiplications
    *                     integer is promoted to size_t */
   size_t n_l = n;
-  /*-------------------- Rational filter with pole at ((a+b)/2,(b-a)/2) with 
+  /*-------------------- Rational filter with pole at ((a+b)/2,(b-a)/2) with
     multiplicity pow, bar value equals 1/2        */
   /*-------------------- a, b, used for testing only at end */
   double bar = 0.5;
@@ -95,8 +95,8 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   double aa = intv[0];
   double bb = intv[1];
   //int deg = rat->pow; // multiplicity of the pole
-  /*-----------------------------------------------------------------------* 
-   * *Non-restarted* Lanczos iteration 
+  /*-----------------------------------------------------------------------*
+   * *Non-restarted* Lanczos iteration
    *-----------------------------------------------------------------------*/
   if (do_print) {
     fprintf(fstats, " ** Rat-LanNr \n");
@@ -119,7 +119,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   Malloc(Lam,   maxit, double);       // holds computed Ritz values
   Malloc(res,   maxit, double);       // residual norms (w.r.t. ro(A))
   Malloc(EvalT, maxit, double);       // eigenvalues of tridia. matrix  T
-  /*-------------------- nev = current number of converged e-pairs 
+  /*-------------------- nev = current number of converged e-pairs
                          nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
@@ -163,7 +163,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   /*--------------------  Lanczos recurrence coefficients */
   double alpha, nalpha, beta=0.0, nbeta;
   int count = 0;
-  // ---------------- main Lanczos loop 
+  // ---------------- main Lanczos loop
   for (k=0; k<maxit; k++) {
     /*-------------------- quick reference to Z(:,k-1) when k>0 */
     zold = k > 0 ? Z+(k-1)*n_l : NULL;
@@ -194,7 +194,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     if (ifGenEv) {
       /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
       CGS_DGKS2(n, k+1, NGS_MAX, Z, V, znew, wk);
-      /* -------------- NOTE: B-matvec 
+      /* -------------- NOTE: B-matvec
        *                vnew = B * znew */
       matvec_B(znew, vnew);
       /*-------------------- beta = (vnew, znew)^{1/2} */
@@ -252,7 +252,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- T(k+1,k) = beta */
     eT[k] = beta;
 #if 0
-    /*-------------------- Reallocate memory if maxit is smaller than # of eigs */    
+    /*-------------------- Reallocate memory if maxit is smaller than # of eigs */
     if (k == maxit-1) {
       maxit = 1 + (int) (maxit * 1.5);
       Realloc(V, (maxit+1)*n_l, double);
@@ -265,7 +265,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       Realloc(dT,    maxit, double);
       Realloc(eT,    maxit, double);
       Realloc(Lam,   maxit, double);
-      Realloc(res,   maxit, double);    
+      Realloc(res,   maxit, double);
       Realloc(EvalT, maxit, double);
     }
 #endif
@@ -273,11 +273,11 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 ) {
       continue;
     }
-    /*---------------------- diagonalize  T(1:k,1:k)       
+    /*---------------------- diagonalize  T(1:k,1:k)
                              vals in EvalT, vecs in EvecT  */
     kdim = k+1;
 #if 1
-    /*-------------------- THIS uses dsetv, do not need eig vector */    
+    /*-------------------- THIS uses dsetv, do not need eig vector */
     SymmTridEig(EvalT, NULL, kdim, dT, eT);
     count = kdim;
 #else
@@ -286,10 +286,10 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     SymmTridEigS(EvalT, EvecT, kdim, vl, vu, &count, dT, eT);
 #endif
     /*-------------------- restricted trace: used for convergence test */
-    tr1 = 0;  
-    /*-------------------- get residual norms and check acceptance of Ritz 
-     *                     values for r(A). nconv records number of 
-     *                     eigenvalues whose residual for r(A) is smaller 
+    tr1 = 0;
+    /*-------------------- get residual norms and check acceptance of Ritz
+     *                     values for r(A). nconv records number of
+     *                     eigenvalues whose residual for r(A) is smaller
      *                     than tol. */
     nconv = 0;
     for (i=0; i<count; i++) {
@@ -320,7 +320,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   size_t kdim_l = kdim; /* just in case if kdim is > 65K */
   Malloc(EvecT, kdim_l*kdim_l, double); // Eigen vectors of T
   SymmTridEig(EvalT, EvecT, kdim, dT, eT);
-  
+
   tt = evsl_timer();
   /*-------------------- done == compute Ritz vectors */
   Malloc(Rvec, nconv*n_l, double);       // holds computed Ritz vectors
@@ -339,7 +339,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     t = 1.0 / t;
     DSCAL(&kdim, &t, y, &one);
     */
-    /*-------------------- compute Ritz vectors 
+    /*-------------------- compute Ritz vectors
      *                     NOTE: use Z for gen e.v */
     u = &Rvec[nev*n_l];
     DGEMV(&cN, &n, &kdim, &done, Z, &n, y, &one, &dzero, u, &one);
@@ -392,7 +392,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       }
     }
     /*-------------------- res0 = 2-norm(wk) */
-    res0 = DNRM2(&n, wk, &one); 
+    res0 = DNRM2(&n, wk, &one);
     /*--------------------   accept (t, y) */
     if (res0 < tol) {
       Lam[nev] = t;
@@ -401,7 +401,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     }
   }
   tm1 = evsl_timer() - tt;
-  
+
   /*-------------------- Done.  output : */
   *nevOut = nev;
   *lamo = Lam;

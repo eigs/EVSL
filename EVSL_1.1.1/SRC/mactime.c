@@ -1,7 +1,7 @@
-#include <mach/mach.h>  
-#include <mach/mach_time.h>  
+#include <mach/mach.h>
+#include <mach/mach_time.h>
 #include <unistd.h>
-#include <stdio.h>  
+#include <stdio.h>
 #include <math.h>
 /**
  * @file mactime.c
@@ -15,12 +15,12 @@
 double evsl_timer() {
   double t;
   uint64_t absNano;
-  static mach_timebase_info_data_t    sTimebaseInfo; 
+  static mach_timebase_info_data_t    sTimebaseInfo;
   absNano = mach_absolute_time();
   if ( sTimebaseInfo.denom == 0 ) {
     (void) mach_timebase_info(&sTimebaseInfo);
   }
-  t = (double) absNano * 1.e-09* 
+  t = (double) absNano * 1.e-09*
     (sTimebaseInfo.numer / sTimebaseInfo.denom);
   return t;
 }
@@ -38,4 +38,4 @@ int time_seeder() {
   return (iseed);
 }
 
-      
+

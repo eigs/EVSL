@@ -17,15 +17,15 @@
  * @brief This function  computes the  coefficients of the  density of
  * states  in  the  chebyshev   basis.   It  also  returns  the
  * estimated number of eigenvalues in the interval given by intv.
- * @param[in] Mdeg     degree of polynomial to be used. 
+ * @param[in] Mdeg     degree of polynomial to be used.
  * @param[in] damping  type of damping to be used [0=none,1=jackson,2=sigma]
  * @param[in] nvec     number of random vectors to use for sampling
  * @param[in] intv   an array of length 4  \n
- *                 [intv[0] intv[1]] is the interval of desired eigenvalues 
+ *                 [intv[0] intv[1]] is the interval of desired eigenvalues
  *                 that must be cut (sliced) into n_int  sub-intervals \n
- *                 [intv[2],intv[3]] is the global interval of eigenvalues 
+ *                 [intv[2],intv[3]] is the global interval of eigenvalues
  *                 it must contain all eigenvalues of A \n
- * @param[out] mu   array of Chebyshev coefficients 
+ * @param[out] mu   array of Chebyshev coefficients
  * @param[out] ecnt estimated num of eigenvalues in the interval of interest
  *
  *----------------------------------------------------------------------*/
@@ -45,7 +45,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   Malloc(vkm1, n, double);
   Malloc(vk, n, double);
   Malloc(jac, Mdeg+1, double);
-  double *tmp,  ctr, wid; 
+  double *tmp,  ctr, wid;
   double scal, t, tcnt, beta1, beta2, aa, bb;
   int k, k1, i, m, mdegp1, one=1;
   //-------------------- check if the interval is valid
@@ -80,7 +80,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
       /* unit 2-norm v */
       rand_double(n, v);
       t = 1.0 / DNRM2(&n, v, &one);
-      DSCAL(&n, &t, v, &one);  
+      DSCAL(&n, &t, v, &one);
       /*  w = L^{-T}*v */
       solve_LT(v, w);
       /* v = B*w */
@@ -94,11 +94,11 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
       DSCAL(&n, &t, v, &one);
       memcpy(vk, v, n*sizeof(double));
     }
-    
+
     memset(vkm1, 0, n*sizeof(double));
     mu[0] += jac[0];
     //-------------------- for eigCount
-    tcnt -= jac[0]*(beta2-beta1);  
+    tcnt -= jac[0]*(beta2-beta1);
     /*-------------------- Chebyshev (degree) loop */
     for (k=0; k<Mdeg; k++) {
       /*-------------------- Cheb. recurrence */
@@ -124,7 +124,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
       t = 2*jac[k1] * DDOT(&n, vk, &one, v, &one);
       mu[k1] += t;
       /*-------------------- for eig. counts */
-      tcnt -= t*(sin(k1*beta2)-sin(k1*beta1))/k1;  
+      tcnt -= t*(sin(k1*beta2)-sin(k1*beta1))/k1;
     }
   }
   //--------------------change of interval + scaling in formula
@@ -146,7 +146,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   return 0;
 }
 
-/**  
+/**
  * @brief Computes the integrals \f$\int_{xi[0]}^{xi[j]} p(t) dt\f$
  *  where p(t) is the approximate DOS as given in the KPM method
  *  in the expanded form:  \f$\sum mu_i C_i /\sqrt{1-t^2}\f$
@@ -160,16 +160,16 @@ void intChx(const int Mdeg, double *mu, const int npts, double *xi, double *yi) 
   }
   double val0, theta0, *thetas;
   Malloc(thetas, npts, double);
-  ndp1   = Mdeg+1; 
-  //  if (xi[0]<-1.0) xi[0] = -1; 
-  //if (xi[npts-1]> 1.0) xi[npts-1]  = 1; 
+  ndp1   = Mdeg+1;
+  //  if (xi[0]<-1.0) xi[0] = -1;
+  //if (xi[npts-1]> 1.0) xi[npts-1]  = 1;
 
   for (j=0; j<npts; j++)
     thetas[j] = acos(xi[j]);
   theta0 = thetas[0];
-  for (j=0; j<npts; j++) 
+  for (j=0; j<npts; j++)
     yi[j] = mu[0]*(theta0 - thetas[j]);
-  //-------------------- degree loop  
+  //-------------------- degree loop
   for (k=1; k<ndp1; k++){
     val0 = sin(k*theta0)/k;
     //-------------------- points loop
@@ -179,9 +179,9 @@ void intChx(const int Mdeg, double *mu, const int npts, double *xi, double *yi) 
   free (thetas);
 }
 
-/**----------------------------------------------------------------------- 
+/**-----------------------------------------------------------------------
  * @brief given the dos function defined by mu find a partitioning
- * of sub-interval [a,b] of the spectrum so each 
+ * of sub-interval [a,b] of the spectrum so each
  * subinterval has about the same number of eigenvalues
  * Mdeg = degree.. mu is of length Mdeg+1  [0---> Mdeg]
  * on return [ sli[i],sli[i+1] ] is a subinterval (slice).
@@ -189,16 +189,16 @@ void intChx(const int Mdeg, double *mu, const int npts, double *xi, double *yi) 
  * @param *sli  see above (output)
  * @param *mu   coeffs of polynomial (input)
  * @param Mdeg     degree of polynomial (input)
- * @param *intv  an array of length 4 
+ * @param *intv  an array of length 4
  *                [intv[0] intv[1]] is the interval of desired eigenvalues
  *                that must be cut (sliced) into n_int  sub-intervals
  *                [intv[2],intv[3]] is the global interval of eigenvalues
  *                it must contain all eigenvalues of A
  * @param n_int   number of slices wanted (input)
  * @param npts      number of points to use for discretizing the interval
- *                [a b]. The more points the more accurate the intervals. 
- *                it is recommended to set npts to a few times the number 
- *                of eigenvalues in the interval [a b] (input). 
+ *                [a b]. The more points the more accurate the intervals.
+ *                it is recommended to set npts to a few times the number
+ *                of eigenvalues in the interval [a b] (input).
  *
  *----------------------------------------------------------------------*/
 int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts) {
@@ -216,7 +216,7 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npt
         __FILE__, __LINE__, intv[0], intv[1], aa, bb);
   }
 
-  //-------------------- 
+  //--------------------
   memset(sli,0,(n_int+1)*sizeof(double));
   //-------------------- transform to ref interval [-1 1]
   //-------------------- take care of trivial case n_int==1
@@ -225,10 +225,10 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npt
     sli[1] = intv[1];
     return 0;
   }
-  //-------------------- general case 
+  //-------------------- general case
   ctr = (intv[3] + intv[2])/2;
   wid = (intv[3] - intv[2])/2;
-  aL  = (aa - ctr)/wid;   // (a - ctr)/wid 
+  aL  = (aa - ctr)/wid;   // (a - ctr)/wid
   bL  = (bb - ctr)/wid;   // (b - ctr)/wid
   aL = evsl_max(aL,-1.0);
   bL = evsl_min(bL,1.0);
@@ -238,16 +238,16 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npt
   Malloc(yi, npts, double);
   linspace(aL, bL, npts, xi);
   //printf(" aL %15.3e bL %15.3e \n",aL,bL);
-  //-------------------- get all integrals at the xi's 
+  //-------------------- get all integrals at the xi's
   //-------------------- exact integrals used.
-  intChx(Mdeg, mu, npts, xi, yi) ; 
+  intChx(Mdeg, mu, npts, xi, yi) ;
   //-------------------- goal: equal share of integral per slice
   target = yi[npts-1] / (double)n_int;
   ls = 0;
   ii = 0;
   // use the unadjust left boundary
   sli[ls] = intv[0];
-  //-------------------- main loop 
+  //-------------------- main loop
   while (++ls < n_int) {
     while (ii < npts && yi[ii] < target) {
       ii++;
