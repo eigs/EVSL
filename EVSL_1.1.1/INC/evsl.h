@@ -32,12 +32,16 @@ int find_pol(double *intv, polparams *pol);
 //
 void free_pol(polparams *pol);
 
+int ChebAv(polparams *pol, double *v, double *y, double *w);
+
 /*- - - - - - - - - chebsi.c */
 int ChebSI(int nev, double *intv, int maxit, double tol, double *vinit,
            polparams *pol, int *nevo, double **lamo, double **Yo, double **reso,
            FILE *fstats);
 
 /*- - - - - - - - - - dos_utils.c */
+void SetupBPol(int n, int max_deg, double tol, double lmin, double lmax, double (*ffun)(double), BSolDataPol *data);
+
 void SetupPolRec(int n, int max_deg, double tol, double lmin, double lmax, BSolDataPol *data);
 //
 void SetupPolSqrt(int n, int max_deg, double tol, double lmin, double lmax, BSolDataPol *data);
