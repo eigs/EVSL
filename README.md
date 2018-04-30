@@ -344,6 +344,7 @@ folder of the package in EVSL_1.1.x
      * MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market)
 
    * GEN           : Test drivers for the generalized eigenvalue problem
+     * MMsimple.c    : A stripped down (no slicing) drivier based on MMPLanN.c
      * MMPLanN.c     : Polynomial filtering non-restart Lanczos (Matrix Market)
      * MMPLanR.c     : Polynomial filtering T-R Lanczos (Matrix Market) 
      * MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market) 

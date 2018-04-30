@@ -178,6 +178,12 @@ MMPSI.c :
 
 ---------------------------------------- GEN
 
+MMsimple.c A stripped down driver. Requires  no direct solves, and only requires
+      the matrix (info entered in driver) and number of eigenvalues (61 in NM1A,
+      the  default)  to  be  run.   Run as  ./MMsimple.ex.  Maintains  the  same
+      structure  as the  other drivers  for easy  interoperability, while  still
+      being composed of not-overly-complex code.
+
 MMPLanN.c Pol. filtering Lanczos algorithm with no restarts
 	  uses Lanczos for slicing
          ** Note: this driver tests the case when all operations with
