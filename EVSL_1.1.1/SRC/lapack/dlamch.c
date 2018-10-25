@@ -391,7 +391,7 @@ L30:
     doublereal one, two;
     logical ieee;
     doublereal half;
-    logical lrnd;
+    logical lrnd=0;
     static doublereal leps;
     doublereal zero;
     static integer lbeta;
