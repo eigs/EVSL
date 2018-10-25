@@ -601,8 +601,6 @@ LIBLAPACK_DIR
 LIBLAPACK
 LIBBLAS_DIR
 LIBBLAS
-USE_EVSL_LAPACK
-USE_EVSL_BLAS
 EVSL_LIBSUFFIX
 FLIBS
 LIBS_DIR
@@ -663,7 +661,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -700,6 +697,7 @@ with_suitesparse_dir
 with_metis_dir
 with_extra_lib_name
 with_extra_lib_dir
+with_framework_accelerate
 '
       ac_precious_vars='build_alias
 host_alias
@@ -752,7 +750,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1005,15 +1002,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1151,7 +1139,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1304,7 +1292,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1383,6 +1370,8 @@ Optional Packages:
                           DIR is space-separated list (enclosed in quotes) of
                           directories containing extra libraries that are set
                           by --with-extra-lib-name, e.g., /opt/lib
+  --with-framework-accelerate
+                          Using Apple's Accelerate framework (Mac only)
 
 Some influential environment variables:
   CC          C compiler command
@@ -2091,7 +2080,7 @@ evsl_using_evsl_blas=yes
 evsl_using_evsl_lapack=yes
 evsl_cholmod_use_long=yes
 evsl_using_shared_lib=no
-
+evsl_using_mac_frame_accelerate=no
 if test "x$build_alias" = "x"
 then
    # Make sure we can run config.sub.
@@ -2327,6 +2316,14 @@ if test "${with_extra_lib_dir+set}" = set; then :
   withval=$with_extra_lib_dir; for extra_dir in $withval; do
     LIBS_DIR+="-L$extra_dir "
  done
+
+fi
+
+
+
+# Check whether --with-framework-accelerate was given.
+if test "${with_framework_accelerate+set}" = set; then :
+  withval=$with_framework_accelerate; evsl_using_mac_frame_accelerate=yes
 
 fi
 
@@ -4623,7 +4620,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_sin" >&5
 $as_echo "$ac_cv_lib_m_sin" >&6; }
 if test "x$ac_cv_lib_m_sin" = xyes; then :
-  LIBS="-lm"
+  LIBS="-lm "
 fi
 
 else
@@ -4672,7 +4669,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_sin" >&5
 $as_echo "$ac_cv_lib_m_sin" >&6; }
 if test "x$ac_cv_lib_m_sin" = xyes; then :
-  LIBS="$LIBS -lm"
+  LIBS="$LIBS -lm "
 fi
 
 fi
@@ -4718,6 +4715,8 @@ then
 
 $as_echo "#define EVSL_ARCH_MAC 1" >>confdefs.h
 
+else
+   evsl_using_mac_frame_accelerate=no
 fi
 
 if test "x$evsl_using_shared_lib" = "xyes"
@@ -4786,39 +4785,35 @@ $as_echo "#define EVSL_USING_OPENMP 1" >>confdefs.h
    LIBS="$LIBS -fopenmp"
 fi
 
-if test "x$evsl_using_evsl_blas" = "xyes"
+if test "x$evsl_using_mac_frame_accelerate" = "xyes"
 then
+   LIBS+="-framework Accelerate "
+else
+   if test "x$evsl_using_evsl_blas" = "xyes"
+   then
 
 $as_echo "#define EVSL_USING_EVSL_BLAS 1" >>confdefs.h
 
-   USE_EVSL_BLAS=YES
-
-else
-   USE_EVSL_BLAS=NO
-
-   if test "x$LIBBLAS" = "x-lyes "
-   then
-      LIBBLAS="-lblas"
+   else
+      if test "x$LIBBLAS" = "x-lyes "
+      then
+         LIBBLAS="-lblas"
+      fi
    fi
-fi
 
-if test "x$evsl_using_evsl_lapack" = "xyes"
-then
+   if test "x$evsl_using_evsl_lapack" = "xyes"
+   then
 
 $as_echo "#define EVSL_USING_EVSL_LAPACK 1" >>confdefs.h
 
-   USE_EVSL_LAPACK=YES
-
-else
-   USE_EVSL_BLAS=NO
-
-   USE_EVSL_LAPACK=NO
-
-   if test "x$LIBLAPACK" = "x-lyes "
-   then
-      LIBLAPACK="-llapack"
+   else
+      if test "x$LIBLAPACK" = "x-lyes "
+      then
+         LIBLAPACK="-llapack"
+      fi
    fi
 fi
+
 
 
 

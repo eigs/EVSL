@@ -1,13 +1,6 @@
 include ../makefile.in
 
-SRC_DIRS=
-ifeq ($(USE_EVSL_BLAS), YES)
-SRC_DIRS += blas
-endif
-
-ifeq ($(USE_EVSL_LAPACK), YES)
-SRC_DIRS += lapack
-endif
+SRC_DIRS=blas lapack
 
 INCLUDES = -I../INC
 ifeq ($(INTEL_MKL), 1)

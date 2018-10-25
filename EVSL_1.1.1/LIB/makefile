@@ -2,13 +2,10 @@ include ../makefile.in
 
 all: libevsl${EVSL_LIB_SUFFIX}
 
-ifeq ($(LIBBLAS), )
 BLAS_OBJS=../SRC/blas/*.o ../SRC/blas/f2c/*.o
-endif
-ifeq ($(LIBLAPACK), )
 LAPACK_OBJS=../SRC/lapack/*.o
-endif
 OBJS=../SRC/*.o $(BLAS_OBJS) $(LAPACK_OBJS)
+
 SONAME = libevsl-${EVSL_RELEASE_VERSION}${EVSL_LIB_SUFFIX}
 SOLIBS = $(LIBLAPACKDIR) $(LIBLAPACK) $(LIBBLASDIR) $(LIBBLAS) ${LIBS}
 

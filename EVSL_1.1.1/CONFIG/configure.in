@@ -104,7 +104,7 @@ evsl_using_evsl_blas=yes
 evsl_using_evsl_lapack=yes
 evsl_cholmod_use_long=yes
 evsl_using_shared_lib=no
-
+evsl_using_mac_frame_accelerate=no
 dnl *********************************************************************
 dnl * Determine BUILD, HOST, and TARGET types
 dnl *********************************************************************
@@ -259,6 +259,12 @@ AS_HELP_STRING([--with-extra-lib-dir=DIR],
  done]
 )
 
+AC_ARG_WITH(framework-accelerate,
+AS_HELP_STRING([--with-framework-accelerate],
+               [Using Apple's Accelerate framework (Mac only)]),
+[evsl_using_mac_frame_accelerate=yes]
+)
+
 dnl *********************************************************************
 dnl * Set default AR value if not defined by the user
 dnl *********************************************************************
@@ -352,9 +358,9 @@ LIBS+=${EXTRA_LIBS}
 
 if test "x$LIBS" = "x"
 then
-AC_CHECK_LIB(m, sin, LIBS="-lm")
+AC_CHECK_LIB(m, sin, LIBS="-lm ")
 else
-AC_CHECK_LIB(m, sin, LIBS="$LIBS -lm")
+AC_CHECK_LIB(m, sin, LIBS="$LIBS -lm ")
 fi
 
 dnl *********************************************************************
@@ -399,6 +405,8 @@ fi
 if test "x$HOSTARCH" = "xDarwin"
 then
    AC_DEFINE(EVSL_ARCH_MAC, 1, [Mac platforms])
+else
+   evsl_using_mac_frame_accelerate=no
 fi
 
 dnl *********************************************************************
@@ -497,30 +505,31 @@ fi
 dnl *********************************************************************
 dnl * BLAS & LAPACK related information
 dnl *********************************************************************
-if test "x$evsl_using_evsl_blas" = "xyes"
+if test "x$evsl_using_mac_frame_accelerate" = "xyes"
 then
-   AC_DEFINE(EVSL_USING_EVSL_BLAS, 1, [Using internal BLAS routines in EVSL])
-   AC_SUBST(USE_EVSL_BLAS, YES)
+   LIBS+="-framework Accelerate "
 else
-   AC_SUBST(USE_EVSL_BLAS, NO)
-   if test "x$LIBBLAS" = "x-lyes "
+   if test "x$evsl_using_evsl_blas" = "xyes"
    then
-      LIBBLAS="-lblas"
+      AC_DEFINE(EVSL_USING_EVSL_BLAS, 1, [Using internal BLAS routines in EVSL])
+   else
+      if test "x$LIBBLAS" = "x-lyes "
+      then
+         LIBBLAS="-lblas"
+      fi
+   fi
+
+   if test "x$evsl_using_evsl_lapack" = "xyes"
+   then
+      AC_DEFINE(EVSL_USING_EVSL_LAPACK, 1, [Using internal LAPACK routines in EVSL])
+   else
+      if test "x$LIBLAPACK" = "x-lyes "
+      then
+         LIBLAPACK="-llapack"
+      fi
    fi
 fi
 
-if test "x$evsl_using_evsl_lapack" = "xyes"
-then
-   AC_DEFINE(EVSL_USING_EVSL_LAPACK, 1, [Using internal LAPACK routines in EVSL])
-   AC_SUBST(USE_EVSL_LAPACK, YES)
-else
-   AC_SUBST(USE_EVSL_BLAS, NO)
-   AC_SUBST(USE_EVSL_LAPACK, NO)
-   if test "x$LIBLAPACK" = "x-lyes "
-   then
-      LIBLAPACK="-llapack"
-   fi
-fi
 AC_SUBST(LIBBLAS)
 AC_SUBST(LIBBLAS_DIR)
 AC_SUBST(LIBLAPACK)

@@ -9,7 +9,7 @@ OBJS_MM         = MMPLanN.o          $(EXTRA)
 OBJS_PN_MatFree = LapPLanN_MatFree.o $(EXTRA)
 
 LIB = -L${EVSL_BUILD_DIR}/lib -levsl
-LIB_EXT = $(LIBLAPACK_DIR) $(LIBLAPACK) $(LIBBLAS_DIR) $(LIBBLAS) $(LIBS)
+LIB_EXT = $(LIBLAPACK_DIR) $(LIBLAPACK) $(LIBBLAS_DIR) $(LIBBLAS) $(LIBS_DIR) $(LIBS)
 
 all: LapPLanN.ex LapPLanN_MatFree.ex MMPLanN.ex
 
