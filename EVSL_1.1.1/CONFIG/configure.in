@@ -565,20 +565,24 @@ if test "x$evsl_using_suitesparse" = "xyes"
 then
    if test "x$evsl_using_evsl_blas" = "xyes"
    then
-      AC_MSG_ERROR([BLAS library must be provided for Suitesparse!])
+      AC_MSG_WARN([****************************************])
+      AC_MSG_WARN([* BLAS is not provided for Suitesparse *])
+      AC_MSG_WARN([****************************************])
    fi
    if test "x$evsl_using_evsl_lapack" = "xyes"
    then
-      AC_MSG_ERROR([LAPACK library must be provided Suitesparse!])
+      AC_MSG_WARN([******************************************])
+      AC_MSG_WARN([* LAPACK is not provided for Suitesparse *])
+      AC_MSG_WARN([******************************************])
    fi
 
    if test "x$evsl_with_metis" = "xno"
    then
-      AC_MSG_WARN([***************************************])
-      AC_MSG_WARN([* Suitesparse may require METIS (5.1) *])
-      AC_MSG_WARN([* directory of METIS is not provided  *])
-      AC_MSG_WARN([* Set it by --with-metis-dir=DIR      *])
-      AC_MSG_WARN([***************************************])
+      AC_MSG_WARN([****************************************])
+      AC_MSG_WARN([* Suitesparse may require METIS (5.1)  *])
+      AC_MSG_WARN([* directory of METIS is not provided   *])
+      AC_MSG_WARN([* Set it by --with-metis-dir=DIR       *])
+      AC_MSG_WARN([****************************************])
       if test "x$HOSTARCH" = "xLinux"
       then
          METIS_DIR="$SUITESPARSE_DIR/metis-5.1.0/build/Linux-x86_64"
