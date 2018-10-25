@@ -162,42 +162,62 @@ AS_HELP_STRING([--with-openmp],
 [evsl_using_openmp=no]
 )
 
-AC_ARG_WITH(blas-libs,
-AS_HELP_STRING([--with-blas-libs=LIBS],
-               [LIBS is space-separated list (enclosed in quotes) of BLAS libraries
-                (base name only, e.g., blas, and set path by --with-blas-lib-dirs=DIRS]),
+AC_ARG_WITH(blas-lib,
+AS_HELP_STRING([--with-blas-lib=LIB],
+               [LIB is space-separated list (enclosed in quotes) of BLAS libraries
+                (full path and name, e.g., /usr/local/libblas.a]),
+[for blas_lib in $withval; do
+    LIBBLAS+="$blas_lib "
+ done;
+ evsl_using_evsl_blas=no]
+)
+
+AC_ARG_WITH(blas-lib-name,
+AS_HELP_STRING([--with-blas-lib-name=LIB],
+               [LIB is space-separated list (enclosed in quotes) of BLAS libraries
+                (base name only, e.g., blas, and set path by --with-blas-lib-dir=DIR]),
 [for blas_lib in $withval; do
     LIBBLAS+="-l$blas_lib "
  done;
  evsl_using_evsl_blas=no]
 )
 
-AC_ARG_WITH(blas-lib-dirs,
-AS_HELP_STRING([--with-blas-lib-dirs=DIRS],
-               [DIRS is space-separated list (enclosed in quotes) of directories containing BLAS libraries that are
-                set by --with-blas-libs, e.g., /usr/lib]),
+AC_ARG_WITH(blas-lib-dir,
+AS_HELP_STRING([--with-blas-lib-dir=DIR],
+               [DIR is space-separated list (enclosed in quotes) of directories containing BLAS libraries that are
+                set by --with-blas-lib-name, e.g., /usr/lib]),
 [for blas_dir in $withval; do
-    LIBBLASDIR+="-L$blas_dir "
+    LIBBLAS_DIR+="-L$blas_dir "
  done;
  evsl_using_evsl_blas=no]
 )
 
-AC_ARG_WITH(lapack-libs,
-AS_HELP_STRING([--with-lapack-libs=LIBS],
-               [LIBS is space-separated list (enclosed in quotes) of LAPACK libraries
-                (base name only, e.g., lapack, and set path by --with-lapack-lib-dirs=DIRS]),
+AC_ARG_WITH(lapack-lib,
+AS_HELP_STRING([--with-lapack-lib=LIB],
+               [LIB is space-separated list (enclosed in quotes) of LAPACK libraries
+                (full path and name, e.g., /usr/local/liblapack.a]),
+[for lapack_lib in $withval; do
+    LIBLAPACK+="$lapack_lib "
+ done;
+ evsl_using_evsl_lapack=no]
+)
+
+AC_ARG_WITH(lapack-lib-name,
+AS_HELP_STRING([--with-lapack-lib-name=LIB],
+               [LIB is space-separated list (enclosed in quotes) of LAPACK libraries
+                (base name only, e.g., lapack, and set path by --with-lapack-lib-dir=DIR]),
 [for lapack_lib in $withval; do
     LIBLAPACK+="-l$lapack_lib "
  done;
  evsl_using_evsl_lapack=no]
 )
 
-AC_ARG_WITH(lapack-lib-dirs,
-AS_HELP_STRING([--with-lapack-lib-dirs=DIRS],
-               [DIRS is space-separated list (enclosed in quotes) of directories containing LAPACK libraries that are
-                set by --with-lapack-libs, e.g., /usr/lib]),
+AC_ARG_WITH(lapack-lib-dir,
+AS_HELP_STRING([--with-lapack-lib-dir=DIR],
+               [DIR is space-separated list (enclosed in quotes) of directories containing LAPACK libraries that are
+                set by --with-lapack-lib-name, e.g., /usr/lib]),
 [for lapack_dir in $withval; do
-    LIBLAPACKDIR+="-L$lapack_dir "
+    LIBLAPACK_DIR+="-L$lapack_dir "
  done;
  evsl_using_evsl_lapack=no]
 )
@@ -219,6 +239,24 @@ AS_HELP_STRING([--with-metis-dir=DIR],
     METIS_DIR+="$metis_dir "
  done;
  evsl_with_metis=no]
+)
+
+AC_ARG_WITH(extra-lib-name,
+AS_HELP_STRING([--with-extra-lib-name=LIB],
+               [LIB is space-separated list (enclosed in quotes) of extra libraries
+                (base name only, e.g., 'pthread gfortran']),
+[for extra_lib in $withval; do
+    EXTRA_LIBS+="-l$extra_lib "
+ done]
+)
+
+AC_ARG_WITH(extra-lib-dir,
+AS_HELP_STRING([--with-extra-lib-dir=DIR],
+               [DIR is space-separated list (enclosed in quotes) of directories containing extra libraries that are
+                set by --with-extra-lib-name, e.g., /opt/lib]),
+[for extra_dir in $withval; do
+    LIBS_DIR+="-L$extra_dir "
+ done]
 )
 
 dnl *********************************************************************
@@ -309,6 +347,8 @@ then
    CC=${CXX}
    CFLAGS=${CXXFLAGS}
 fi
+
+LIBS+=${EXTRA_LIBS}
 
 if test "x$LIBS" = "x"
 then
@@ -435,6 +475,7 @@ dnl AC_SUBST(EVSL_INCINSTALL)
 dnl *********************************************************************
 dnl * General purpose header files, libraries and directories
 dnl *********************************************************************
+AC_SUBST(LIBS_DIR)
 AC_SUBST(LIBS)
 AC_SUBST(FLIBS)
 AC_SUBST(FCLIBS)
@@ -458,8 +499,10 @@ dnl * BLAS & LAPACK related information
 dnl *********************************************************************
 if test "x$evsl_using_evsl_blas" = "xyes"
 then
-  AC_DEFINE(EVSL_USING_EVSL_BLAS, 1, [Using internal BLAS routines in EVSL])
+   AC_DEFINE(EVSL_USING_EVSL_BLAS, 1, [Using internal BLAS routines in EVSL])
+   AC_SUBST(USE_EVSL_BLAS, YES)
 else
+   AC_SUBST(USE_EVSL_BLAS, NO)
    if test "x$LIBBLAS" = "x-lyes "
    then
       LIBBLAS="-lblas"
@@ -468,18 +511,20 @@ fi
 
 if test "x$evsl_using_evsl_lapack" = "xyes"
 then
-  AC_DEFINE(EVSL_USING_EVSL_LAPACK, 1, [Using internal LAPACK routines in EVSL])
+   AC_DEFINE(EVSL_USING_EVSL_LAPACK, 1, [Using internal LAPACK routines in EVSL])
+   AC_SUBST(USE_EVSL_LAPACK, YES)
 else
+   AC_SUBST(USE_EVSL_BLAS, NO)
+   AC_SUBST(USE_EVSL_LAPACK, NO)
    if test "x$LIBLAPACK" = "x-lyes "
    then
       LIBLAPACK="-llapack"
    fi
 fi
-
 AC_SUBST(LIBBLAS)
-AC_SUBST(LIBBLASDIR)
+AC_SUBST(LIBBLAS_DIR)
 AC_SUBST(LIBLAPACK)
-AC_SUBST(LIBLAPACKDIR)
+AC_SUBST(LIBLAPACK_DIR)
 
 dnl *********************************************************************
 dnl * INTEL MKL related information
@@ -523,7 +568,7 @@ then
       AC_MSG_WARN([***************************************])
       AC_MSG_WARN([* Suitesparse may require METIS (5.1) *])
       AC_MSG_WARN([* directory of METIS is not provided  *])
-      AC_MSG_WARN([* Set it by --with-metis-dir=DIRS     *])
+      AC_MSG_WARN([* Set it by --with-metis-dir=DIR      *])
       AC_MSG_WARN([***************************************])
       if test "x$HOSTARCH" = "xLinux"
       then

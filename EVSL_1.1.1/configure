@@ -597,12 +597,15 @@ DIRECTSOL_INTERFACE
 DIRECTSOL
 AR
 EVSL_USE_INTEL_MKL
-LIBLAPACKDIR
+LIBLAPACK_DIR
 LIBLAPACK
-LIBBLASDIR
+LIBBLAS_DIR
 LIBBLAS
+USE_EVSL_LAPACK
+USE_EVSL_BLAS
 EVSL_LIBSUFFIX
 FLIBS
+LIBS_DIR
 SHARED_OPTIONS
 SHARED_SET_SONAME
 BUILD_CXX_SHARED
@@ -687,12 +690,16 @@ enable_debug
 with_cxxcompiler
 enable_shared
 with_openmp
-with_blas_libs
-with_blas_lib_dirs
-with_lapack_libs
-with_lapack_lib_dirs
+with_blas_lib
+with_blas_lib_name
+with_blas_lib_dir
+with_lapack_lib
+with_lapack_lib_name
+with_lapack_lib_dir
 with_suitesparse_dir
 with_metis_dir
+with_extra_lib_name
+with_extra_lib_dir
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1340,20 +1347,27 @@ Optional Packages:
   --with-cxxcompiler      Use C++ compiler for compiling (default is no)
   --with-openmp           Use OpenMP. This may affect which compiler is
                           chosen.
-  --with-blas-libs=LIBS   LIBS is space-separated list (enclosed in quotes) of
+  --with-blas-lib=LIB     LIB is space-separated list (enclosed in quotes) of
+                          BLAS libraries (full path and name, e.g.,
+                          /usr/local/libblas.a
+  --with-blas-lib-name=LIB
+                          LIB is space-separated list (enclosed in quotes) of
                           BLAS libraries (base name only, e.g., blas, and set
-                          path by --with-blas-lib-dirs=DIRS
-  --with-blas-lib-dirs=DIRS
-                          DIRS is space-separated list (enclosed in quotes) of
+                          path by --with-blas-lib-dir=DIR
+  --with-blas-lib-dir=DIR DIR is space-separated list (enclosed in quotes) of
                           directories containing BLAS libraries that are set
-                          by --with-blas-libs, e.g., /usr/lib
-  --with-lapack-libs=LIBS LIBS is space-separated list (enclosed in quotes) of
+                          by --with-blas-lib-name, e.g., /usr/lib
+  --with-lapack-lib=LIB   LIB is space-separated list (enclosed in quotes) of
+                          LAPACK libraries (full path and name, e.g.,
+                          /usr/local/liblapack.a
+  --with-lapack-lib-name=LIB
+                          LIB is space-separated list (enclosed in quotes) of
                           LAPACK libraries (base name only, e.g., lapack, and
-                          set path by --with-lapack-lib-dirs=DIRS
-  --with-lapack-lib-dirs=DIRS
-                          DIRS is space-separated list (enclosed in quotes) of
+                          set path by --with-lapack-lib-dir=DIR
+  --with-lapack-lib-dir=DIR
+                          DIR is space-separated list (enclosed in quotes) of
                           directories containing LAPACK libraries that are set
-                          by --with-lapack-libs, e.g., /usr/lib
+                          by --with-lapack-lib-name, e.g., /usr/lib
   --with-suitesparse-dir=DIR
                           DIR is the root directory of SUITESPARSE
                           (http://faculty.cse.tamu.edu/davis/suitesparse.html),
@@ -1361,6 +1375,14 @@ Optional Packages:
   --with-metis-dir=DIR    DIR is the build directory of metis (5.1.0)
                           (http://glaros.dtc.umn.edu/gkhome/metis/metis/overview),
                           e.g., /usr/local/metis-5.1.0/build/Linux-x86_64
+  --with-extra-lib-name=LIB
+                          LIB is space-separated list (enclosed in quotes) of
+                          extra libraries (base name only, e.g., 'pthread
+                          gfortran'
+  --with-extra-lib-dir=DIR
+                          DIR is space-separated list (enclosed in quotes) of
+                          directories containing extra libraries that are set
+                          by --with-extra-lib-name, e.g., /opt/lib
 
 Some influential environment variables:
   CC          C compiler command
@@ -2201,9 +2223,20 @@ fi
 
 
 
-# Check whether --with-blas-libs was given.
-if test "${with_blas_libs+set}" = set; then :
-  withval=$with_blas_libs; for blas_lib in $withval; do
+# Check whether --with-blas-lib was given.
+if test "${with_blas_lib+set}" = set; then :
+  withval=$with_blas_lib; for blas_lib in $withval; do
+    LIBBLAS+="$blas_lib "
+ done;
+ evsl_using_evsl_blas=no
+
+fi
+
+
+
+# Check whether --with-blas-lib-name was given.
+if test "${with_blas_lib_name+set}" = set; then :
+  withval=$with_blas_lib_name; for blas_lib in $withval; do
     LIBBLAS+="-l$blas_lib "
  done;
  evsl_using_evsl_blas=no
@@ -2212,10 +2245,10 @@ fi
 
 
 
-# Check whether --with-blas-lib-dirs was given.
-if test "${with_blas_lib_dirs+set}" = set; then :
-  withval=$with_blas_lib_dirs; for blas_dir in $withval; do
-    LIBBLASDIR+="-L$blas_dir "
+# Check whether --with-blas-lib-dir was given.
+if test "${with_blas_lib_dir+set}" = set; then :
+  withval=$with_blas_lib_dir; for blas_dir in $withval; do
+    LIBBLAS_DIR+="-L$blas_dir "
  done;
  evsl_using_evsl_blas=no
 
@@ -2223,9 +2256,20 @@ fi
 
 
 
-# Check whether --with-lapack-libs was given.
-if test "${with_lapack_libs+set}" = set; then :
-  withval=$with_lapack_libs; for lapack_lib in $withval; do
+# Check whether --with-lapack-lib was given.
+if test "${with_lapack_lib+set}" = set; then :
+  withval=$with_lapack_lib; for lapack_lib in $withval; do
+    LIBLAPACK+="$lapack_lib "
+ done;
+ evsl_using_evsl_lapack=no
+
+fi
+
+
+
+# Check whether --with-lapack-lib-name was given.
+if test "${with_lapack_lib_name+set}" = set; then :
+  withval=$with_lapack_lib_name; for lapack_lib in $withval; do
     LIBLAPACK+="-l$lapack_lib "
  done;
  evsl_using_evsl_lapack=no
@@ -2234,10 +2278,10 @@ fi
 
 
 
-# Check whether --with-lapack-lib-dirs was given.
-if test "${with_lapack_lib_dirs+set}" = set; then :
-  withval=$with_lapack_lib_dirs; for lapack_dir in $withval; do
-    LIBLAPACKDIR+="-L$lapack_dir "
+# Check whether --with-lapack-lib-dir was given.
+if test "${with_lapack_lib_dir+set}" = set; then :
+  withval=$with_lapack_lib_dir; for lapack_dir in $withval; do
+    LIBLAPACK_DIR+="-L$lapack_dir "
  done;
  evsl_using_evsl_lapack=no
 
@@ -2263,6 +2307,26 @@ if test "${with_metis_dir+set}" = set; then :
     METIS_DIR+="$metis_dir "
  done;
  evsl_with_metis=no
+
+fi
+
+
+
+# Check whether --with-extra-lib-name was given.
+if test "${with_extra_lib_name+set}" = set; then :
+  withval=$with_extra_lib_name; for extra_lib in $withval; do
+    EXTRA_LIBS+="-l$extra_lib "
+ done
+
+fi
+
+
+
+# Check whether --with-extra-lib-dir was given.
+if test "${with_extra_lib_dir+set}" = set; then :
+  withval=$with_extra_lib_dir; for extra_dir in $withval; do
+    LIBS_DIR+="-L$extra_dir "
+ done
 
 fi
 
@@ -4510,6 +4574,8 @@ then
    CFLAGS=${CXXFLAGS}
 fi
 
+LIBS+=${EXTRA_LIBS}
+
 if test "x$LIBS" = "x"
 then
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sin in -lm" >&5
@@ -4710,6 +4776,7 @@ LINK_FC=${FC}
 
 
 
+
 if test "x$evsl_using_openmp" = "xyes"
 then
 
@@ -4724,7 +4791,11 @@ then
 
 $as_echo "#define EVSL_USING_EVSL_BLAS 1" >>confdefs.h
 
+   USE_EVSL_BLAS=YES
+
 else
+   USE_EVSL_BLAS=NO
+
    if test "x$LIBBLAS" = "x-lyes "
    then
       LIBBLAS="-lblas"
@@ -4736,13 +4807,18 @@ then
 
 $as_echo "#define EVSL_USING_EVSL_LAPACK 1" >>confdefs.h
 
+   USE_EVSL_LAPACK=YES
+
 else
+   USE_EVSL_BLAS=NO
+
+   USE_EVSL_LAPACK=NO
+
    if test "x$LIBLAPACK" = "x-lyes "
    then
       LIBLAPACK="-llapack"
    fi
 fi
-
 
 
 
@@ -4789,8 +4865,8 @@ $as_echo "$as_me: WARNING: ***************************************" >&2;}
 $as_echo "$as_me: WARNING: * Suitesparse may require METIS (5.1) *" >&2;}
       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: * directory of METIS is not provided  *" >&5
 $as_echo "$as_me: WARNING: * directory of METIS is not provided  *" >&2;}
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: * Set it by --with-metis-dir=DIRS     *" >&5
-$as_echo "$as_me: WARNING: * Set it by --with-metis-dir=DIRS     *" >&2;}
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: * Set it by --with-metis-dir=DIR      *" >&5
+$as_echo "$as_me: WARNING: * Set it by --with-metis-dir=DIR      *" >&2;}
       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ***************************************" >&5
 $as_echo "$as_me: WARNING: ***************************************" >&2;}
       if test "x$HOSTARCH" = "xLinux"

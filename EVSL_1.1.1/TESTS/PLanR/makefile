@@ -9,7 +9,7 @@ OBJS_MM     = MMPLanR.o     $(EXTRA)
 OBJS_MM_OMP = MMPLanR_omp.o $(EXTRA)
 
 LIB = -L${EVSL_BUILD_DIR}/lib -levsl
-LIB_EXT = $(LIBLAPACK) $(LIBBLAS) $(LIBS)
+LIB_EXT = $(LIBLAPACK_DIR) $(LIBLAPACK) $(LIBBLAS_DIR) $(LIBBLAS) $(LIBS)
 
 all: LapPLanR.ex MMPLanR_omp.ex  MMPLanR.ex
 

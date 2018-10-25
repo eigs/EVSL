@@ -1,11 +1,11 @@
 include ../makefile.in
 
 SRC_DIRS=
-ifeq ($(LIBBLAS), )
+ifeq ($(USE_EVSL_BLAS), YES)
 SRC_DIRS += blas
 endif
 
-ifeq ($(LIBLAPACK), )
+ifeq ($(USE_EVSL_LAPACK), YES)
 SRC_DIRS += lapack
 endif
 

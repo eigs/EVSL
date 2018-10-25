@@ -10,7 +10,7 @@ OBJS_RR = LapRLanR.o functns.o genmat.o $(OBJ_DSOL)
 OBJ_CSR = csr_module.o
 
 LIB = -L${EVSL_BUILD_DIR}/lib -levsl
-LIB_EXT = $(LIBDIRECTSOL) $(LIBLAPACK) $(LIBBLAS) $(LIBS)
+LIB_EXT = $(LIBDIRECTSOL) $(LIBLAPACK_DIR) $(LIBLAPACK) $(LIBBLAS_DIR) $(LIBBLAS) $(LIBS)
 
 all: LapPLanN.ex LapPLanR.ex LapPLanN_MatFree.ex LapRLanN.ex LapRLanR.ex
 
