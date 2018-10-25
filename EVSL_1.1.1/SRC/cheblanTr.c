@@ -338,10 +338,10 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       /*------------------ NOTE: z is used!!! [TODO: FIX ME] */
       ChebAv(pol, z, znew, work);
       it++;
-      /*-------------------- deflation: orthgonalize vs locked ones first */
+      /*-------------------- deflation: orthogonalize vs locked ones first */
       if (lock > 0) {
         if (ifGenEv) {
-          /* orthgonlize against locked vectors first, znew = znew - B*Y*Y'*znew */
+          /* orthogonalize against locked vectors first, znew = znew - B*Y*Y'*znew */
           CGS_DGKS2(n, lock, NGS_MAX, BY, Y, znew, work);
         } else {
           /*--------------------   vnew = vnew - Y*Y'*vnew */
@@ -506,7 +506,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     //savedensemat(EvecT, lanm1, k, k, "Evec.txt");
     //save_vec(k, Rval, "eval.txt");
     /*--------------------   TWO passes to select good candidates */
-    /*                       Pass-1: based on if ``p(Ritzvalue) > bar'' */	
+    /*                       Pass-1: based on if ``p(Ritzvalue) > bar'' */
     jl = 0;
     for (i=0; i<k; i++) {
       //printf("resi[%d] = %.15e\n", i, fabs(beta*EvecT[i*lanm1+(k-1)]));
