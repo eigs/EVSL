@@ -1,5 +1,5 @@
 1
-../../MATRICES/A.mtx stiff1 MM1  0.1 0.3 5  
+../../MATRICES/A.mtx stiff1 MM1  0.1 0.2 2
 ../MATRICES/A.mtx stiff1 MM1  0.1 0.1387 1  
 ../MATRICES/A.mtx stiff1 MM1  28.617629  1746.952 2
 

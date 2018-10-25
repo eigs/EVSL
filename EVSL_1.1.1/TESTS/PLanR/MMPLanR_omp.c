@@ -1,31 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
 #include <sys/stat.h>
 #include <math.h>
-#include <omp.h>
 #include "evsl.h"
 #include "io.h"
+#if defined(EVSL_USING_OPENMP)
+#include <omp.h>
+#endif
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define min(a, b) ((a) < (b) ? (a) : (b))
 #define TRIV_SLICER 0
 
-int main () { 
+int main () {
   int ierr = 0;
   /*--------------------------------------------------------------
    * this tests the spectrum slicing idea for a generic matrix
    * read in sparse matrix format
    * Uses:
    * Thick-restart Lanczos with pol. filtering
-   * this driver implements thread parallelism across slices/ 
+   * this driver implements thread parallelism across slices/
    *-------------------------------------------------------------*/
   int n = 0, sl, i, j, mlan, nev, totcnt;
   //int nnz;
   double a, b, ecount, xintv[4];
-  double lmin, lmax; 
-  int n_intv;      // number of subintervals (slices)  
-  int npts;       // number of integration points for eigenvalue count 
+  double lmin, lmax;
+  int n_intv;      // number of subintervals (slices)
+  int npts;       // number of integration points for eigenvalue count
   /*-------------------- matrix A: coo format and csr format */
   cooMat Acoo;
   csrMat Acsr;
@@ -37,7 +37,7 @@ int main () {
   FILE *flog = stdout, *fmat = NULL, *fstats = NULL;
   io_t io;
   int numat, mat;
-  char line[MAX_LINE]; 
+  char line[MAX_LINE];
   /* initial vector: random */
   double *vinit;
   tol = 1e-8;
@@ -46,16 +46,16 @@ int main () {
   nvec = 60;
   /*-------------------- start EVSL */
   EVSLStart();
-  //-------------------- interior eigensolver parameters  
-  double *mu = malloc((Mdeg+1)*sizeof(double));
-  int *counts; 
+  //-------------------- interior eigensolver parameters
+  double *mu = evsl_Malloc(Mdeg+1, double);
+  int *counts;
   double *sli;
   /*------------------ file "matfile" contains paths to matrices */
   if( NULL == ( fmat = fopen( "matfile", "r" ) ) ) {
     fprintf( flog, "Can't open matfile...\n" );
     exit(2);
   }
-  /*-------------------- read number of matrices ..*/  
+  /*-------------------- read number of matrices ..*/
   memset( line, 0, MAX_LINE );
   if (NULL == fgets( line, MAX_LINE, fmat )) {
     fprintf( flog, "error in reading matfile...\n" );
@@ -72,7 +72,7 @@ int main () {
       exit(5);
     }
     /*----------------input matrix and interval information -*/
-    fprintf(flog, "MATRIX: %s...\n", io.MatNam);
+    fprintf(flog, "MATRIX: %s...\n", io.MatNam1);
     a = io.a;
     b = io.b;
     n_intv = io.n_intv;
@@ -85,22 +85,22 @@ int main () {
     /*-------------------- path to write the output files*/
     char path[1024];
     strcpy( path, "OUT/MMPLanR_OMP_");
-    strcat( path, io.MatNam);
+    strcat( path, io.MatNam1);
     fstats = fopen(path,"w"); // write all the output to the file io.MatNam
     if (!fstats) {
       printf(" failed in opening output file in OUT/\n");
       fstats = stdout;
     }
-    fprintf(fstats, "MATRIX: %s...\n", io.MatNam);
+    fprintf(fstats, "MATRIX: %s...\n", io.MatNam1);
     fprintf(fstats,"Partition the interval of interest [%f,%f] into %d slices\n", a,b,n_intv);
-    counts = malloc(n_intv*sizeof(int)); 
-    sli = malloc((n_intv+1)*sizeof(double));
+    counts = evsl_Malloc(n_intv, int);
+    sli = evsl_Malloc(n_intv+1, double);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
-      ierr = read_coo_MM(io.Fname, 1, 0, &Acoo); 
+      ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
       if (ierr == 0) {
         fprintf(fstats,"matrix read successfully\n");
-        //nnz = Acoo.nnz; 
+        //nnz = Acoo.nnz;
         n = Acoo.nrows;
       }
       else {
@@ -115,14 +115,14 @@ int main () {
       exit(7);
     }
     /*-------------------- set the left-hand side matrix A */
-    SetAMatrix(&Acsr);       
+    SetAMatrix(&Acsr);
     /*-------------------- define ChebLanTr parameters */
-    vinit = (double *) malloc(n*sizeof(double));
+    vinit = evsl_Malloc(n, double);
     rand_double(n, vinit);
     /*-------------------- get lambda_min lambda_max estimates */
     ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bounds for A: [%.15e, %.15e]\n", lmin, lmax);
-    /*-------------------- define [a b] now so we can get estimates now    
+    /*-------------------- define [a b] now so we can get estimates now
                            on number of eigenvalues in [a b] from kpmdos */
     fprintf(fstats," --> interval: a  %9.3e  b %9.3e \n",a, b);
     /*-------------------- define kpmdos parameters */
@@ -166,21 +166,23 @@ int main () {
     }
     //-------------------- # eigs per slice
     //-------------------- approximate number of eigenvalues wanted
-    double fac = 1.2;   // this factor insures that # of eigs per slice is slightly overestimated 
+    double fac = 1.2;   // this factor insures that # of eigs per slice is slightly overestimated
     nev = (int) (1 + ecount / ((double) n_intv));  // # eigs per slice
-    nev = (int)(fac*nev);                          // want an overestimate of ev_int 
+    nev = (int)(fac*nev);                          // want an overestimate of ev_int
     fprintf(fstats,"Step 2: In each slice compute %d eigenvalues ... \n", nev);
     /*-------------------- MAIN intv LOOP: for each sclice Do: */
     double tsolve = evsl_timer();
     totcnt = 0;
-    mlan = max(4*nev,300);   mlan = min(n, mlan);
-    max_its = 3*mlan; 
-    // array for storing eigenvalues and residuals for each slice 
+    mlan = evsl_max(4*nev,300);   mlan = evsl_min(n, mlan);
+    max_its = 3*mlan;
+    // array for storing eigenvalues and residuals for each slice
     double **lam_global, **res_global;
-    lam_global = (double **) malloc(n_intv*sizeof(double*));
-    res_global = (double **) malloc(n_intv*sizeof(double*));
+    lam_global = evsl_Malloc(n_intv, double *);
+    res_global = evsl_Malloc(n_intv, double *);
 
+#if defined(EVSL_USING_OPENMP)
 #pragma omp parallel for private(sl)
+#endif
     for (sl=0; sl<n_intv; sl++) {
       int nevOut, j;
       double *lam, *Y, *res;
@@ -192,19 +194,21 @@ int main () {
       //-------------------- ChebLanTr
       intv[0] = sli[sl];
       intv[1] = sli[sl+1];
-      intv[2] = lmin; 
+      intv[2] = lmin;
       intv[3] = lmax;
 
       set_pol_def(&pol);
       find_pol(intv, &pol);
-      
+
+#if defined(EVSL_USING_OPENMP)
 #pragma omp critical
       {
          fprintf(fstats, " Thread %d out of %d:  \n", omp_get_thread_num()+1, omp_get_num_threads());
          fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
                  pol.type, pol.deg, pol.bar, pol.gam);
       }
-      
+#endif
+
       ierr = ChebLanTr(mlan, nev, intv, max_its, tol, vinit,
                        &pol, &nevOut, &lam, &Y, &res, NULL);
       if (ierr) {
@@ -212,26 +216,26 @@ int main () {
       }
       /* sort the eigenvals: ascending order
        * ind: keep the orginal indices */
-      ind = (int *) malloc(nevOut*sizeof(int));
+      ind = evsl_Malloc(nevOut, int);
       sort_double(nevOut, lam, ind);
-      // sort residuals accordingly 
-      res_sorted = (double *) malloc(nevOut*sizeof(double));
+      // sort residuals accordingly
+      res_sorted = evsl_Malloc(nevOut, double);
       for (j=0; j<nevOut; j++){
         res_sorted[j] = res[ind[j]];
       }
 
       /* copy result to global arrays: only eigenvalues saved */
-      lam_global[sl] = (double *) malloc(nevOut*sizeof(double));
-      res_global[sl] = (double *) malloc(nevOut*sizeof(double));
+      lam_global[sl] = evsl_Malloc(nevOut, double);
+      res_global[sl] = evsl_Malloc(nevOut, double);
       memcpy(lam_global[sl], lam,        nevOut*sizeof(double));
       memcpy(res_global[sl], res_sorted, nevOut*sizeof(double));
       counts[sl] = nevOut;
       //-------------------- free memory within this loop
-      if (lam)  free(lam);
-      if (Y)  free(Y);
-      if (res)  free(res);
-      free(res_sorted);
-      free(ind);
+      if (lam)  evsl_Free(lam);
+      if (Y)  evsl_Free(Y);
+      if (res)  evsl_Free(res);
+      evsl_Free(res_sorted);
+      evsl_Free(ind);
       free_pol(&pol);
       /*-------------------- end slice loop */
     } // end of parallel for-loop
@@ -240,12 +244,12 @@ int main () {
 
     // Now output results
     for (sl = 0; sl < n_intv; sl++) {
-      //-------------------- 
+      //--------------------
       a = sli[sl];
       b = sli[sl+1];
 
       fprintf(fstats,"======================================================\n");
-      fprintf(fstats, " subinterval: [% 12.4e , % 12.4e ]\n", a, b); 
+      fprintf(fstats, " subinterval: [% 12.4e , % 12.4e ]\n", a, b);
       fprintf(fstats, " Thick Restarted Lanczos with dimension %d\n", mlan);
       fprintf(fstats, " Max Lanczos steps %d\n", max_its);
 
@@ -265,25 +269,26 @@ int main () {
     fprintf(fstats, " Solution  time :    %.2f\n", tsolve);
     fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
     /*-------------------- free memory */
-    free(counts);
-    free(sli);
+    evsl_Free(counts);
+    evsl_Free(sli);
     for (sl = 0; sl < n_intv; sl++) {
-      free(lam_global[sl]);
-      free(res_global[sl]);
+      evsl_Free(lam_global[sl]);
+      evsl_Free(res_global[sl]);
     }
-    free(lam_global);
-    free(res_global);
-    free(vinit);
+    evsl_Free(lam_global);
+    evsl_Free(res_global);
+    evsl_Free(vinit);
     free_coo(&Acoo);
     free_csr(&Acsr);
     if (fstats != stdout) fclose(fstats);
     /*-------------------- end matrix loop */
   }
-  //-------------------- free rest of memory 
-  free(mu);
+  //-------------------- free rest of memory
+  evsl_Free(mu);
   if( flog != stdout ) fclose ( flog );
   fclose( fmat );
   /*-------------------- finalize EVSL */
   EVSLFinish();
   return 0;
 }
+

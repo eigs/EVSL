@@ -1,7 +1,4 @@
-#include <stdlib.h>
-#include "def.h"
-#include "struct.h"
-#include "internal_proto.h"
+#include "internal_header.h"
 
 /**
  * @file evsl.c
@@ -48,16 +45,16 @@ int EVSLStart() {
  * */
 int EVSLFinish() {
   if (evsldata.Amv) {
-    free(evsldata.Amv);
+    evsl_Free(evsldata.Amv);
   }
   if (evsldata.Bmv) {
-    free(evsldata.Bmv);
+    evsl_Free(evsldata.Bmv);
   }
   if (evsldata.Bsol) {
-    free(evsldata.Bsol);
+    evsl_Free(evsldata.Bsol);
   }
   if (evsldata.LTsol) {
-    free(evsldata.LTsol);
+    evsl_Free(evsldata.LTsol);
   }
   return 0;
 }
@@ -71,7 +68,7 @@ int EVSLFinish() {
 int SetAMatrix(csrMat *A) {
   evsldata.n = A->ncols;
   if (!evsldata.Amv) {
-    Calloc(evsldata.Amv, 1, EVSLMatvec);
+     evsldata.Amv = evsl_Calloc(1, EVSLMatvec);
   }
   evsldata.Amv->func = matvec_csr;
   evsldata.Amv->data = (void *) A;
@@ -87,7 +84,7 @@ int SetAMatrix(csrMat *A) {
 int SetBMatrix(csrMat *B) {
   evsldata.n = B->ncols;
   if (!evsldata.Bmv) {
-    Calloc(evsldata.Bmv, 1, EVSLMatvec);
+     evsldata.Bmv = evsl_Calloc(1, EVSLMatvec);
   }
   evsldata.Bmv->func = matvec_csr;
   evsldata.Bmv->data = (void *) B;
@@ -108,7 +105,7 @@ int SetBMatrix(csrMat *B) {
 int SetAMatvec(int n, MVFunc func, void *data) {
   evsldata.n = n;
   if (!evsldata.Amv) {
-    Calloc(evsldata.Amv, 1, EVSLMatvec);
+    evsldata.Amv = evsl_Calloc(1, EVSLMatvec);
   }
   evsldata.Amv->func = func;
   evsldata.Amv->data = data;
@@ -128,7 +125,7 @@ int SetAMatvec(int n, MVFunc func, void *data) {
 int SetBMatvec(int n, MVFunc func, void *data) {
   evsldata.n = n;
   if (!evsldata.Bmv) {
-    Calloc(evsldata.Bmv, 1, EVSLMatvec);
+    evsldata.Bmv = evsl_Calloc(1, EVSLMatvec);
   }
   evsldata.Bmv->func = func;
   evsldata.Bmv->data = data;
@@ -144,7 +141,7 @@ int SetBMatvec(int n, MVFunc func, void *data) {
  * */
 int SetBSol(SolFuncR func, void *data) {
   if (!evsldata.Bsol) {
-    Calloc(evsldata.Bsol, 1, EVSLBSol);
+    evsldata.Bsol = evsl_Calloc(1, EVSLBSol);
   }
 
   evsldata.Bsol->func = func;
@@ -184,15 +181,18 @@ int SetGenEig() {
  * @param[in] data data array
  *
  * */
-int SetASigmaBSol(ratparams *rat, SolFuncC *func, SolFuncC allf, void **data) {
-  int i,num;
-  num = rat->num;
-  Calloc(rat->ASIGBsol, num, EVSLASIGMABSol);
+int SetASigmaBSol(ratparams *rat, int i, SolFuncC func, void *data) {
+  int num = rat->num;
 
-  for (i=0; i<num; i++) {
-    rat->ASIGBsol[i].func = func ? func[i] : allf;
-    rat->ASIGBsol[i].data = data[i];
+  if (rat->ASIGBsol == NULL)
+  {
+    rat->ASIGBsol = evsl_Calloc(num, EVSLASIGMABSol);
   }
+
+  CHKERR(i < 0 || i >= num);
+
+  rat->ASIGBsol[i].func = func;
+  rat->ASIGBsol[i].data = data;
 
   return 0;
 }
@@ -206,7 +206,7 @@ int SetASigmaBSol(ratparams *rat, SolFuncC *func, SolFuncC allf, void **data) {
  * */
 int SetLTSol(SolFuncR func, void *data) {
   if (!evsldata.LTsol) {
-    Calloc(evsldata.LTsol, 1, EVSLLTSol);
+    evsldata.LTsol = evsl_Calloc(1, EVSLLTSol);
   }
   evsldata.LTsol->func = func;
   evsldata.LTsol->data = data;

@@ -3,10 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
-#include "def.h"
-#include "blaslapack.h"
-#include "struct.h"
-#include "internal_proto.h"
+#include "internal_header.h"
 
 /**
  * @file spslice.c
@@ -38,13 +35,13 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   double *w = NULL;
   /*-------------------- workspace for generalized eigenvalue prob */
   if (ifGenEv) {
-    Malloc(w, n, double);
+    w = evsl_Malloc(n, double);
   }
-  Malloc(vkp1, n, double);
-  Malloc(v, n, double);
-  Malloc(vkm1, n, double);
-  Malloc(vk, n, double);
-  Malloc(jac, Mdeg+1, double);
+  vkp1 = evsl_Malloc(n, double);
+  v = evsl_Malloc(n, double);
+  vkm1 = evsl_Malloc(n, double);
+  vk = evsl_Malloc(n, double);
+  jac = evsl_Malloc(Mdeg+1, double);
   double *tmp,  ctr, wid;
   double scal, t, tcnt, beta1, beta2, aa, bb;
   int k, k1, i, m, mdegp1, one=1;
@@ -79,19 +76,19 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
     if (ifGenEv) {
       /* unit 2-norm v */
       rand_double(n, v);
-      t = 1.0 / DNRM2(&n, v, &one);
-      DSCAL(&n, &t, v, &one);
+      t = 1.0 / evsl_dnrm2(&n, v, &one);
+      evsl_dscal(&n, &t, v, &one);
       /*  w = L^{-T}*v */
       solve_LT(v, w);
       /* v = B*w */
       matvec_B(w, v);
-      t = DDOT(&n, v, &one, w, &one);
+      t = evsl_ddot(&n, v, &one, w, &one);
       memcpy(vk, w, n*sizeof(double));
     } else {
       /* unit 2-norm */
       rand_double(n, v);
-      t = 1.0 / DNRM2(&n, v, &one);
-      DSCAL(&n, &t, v, &one);
+      t = 1.0 / evsl_dnrm2(&n, v, &one);
+      evsl_dscal(&n, &t, v, &one);
       memcpy(vk, v, n*sizeof(double));
     }
 
@@ -121,26 +118,26 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
       vkp1 = tmp;
       /*-------------------- accumulate dot products for DOS expansion */
       k1 = k+1;
-      t = 2*jac[k1] * DDOT(&n, vk, &one, v, &one);
+      t = 2*jac[k1] * evsl_ddot(&n, vk, &one, v, &one);
       mu[k1] += t;
       /*-------------------- for eig. counts */
       tcnt -= t*(sin(k1*beta2)-sin(k1*beta1))/k1;
     }
   }
   //--------------------change of interval + scaling in formula
-  t = 1.0 /(((double)nvec)*PI) ;
+  t = 1.0 /(((double)nvec)*EVSL_PI) ;
   mdegp1 = Mdeg+1;
-  DSCAL(&mdegp1, &t, mu, &one) ;
+  evsl_dscal(&mdegp1, &t, mu, &one) ;
   tcnt *= t*((double) n);
   *ecnt = tcnt;
   /*-------------------- free memory  */
-  free(vkp1);
-  free(v);
-  free(vkm1);
-  free(vk);
-  free(jac);
+  evsl_Free(vkp1);
+  evsl_Free(v);
+  evsl_Free(vkm1);
+  evsl_Free(vk);
+  evsl_Free(jac);
   if (ifGenEv) {
-    free(w);
+    evsl_Free(w);
   }
 
   return 0;
@@ -159,7 +156,7 @@ void intChx(const int Mdeg, double *mu, const int npts, double *xi, double *yi) 
     exit (1);
   }
   double val0, theta0, *thetas;
-  Malloc(thetas, npts, double);
+  thetas = evsl_Malloc(npts, double);
   ndp1   = Mdeg+1;
   //  if (xi[0]<-1.0) xi[0] = -1;
   //if (xi[npts-1]> 1.0) xi[npts-1]  = 1;
@@ -176,7 +173,7 @@ void intChx(const int Mdeg, double *mu, const int npts, double *xi, double *yi) 
     for (j=0; j<npts; j++)
       yi[j] += mu[k]*(val0 - sin(k*thetas[j])/k);
   }
-  free (thetas);
+  evsl_Free(thetas);
 }
 
 /**-----------------------------------------------------------------------
@@ -234,8 +231,8 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npt
   bL = evsl_min(bL,1.0);
   npts = evsl_max(npts,2*n_int+1);
   double *xi, *yi;
-  Malloc(xi, npts, double);
-  Malloc(yi, npts, double);
+  xi = evsl_Malloc(npts, double);
+  yi = evsl_Malloc(npts, double);
   linspace(aL, bL, npts, xi);
   //printf(" aL %15.3e bL %15.3e \n",aL,bL);
   //-------------------- get all integrals at the xi's
@@ -290,10 +287,8 @@ int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npt
   }
 
   /*-------------------- free arrays */
-  free(xi);
-  free(yi);
+  evsl_Free(xi);
+  evsl_Free(yi);
   return err;
 }
-
-
 

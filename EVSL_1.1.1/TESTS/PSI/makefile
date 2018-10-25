@@ -1,40 +1,28 @@
-.SUFFIXES : .c .o
-
 include ../../makefile.in
 
-FLAGS ?= -DUNIX -O3 -g -Wall 
-
-INCLUDES = -I../../INC -I../../EXTERNAL   -I ../COMMON
-
+INCLUDES = -I${EVSL_BUILD_DIR}/include -I../COMMON
 EXTRA =  ../COMMON/io.o ../COMMON/mmio.o ../COMMON/lapl.o
+
 # Object files
-OBJS_L  =  LapPSI.o $(EXTRA)
-OBJS_MM  = MMPSI.o $(EXTRA)
+OBJS_L  = LapPSI.o $(EXTRA)
+OBJS_MM = MMPSI.o  $(EXTRA)
 
-LIB = -L../../ -levsl 
-LIB_EXT = $(OMP) $(LIBLAPACK) $(LIB0)
+LIB = -L${EVSL_BUILD_DIR}/lib -levsl
+LIB_EXT = $(LIBLAPACK) $(LIBBLAS) $(LIBS)
 
-ALLEXE = LapPSI.ex MMPSI.ex
-
-
-# Rules
-default: LapPSI.ex
-
-%.o : %.c
-	$(CC) $(FLAGS) $(INCLUDES) -o $@ -x c -c $<
+all: LapPSI.ex MMPSI.ex
 
 # Exe
-## polynomial
 LapPSI.ex: $(OBJS_L)
-	$(LINK) -o LapPSI.ex $(OBJS_L) $(LIB) $(LIB_EXT) 
+	$(LINK_CC) $(LDFLAGS) -o $@ $(OBJS_L) $(LIB) $(LIB_EXT)
+	@mkdir -p OUT
 
 MMPSI.ex: $(OBJS_MM)
-	$(LINK) -o MMPSI.ex $(OBJS_MM) $(LIB) $(LIB_EXT) 
-
-all: $(ALLEXE)
+	$(LINK_CC) $(LDFLAGS) -o $@ $(OBJS_MM) $(LIB) $(LIB_EXT)
+	@mkdir -p OUT
 
 clean:
 	rm -f *.o *.ex
 
-cleanall:
-	rm -f *.o *.ex OUT/*
+distclean:
+	rm -rf *.o *.ex OUT

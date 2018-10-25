@@ -34,8 +34,6 @@ COMMON : contains a number of functions that are called by many of the
          drivers for standard problems (e.g. routines for reading matrices
          from files.. )
 
-COMMON_GEN : same thing but for the generalized problems.
-
 Fortran : contains drivers that test the wrappers for fortran 
 
 ----------------------------------------

@@ -4,13 +4,6 @@
 #include <assert.h>
 #include "mmio.h"
 #include "io.h"
-#include "evsl.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define ERR_IO  10
 
 char *mybasename (const char *name) {
   const char *base = name;
@@ -22,36 +15,86 @@ char *mybasename (const char *name) {
   return (char *) base;
 }
 
+// returns number of words in str
+unsigned countWords(char *str)
+{
+  int state = 0;
+  unsigned wc = 0;  // word count
+  // Scan all characters one by one
+  while (*str)
+  {
+    // If next character is a separator, set the
+    // state as OUT
+     if (*str == ' ' || *str == '\n' || *str == '\t')
+     {
+       state = 0;
+     }
+     // If next character is not a word separator and
+     // state is OUT, then set the state as IN and
+     // increment word count
+     else if (state == 0)
+     {
+        state = 1;
+        ++wc;
+     }
+
+     // Move to next character
+     ++str;
+  }
+
+  return wc;
+}
+
 /*-----------------------------------------------*/
-int get_matrix_info( FILE *fmat, io_t *pio ){
-//  char path[MAX_LINE],  MatNam[MaxNamLen], Fmt[4], ca[2], cb[2], cn_intv[2];  
-  char path[MAX_LINE],  MatNam[MaxNamLen], Fmt[4], ca[100], cb[100], cn_intv[100];
+int get_matrix_info( FILE *fmat, io_t *pio ) {
+  char line[MAX_LINE];
+  char path1[MAX_LINE], path2[MAX_LINE], MatNam1[MaxNamLen], MatNam2[MaxNamLen], Fmt[4], ca[100], cb[100], cn_intv[100];
   int count, n_intv;
   double a, b;
   /*-------------------- READ LINE */
-  if (6 != fscanf(fmat,"%s %s %s %s %s %s\n",path,MatNam,Fmt, ca, cb, cn_intv)) {
-    printf("warning: fscanf may not be successfully done\n");
+  if (fgets(line, MAX_LINE, fmat) == NULL) {
+    return -1;
   }
-  /*-------------------- file pathname */
-  count = strlen(path);
-  memset(pio->Fname,0,MAX_LINE*sizeof(char));
-  memcpy(pio->Fname,path,count*sizeof(char));
-  /*-------------------- file short name */
-  count = strlen(MatNam);
-  memset(pio->MatNam,0,MaxNamLen*sizeof(char));
-  memcpy(pio->MatNam,MatNam,count*sizeof(char));
+  int nfields = countWords(line);
+  if (nfields != 6 && nfields != 8) {
+    printf("warning: fscanf may not be successfully done\n");
+    return -2;
+  }
+  if (nfields == 6) {
+    sscanf(line,"%s %s %s %s %s %s", path1, MatNam1, Fmt, ca, cb, cn_intv);
+  }
+  if (nfields == 8) {
+    sscanf(line,"%s %s %s %s %s %s %s %s", path1, path2, MatNam1, MatNam2, Fmt, ca, cb, cn_intv);
+  }
+  /*-------------------- file pathname for stiffness and mass matrices*/
+  count = strlen(path1);
+  memset(pio->Fname1,0,MAX_LINE*sizeof(char));
+  memcpy(pio->Fname1,path1,count*sizeof(char));
+  if (nfields == 8) {
+    count = strlen(path2);
+    memset(pio->Fname2,0,MAX_LINE*sizeof(char));
+    memcpy(pio->Fname2,path2,count*sizeof(char));
+  }
+  /*-------------------- file short names for stiffness and mass matrices */
+  count = strlen(MatNam1);
+  memset(pio->MatNam1,0,MaxNamLen*sizeof(char));
+  memcpy(pio->MatNam1,MatNam1,count*sizeof(char));
+  if (nfields == 8) {
+    count = strlen(MatNam2);
+    memset(pio->MatNam2,0,MaxNamLen*sizeof(char));
+    memcpy(pio->MatNam2,MatNam2,count*sizeof(char));
+  }
   /*-------------------- matrix format */
-  if (strcmp(Fmt,"HB")==0) 
-    pio->Fmt = 1;
-  else 
-    if (strcmp(Fmt,"MM0")==0) 
-      pio->Fmt = MM0;
-    else 
-      if (strcmp(Fmt,"MM1")==0) 
-        pio->Fmt = MM1;
-      else 
-	/*-------------------- UNKNOWN_FORMAT */
-	return(ERR_IO+2);
+  if (strcmp(Fmt,"HB")==0)
+    pio->Fmt = HB;
+  else if (strcmp(Fmt,"MM0")==0)
+    pio->Fmt = MM0;
+  else if (strcmp(Fmt,"MM1")==0)
+    pio->Fmt = MM1;
+  else {
+     /*-------------------- UNKNOWN_FORMAT */
+     return(-3);
+  }
   /*-------------------- interval information */
   a = atof(ca);
   b = atof(cb);
@@ -59,7 +102,9 @@ int get_matrix_info( FILE *fmat, io_t *pio ){
   pio->b = b;
   n_intv = atoi(cn_intv);
   pio->n_intv = n_intv;
-  /* debug  printf(" Echo: %s %s %s \n", pio->Fname, pio->MatNam, Fmt); */
+
+  /* printf(" Echo: %s %s %d\n", pio->Fname1, pio->MatNam1, pio->Fmt); */
+
   return(0);
 }
 
@@ -84,7 +129,7 @@ int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo) {
     printf("Invalid Matrix Market file.\n");
     return 1;
   }
-  if ( !( (mm_is_real(matcode) || mm_is_integer(matcode)) && mm_is_coordinate(matcode) 
+  if ( !( (mm_is_real(matcode) || mm_is_integer(matcode)) && mm_is_coordinate(matcode)
         && mm_is_sparse(matcode) ) ) {
     printf("Only sparse real-valued/integer coordinate \
         matrices are supported\n");
@@ -104,7 +149,7 @@ int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo) {
   /*--------------------------------------
    * symmetric case : only L part stored,
    * so nnz2 := 2*nnz - nnz of diag,
-   * so nnz2 <= 2*nnz 
+   * so nnz2 <= 2*nnz
    *-------------------------------------*/
   if (mm_is_symmetric(matcode)){
     /* printf(" * * * *  matrix is symmetric * * * * \n"); */
@@ -113,16 +158,16 @@ int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo) {
     nnz2 = nnz;
   }
   /*-------- Allocate mem for COO */
-  int* IR = (int *)malloc(nnz2*sizeof(int));
-  int* JC = (int *)malloc(nnz2*sizeof(int));
-  double* VAL = (double *)malloc(nnz2*sizeof(double));
+  int* IR = evsl_Malloc(nnz2, int);
+  int* JC = evsl_Malloc(nnz2, int);
+  double* VAL = evsl_Malloc(nnz2, double);
   /*-------- read line by line */
   char *p1, *p2;
   for (k=0; k<nnz; k++) {
-    if (fgets(line, MAX_LINE, p) == NULL) {return -1;};
+    if (fgets(line, MAX_LINE, p) == NULL) { return -1; }
     for( p1 = line; ' ' == *p1; p1++ );
     /*----------------- 1st entry - row index */
-    for( p2 = p1; ' ' != *p2; p2++ ); 
+    for( p2 = p1; ' ' != *p2; p2++ );
     *p2 = '\0';
     float tmp1 = atof(p1);
     //coo.ir[k] = atoi(p1);
@@ -133,10 +178,10 @@ int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo) {
     *p2 = '\0';
     float tmp2 = atof(p1);
     JC[k] = (int) tmp2;
-    //coo.jc[k]  = atoi(p1);      
+    //coo.jc[k]  = atoi(p1);
     /*------------- 3rd entry - nonzero entry */
     p1 = p2+1;
-    VAL[k] = atof(p1); 
+    VAL[k] = atof(p1);
   }
   /*------------------ Symmetric case */
   j = nnz;
@@ -213,6 +258,3 @@ int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv
   return 0;
 }
 
-#ifdef __cplusplus
-}
-#endif

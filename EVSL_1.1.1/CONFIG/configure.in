@@ -1,0 +1,579 @@
+dnl *********************************************************************
+dnl * File Name: configure.in
+dnl *
+dnl * This file is read when autoconf is run and the configure script is
+dnl * generated. 
+dnl * Configure.in is structured as follows:
+dnl * initialization information
+dnl * determine the current architecture
+dnl * set user specified compilers and any other user specified options
+dnl *
+dnl * For the given the architecture, an optimal compiler is
+dnl * found (if not specified by the user). If the architecture is
+dnl * unknown or none of the preferred compilers are available then
+dnl * default compilers are found.  
+dnl *
+dnl * For each chosen compiler, the appropriate flags are set for 
+dnl * optimization, debugging, MPI and pthreading (as required) and the
+dnl * C preprocessor is checked.
+dnl * 
+dnl * Finally, library flags are added and AC_SUBST is used to export
+dnl * all necessary macro values.  
+dnl *********************************************************************
+
+dnl *********************************************************************
+dnl * Initialization Information
+dnl * Set package information so it only has to be modified in one place
+dnl *********************************************************************
+
+m4_define([M4_EVSL_NAME],    [EVSL])
+m4_define([M4_EVSL_VERSION], [1.1.1])
+m4_define([M4_EVSL_DATE],    [2018/03/23])
+m4_define([M4_EVSL_TIME],    [00:00:00])
+m4_define([M4_EVSL_BUGS],    [saad@cs.umn.edu])
+m4_define([M4_EVSL_SRCDIR],  [`pwd`])
+
+AC_PREREQ(2.59)
+AC_REVISION($Id$)
+AC_INIT(M4_EVSL_NAME, M4_EVSL_VERSION)
+AC_CONFIG_HEADERS([INC/EVSL_config.h:CONFIG/EVSL_config.h.in])
+AC_COPYRIGHT([EVSL is free software; you can redistribute it and/or modify it under the
+terms of the GNU Lesser General Public License (as published by the Free
+Software Foundation) version 2.1 dated February 1999.])
+AC_CONFIG_AUX_DIR(CONFIG)
+AC_CONFIG_SRCDIR([../"M4_EVSL_NAME"_"M4_EVSL_VERSION"])
+dnl * Change default prefix from /usr/local to ./EVSL
+dnl * Note that $ expansion of shell variables doesn't work with this AC macro.
+AC_PREFIX_DEFAULT(["M4_EVSL_SRCDIR"/EVSL])
+
+dnl *********************************************************************
+dnl * Initialize some variables
+dnl *
+dnl * For some reason, this type of variable initialization doesn't work
+dnl * if done before AC_INIT above.  To keep the release info at the top
+dnl * of the file, 'm4_define' is used to define m4 macros first.
+dnl *********************************************************************
+EVSL_NAME="M4_EVSL_NAME"
+EVSL_VERSION="M4_EVSL_VERSION"
+EVSL_DATE="M4_EVSL_DATE"
+EVSL_TIME="M4_EVSL_TIME"
+EVSL_BUGS="M4_EVSL_BUGS"
+EVSL_SRCDIR="M4_EVSL_SRCDIR"
+
+AC_DEFINE_UNQUOTED(EVSL_RELEASE_NAME,    ["$EVSL_NAME"],    [Release name])
+AC_DEFINE_UNQUOTED(EVSL_RELEASE_VERSION, ["$EVSL_VERSION"], [Version number])
+AC_DEFINE_UNQUOTED(EVSL_RELEASE_DATE,    ["$EVSL_DATE"],    [Date of release])
+AC_DEFINE_UNQUOTED(EVSL_RELEASE_TIME,    ["$EVSL_TIME"],    [Time of release])
+AC_DEFINE_UNQUOTED(EVSL_RELEASE_BUGS,    ["$EVSL_BUGS"],    [Bug reports])
+
+AC_SUBST(EVSL_NAME)
+AC_SUBST(EVSL_VERSION)
+AC_SUBST(EVSL_DATE)
+AC_SUBST(EVSL_TIME)
+AC_SUBST(EVSL_BUGS)
+
+AC_SUBST(EVSL_SRCDIR)
+
+dnl *********************************************************************
+dnl * Clear variables defined by AC_INIT to avoid name conflicts with
+dnl * other packages.
+dnl *********************************************************************
+PACKAGE_DATE=
+PACKAGE_TIME=
+PACKAGE_DATETIME=
+PACKAGE_NAME=
+PACKAGE_VERSION=
+PACKAGE_STRING=
+PACKAGE_TARNAME=
+PACKAGE_BUGREPORT=
+
+dnl *********************************************************************
+dnl * Initialize evsl variables
+dnl *********************************************************************
+evsl_using_Ccompiler=yes
+evsl_using_CXXcompiler=no
+evsl_using_openmp=no
+evsl_with_fortran=yes
+evsl_with_debug=no
+evsl_using_evsl_cxsparse=yes
+evsl_using_suitesparse=no
+evsl_with_metis=no
+evsl_using_int=yes
+evsl_using_double=yes
+evsl_using_evsl_blas=yes
+evsl_using_evsl_lapack=yes
+evsl_cholmod_use_long=yes
+evsl_using_shared_lib=no
+
+dnl *********************************************************************
+dnl * Determine BUILD, HOST, and TARGET types
+dnl *********************************************************************
+if test "x$build_alias" = "x"
+then
+   AC_CANONICAL_BUILD
+fi
+
+if test "x$host_alias" = "x"
+then
+   AC_CANONICAL_HOST
+fi
+
+if test "x$target_alias" = "x"
+then
+   target_alias=$host_alias
+fi
+
+dnl *********************************************************************
+dnl * Define optional features
+dnl *********************************************************************
+AC_ARG_ENABLE(debug,
+AS_HELP_STRING([--enable-debug],
+               [Set compiler flags for debugging (default is no)]),
+[evsl_with_debug=yes],
+[evsl_with_debug=no]
+)
+
+AC_ARG_WITH(cxxcompiler,
+AS_HELP_STRING([--with-cxxcompiler],
+               [Use C++ compiler for compiling (default is no)]),
+[evsl_using_CXXcompiler=yes],
+[evsl_using_CXXcompiler=no]
+)
+
+AC_ARG_ENABLE(shared,
+AS_HELP_STRING([--enable-shared],
+               [Build shared libraries (default is NO).]),
+[case "${enableval}" in
+    yes) evsl_using_shared_lib=yes ;;
+    no)  evsl_using_shared_lib=no ;;
+    *)   AC_MSG_ERROR([Bad value ${enableval} for --enable-shared]) ;;
+ esac],
+[evsl_using_shared_lib=no]
+)
+
+AC_ARG_WITH(openmp,
+AS_HELP_STRING([--with-openmp],
+               [Use OpenMP.  This may affect which compiler is chosen.]),
+[case "${withval}" in
+    yes) evsl_using_openmp=yes;;
+    no)  evsl_using_openmp=no ;;
+    *)   AC_MSG_ERROR([Bad value ${withval} for --with-openmp]) ;;
+ esac],
+[evsl_using_openmp=no]
+)
+
+AC_ARG_WITH(blas-libs,
+AS_HELP_STRING([--with-blas-libs=LIBS],
+               [LIBS is space-separated list (enclosed in quotes) of BLAS libraries
+                (base name only, e.g., blas, and set path by --with-blas-lib-dirs=DIRS]),
+[for blas_lib in $withval; do
+    LIBBLAS+="-l$blas_lib "
+ done;
+ evsl_using_evsl_blas=no]
+)
+
+AC_ARG_WITH(blas-lib-dirs,
+AS_HELP_STRING([--with-blas-lib-dirs=DIRS],
+               [DIRS is space-separated list (enclosed in quotes) of directories containing BLAS libraries that are
+                set by --with-blas-libs, e.g., /usr/lib]),
+[for blas_dir in $withval; do
+    LIBBLASDIR+="-L$blas_dir "
+ done;
+ evsl_using_evsl_blas=no]
+)
+
+AC_ARG_WITH(lapack-libs,
+AS_HELP_STRING([--with-lapack-libs=LIBS],
+               [LIBS is space-separated list (enclosed in quotes) of LAPACK libraries
+                (base name only, e.g., lapack, and set path by --with-lapack-lib-dirs=DIRS]),
+[for lapack_lib in $withval; do
+    LIBLAPACK+="-l$lapack_lib "
+ done;
+ evsl_using_evsl_lapack=no]
+)
+
+AC_ARG_WITH(lapack-lib-dirs,
+AS_HELP_STRING([--with-lapack-lib-dirs=DIRS],
+               [DIRS is space-separated list (enclosed in quotes) of directories containing LAPACK libraries that are
+                set by --with-lapack-libs, e.g., /usr/lib]),
+[for lapack_dir in $withval; do
+    LIBLAPACKDIR+="-L$lapack_dir "
+ done;
+ evsl_using_evsl_lapack=no]
+)
+
+AC_ARG_WITH(suitesparse-dir,
+AS_HELP_STRING([--with-suitesparse-dir=DIR],
+               [DIR is the root directory of SUITESPARSE (http://faculty.cse.tamu.edu/davis/suitesparse.html), e.g., /usr/local/SuiteSparse]),
+[for suitesparse_dir in $withval; do
+    SUITESPARSE_DIR+="$suitesparse_dir"
+ done;
+ evsl_using_evsl_cxsparse=no
+ evsl_using_suitesparse=yes]
+)
+
+AC_ARG_WITH(metis-dir,
+AS_HELP_STRING([--with-metis-dir=DIR],
+               [DIR is the build directory of metis (5.1.0) (http://glaros.dtc.umn.edu/gkhome/metis/metis/overview), e.g., /usr/local/metis-5.1.0/build/Linux-x86_64]),
+[for metis_dir in $withval; do
+    METIS_DIR+="$metis_dir "
+ done;
+ evsl_with_metis=no]
+)
+
+dnl *********************************************************************
+dnl * Set default AR value if not defined by the user
+dnl *********************************************************************
+if test "x$AR" = "x"
+then
+   AR="ar rc"
+fi
+
+dnl *********************************************************************
+dnl * Check for general programs
+dnl *********************************************************************
+AC_PROG_MAKE_SET
+AC_PROG_RANLIB
+
+dnl *********************************************************************
+dnl * Set default CC if not defined by the user
+dnl *********************************************************************
+if test "x$evsl_using_Ccompiler" = "xyes" -a "x$CC" = "x"
+then
+    AC_CHECK_PROGS(CC, [gcc cc clang xlc])
+fi
+
+dnl *********************************************************************
+dnl * Set default CFLAGS if not defined by the user
+dnl *********************************************************************
+if test "x$evsl_using_Ccompiler" = "xyes" -a "x$CFLAGS" = "x"
+then
+   CFLAGS="-O2 -Wall -Wno-unused-result"
+fi
+
+dnl *********************************************************************
+dnl * Set default FC if not defined by the user
+dnl *********************************************************************
+if test "x$evsl_with_fortran" = "xyes" -a "x$FC" = "x"
+then
+    AC_CHECK_PROGS(FC, [gfortran f77 xlf])
+fi
+
+dnl *********************************************************************
+dnl * Set default FCFLAGS if not defined by the user
+dnl *********************************************************************
+if test "x$evsl_with_fortran" = "xyes" -a "x$FCFLAGS" = "x"
+then
+   FCFLAGS="-O2 -Wall -Wno-unused-variable -Wno-unused-dummy-argument"
+fi
+
+dnl *********************************************************************
+dnl * Set default CXX if not defined by the user
+dnl *********************************************************************
+if test "x$evsl_using_CXXcompiler" = "xyes" -a "x$CXX" = "x"
+then
+    AC_CHECK_PROGS(CXX, [g++ c++ clang++ xlC])
+fi
+
+dnl *********************************************************************
+dnl * Set default CXXFLAGS if not defined by the user
+dnl *********************************************************************
+if test "x$evsl_using_CXXcompiler" = "xyes" -a "x$CXXFLAGS" = "x"
+then
+   CXXFLAGS="-O2 -Wall -Wno-unused-result"
+fi
+
+dnl *********************************************************************
+dnl * Check for compiler related programs 
+dnl * Most of these AC_PROG_ macros check to see if the compilers works.
+dnl *********************************************************************
+if test "x$evsl_using_Ccompiler" = "xyes"
+then
+   AC_PROG_CC
+fi
+
+if test "x$evsl_using_CXXcompiler" = "xyes"
+then
+   AC_PROG_CXX
+fi
+
+if test "x$evsl_with_fortran" = "xyes"
+then
+   AC_PROG_FC
+   AC_FC_WRAPPERS
+fi
+
+if test "x$evsl_using_CXXcompiler" = "xyes"
+then
+   dnl use C++ compiler to compile C code
+   CC=${CXX}
+   CFLAGS=${CXXFLAGS}
+fi
+
+if test "x$LIBS" = "x"
+then
+AC_CHECK_LIB(m, sin, LIBS="-lm")
+else
+AC_CHECK_LIB(m, sin, LIBS="$LIBS -lm")
+fi
+
+dnl *********************************************************************
+dnl * Set installation directories
+dnl *********************************************************************
+dnl EVSL_INSTALLDIR="${prefix}"
+dnl EVSL_LIBINSTALL="${libdir}"
+dnl EVSL_INCINSTALL="${includedir}"
+
+dnl *********************************************************************
+dnl * Define machine name and architecture
+dnl *********************************************************************
+AC_MSG_CHECKING(the hostname)
+evsl_hostname=hostname
+HOSTNAME="`$evsl_hostname`"
+dnl * if $HOSTNAME is still empty, give it the value "unknown".
+if test -z "$HOSTNAME"
+then
+   HOSTNAME=unknown
+   AC_MSG_WARN(hostname is unknown)
+else
+   AC_MSG_RESULT($HOSTNAME)
+fi
+
+AC_MSG_CHECKING(the architecture)
+HOSTARCH=`uname -s`
+dnl * if $HOSTARCH is still empty, give it the value "unknown".
+if test -z "$HOSTARCH"
+then
+   HOSTARCH=unknown
+   AC_MSG_WARN(architecture is unknown)
+else
+   AC_MSG_RESULT($HOSTARCH)
+fi
+
+if test "x$HOSTARCH" = "xLinux"
+then
+   AC_DEFINE(EVSL_ARCH_LINUX, 1, [Linux platforms])
+   LIBS="$LIBS -lrt"
+fi
+
+if test "x$HOSTARCH" = "xDarwin"
+then
+   AC_DEFINE(EVSL_ARCH_MAC, 1, [Mac platforms])
+fi
+
+dnl *********************************************************************
+dnl * Shared libraries
+dnl *********************************************************************
+if test "x$evsl_using_shared_lib" = "xyes"
+then
+   case $HOSTARCH in
+      DARWIN* | darwin* | Darwin*) SHARED_BUILD_FLAG="-dynamiclib -undefined dynamic_lookup"
+                                   EVSL_LIBSUFFIX=".dylib"
+                                   SHARED_SET_SONAME="-install_name @rpath/"
+                                   SHARED_OPTIONS="-undefined error" ;;
+      LINUX* | linux* | Linux*)    SHARED_BUILD_FLAG="-shared"
+                                   EVSL_LIBSUFFIX=".so"
+                                   SHARED_SET_SONAME="-Wl,-soname,"
+                                   SHARED_OPTIONS="-Wl,-z,defs"
+                                   SHARED_COMPILE_FLAG="-fPIC" ;;
+   esac
+   SHARED_BUILD_FLAG="${SHARED_BUILD_FLAG} ${EXTRA_BUILD_FLAGS}"
+   FFLAGS="${FFLAGS} ${SHARED_COMPILE_FLAG}"
+   BUILD_FC_SHARED="${FC} ${SHARED_BUILD_FLAG}"
+   CFLAGS="${CFLAGS} ${SHARED_COMPILE_FLAG}"
+   BUILD_CC_SHARED="${CC} ${SHARED_BUILD_FLAG}"
+   if test "x$evsl_using_CXXcompiler" = "xyes"
+   then
+      CXXFLAGS="${CXXFLAGS} ${SHARED_COMPILE_FLAG}"
+      BUILD_CXX_SHARED="${CXX} ${SHARED_BUILD_FLAG}"
+   fi
+else
+   EVSL_LIBSUFFIX=".a"
+fi
+
+dnl *********************************************************************
+dnl * Set default link commands and suffix values
+dnl *********************************************************************
+LINK_CC=${CC}
+LINK_CXX=${CXX}
+LINK_FC=${FC}
+
+dnl *********************************************************************
+dnl * AC_SUBST performs the variable substitutions so they may be used in
+dnl * the makefile.in files. Some macros call AC_SUBST for some of these
+dnl * variables, but it does no damage to call it again.
+dnl *********************************************************************
+
+dnl *********************************************************************
+dnl * compilers and load flags
+dnl *********************************************************************
+AC_SUBST(CC)
+AC_SUBST(CXX)
+AC_SUBST(FC)
+AC_SUBST(CFLAGS)
+AC_SUBST(CXXFLAGS)
+AC_SUBST(FCFLAGS)
+AC_SUBST(LDFLAGS)
+
+AC_SUBST(LINK_FC)
+AC_SUBST(LINK_CC)
+AC_SUBST(LINK_CXX)
+
+AC_SUBST(BUILD_FC_SHARED)
+AC_SUBST(BUILD_CC_SHARED)
+AC_SUBST(BUILD_CXX_SHARED)
+AC_SUBST(SHARED_SET_SONAME)
+AC_SUBST(SHARED_OPTIONS)
+
+dnl *********************************************************************
+dnl * Installation Directories
+dnl *********************************************************************
+dnl AC_SUBST(EVSL_INSTALLDIR)
+dnl AC_SUBST(EVSL_LIBINSTALL)
+dnl AC_SUBST(EVSL_INCINSTALL)
+
+dnl *********************************************************************
+dnl * General purpose header files, libraries and directories
+dnl *********************************************************************
+AC_SUBST(LIBS)
+AC_SUBST(FLIBS)
+AC_SUBST(FCLIBS)
+dnl *********************************************************************
+dnl * suffix for evsl libraries
+dnl *********************************************************************
+AC_SUBST(EVSL_LIBSUFFIX)
+
+dnl *********************************************************************
+dnl * OpenMP
+dnl *********************************************************************
+if test "x$evsl_using_openmp" = "xyes"
+then
+   AC_DEFINE(EVSL_USING_OPENMP, 1, [Using OpenMP in EVSL])
+   CFLAGS="$CFLAGS -fopenmp"
+   LIBS="$LIBS -fopenmp"
+fi
+
+dnl *********************************************************************
+dnl * BLAS & LAPACK related information
+dnl *********************************************************************
+if test "x$evsl_using_evsl_blas" = "xyes"
+then
+  AC_DEFINE(EVSL_USING_EVSL_BLAS, 1, [Using internal BLAS routines in EVSL])
+else
+   if test "x$LIBBLAS" = "x-lyes "
+   then
+      LIBBLAS="-lblas"
+   fi
+fi
+
+if test "x$evsl_using_evsl_lapack" = "xyes"
+then
+  AC_DEFINE(EVSL_USING_EVSL_LAPACK, 1, [Using internal LAPACK routines in EVSL])
+else
+   if test "x$LIBLAPACK" = "x-lyes "
+   then
+      LIBLAPACK="-llapack"
+   fi
+fi
+
+AC_SUBST(LIBBLAS)
+AC_SUBST(LIBBLASDIR)
+AC_SUBST(LIBLAPACK)
+AC_SUBST(LIBLAPACKDIR)
+
+dnl *********************************************************************
+dnl * INTEL MKL related information
+dnl *********************************************************************
+EVSL_USE_MKL=0
+AC_SUBST(EVSL_USE_INTEL_MKL)
+dnl *********************************************************************
+dnl * ar & ranlib substitution
+dnl *********************************************************************
+AC_SUBST(AR)
+AC_SUBST(RANLIB)
+
+dnl *********************************************************************
+dnl * direct solver option
+dnl *********************************************************************
+if test "x$evsl_using_evsl_cxsparse" = "xyes"
+then
+   AC_MSG_NOTICE([*****************************************************************])
+   AC_MSG_NOTICE([* The CXSparse distributed with EVSL is chosen as direct solver *])
+   AC_MSG_NOTICE([* CHOLMOD and UMFPACK in SuiteSparse,  and Pardiso in Intel MKL *])
+   AC_MSG_NOTICE([* are also supported,  which can often yield higher performance *])
+   AC_MSG_NOTICE([*****************************************************************])
+   DIRECTSOL="CXSPARSE"
+   DIRECTSOL_INTERFACE="evsl_cxsparse.o"
+   LIBDIRECTSOL="-L$EVSL_SRCDIR/DIRECT/CXSparse/Lib -lcxsparse"
+fi
+
+if test "x$evsl_using_suitesparse" = "xyes"
+then
+   if test "x$evsl_using_evsl_blas" = "xyes"
+   then
+      AC_MSG_ERROR([BLAS library must be provided for Suitesparse!])
+   fi
+   if test "x$evsl_using_evsl_lapack" = "xyes"
+   then
+      AC_MSG_ERROR([LAPACK library must be provided Suitesparse!])
+   fi
+
+   if test "x$evsl_with_metis" = "xno"
+   then
+      AC_MSG_WARN([***************************************])
+      AC_MSG_WARN([* Suitesparse may require METIS (5.1) *])
+      AC_MSG_WARN([* directory of METIS is not provided  *])
+      AC_MSG_WARN([* Set it by --with-metis-dir=DIRS     *])
+      AC_MSG_WARN([***************************************])
+      if test "x$HOSTARCH" = "xLinux"
+      then
+         METIS_DIR="$SUITESPARSE_DIR/metis-5.1.0/build/Linux-x86_64"
+      else
+         METIS_DIR="$SUITESPARSE_DIR/metis-5.1.0/build/Darwin-x86_64"
+      fi
+   fi
+   DIRECTSOL="SUITESPARSE"
+   DIRECTSOL_INTERFACE="evsl_suitesparse.o"
+   LIBDIRECTSOL="-L\${SUITESPARSE_DIR}/UMFPACK/Lib -lumfpack                  \\
+                       -L\${SUITESPARSE_DIR}/SuiteSparse_config -lsuitesparseconfig \\
+                       -L\${SUITESPARSE_DIR}/CHOLMOD/Lib -lcholmod                  \\
+                       -L\${SUITESPARSE_DIR}/AMD/Lib/ -lamd                         \\
+                       -L\${SUITESPARSE_DIR}/COLAMD/Lib -lcolamd                    \\
+                       -L\${METIS_DIR}/libmetis -lmetis                             \\
+                       -L\${SUITESPARSE_DIR}/CCOLAMD/Lib -lccolamd                  \\
+                       -L\${SUITESPARSE_DIR}/CAMD/Lib -lcamd"
+fi
+
+if test "x$evsl_cholmod_use_long" = "xyes"
+then
+   AC_DEFINE(EVSL_CHOLMOD_USE_LONG, 1, [Using long int version of Cholmod in SuiteSparse interface])
+fi
+
+AC_SUBST(DIRECTSOL)
+AC_SUBST(DIRECTSOL_INTERFACE)
+AC_SUBST(METIS_DIR)
+AC_SUBST(SUITESPARSE_DIR)
+AC_SUBST(LIBDIRECTSOL)
+
+dnl *********************************************************************
+dnl * basic data types
+dnl *********************************************************************
+if test "x$evsl_using_int" = "xyes"
+then
+  AC_DEFINE(EVSL_Int, [int], [EVSL data type for integer])
+  AC_DEFINE(EVSL_Unsigned, [unsigned], [EVSL data type for unsigned integer])
+  AC_DEFINE(EVSL_LongInt, [long int], [EVSL data type for long integer])
+fi
+
+if test "x$evsl_using_double" = "xyes"
+then
+  AC_DEFINE(EVSL_Real, [double], [EVSL data type for real])
+  AC_DEFINE(EVSL_Complex, [double _Complex], [EVSL data type for complex])
+fi
+
+dnl *********************************************************************
+dnl * Define the files to be configured and made 
+dnl *********************************************************************
+AC_CONFIG_FILES([makefile.in:CONFIG/makefile.in.config])
+
+AC_OUTPUT

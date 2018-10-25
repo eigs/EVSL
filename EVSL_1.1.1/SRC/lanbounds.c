@@ -1,10 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "def.h"
-#include "blaslapack.h"
-#include "struct.h"
-#include "internal_proto.h"
+#include "internal_header.h"
 
 /**
  * @file lanbounds.c
@@ -31,12 +28,12 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   n_l = n;
 
   msteps = evsl_min(n, msteps);
-  Malloc(alp, msteps, double);
-  Malloc(bet, msteps, double);
-  Malloc(V, (msteps+1)*n_l, double);
+  alp = evsl_Malloc(msteps, double);
+  bet = evsl_Malloc(msteps, double);
+  V = evsl_Malloc((msteps+1)*n_l, double);
   if (ifGenEv) {
     /* storage for Z = B * V */
-    Malloc(Z, (msteps+1)*n_l, double);
+    Z = evsl_Malloc((msteps+1)*n_l, double);
   } else {
     /* Z and V are the same */
     Z = V;
@@ -45,16 +42,16 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   if (ifGenEv) {
     /* B norm */
     matvec_B(v, Z);
-    t = 1.0 / sqrt(DDOT(&n, v, &one, Z, &one));
-    DSCAL(&n, &t, Z, &one);
+    t = 1.0 / sqrt(evsl_ddot(&n, v, &one, Z, &one));
+    evsl_dscal(&n, &t, Z, &one);
   } else {
     /* 2-norm */
-    t = 1.0 / DNRM2(&n, v, &one);
+    t = 1.0 / evsl_dnrm2(&n, v, &one);
   }
   /* starting vector */
-  DCOPY(&n, v, &one, V, &one);
+  evsl_dcopy(&n, v, &one, V, &one);
   /* unit B-norm or 2-norm */
-  DSCAL(&n, &t, V, &one);
+  evsl_dscal(&n, &t, V, &one);
   double wn = 0.0;
   /*-------------------- main Lanczos loop */
   for (j=0; j<msteps; j++) {
@@ -66,24 +63,24 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
     /* vnew = vnew - bet * vold */
     if (j) {
       nbet = -bet[j-1];
-      DAXPY(&n, &nbet, &Z[(j-1)*n_l], &one, &Z[(j+1)*n_l], &one);
+      evsl_daxpy(&n, &nbet, &Z[(j-1)*n_l], &one, &Z[(j+1)*n_l], &one);
     }
     /* alpha */
     /* alp = znew' * v */
     /* alp = vnew' * v */
-    alp[j] = DDOT(&n, &Z[(j+1)*n_l], &one, &V[j*n_l], &one);
+    alp[j] = evsl_ddot(&n, &Z[(j+1)*n_l], &one, &V[j*n_l], &one);
     wn += alp[j] * alp[j];
     /* znew = znew - alp * z */
     /* vnew = vnew - alp * v */
     nalp = -alp[j];
-    DAXPY(&n, &nalp, &Z[j*n_l], &one, &Z[(j+1)*n_l], &one);
+    evsl_daxpy(&n, &nalp, &Z[j*n_l], &one, &Z[(j+1)*n_l], &one);
     /* full reortho for znew */
     for (i=0; i<=j; i++) {
       /* (znew, v) */
       /* (vnew, v) */
-      t = DDOT(&n, &Z[(j+1)*n_l], &one, &V[i*n_l], &one);
+      t = evsl_ddot(&n, &Z[(j+1)*n_l], &one, &V[i*n_l], &one);
       double mt = -t;
-      DAXPY(&n, &mt, &Z[i*n_l], &one, &Z[(j+1)*n_l], &one);
+      evsl_daxpy(&n, &mt, &Z[i*n_l], &one, &Z[(j+1)*n_l], &one);
     }
     if (ifGenEv) {
       /* vnew = B \ znew */
@@ -91,7 +88,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
     }
     /* beta = (vnew, znew) */
     /* beta = (vnew, vnew) */
-    bet[j] = DDOT(&n, &V[(j+1)*n_l], &one, &Z[(j+1)*n_l], &one);
+    bet[j] = evsl_ddot(&n, &V[(j+1)*n_l], &one, &Z[(j+1)*n_l], &one);
     if (bet[j]*(j+1) < orthTol*wn) {
       fprintf(stdout, "lanbounds: lucky break, j=%d, beta=%e, break\n", j, bet[j]);
       msteps = j + 1;
@@ -101,18 +98,18 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
     bet[j] = sqrt(bet[j]);
     t = 1.0 / bet[j];
     /* vnew = vnew / bet */
-    DSCAL(&n, &t, &V[(j+1)*n_l], &one);
+    evsl_dscal(&n, &t, &V[(j+1)*n_l], &one);
     if (ifGenEv) {
       /* znew = znew / bet */
-      DSCAL(&n, &t, &Z[(j+1)*n_l], &one);
+      evsl_dscal(&n, &t, &Z[(j+1)*n_l], &one);
     }
   } /* main loop */
 
   double bottomBeta = bet[msteps-1];
   double *S, *ritzVal;
   size_t msteps_l = msteps;
-  Malloc(S, msteps_l*msteps_l, double);
-  Malloc(ritzVal, msteps, double);
+  S = evsl_Malloc(msteps_l*msteps_l, double);
+  ritzVal = evsl_Malloc(msteps, double);
   /*-------------------- diagonalize tridiagonal matrix */
   SymmTridEig(ritzVal, S, msteps, alp, bet);
 #if 1
@@ -134,14 +131,14 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   *lmax = amax;
 #endif
   /*-------------------- done */
-  free(alp);
-  free(bet);
-  free(V);
+  evsl_Free(alp);
+  evsl_Free(bet);
+  evsl_Free(V);
   if (ifGenEv) {
-    free(Z);
+    evsl_Free(Z);
   }
-  free(S);
-  free(ritzVal);
+  evsl_Free(S);
+  evsl_Free(ritzVal);
 
   return 0;
 }

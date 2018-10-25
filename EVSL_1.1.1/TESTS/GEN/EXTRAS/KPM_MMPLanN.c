@@ -7,21 +7,13 @@
 #include "io.h"
 #include "evsl_direct.h"
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define min(a, b) ((a) < (b) ? (a) : (b))
-
-/*-------------------- Protos */
-int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
-int get_matrix_info(FILE *fmat, io_t *pio);
-/*-------------------- End Protos */
-
 int main() {
   /*--------------------------------------------------------------
    * this tests the spectrum slicing idea for a generic matrix pair
    * read in matrix format -- using
    * Thick-Restarted Lanczos with polynomial filtering.
    *-------------------------------------------------------------*/
-  int n = 0, i, j, npts, nslices, nvec, Mdeg, nev, mlan, ev_int, sl, 
+  int n = 0, i, j, npts, nslices, nvec, Mdeg, nev, mlan, ev_int, sl,
       ierr, totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
@@ -37,7 +29,7 @@ int main() {
   /* slicer parameters */
   Mdeg = 50;
   nvec = 40;
-  mu = malloc((Mdeg + 1) * sizeof(double));
+  mu = evsl_Malloc(Mdeg+1, double);
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
   io_t io;
@@ -45,12 +37,6 @@ int main() {
   char line[MAX_LINE];
   /*-------------------- Bsol */
   void *Bsol;
-#if CXSPARSE == 1
-  printf("-----------------------------------------\n");
-  printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times. \n\n");
-  printf("-----------------------------------------\n");
-#endif
-
   /*-------------------- stopping tol */
   tol = 1e-6;
   /*-------------------- start EVSL */
@@ -97,10 +83,10 @@ int main() {
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", 
+    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n",
             a, b, nslices);
-    counts = malloc(nslices * sizeof(int));
-    sli = malloc((nslices + 1) * sizeof(double));
+    counts = evsl_Malloc(nslices, int);
+    sli = evsl_Malloc(nslices+1, double);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
@@ -136,7 +122,7 @@ int main() {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
-    alleigs = malloc(n * sizeof(double));
+    alleigs = evsl_Malloc(n, double);
     /*-------------------- use direct solve as the solver for B  in eigenvalue
      *                     computation*/
     SetupBSolDirect(&Bcsr, &Bsol);
@@ -151,7 +137,7 @@ int main() {
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
     //-------------------- initial vector
-    vinit = (double *)malloc(n * sizeof(double));
+    vinit = evsl_Malloc(n, double);
     rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-12, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n",
@@ -218,8 +204,8 @@ int main() {
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int + 2;
       //-------------------- Dimension of Krylov subspace and maximal iterations
-      mlan = max(5 * nev, 100);
-      mlan = min(mlan, n);
+      mlan = evsl_max(5 * nev, 100);
+      mlan = evsl_min(mlan, n);
       //-------------------- then call ChebLanNr
       ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res,
                        fstats);
@@ -230,7 +216,7 @@ int main() {
 
       /* sort the eigenvals: ascending order
        * ind: keep the orginal indices */
-      ind = (int *)malloc(nev2 * sizeof(int));
+      ind = evsl_Malloc(nev2, int);
       sort_double(nev2, lam, ind);
       printf(" number of eigenvalues found: %d\n", nev2);
       /* print eigenvalues */
@@ -246,13 +232,13 @@ int main() {
       counts[sl] = nev2;
       //-------------------- free allocated space withing this scope
       if (lam)
-        free(lam);
+        evsl_Free(lam);
       if (Y)
-        free(Y);
+        evsl_Free(Y);
       if (res)
-        free(res);
+        evsl_Free(res);
       free_pol(&pol);
-      free(ind);
+      evsl_Free(ind);
     } // for (sl=0; sl<nslices; sl++)
     //-------------------- free other allocated space
     fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
@@ -263,21 +249,21 @@ int main() {
         fprintf(fmtout, "%.15e\n", alleigs[j]);
       fclose(fmtout);
     }
-    free(vinit);
-    free(sli);
+    evsl_Free(vinit);
+    evsl_Free(sli);
     free_coo(&Acoo);
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
     FreeBSolDirectData(Bsol);
-    free(alleigs);
-    free(counts);
+    evsl_Free(alleigs);
+    evsl_Free(counts);
     if (fstats != stdout) {
       fclose(fstats);
     }
     /*-------------------- end matrix loop */
   }
-  free(mu);
+  evsl_Free(mu);
   if (flog != stdout) {
     fclose(flog);
   }

@@ -1,12 +1,7 @@
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "blaslapack.h"
-#include "def.h"
-#include "evsl.h"
-#include "internal_proto.h"
-#include "string.h"  //for memset
-#include "struct.h"
+#include "internal_header.h"
+
 /**
  * @file SRC/landos.c
  * @brief Function to use Lanczos method for approximating DOS for the
@@ -60,17 +55,17 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
   //-------------------- Variables that persist through iterations
   double *v, *y;  // v=Vector for current iteration; y Stores y values
   int *ind;
-  Malloc(v, n, double);
-  Calloc(y, npts, double);
-  Malloc(ind, npts, int);
+  v = evsl_Malloc(n, double);
+  y = evsl_Calloc(npts, double);
+  ind = evsl_Malloc(npts, int);
   /*-------------------- for tridiag. eigenvalue problem + lanczos
                          quadrature */
   double *S, *ritzVal, *gamma2;
   // S will contain a matrix compressed into a single array.
   size_t msteps_l = msteps;
-  Malloc(S, msteps_l * msteps_l, double);
-  Malloc(gamma2, msteps, double);
-  Malloc(ritzVal, msteps, double);
+  S = evsl_Malloc(msteps_l * msteps_l, double);
+  gamma2 = evsl_Malloc(msteps, double);
+  ritzVal = evsl_Malloc(msteps, double);
   const double lm = intv[2];
   const double lM = intv[3];
   const double tolBdwn = 1.e-13 * (fabs(lM) + fabs(lm));
@@ -86,19 +81,19 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
   double width = sigma * sqrt(-2.0 * log(tol));
   linspace(aa, bb, npts, xdos);  // xdos = linspace(lm,lM, npts);
 
-  Malloc(alp, msteps, double);
-  Malloc(bet, msteps, double);
-  Malloc(V, (msteps + 1) * n_l, double);
+  alp = evsl_Malloc(msteps, double);
+  bet = evsl_Malloc(msteps, double);
+  V = evsl_Malloc((msteps + 1) * n_l, double);
   //-------------------- Lanczos loop for this vector
   for (m = 0; m < nvec; m++) {
     randn_double(n, v);  // w = randn(size(A,1),1);
     //--------------------Start of bulk of lanbound.c code
-    t = DDOT(&n, v, &one, v, &one);
+    t = evsl_ddot(&n, v, &one, v, &one);
     //-------------------- normalize vector
     //                     v = can also  use DNRM2 instead.
     t = 1.0 / sqrt(t);
-    DSCAL(&n, &t, v, &one);
-    DCOPY(&n, v, &one, V, &one);
+    evsl_dscal(&n, &t, v, &one);
+    evsl_dcopy(&n, v, &one, V, &one);
     double wn = 0.0;
     /*-------------------- main Lanczos loop */
     for (j = 0; j < msteps; j++) {
@@ -107,21 +102,21 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
       // w = w - bet * vold
       if (j) {
         nbet = -bet[j - 1];
-        DAXPY(&n, &nbet, &V[(j - 1) * n_l], &one, &V[(j + 1) * n_l], &one);
+        evsl_daxpy(&n, &nbet, &V[(j - 1) * n_l], &one, &V[(j + 1) * n_l], &one);
       }
       /*-------------------- alp = w' * v */
-      alp[j] = DDOT(&n, &V[(j + 1) * n_l], &one, &V[j * n_l], &one);
+      alp[j] = evsl_ddot(&n, &V[(j + 1) * n_l], &one, &V[j * n_l], &one);
       wn += alp[j] * alp[j];
       //-------------------- w = w - alp * v
       nalp = -alp[j];
-      DAXPY(&n, &nalp, &V[j * n_l], &one, &V[(j + 1) * n_l], &one);
+      evsl_daxpy(&n, &nalp, &V[j * n_l], &one, &V[(j + 1) * n_l], &one);
       //-------------------- full reortho
       for (i = 0; i <= j; i++) {
-        t = DDOT(&n, &V[(j + 1) * n_l], &one, &V[i * n_l], &one);
+        t = evsl_ddot(&n, &V[(j + 1) * n_l], &one, &V[i * n_l], &one);
         double mt = -t;
-        DAXPY(&n, &mt, &V[i * n_l], &one, &V[(j + 1) * n_l], &one);
+        evsl_daxpy(&n, &mt, &V[i * n_l], &one, &V[(j + 1) * n_l], &one);
       }
-      bet[j] = DDOT(&n, &V[(j + 1) * n_l], &one, &V[(j + 1) * n_l], &one);
+      bet[j] = evsl_ddot(&n, &V[(j + 1) * n_l], &one, &V[(j + 1) * n_l], &one);
       if (bet[j] * (j + 1) < orthTol * wn) {
         fprintf(stdout, "lanbounds: lucky break, j=%d, beta=%e, break\n", j,
                 bet[j]);
@@ -132,20 +127,20 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
         wn += 2.0 * bet[j];
         bet[j] = sqrt(bet[j]);
         t = 1.0 / bet[j];
-        DSCAL(&n, &t, &V[(j + 1) * n_l], &one);
+        evsl_dscal(&n, &t, &V[(j + 1) * n_l], &one);
       } else {  // Otherwise generate a new vector and redo the previous
                 // calculations on it
         randn_double(n, v);  // w = randn(size(A,1),1);
         for (i = 0; i <= j; i++) {
-          t = DDOT(&n, &V[(j + 1) * n_l], &one, &V[i * n_l], &one);
+          t = evsl_ddot(&n, &V[(j + 1) * n_l], &one, &V[i * n_l], &one);
           double mt = -t;
-          DAXPY(&n, &mt, &V[i * n_l], &one, &V[(j + 1) * n_l], &one);
+          evsl_daxpy(&n, &mt, &V[i * n_l], &one, &V[(j + 1) * n_l], &one);
         }
-        bet[j] = DDOT(&n, &V[(j + 1) * n_l], &one, &V[(j + 1) * n_l], &one);
+        bet[j] = evsl_ddot(&n, &V[(j + 1) * n_l], &one, &V[(j + 1) * n_l], &one);
         wn += 2.0 * bet[j];
         bet[j] = sqrt(bet[j]);
         t = 1.0 / bet[j];
-        DSCAL(&n, &t, &V[(j + 1) * n_l], &one);
+        evsl_dscal(&n, &t, &V[(j + 1) * n_l], &one);
         bet[j] = 0;
       }
     }
@@ -179,24 +174,24 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
     /*-------------------- end vector loop */
   }
 
-  double scaling = 1.0 / (nvec * sqrt(sigma2 * PI));
+  double scaling = 1.0 / (nvec * sqrt(sigma2 * EVSL_PI));
   /* y = ydos * scaling */
-  DSCAL(&npts, &scaling, y, &one);
-  DCOPY(&npts, y, &one, ydos, &one);
+  evsl_dscal(&npts, &scaling, y, &one);
+  evsl_dcopy(&npts, y, &one, ydos, &one);
   simpson(xdos, y, npts);
 
   *neig = y[npts - 1] * n;
-  free(gamma2);
-  free(S);
-  free(ritzVal);
+  evsl_Free(gamma2);
+  evsl_Free(S);
+  evsl_Free(ritzVal);
 
-  free(alp);
-  free(bet);
-  free(V);
+  evsl_Free(alp);
+  evsl_Free(bet);
+  evsl_Free(V);
 
-  free(v);
-  free(y);
-  free(ind);
+  evsl_Free(v);
+  evsl_Free(y);
+  evsl_Free(ind);
 
   return 0;
 }

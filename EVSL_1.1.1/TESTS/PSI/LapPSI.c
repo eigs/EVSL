@@ -7,33 +7,18 @@
 #include "io.h"
 #include "lapl.h"
 
-#ifdef __cplusplus
-extern "C" {
-
-#define max(a, b) std::max(a, b)
-#define min(a, b) std::min(a, b)
-#else
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
-int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv);
-int lapgen(int nx, int ny, int nz, cooMat *Acoo);
-int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
 int main(int argc, char *argv[]) {
   /*------------------------------------------------------------
-    generates a laplacean matrix on an nx x ny x nz mesh 
+    generates a laplacean matrix on an nx x ny x nz mesh
     and computes all eigenvalues in a given interval [a  b]
     The default set values are
     nx = 41; ny = 53; nz = 1;
     a = 0.4; b = 0.8;
-    nslices = 1 [one slice only] 
-    other parameters 
+    nslices = 1 [one slice only]
+    other parameters
     tol [tolerance for stopping - based on residual]
     Mdeg = pol. degree used for DOS
-    nvec  = number of sample vectors used for DOS 
+    nvec  = number of sample vectors used for DOS
     ...
     This uses:
     Subspace iteration  with polynomial filtering
@@ -49,7 +34,7 @@ int main(int argc, char *argv[]) {
     printf(" failed in opening output file in OUT/\n");
     fstats = stdout;
   }
-  int n, nx, ny, nz, i, j, npts, nslices, nvec, Mdeg, nev, 
+  int n, nx, ny, nz, i, j, npts, nslices, nvec, Mdeg, nev,
       max_its, sl, flg, ierr;
   //int ev_int;
   /* find the eigenvalues of A in the interval [a,b] */
@@ -84,7 +69,7 @@ int main(int argc, char *argv[]) {
   fprintf(fstats,"used nx = %3d ny = %3d nz = %3d",nx,ny,nz);
   fprintf(fstats," [ a = %4.2f  b= %4.2f],  nslices=%2d \n",a,b,nslices);
   //-------------------- eigenvalue bounds set by hand.
-  lmin = 0.0;  
+  lmin = 0.0;
   lmax = nz == 1 ? 8.0 : 12.0;
   xintv[0] = a;
   xintv[1] = b;
@@ -98,7 +83,7 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, "Laplacian: %d x %d x %d, n = %d\n", nx, ny, nz, n);
   fprintf(fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
 
-  /*-------------------- generate 2D/3D Laplacian matrix 
+  /*-------------------- generate 2D/3D Laplacian matrix
    *                     saved in coo format */
   ierr = lapgen(nx, ny, nz, &Acoo);
   /*-------------------- convert coo to csr */
@@ -112,9 +97,9 @@ int main(int argc, char *argv[]) {
   /*-------------------- start EVSL */
   EVSLStart();
    /*-------------------- set the left-hand side matrix A */
-   SetAMatrix(&Acsr);         
+   SetAMatrix(&Acsr);
   //-------------------- call kpmdos
-  mu = (double *) malloc((Mdeg+1)*sizeof(double));
+  mu = evsl_Malloc(Mdeg+1, double);
   double t = evsl_timer();
   ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
   t = evsl_timer() - t;
@@ -125,10 +110,10 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f \n",t);
   fprintf(fstats, " estimated eig count in interval: %10.2e \n",ecount);
   //-------------------- call splicer to slice the spectrum
-  npts = 10 * ecount; //200; 
-  sli = (double *) malloc((nslices+1)*sizeof(double));
+  npts = 10 * ecount; //200;
+  sli = evsl_Malloc(nslices+1, double);
 
-  ierr = spslicer(sli, mu, Mdeg, xintv, nslices,  npts);  
+  ierr = spslicer(sli, mu, Mdeg, xintv, nslices,  npts);
   if (ierr) {
     printf("spslicer error %d\n", ierr);
     return 1;
@@ -138,14 +123,14 @@ int main(int argc, char *argv[]) {
     printf(" %2d: [% .15e , % .15e]\n", j+1, sli[j],sli[j+1]);
   //-------------------- # eigs per slice
   // ev_int = (int) (1 + ecount / ((double) nslices));
-  //-------------------- initial vector  
-  vinit = (double *) malloc(n*sizeof(double));
+  //-------------------- initial vector
+  vinit = evsl_Malloc(n, double);
   rand_double(n, vinit);
   //-------------------- debug only :
   //  save_vec(n, vinit, "OUT/vinit.mtx");
   //-------------------- For each slice call ChebLanr
   // set polynomial defaults
-  // forced degree 
+  // forced degree
   for (sl=0; sl<nslices; sl++){
     printf("======================================================\n");
     int nevOut;
@@ -153,15 +138,15 @@ int main(int argc, char *argv[]) {
     int *ind;
     int nev_ex;
     double *lam_ex;
-    //-------------------- 
+    //--------------------
     a = sli[sl];
     b = sli[sl+1];
-    printf(" subinterval: [%.4e , %.4e]\n", a, b); 
+    printf(" subinterval: [%.4e , %.4e]\n", a, b);
     //-------------------- approximate number of eigenvalues wanted
-    // this factor insures that #eigs per slice is slightly overestimated 
-    double fac = 1.2;   
+    // this factor insures that #eigs per slice is slightly overestimated
+    double fac = 1.2;
     nev = (int) (1 + ecount / ((double) nslices));  // # eigs per slice
-    nev = (int)(fac*nev);                        // want an overestimate of ev_int 
+    nev = (int)(fac*nev);                        // want an overestimate of ev_int
     max_its = 1000;
     //-------------------- ChebLanTr
     xintv[0] = a;     xintv[1] = b;
@@ -175,27 +160,27 @@ int main(int argc, char *argv[]) {
     //                   it is better to change the values of the thresholds
     //                   pol.thresh_ext and plot.thresh_int
     //-------------------- get polynomial to use :
-    find_pol(xintv, &pol);       
+    find_pol(xintv, &pol);
 
     fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
             pol.type, pol.deg, pol.bar, pol.gam);
     //-------------------- then call ChenLanNr
 
     double *V0;
-    V0 = (double *) malloc(n*nev*sizeof(double));
+    V0 = evsl_Malloc(n*nev, double);
     rand_double(n*nev, V0);
 
-    ierr = ChebSI(nev, xintv, max_its, tol, V0, &pol, &nevOut, 
+    ierr = ChebSI(nev, xintv, max_its, tol, V0, &pol, &nevOut,
                   &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebSI error %d\n", ierr);
       return 1;
     }
 
-    free(V0);
+    evsl_Free(V0);
     /* sort the eigenvals: ascending order
      * ind: keep the orginal indices */
-    ind = (int *) malloc(nevOut*sizeof(int));
+    ind = evsl_Malloc(nevOut, int);
     sort_double(nevOut, lam, ind);
     /* compute exact eigenvalues */
     exeiglap3(nx, ny, nz, a, b, &nev_ex, &lam_ex);
@@ -209,13 +194,13 @@ int main(int argc, char *argv[]) {
       fprintf(fstats, "                 Err");
     }
     fprintf(fstats, "\n");
-    for (i=0; i<max(nevOut, nev_ex); i++) {
+    for (i=0; i<evsl_max(nevOut, nev_ex); i++) {
       if (i < nevOut) {
         fprintf(fstats, "% .15e  %.1e", lam[i], res[ind[i]]);
       } else {
         fprintf(fstats, "                               ");
       }
-      if (i < nev_ex) { 
+      if (i < nev_ex) {
         fprintf(fstats, "        % .15e", lam_ex[i]);
       }
       if (nevOut == nev_ex) {
@@ -225,28 +210,25 @@ int main(int argc, char *argv[]) {
       if (i>50) {
         fprintf(fstats,"                        -- More not shown --\n");
         break;
-      } 
+      }
     }
     //-------------------- free allocated space withing this scope
-    if (lam)  free(lam);
-    if (Y) free(Y);
-    if (res)  free(res);
+    if (lam)  evsl_Free(lam);
+    if (Y) evsl_Free(Y);
+    if (res)  evsl_Free(res);
     free_pol(&pol);
-    free(ind);
-    free(lam_ex);
+    evsl_Free(ind);
+    evsl_Free(lam_ex);
   }
-  //-------------------- free other allocated space 
-  free(vinit);
-  free(sli);
+  //-------------------- free other allocated space
+  evsl_Free(vinit);
+  evsl_Free(sli);
   free_coo(&Acoo);
   free_csr(&Acsr);
-  free(mu);
+  evsl_Free(mu);
   fclose(fstats);
   /*-------------------- finalize EVSL */
   EVSLFinish();
   return 0;
 }
 
-#ifdef __cplusplus
-}
-#endif

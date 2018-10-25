@@ -32,7 +32,7 @@ program driver
     integer*8 :: rat, asigbss, csr, dummy
 
     ! Loop varialbe declarations
-    integer :: i, j, k, zero
+    integer :: i, j, k, zero, one
 
     ! DEBUG Variables
     integer :: s, e
@@ -52,6 +52,7 @@ program driver
     ! print a usage statement then terminate
 
     zero = 0
+    one = 1
     !Set default values
     nx = 16
     ny = 16
@@ -66,7 +67,7 @@ program driver
     do i = 1, iargc()
         call getarg(i, arg)
         arg = trim(arg)
-        
+
         if(arg(1:2) == 'nx') then
             read(arg(4:), *, iostat = readerr) nx
         elseif(arg(1:2) == 'ny') then
@@ -113,7 +114,7 @@ program driver
         endif
     endif
     n = nx*ny*nz
-    
+
     ! allocate our csr matrix
     allocate(vals(n*7)) !Size of number of nonzeros
     allocate(valst(n*7))
@@ -151,12 +152,12 @@ program driver
 
     ! Initialize the EVSL global data
     call EVSL_START_F90()
-    
+
     ! Set the A matrix in EVSL global data to point to the arrays built here
     call EVSL_ARR2CSR_F90(n, ia, ja, vals, csr)
-    
+
     call EVSL_SETA_CSR_F90(csr)
-    
+
     ! kmpdos in EVSL for the DOS for dividing the spectrum
     ! Set up necessary variables for kpmdos
     Mdeg = 300;
@@ -164,7 +165,7 @@ program driver
     allocate(sli(nslices+1))
     ! Call EVSL kpmdos and spslicer
     call EVSL_KPM_SPSLICER_F90(Mdeg, nvec, xintv, nslices, sli, ev_int)
-    
+
     ! For each slice call RatLanNr
     do i = 1, nslices
         ! Prepare parameters for this slice
@@ -172,33 +173,31 @@ program driver
         xintv(2) = sli(i+1)
 
         ! Call EVSL to create our rational filter
-        call EVSL_FIND_RAT_F90(xintv, rat)
+        call EVSL_FIND_RAT_F90(one, dummy, dummy, dummy, dummy, dummy, xintv, rat)
 
         ! Get the factorizations of A-\sigma*B
         ! matrix B is not present
         call SETUP_ASIGMABSOL_DIRECT_F90(csr, zero, dummy, rat, asigbss)
-        ! Set the direct solver function
-        call SET_ASIGMABSOL_DIRECT_F90(rat, asigbss)
 
         ! Necessary paramters
         nev = ev_int + 2
         mlan = max(4*nev, 100)
         mlan = min(mlan, n)
-        
+
         ! Call the EVSL ratlannr function to find the eigenvalues in the slice
         call EVSL_RATLANNR_F90(xintv, mlan, tol, rat)
-        
+
         ! Extract the number of eigenvalues found from the EVSL global data
         call EVSL_GET_NEV_F90(nev)
-        
+
         ! Allocate storage for the eigenvalue and vectors found from cheblannr
         allocate(eigval(nev))
         allocate(eigvec(nev*size(ia))) ! number of eigen values * number of rows
-        
+
         ! Extract the arrays of eigenvalues and eigenvectors from the EVSL global data
         call EVSL_COPY_RESULT_F90(eigval, eigvec)
         write(*,*) nev, ' Eigs in this slice'
-        
+
         ! Here you can do something with the eigenvalues that were found
         ! The eigenvalues are stored in eigval and eigenvectors are in eigvec
 
@@ -210,9 +209,9 @@ program driver
         deallocate(eigvec)
     enddo
     deallocate(sli)
-    
+
     call EVSL_FREE_CSR_F90(csr)
-    
+
     call EVSL_FINISH_F90()
 
     ! Necessary Cleanup

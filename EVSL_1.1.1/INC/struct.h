@@ -1,18 +1,6 @@
 #ifndef STRUCT_H
 #define STRUCT_H
 
-#ifdef __cplusplus
-#include <complex>
-#else
-#include <complex.h>
-#endif
-
-#include <stddef.h>
-
-#ifdef __cplusplus
-#define complex _Complex
-extern "C" {
-#endif
 /**
  * @file struct.h
  * @brief structs used in evsl
@@ -22,7 +10,7 @@ extern "C" {
  * @brief sparse matrix format: the coordinate (COO) format, 0-based
  *
  * ir, jc, vv : triples for all nonzeros (of size nnz)
- */ 
+ */
 typedef struct _cooMat {
   int nrows,  /**< number of rows */
       ncols,  /**< number of columns */
@@ -33,11 +21,11 @@ typedef struct _cooMat {
 } cooMat;
 
 
-/*! 
+/*!
  * @brief sparse matrix format: the compressed sparse row (CSR) format, 0-based
- * 
+ *
  * 3-array variant: ia,ja,a, nnz == ia[nrows]
- */ 
+ */
 typedef struct _csrMat {
   int owndata, /**< if owns (ia, ja, a) */
       nrows,   /**< number of rows */
@@ -48,13 +36,13 @@ typedef struct _csrMat {
 } csrMat;
 
 /*!
- * @brief  parameters for polynomial filter 
+ * @brief  parameters for polynomial filter
  *
  * default values are set by set_pol_def
  */
 typedef struct _polparams {
   /** @name input to find_pol */
-  /**@{*/ 
+  /**@{*/
   int     max_deg;     /**< max allowed degree */
   int     min_deg ;    /**< min allowed degree */
   int     damping;     /**< 0 = no damping, 1 = Jackson, 2 = Lanczos */
@@ -62,10 +50,10 @@ typedef struct _polparams {
   double  thresh_int;  /**< threshold for interior intervals */
   double  intvtol;     /**< cut-off point of middle interval */
   /**@}*/
-  
+
   /** @name output from find_pol */
-  /**@{*/ 
-  int     type;       /**< type of the filter: 
+  /**@{*/
+  int     type;       /**< type of the filter:
                            0: middle interval, 1: left interval, 2: right interval */
   double *mu;         /**< coefficients. allocation done by set_pol */
   double  cc;         /**< center of interval - used by chebAv */
@@ -73,9 +61,9 @@ typedef struct _polparams {
   double  gam;        /**< center of delta function used */
   double  bar;        /**< p(theta)>=bar indicates a wanted Ritz value */
   /**@}*/
-  
+
   /** @name both input to and output from find_pol */
-  /**@{*/ 
+  /**@{*/
   int deg ;           /**< if deg == 0 before calling find_deg then
                        the polynomial degree is  computed
                        internally. Otherwise it is of degree deg.
@@ -86,21 +74,21 @@ typedef struct _polparams {
 
 /**
  * @brief linear solver function prototype: [complex version]
- * which is used for solving system with A-SIGMA B 
+ * which is used for solving system with A-SIGMA B
  * n  is the size  of the system,  br, bz are  the right-hand
  * side (real and  imaginary parts of complex vector),  xr, xz will
  * be the  solution (complex vector),  and "data" contains  all the
- * data  needed  by  the  solver. 
+ * data  needed  by  the  solver.
  */
 typedef void (*SolFuncC)(int n, double *br, double *bz, double *xr, double *xz, void *data);
 
-/** 
+/**
  * @brief function prototype for applying the solve B x = b
  */
 typedef void (*SolFuncR)(double *b, double *x, void *data);
 
 /**
- * @brief matvec function prototype 
+ * @brief matvec function prototype
  */
 typedef void (*MVFunc)(double *x, double *y, void *data);
 
@@ -131,9 +119,9 @@ typedef struct _ratparams {
   int *mulp;          /**< multiplicity of each pole */
   int pow;            /**< total multiplicites of all poles */
   /** The following are output - i.e., set by find_ratf */
-  complex double *omega; /**< weights allocation done by find_ratf */
-  complex double *zk;    /**< locations of poles done by find_ratf */
-  EVSLASIGMABSol *ASIGBsol; /**< function and data for A-&sigma B solve 
+  EVSL_Complex *omega; /**< weights allocation done by find_ratf */
+  EVSL_Complex *zk;    /**< locations of poles done by find_ratf */
+  EVSLASIGMABSol *ASIGBsol; /**< function and data for A-&sigma B solve
                                  arrays of length ratparams.num */
 } ratparams;
 
@@ -236,7 +224,4 @@ typedef struct _evslstat {
 /* global variable: pevsl_stats */
 extern evslStat evslstat;
 
-#ifdef __cplusplus
-}
-#endif
 #endif

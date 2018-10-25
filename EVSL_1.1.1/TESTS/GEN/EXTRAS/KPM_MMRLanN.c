@@ -7,14 +7,6 @@
 #include "evsl.h"
 #include "evsl_direct.h"
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define min(a, b) ((a) < (b) ? (a) : (b))
-
-/*-------------------- Protos */
-int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
-int get_matrix_info(FILE *fmat, io_t *pio);
-/*-------------------- End Protos */
-
 int main() {
   /*--------------------------------------------------------------
    * this tests the spectrum slicing idea for a generic matrix pair
@@ -41,7 +33,7 @@ int main() {
   /* slicer parameters */
   Mdeg = 80;
   nvec = 40;
-  mu = malloc((Mdeg + 1) * sizeof(double));
+  mu = evsl_Malloc(Mdeg+1, double);
   FILE *flog = stdout, *fmat = NULL;
   FILE *fstats = NULL;
   io_t io;
@@ -49,11 +41,6 @@ int main() {
   const double tau = 1e-4; // Tolerance in polynomial approximation
   int numat, mat;
   char line[MAX_LINE];
-#if CXSPARSE == 1
-  printf("-----------------------------------------\n");
-  printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times. \n\n");
-  printf("-----------------------------------------\n");
-#endif
   /*-------------------- stopping tol */
   tol = 1e-6;
   /*-------------------- Polynomial approximation to B and sqrtB*/
@@ -104,8 +91,8 @@ int main() {
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
     fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n",
             a, b, nslices);
-    counts = malloc(nslices * sizeof(int));
-    sli = malloc((nslices + 1) * sizeof(double));
+    counts = evsl_Malloc(nslices, int);
+    sli = evsl_Malloc(nslices+1, double);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
@@ -127,7 +114,7 @@ int main() {
         exit(6);
       }
       /*------------------ diagonal scaling for Acoo and Bcoo */
-      sqrtdiag = (double *)calloc(n, sizeof(double));
+      sqrtdiag = evsl_Calloc(n, double);
       /*------------------ conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       ierr = cooMat_to_csrMat(0, &Bcoo, &Bcsr);
@@ -136,7 +123,7 @@ int main() {
       exit(7);
     }
 
-    /*-------------------- diagonal scaling for L-S poly. approx. 
+    /*-------------------- diagonal scaling for L-S poly. approx.
      *                     of B^{-1} and B^{-1/2},
      *                     which will be used in the DOS */
     /*-------------------- sqrt of diag(B) */
@@ -151,14 +138,14 @@ int main() {
     diagScalCsr(&Acsr, sqrtdiag);
     diagScalCsr(&Bcsr, sqrtdiag);
     if (sqrtdiag) {
-      free(sqrtdiag);
+      evsl_Free(sqrtdiag);
     }
 
     /*---------------- Set EVSL to solve std eig problem to
      *---------------- compute the range of the spectrum of B */
     SetStdEig();
     SetAMatrix(&Bcsr);
-    vinit = (double *)malloc(n * sizeof(double));
+    vinit = evsl_Malloc(n, double);
     rand_double(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
     /*-------------------- Use polynomial to solve B and sqrt(B) */
@@ -219,9 +206,9 @@ int main() {
     //-------------------- # eigs per slice
     ev_int = (int)(1 + ecount / ((double)nslices));
     totcnt = 0;
-    alleigs = malloc(n * sizeof(double));
- 
-    /* recover the original matrices A and B before scaling 
+    alleigs = evsl_Malloc(n, double);
+
+    /* recover the original matrices A and B before scaling
      * Note that B-sol and sqrt(B)-sol will not be needed in RatLan,
      * so we can recover them */
     csr_copy(&Acsr0, &Acsr, 0); /* 0 stands for no memory alloc */
@@ -253,7 +240,7 @@ int main() {
       // now determine rational filter
       find_ratf(intv, &rat);
       // use direct solver function
-      void **solshiftdata = (void **)malloc(num * sizeof(void *));
+      void **solshiftdata = evsl_Malloc(num, void *);
       /*------------ factoring the shifted matrices and store the factors */
       SetupASIGMABSolDirect(&Acsr, &Bcsr, num, rat.zk, solshiftdata);
       /*------------ give the data to rat */
@@ -261,8 +248,8 @@ int main() {
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int + 2;
       //-------------------- maximal Lanczos iterations
-      max_its = max(4 * nev, 300);
-      max_its = min(max_its, n);
+      max_its = evsl_max(4 * nev, 300);
+      max_its = evsl_min(max_its, n);
       //-------------------- RationalLanNr
       ierr = RatLanNr(intv, max_its, tol, vinit, &rat, &nev2, &lam, &Y, &res,
                       fstats);
@@ -273,7 +260,7 @@ int main() {
 
       /* sort the eigenvals: ascending order
        * ind: keep the orginal indices */
-      ind = (int *)malloc(nev2 * sizeof(int));
+      ind = evsl_Malloc(nev2, int);
       sort_double(nev2, lam, ind);
       printf(" number of eigenvalues found: %d\n", nev2);
       /* print eigenvalues */
@@ -289,15 +276,15 @@ int main() {
       counts[sl] = nev2;
       //-------------------- free allocated space withing this scope
       if (lam)
-        free(lam);
+        evsl_Free(lam);
       if (Y)
-        free(Y);
+        evsl_Free(Y);
       if (res)
-        free(res);
+        evsl_Free(res);
       FreeASIGMABSolDirect(rat.num, solshiftdata);
-      free(solshiftdata);
+      evsl_Free(solshiftdata);
       free_rat(&rat);
-      free(ind);
+      evsl_Free(ind);
     } // for (sl=0; sl<nslices; sl++)
     //-------------------- free other allocated space
     fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
@@ -308,22 +295,22 @@ int main() {
         fprintf(fmtout, "%.15e\n", alleigs[j]);
       fclose(fmtout);
     }
-    free(vinit);
-    free(sli);
+    evsl_Free(vinit);
+    evsl_Free(sli);
     free_coo(&Acoo);
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
     free_csr(&Acsr0);
     free_csr(&Bcsr0);
-    free(alleigs);
-    free(counts);
+    evsl_Free(alleigs);
+    evsl_Free(counts);
     if (fstats != stdout) {
       fclose(fstats);
     }
     /*-------------------- end matrix loop */
   }
-  free(mu);
+  evsl_Free(mu);
   if (flog != stdout) {
     fclose(flog);
   }

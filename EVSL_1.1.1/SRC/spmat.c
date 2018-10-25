@@ -1,8 +1,5 @@
 #include <string.h>
-#include "def.h"
-#include "blaslapack.h"
-#include "struct.h"
-#include "internal_proto.h"
+#include "internal_header.h"
 
 /**
  * @file spmat.c
@@ -72,16 +69,16 @@ void sortrow(csrMat *A) {
   // work array
   double *b;
   int *jb, *ib;
-  Malloc(b, nnz, double);
-  Malloc(jb, nnz, int);
-  Malloc(ib, ncols+1, int);
+  b = evsl_Malloc(nnz, double);
+  jb = evsl_Malloc(nnz, int);
+  ib = evsl_Malloc(ncols+1, int);
   // double transposition
   csrcsc(0, nrows, ncols, 1, A->a, A->ja, A->ia, b, jb, ib);
   csrcsc(0, ncols, nrows, 1, b, jb, ib, A->a, A->ja, A->ia);
   // free
-  free(b);
-  free(jb);
-  free(ib);
+  evsl_Free(b);
+  evsl_Free(jb);
+  evsl_Free(ib);
 }
 
 /**
@@ -95,9 +92,9 @@ void csr_resize(int nrow, int ncol, int nnz, csrMat *csr) {
   csr->owndata = 1;
   csr->nrows = nrow;
   csr->ncols = ncol;
-  Malloc(csr->ia, nrow+1, int);
-  Malloc(csr->ja, nnz, int);
-  Malloc(csr->a, nnz, double);
+  csr->ia = evsl_Malloc(nrow+1, int);
+  csr->ja = evsl_Malloc(nnz, int);
+  csr->a = evsl_Malloc(nnz, double);
 }
 
 /**
@@ -109,9 +106,9 @@ void free_csr(csrMat *csr) {
   if (!csr->owndata) {
     return;
   }
-  free(csr->ia);
-  free(csr->ja);
-  free(csr->a);
+  evsl_Free(csr->ia);
+  evsl_Free(csr->ja);
+  evsl_Free(csr->a);
 }
 
 /**
@@ -145,9 +142,9 @@ void csr_copy(csrMat *A, csrMat *B, int allocB) {
  * @param[in] coo Coo matrix to free
  */
 void free_coo(cooMat *coo) {
-  free(coo->ir);
-  free(coo->jc);
-  free(coo->vv);
+  evsl_Free(coo->ir);
+  evsl_Free(coo->jc);
+  evsl_Free(coo->vv);
 }
 
 /**
@@ -407,8 +404,8 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
     }
     C->ia[i+1] = k;
   }
-  Realloc(C->ja, k, int);
-  Realloc(C->a, k, double);
+  C->ja = evsl_Realloc(C->ja, k, int);
+  C->a = evsl_Realloc(C->a, k, double);
   return 0;
 }
 

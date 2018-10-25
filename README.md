@@ -90,9 +90,6 @@ folder of the package in EVSL_1.1.x
    testing. However,  be aware that it is significantly slower than other available
     direct solvers such as those in SuiteSparse  for example  (see below).
 
-   NOTE: The compiler used to compile CXSparse is specified in the makefile
-   at EXTERNAL/CXSparse/Lib/Makefile.
-
 >  NOTE: CXSparse, which is  distributed with EVSL, is Copyrighted by
 >  Timothy Davis. As noted above much better performance can be
 >  achieved by other existing direct solvers. 

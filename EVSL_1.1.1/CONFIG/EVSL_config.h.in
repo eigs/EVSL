@@ -1,0 +1,64 @@
+
+/* Release name */
+#undef EVSL_RELEASE_NAME
+
+/* Version number */
+#undef EVSL_RELEASE_VERSION
+
+/* Date of release */
+#undef EVSL_RELEASE_DATE
+
+/* Time of release */
+#undef EVSL_RELEASE_TIME
+
+/* Bug reports */
+#undef EVSL_RELEASE_BUGS
+
+/* Define to 1 for Linux platforms */
+#undef EVSL_ARCH_LINUX
+
+/* Define to 1 for Mac platforms */
+#undef EVSL_ARCH_MAC
+
+/* Using internal BLAS routines in EVSL */
+#undef EVSL_USING_EVSL_BLAS
+
+/* Using internal LAPACK routines in EVSL */
+#undef EVSL_USING_EVSL_LAPACK
+
+/* Using long int version of Cholmod in SuiteSparse interface */
+#undef EVSL_CHOLMOD_USE_LONG
+
+/* Using Intel MKL */
+#undef EVSL_USING_INTEL_MKL
+
+/* Enable OpenMP support */
+#undef EVSL_USING_OPENMP
+
+/* EVSL basic data types */
+
+/* EVSL data type for integer */
+#undef EVSL_Int
+
+/* EVSL data type for unsigned integer */
+#undef EVSL_Unsigned
+
+/* EVSL data type for long integer */
+#undef EVSL_LongInt
+
+/* EVSL data type for real */
+#undef EVSL_Real
+
+/* EVSL data type for complex */
+#undef EVSL_Complex
+
+/* Define to a macro mangling the given C identifier (in lower and upper
+ * case), which must not contain underscores, for linking with Fortran. */
+#undef FC_FUNC
+
+/* As FC_FUNC, but for C identifiers containing underscores. */
+#undef FC_FUNC_
+
+/* EVSL Fortran 90 interface naming mangling */
+#define EVSLFORT(name, NAME) FC_FUNC_(name ## _f90, NAME ## _f90)
+

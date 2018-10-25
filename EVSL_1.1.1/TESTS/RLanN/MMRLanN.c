@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
 #include <sys/stat.h>
 #include <math.h>
 #include <complex.h>
@@ -8,34 +8,24 @@
 #include "io.h"
 #include "evsl_direct.h"
 
-#ifdef __cplusplus
-extern "C" {
-
-#define max(a, b) std::max(a, b)
-#define min(a, b) std::min(a, b)
-#else
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
 #define TRIV_SLICER 0
 
-int main () { 
+int main () {
   int ierr = 0;
   /*--------------------------------------------------------------
    * this tests the spectrum slicing idea for a generic matrix
    * read in matrix format -- using
    * Thick-Restarted Lanczos with rational filtering.
    *-------------------------------------------------------------*/
-  int n=0, sl, i, j, nev, totcnt; 
+  int n=0, sl, i, j, nev, totcnt;
   double a, b, ecount, xintv[4];
-  double lmin, lmax; 
-  double *alleigs; 
-  int n_intv;      // number of subintervals (slices)  
-  int npnts;       // number of integration points for eigenvalue count 
+  double lmin, lmax;
+  double *alleigs;
+  int n_intv;      // number of subintervals (slices)
+  int npnts;       // number of integration points for eigenvalue count
   /*-------------------- matrix A: coo format and csr format */
   cooMat Acoo;
-  csrMat Acsr; 
+  csrMat Acsr;
   /* tolerance to accept ev */
   double tol;
   /* total #ev computed; the computed eig val/vec */
@@ -49,34 +39,29 @@ int main () {
   FILE *fstats = NULL;
   io_t io;
   int numat, mat;
-  char line[MAX_LINE]; 
+  char line[MAX_LINE];
   /* initial vector: random */
   double *vinit;
   tol = 1e-6;
   /* parameters for rational filter */
-  int pow = 2; // multiplicity of the pole 
+  int pow = 2; // multiplicity of the pole
   double beta = 0.01; // beta in the LS approximation
   /* slicer parameters */
   npnts = 1000;
   Mdeg = 300;
-  nvec = 60;  
+  nvec = 60;
   /*-------------------- start EVSL */
   EVSLStart();
-  /* interior eigensolver parameters */  
-  double *mu = malloc((Mdeg+1)*sizeof(double)); // coeff. for kpmdos
+  /* interior eigensolver parameters */
+  double *mu = evsl_Malloc(Mdeg+1, double); // coeff. for kpmdos
   int *counts; // #ev computed in each slice
   double *sli; // endpoints of partitioned slices
-#if CXSPARSE == 1
-  printf("-----------------------------------------\n");
-  printf("Note: You are using CXSparse for the direct solver. \n We recommend a more performance based direct solver for anything more than basic tests. \n SuiteSparse is supported with a makefile change. \n Using SuiteSparse can result in magnitudes faster times. \n\n");
-  printf("-----------------------------------------\n");
-#endif
   /*------------------ file "matfile" contains paths to matrices */
   if( NULL == ( fmat = fopen( "matfile", "r" ) ) ) {
     fprintf( flog, "Can't open matfile...\n" );
     exit(2);
   }
-  /*-------------------- read number of matrices ..*/  
+  /*-------------------- read number of matrices ..*/
   memset( line, 0, MAX_LINE );
   if (NULL == fgets( line, MAX_LINE, fmat )) {
     fprintf( flog, "error in reading matfile...\n" );
@@ -93,7 +78,7 @@ int main () {
       exit(5);
     }
     /*----------------input matrix and interval information -*/
-    fprintf(flog, "MATRIX: %s...\n", io.MatNam);
+    fprintf(flog, "MATRIX: %s...\n", io.MatNam1);
     a = io.a; // left endpoint of input interval
     b = io.b; // right endpoint of input interval
     n_intv = io.n_intv;
@@ -105,20 +90,20 @@ int main () {
 
     char path[1024];   // path to write the output files
     strcpy( path, "OUT/MMRLanN_");
-    strcat( path, io.MatNam);
-    fstats = fopen(path,"w"); // write all the output to the file io.MatNam 
+    strcat( path, io.MatNam1);
+    fstats = fopen(path,"w"); // write all the output to the file io.MatNam
     if (!fstats) {
       printf(" failed in opening output file in OUT/\n");
       fstats = stdout;
     }
-    fprintf(fstats, "MATRIX: %s...\n", io.MatNam);
+    fprintf(fstats, "MATRIX: %s...\n", io.MatNam1);
     fprintf(fstats,"Partition the interval of interest [%f,%f] into %d slices\n",
             a,b,n_intv);
-    counts = (int *) malloc(n_intv*sizeof(int));
-    sli = (double *) malloc( (n_intv+1)*sizeof(double));
+    counts = evsl_Malloc(n_intv, int);
+    sli = evsl_Malloc(n_intv+1, double);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB){
-      ierr =read_coo_MM(io.Fname, 1, 0, &Acoo); 
+      ierr =read_coo_MM(io.Fname1, 1, 0, &Acoo);
       if (ierr == 0) {
         fprintf(fstats,"matrix read successfully\n");
         n = Acoo.nrows;
@@ -135,16 +120,16 @@ int main () {
       exit(7);
     }
     /*-------------------- set the left-hand side matrix A */
-    SetAMatrix(&Acsr);    
+    SetAMatrix(&Acsr);
     /*-------------------- define parameters for DOS */
-    alleigs = (double *) malloc(n*sizeof(double));
-    vinit = (double *) malloc(n*sizeof(double));
+    alleigs = evsl_Malloc(n, double);
+    vinit = evsl_Malloc(n, double);
     rand_double(n, vinit);
     /*-------------------- get lambda_min lambda_max estimates */
     ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bounds for A: [%.15e, %.15e]\n",
             lmin, lmax);
-    /*-------------------- define [a b] now so we can get estimates now    
+    /*-------------------- define [a b] now so we can get estimates now
       on number of eigenvalues in [a b] from kpmdos */
     fprintf(fstats," --> interval: a  %9.3e  b %9.3e \n",a, b);
     /*-------------------- define kpmdos parameters */
@@ -158,8 +143,8 @@ int main () {
       ierr = kpmdos(Mdeg, 0, nvec, xintv, mu, &ecount);
       t = evsl_timer() - t;
       if (ierr) {
-	printf("kpmdos error %d\n", ierr);
-	return 1;
+        printf("kpmdos error %d\n", ierr);
+        return 1;
       }
       fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n",t);
       fprintf(fstats, "Step 1a: Estimated eig count in interval - %10.2e \n",
@@ -188,11 +173,11 @@ int main () {
       fprintf(fstats,"[% 12.4e , % 12.4e]\n", sli[j],sli[j+1]);
     //-------------------- # eigs per slice
     //-------------------- approximate number of eigenvalues wanted
-    double fac = 1.2;   // this factor insures that # of eigs per slice is slightly overestimated 
+    double fac = 1.2;   // this factor insures that # of eigs per slice is slightly overestimated
     printf("Total number of eigenvalues estimated = %d \n", (int)(ecount));
     nev = (int) (1 + ecount / ((double) n_intv));  // # eigs per slice
-    nev = (int)(fac*nev);                        // want an overestimate of ev_int 
-    max_its = max(4*nev,300);  max_its = min(max_its, n);   
+    nev = (int)(fac*nev);                        // want an overestimate of ev_int
+    max_its = evsl_max(4*nev,300);  max_its = evsl_min(max_its, n);
     fprintf(fstats, "Step 2: In each slice compute %d eigenvalues ... \n", nev);
     /*-------------------- MAIN intv LOOP: for each sclice Do: */
     totcnt = 0;
@@ -200,20 +185,20 @@ int main () {
       fprintf(fstats,"======================================================\n");
       double *lam, *Y, *res;
       int *ind;
-      //-------------------- 
+      //--------------------
       a = sli[sl];
       b = sli[sl+1];
       StatsReset();
-      fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b); 
+      fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b);
       //-------------------- Parameters for RatLanNr
       fprintf(fstats, " Max Lanczos steps %d\n", max_its);
       double intv[4]; // endpoints of this slice and spectrum
-      intv[0] = a; 
+      intv[0] = a;
       intv[1] = b;
       intv[2] = lmin;
       intv[3] = lmax;
       printf("=== Compute the %dth subinterval: [%.4e, %.4e] out of %d ===\n",
-             sl+1, a, b, n_intv); 
+             sl+1, a, b, n_intv);
       //------------Find the rational filter on this slice
       ratparams rat;
       //------------Set up default parameters for rat
@@ -222,23 +207,25 @@ int main () {
       rat.beta = beta;
       rat.pow = pow;
       //-------------Now determine rational filter
-      find_ratf(intv, &rat);    
-     /*------------ use direct solver function  */
-      void **solshiftdata = (void **) malloc(rat.num*sizeof(void *));
-     /*------------ factoring the shifted matrices and store the factors */
+      find_ratf(intv, &rat);
+      /*------------ use direct solver function  */
+      void **solshiftdata = evsl_Malloc(rat.num, void *);
+      /*------------ factoring the shifted matrices and store the factors */
       SetupASIGMABSolDirect(&Acsr, NULL, rat.num, rat.zk, solshiftdata);
-     /*------------ give the data to rat */
-      SetASigmaBSol(&rat, NULL, ASIGMABSolDirect, solshiftdata);    
-    //-------------------- RationalLanNr
-    ierr = RatLanNr(intv, max_its, tol, vinit, &rat, &nevOut, &lam, 
-                    &Y, &res, fstats);     
+      /*------------ set the solver for A-sI in rat */
+      for (i=0; i<rat.num; i++) {
+        SetASigmaBSol(&rat, i, ASIGMABSolDirect, solshiftdata[i]);
+      }
+      //-------------------- RationalLanNr
+      ierr = RatLanNr(intv, max_its, tol, vinit, &rat, &nevOut, &lam,
+                      &Y, &res, fstats);
       if (ierr) {
         printf("RatLanNr error %d\n", ierr);
         return 1;
       }
       /* sort the eigenvals: ascending order
        * ind: keep the orginal indices */
-      ind = (int *) malloc(nevOut*sizeof(int));
+      ind = evsl_Malloc(nevOut, int);
       sort_double(nevOut, lam, ind);
 
       /* print eigenvalues */
@@ -259,17 +246,17 @@ int main () {
       counts[sl] = nevOut;
       StatsPrint(stdout);
       /*-------------------- free memory within  this loop */
-      if (lam)  free(lam);
-      if (Y)  free(Y);
-      if (res)  free(res);
-      free(ind);
+      if (lam)  evsl_Free(lam);
+      if (Y)  evsl_Free(Y);
+      if (res)  evsl_Free(res);
+      evsl_Free(ind);
       FreeASIGMABSolDirect(rat.num, solshiftdata);
-      free(solshiftdata);      
+      evsl_Free(solshiftdata);
       free_rat(&rat);
       /*-------------------- end slice loop */
     }
     fprintf(fstats," --> Total eigenvalues found = %d\n",totcnt);
-    sprintf(path, "OUT/EigsOut_RLanN_%s", io.MatNam);
+    sprintf(path, "OUT/EigsOut_RLanN_%s", io.MatNam1);
     FILE *fmtout = fopen(path,"w");
     if (fmtout) {
       for (j=0; j<totcnt; j++)
@@ -277,17 +264,17 @@ int main () {
       fclose(fmtout);
     }
     /*-------------------- free memory within  this loop */
-    free(vinit);
+    evsl_Free(vinit);
     free_coo(&Acoo);
     free_csr(&Acsr);
-    free(sli);
-    free(counts);
-    free(alleigs);
+    evsl_Free(sli);
+    evsl_Free(counts);
+    evsl_Free(alleigs);
     if (fstats != stdout) fclose(fstats);
     /*-------------------- end matrix loop */
   }
   //-------------------- free rest of memory
-  free(mu);
+  evsl_Free(mu);
   if( flog != stdout ) fclose ( flog );
   fclose( fmat );
   /*-------------------- finalize EVSL */
@@ -295,6 +282,3 @@ int main () {
   return 0;
 }
 
-#ifdef __cplusplus
-}
-#endif

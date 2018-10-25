@@ -1,34 +1,43 @@
-.SUFFIXES : .c .o
-
 include ../makefile.in
 
-INCLUDES = -I../INC -ISRC
-ifeq ($(INTEL), 1)
+SRC_DIRS=
+ifeq ($(LIBBLAS), )
+SRC_DIRS += blas
+endif
+
+ifeq ($(LIBLAPACK), )
+SRC_DIRS += lapack
+endif
+
+INCLUDES = -I../INC
+ifeq ($(INTEL_MKL), 1)
 INCLUDES += -I${MKLROOT}/include
 endif
 
 # Object files
-OBJS = 	evsl.o dumps.o cheblanNr.o cheblanTr.o chebpoly.o lanbounds.o \
-        lanTrbounds.o misc_la.o ratfilter.o ratlanNr.o ratlanTr.o spmat.o \
-        spslice.o vect.o chebsi.o landos.o spslice2.o simpson.o  dos_utils.o \
-	landosG.o stats.o \
-	../FORTRAN/evsl_f90.o
+SRC = \
+cheblanNr.c  chebsi.c     evsl.c         exDOS.c      landosG.c      ratfilter.c  simpson.c   spslice.c  vect.c \
+cheblanTr.c  dos_utils.c  evsl_f90.c     lanbounds.c  lanTrbounds.c  ratlanNr.c   spmat.c     stats.c           \
+chebpoly.c   dumps.c      evsl_memory.c  landos.c     misc_la.c      ratlanTr.c   spslice2.c  timing.c
 
-### OBJ_TIME = defined in makefile.in 
-##mactime.o  
-##timing.o
+OBJS = ${SRC:.c=.o}
 
-LIB = ../libevsl.a
+all: $(OBJS)
+	@ \
+	for i in ${SRC_DIRS}; \
+	do \
+	   echo "Making $$i ..."; \
+	   ( cd $$i && $(MAKE) $@) || exit 1; \
+	   echo ""; \
+	done
 
-# Rules
-default: $(LIB)
-
-%.o : %.c
-	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c -x c $<
-
-$(LIB): $(OBJS) $(OBJ_TIME) 
-	$(AR) $@ $(OBJS) $(OBJ_TIME)
-	$(RANLIB) $@
 
 clean:
-	rm -f $(OBJS) $(OBJ_TIME) $(TIME_FILE) $(LIB)
+	@ \
+	for i in ${SRC_DIRS}; \
+	do \
+	   echo "Cleaning $$i ..."; \
+	   ( cd $$i && $(MAKE) $@ ) || exit 1; \
+	   echo ""; \
+	done
+	rm -f *.o

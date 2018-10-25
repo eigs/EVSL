@@ -1,14 +1,11 @@
 //============================================================================
 // Routines for computing eigenvalues of a symmetric tridiagonal matrix.
-// They are wrappers of the LAPACK routine DSTEV() or sstev_()
+// They are wrappers of the LAPACK routine dstev() or sstev_()
 //============================================================================
 
 #include <stdio.h>
 #include <string.h>  // for memcpy, strcmp, strncmp, etc.
-#include "def.h"
-#include "blaslapack.h"
-#include "struct.h"
-#include "internal_proto.h"
+#include "internal_header.h"
 
 /* in Gram-Schmidt, use BLAS-2 GEMV or BLAS-1 DOT/AXPY */
 #define USE_DGEMV 1
@@ -30,7 +27,7 @@
  *          in the order as elements in eigVal. If NULL, then no eigenvector
  *          will be computed
  *  @return The flag returned by the
- *  LAPACK routine DSTEV() (if double) or stev_() (if float)
+ *  LAPACK routine dstev() (if double) or sstev_() (if float)
  * --------------------------------------------------------------------- */
 
 int SymmTridEig(double *eigVal, double *eigVec, int n,
@@ -44,23 +41,23 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
   // copy diagonal and subdiagonal elements to alp and bet
   double *alp = eigVal;
   double *bet;
-  Malloc(bet, n-1, double);
+  bet = evsl_Malloc(n-1, double);
   memcpy(alp, diag, n*sizeof(double));
   memcpy(bet, sdiag, (n-1)*sizeof(double));
   // allocate storage for computation
   double *sv = eigVec;
   double *work = NULL;
   if (jobz == 'V') {
-    Malloc(work, 2*n-2, double);
+    work = evsl_Malloc(2*n-2, double);
   }
-  DSTEV(&jobz, &nn, alp, bet, sv, &ldz, work, &info);
+  evsl_dstev(&jobz, &nn, alp, bet, sv, &ldz, work, &info);
   // free memory
-  free(bet);
+  evsl_Free(bet);
   if (work) {
-    free(work);
+    evsl_Free(work);
   }
   if (info) {
-    printf("DSTEV ERROR: INFO %d\n", info);
+    printf("evsl_dstev ERROR: INFO %d\n", info);
     save_vec(n, diag, "alp");
     save_vec(n-1, sdiag, "bet");
     exit(0);
@@ -89,7 +86,7 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
  *
  *  This
  *  routine  computes selected  eigenvalues/vectors as  specified by  a
- *  range of values. This is a wrapper to the LAPACK routine DSTEMR().
+ *  range of values. This is a wrapper to the LAPACK routine dstemr().
  * ----------------------------------------------------------------------- */
 int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
                  int *nevO, const double *diag, const double *sdiag) {
@@ -102,21 +99,21 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   //int idum = 0;
   //-------------------- isuppz not needed
   int *isuppz;
-  Malloc(isuppz, 2*n, int);
+  isuppz = evsl_Malloc(2*n, int);
   //-------------------- real work array
   double *work;
   int lwork = 18*n;
-  Malloc(work, lwork, double);
+  work = evsl_Malloc(lwork, double);
   //-------------------- int work array
   int *iwork;
   int liwork = 10*n;
-  Calloc(iwork, liwork, int);
+  iwork = evsl_Calloc(liwork, int);
   //-------------------- copy diagonal + subdiagonal elements
   //                     to alp and bet
   double *alp;
   double *bet;
-  Malloc(bet, n, double);
-  Malloc(alp, n, double);
+  bet = evsl_Malloc(n, double);
+  alp = evsl_Malloc(n, double);
   //
   memcpy(alp, diag, n*sizeof(double));
   if (n > 1) {
@@ -129,20 +126,20 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   double t0 = vl;
   double t1 = vu;
 
-  DSTEMR(&jobz, &range, &n, alp, bet, &t0, &t1, NULL, NULL, nevO,
-         eigVal, eigVec, &n, &n, isuppz, &tryrac, work, &lwork,
-         iwork, &liwork, &info);
+  evsl_dstemr(&jobz, &range, &n, alp, bet, &t0, &t1, NULL, NULL, nevO,
+              eigVal, eigVec, &n, &n, isuppz, &tryrac, work, &lwork,
+              iwork, &liwork, &info);
 
   if (info) {
     printf("dstemr_ error %d\n", info);
   }
 
   //-------------------- free memory
-  free(bet);
-  free(alp);
-  free(work);
-  free(iwork);
-  free(isuppz);
+  evsl_Free(bet);
+  evsl_Free(alp);
+  evsl_Free(work);
+  evsl_Free(iwork);
+  evsl_Free(isuppz);
 
   double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
@@ -177,7 +174,7 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
   /*   first call: workspace query */
   double work_size;
   int lwork = -1, info;
-  DSYEV(&jobz, &uplo, &n, Q, &ldq, lam, &work_size, &lwork, &info);
+  evsl_dsyev(&jobz, &uplo, &n, Q, &ldq, lam, &work_size, &lwork, &info);
   if (info != 0) {
     fprintf(stdout, "DSYEV error [query call]: %d\n", info);
     exit(0);
@@ -185,13 +182,13 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
   /*   second call: do the computation */
   lwork = (int) work_size;
   double *work;
-  Malloc(work, lwork, double);
-  DSYEV(&jobz, &uplo, &n, Q, &ldq, lam, work, &lwork, &info);
+  work = evsl_Malloc(lwork, double);
+  evsl_dsyev(&jobz, &uplo, &n, Q, &ldq, lam, work, &lwork, &info);
   if (info != 0) {
     fprintf(stdout, "DSYEV error [comp call]: %d\n", info);
     exit(0);
   }
-  free(work);
+  evsl_Free(work);
   double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
 }
@@ -214,21 +211,21 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
   char cT = 'T', cN = 'N';
   double done=1.0, dmone=-1.0, dzero=0.0;
 #endif
-  double old_nrm = DNRM2(&n, v, &one);
+  double old_nrm = evsl_dnrm2(&n, v, &one);
   double new_nrm = 0.0;
 
   for (i=0; i<i_max; i++) {
 #if USE_DGEMV
-    DGEMV(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
-    DGEMV(&cN, &n, &k, &dmone, Q, &n, w, &one, &done,  v, &one);
+    evsl_dgemv(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
+    evsl_dgemv(&cN, &n, &k, &dmone, Q, &n, w, &one, &done,  v, &one);
 #else
     int j;
     for (j=0; j<k; j++) {
-       double t = -DDOT(&n, &Q[j*n], &one, v, &one);
-       DAXPY(&n, &t, &Q[j*n], &one, v, &one);
+       double t = -evsl_ddot(&n, &Q[j*n], &one, v, &one);
+       evsl_daxpy(&n, &t, &Q[j*n], &one, v, &one);
     }
 #endif
-    new_nrm = DNRM2(&n, v, &one);
+    new_nrm = evsl_dnrm2(&n, v, &one);
     if (new_nrm > eta * old_nrm) {
       break;
     }
@@ -264,13 +261,13 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
 #endif
   for (i=0; i<i_max; i++) {
 #if USE_DGEMV
-    DGEMV(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
-    DGEMV(&cN, &n, &k, &dmone, Z, &n, w, &one, &done,  v, &one);
+    evsl_dgemv(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
+    evsl_dgemv(&cN, &n, &k, &dmone, Z, &n, w, &one, &done,  v, &one);
 #else
     int j;
     for (j=0; j<k; j++) {
-       double t = -DDOT(&n, &Q[j*n], &one, v, &one);
-       DAXPY(&n, &t, &Z[j*n], &one, v, &one);
+       double t = -evsl_ddot(&n, &Q[j*n], &one, v, &one);
+       evsl_daxpy(&n, &t, &Z[j*n], &one, v, &one);
     }
 #endif
   }
@@ -294,16 +291,16 @@ void orth(double *V, int n, int k, double *Vo, double *work) {
   int i;
   int one=1;
   int nk = n*k;
-  DCOPY(&nk, V, &one, Vo, &one);
-  double tt = DDOT(&n, Vo, &one, Vo, &one);
+  evsl_dcopy(&nk, V, &one, Vo, &one);
+  double tt = evsl_ddot(&n, Vo, &one, Vo, &one);
   double nrmv = sqrt(tt);
   double t = 1.0 / nrmv;
-  DSCAL(&n, &t, Vo, &one);
+  evsl_dscal(&n, &t, Vo, &one);
   for (i = 1; i < k; i++) {
     int istart = i*n;
     CGS_DGKS(n, i, NGS_MAX, Vo, Vo+istart, &nrmv, work);
     t = 1.0 / nrmv;
-    DSCAL(&n, &t, Vo+istart, &one);
+    evsl_dscal(&n, &t, Vo+istart, &one);
   }
 }
 

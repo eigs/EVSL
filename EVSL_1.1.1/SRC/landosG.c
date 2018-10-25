@@ -2,12 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "blaslapack.h"
-#include "def.h"
-#include "evsl.h"
-#include "internal_proto.h"
-#include "string.h"  //for memset
-#include "struct.h"
+#include "internal_header.h"
 
 /**
  * @file SRC/landosG.c
@@ -53,38 +48,38 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
   const int ifGenEv = evsldata.ifGenEv;
 
   double *vinit;
-  Malloc(vinit, n, double);
+  vinit = evsl_Malloc(n, double);
 
   int *ind;
-  Malloc(ind, npts, int);
+  ind = evsl_Malloc(npts, int);
   double *y;
-  Calloc(y, npts, double);
+  y = evsl_Calloc(npts, double);
 
   /*-------------------- frequently used constants  */
   int one = 1;
   maxit = evsl_min(n, maxit);
   size_t maxit_l = maxit;
   double *gamma2;
-  Calloc(gamma2, maxit, double);
+  gamma2 = evsl_Calloc(maxit, double);
   /*-----------------------------------------------------------------------*
    * *Non-restarted* Lanczos iteration
    *-----------------------------------------------------------------------
    -------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
-  Calloc(V, n_l * (maxit + 1), double);
+  V = evsl_Calloc(n_l * (maxit + 1), double);
   if (ifGenEv) {
     /* storage for Z = B * V */
-    Calloc(Z, n_l * (maxit + 1), double);
+    Z = evsl_Calloc(n_l * (maxit + 1), double);
   } else {
     /* Z and V are the same */
     Z = V;
   }
   /*-------------------- diag. subdiag of Tridiagional matrix */
-  Malloc(dT, maxit, double);
-  Malloc(eT, maxit, double);
+  dT = evsl_Malloc(maxit, double);
+  eT = evsl_Malloc(maxit, double);
   double *EvalT, *EvecT;
-  Malloc(EvalT, maxit, double);          /* eigenvalues of tridia. matrix  T */
-  Malloc(EvecT, maxit_l * maxit_l, double);  /* Eigen vectors of T */
+  EvalT = evsl_Malloc(maxit, double);          /* eigenvalues of tridia. matrix  T */
+  EvecT = evsl_Malloc(maxit_l * maxit_l, double);  /* Eigen vectors of T */
   const double lm = intv[2];
   const double lM = intv[3];
   const double aa = evsl_max(intv[0], intv[2]);
@@ -101,7 +96,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
   /*-------------------- u  is just a pointer. wk == work space */
   double *wk;
   const size_t wk_size = ifGenEv ? 6 * n_l : 4 * n_l;
-  Malloc(wk, wk_size, double);
+  wk = evsl_Malloc(wk_size, double);
   for (m = 0; m < nvec; m++) {
     randn_double(n, vinit);
     /*-------------------- copy initial vector to Z(:,1) */
@@ -114,15 +109,15 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
     if (ifGenEv) {
       /* B norm */
       matvec_B(V, Z);
-      t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
-      DSCAL(&n, &t, Z, &one);
+      t = 1.0 / sqrt(evsl_ddot(&n, V, &one, Z, &one));
+      evsl_dscal(&n, &t, Z, &one);
     } else {
       /* 2-norm */
-      t = 1.0 / DNRM2(&n, vinit, &one);  // add a test here.
-      DCOPY(&n, vinit, &one, V, &one);
+      t = 1.0 / evsl_dnrm2(&n, vinit, &one);  // add a test here.
+      evsl_dcopy(&n, vinit, &one, V, &one);
     }
     /* unit B^{-1}-norm or 2-norm */
-    DSCAL(&n, &t, V, &one);
+    evsl_dscal(&n, &t, V, &one);
     /*-------------------- for ortho test */
     double wn = 0.0;
     int nwn = 0;
@@ -148,16 +143,16 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
       /*------------------ znew = znew - beta*zold */
       if (zold) {
         nbeta = -beta;
-        DAXPY(&n, &nbeta, zold, &one, znew, &one);
+        evsl_daxpy(&n, &nbeta, zold, &one, znew, &one);
       }
       /*-------------------- alpha = znew'*v */
-      alpha = DDOT(&n, v, &one, znew, &one);
+      alpha = evsl_ddot(&n, v, &one, znew, &one);
       /*-------------------- T(k,k) = alpha */
       dT[k] = alpha;
       wn += fabs(alpha);
       /*-------------------- znew = znew - alpha*z */
       nalpha = -alpha;
-      DAXPY(&n, &nalpha, z, &one, znew, &one);
+      evsl_daxpy(&n, &nalpha, z, &one, znew, &one);
       /*-------------------- FULL reortho to all previous Lan vectors */
       if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
@@ -165,7 +160,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
         /* vnew = B \ znew */
         solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
-        beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+        beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
       } else {
         /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
         /* beta = norm(vnew) */
@@ -181,12 +176,12 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
           CGS_DGKS2(n, k + 1, NGS_MAX, V, Z, vnew, wk);
           /* -------------- NOTE: B-matvec */
           matvec_B(vnew, znew);
-          beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+          beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
           /*-------------------- vnew = vnew / beta */
           t = 1.0 / beta;
-          DSCAL(&n, &t, vnew, &one);
+          evsl_dscal(&n, &t, vnew, &one);
           /*-------------------- znew = znew / beta */
-          DSCAL(&n, &t, znew, &one);
+          evsl_dscal(&n, &t, znew, &one);
           beta = 0.0;
         } else {
           /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
@@ -194,16 +189,16 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
           CGS_DGKS(n, k + 1, NGS_MAX, V, vnew, &beta, wk);
           /*-------------------- vnew = vnew / beta */
           t = 1.0 / beta;
-          DSCAL(&n, &t, vnew, &one);
+          evsl_dscal(&n, &t, vnew, &one);
           beta = 0.0;
         }
       } else {
         /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
-        DSCAL(&n, &t, vnew, &one);
+        evsl_dscal(&n, &t, vnew, &one);
         if (ifGenEv) {
           /*-------------------- znew = znew / beta */
-          DSCAL(&n, &t, znew, &one);
+          evsl_dscal(&n, &t, znew, &one);
         }
       }
       /*-------------------- T(k+1,k) = beta */
@@ -232,25 +227,25 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
       }
     }
   }
-  double scaling = 1.0 / (nvec * sqrt(sigma2 * PI));
+  double scaling = 1.0 / (nvec * sqrt(sigma2 * EVSL_PI));
   /* y = ydos * scaling */
-  DSCAL(&npts, &scaling, y, &one);
-  DCOPY(&npts, y, &one, ydos, &one);
+  evsl_dscal(&npts, &scaling, y, &one);
+  evsl_dcopy(&npts, y, &one, ydos, &one);
   simpson(xdos, y, npts);
   *neig = y[npts - 1] * n;
-  free(gamma2);
+  evsl_Free(gamma2);
   /*-------------------- free arrays */
-  free(vinit);
-  free(V);
-  free(dT);
-  free(eT);
-  free(EvalT);
-  free(EvecT);
-  free(wk);
-  free(y);
-  free(ind);
+  evsl_Free(vinit);
+  evsl_Free(V);
+  evsl_Free(dT);
+  evsl_Free(eT);
+  evsl_Free(EvalT);
+  evsl_Free(EvecT);
+  evsl_Free(wk);
+  evsl_Free(y);
+  evsl_Free(ind);
   if (ifGenEv) {
-    free(Z);
+    evsl_Free(Z);
   }
 
   return 0;
