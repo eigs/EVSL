@@ -38,7 +38,7 @@ cholmod_sparse* csrMat_to_cholmod_sparse(csrMat *A, int stype) {
   /* long int version, allocate memory and copy ia, ja */
   B->p = evsl_Malloc(B->nrow+1, SuiteSparse_long);
   B->i = evsl_Malloc(B->nzmax, SuiteSparse_long);
-  int i;
+  size_t i;
   for (i=0; i<B->nrow+1; i++) {
     SuiteSparse_long *ptr = (SuiteSparse_long *) B->p;
     ptr[i] = A->ia[i];
