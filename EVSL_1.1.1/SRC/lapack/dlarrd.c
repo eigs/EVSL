@@ -35,7 +35,7 @@ static integer c__0 = 0;
     integer nwu;
     doublereal tmp1, tmp2;
     integer iend, jblk, ioff, iout, itmp1, itmp2, jdisc;
-    extern logical lsame_(const char *, const char *);
+    /* extern logical lsame_(const char *, const char *); */
     integer iinfo;
     doublereal atoli;
     integer iwoff, itmax;

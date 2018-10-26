@@ -18,7 +18,7 @@ int evsl_dsyev(const char *jobz, const char *uplo, EVSL_Int *n, EVSL_Real *a, EV
 int evsl_dstemr(const char *jobz, const char *range, EVSL_Int *n, EVSL_Real *d__, EVSL_Real *e, EVSL_Real *vl, EVSL_Real *vu, EVSL_Int *il, EVSL_Int *iu, EVSL_Int *m, EVSL_Real *w, EVSL_Real *z__, EVSL_Int *ldz, EVSL_Int *nzc, EVSL_Int *isuppz, EVSL_Int *tryrac, EVSL_Real *work, EVSL_Int *lwork, EVSL_Int *iwork, EVSL_Int *liwork, EVSL_Int *info);
 int evsl_zgesv(EVSL_Int *n, EVSL_Int *nrhs, EVSL_Complex *a, EVSL_Int *lda, EVSL_Int *ipiv, EVSL_Complex *b, EVSL_Int *ldb, EVSL_Int *info);
 
-#ifndef EVSL_USING_EVSL_BLAS
+#ifndef EVSL_USING_EVSL_LAPACK
 #ifdef __cplusplus
 }
 #endif

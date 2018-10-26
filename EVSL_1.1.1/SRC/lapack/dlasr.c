@@ -10,9 +10,13 @@
     /* Local variables */
     integer i__, j, info;
     doublereal temp;
+#if 0
     extern logical lsame_(const char *, const char *);
+#endif
     doublereal ctemp, stemp;
+#if 0
     extern /* Subroutine */ int xerbla_(const char *, integer *);
+#endif
 
 
 /*  -- LAPACK auxiliary routine (version 3.1) -- */

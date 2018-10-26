@@ -8,7 +8,9 @@
 
     /* Local variables */
     integer i__, j;
+#if 0
     extern logical lsame_(const char *, const char *);
+#endif
 
 
 /*  -- LAPACK auxiliary routine (version 3.1) -- */

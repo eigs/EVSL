@@ -19,15 +19,21 @@ static integer c__1 = 1;
     doublereal eps;
     integer imax;
     doublereal rmin, rmax, tnrm;
+#if 0
     extern /* Subroutine */ int dscal_(integer *, doublereal *, doublereal *,
 	    integer *);
+#endif
     doublereal sigma;
+#if 0
     extern logical lsame_(const char *, const char *);
+#endif
     logical wantz;
     extern doublereal dlamch_(const char *);
     integer iscale;
     doublereal safmin;
+#if 0
     extern /* Subroutine */ int xerbla_(const char *, integer *);
+#endif
     doublereal bignum;
     extern doublereal dlanst_(const char *, integer *, doublereal *, doublereal *);
     extern /* Subroutine */ int dsterf_(integer *, doublereal *, doublereal *,

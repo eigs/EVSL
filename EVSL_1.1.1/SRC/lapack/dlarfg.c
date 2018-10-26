@@ -13,9 +13,11 @@
     /* Local variables */
     integer j, knt;
     doublereal beta;
+#if 0
     extern doublereal dnrm2_(integer *, doublereal *, integer *);
     extern /* Subroutine */ int dscal_(integer *, doublereal *, doublereal *,
 	    integer *);
+#endif
     doublereal xnorm;
     extern doublereal dlapy2_(doublereal *, doublereal *), dlamch_(const char *);
     doublereal safmin, rsafmn;

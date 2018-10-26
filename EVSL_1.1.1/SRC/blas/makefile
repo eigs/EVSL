@@ -1,5 +1,7 @@
 include ../../makefile.in
 
+MUTE=@
+
 # Object files
 BLAS_SRC = \
 daxpy.c   dcopy.c  dgemm.c  dger.c   dscal.c  dsymv.c  dsyr2k.c  dtrmv.c   lsame.c   zgemm.c  zscal.c  ztrsm.c \

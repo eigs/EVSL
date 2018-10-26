@@ -35,15 +35,19 @@ static doublereal c_b18 = .001;
 	    *, doublereal *, doublereal *);
     integer inde2, itmp2;
     doublereal rtol1, rtol2;
+#if 0
     extern /* Subroutine */ int dscal_(integer *, doublereal *, doublereal *,
 	    integer *);
+#endif
     doublereal scale;
     integer indgp;
-    extern logical lsame_(const char *, const char *);
+    /* extern logical lsame_(const char *, const char *); */
     integer iinfo, iindw, ilast;
+#if 0
     extern /* Subroutine */ int dcopy_(integer *, doublereal *, integer *,
 	    doublereal *, integer *), dswap_(integer *, doublereal *, integer
 	    *, doublereal *, integer *);
+#endif
     integer lwmin;
     logical wantz;
     extern /* Subroutine */ int dlaev2_(doublereal *, doublereal *,

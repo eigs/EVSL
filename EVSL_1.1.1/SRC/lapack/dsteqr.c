@@ -49,7 +49,9 @@ static integer c__2 = 2;
     extern /* Subroutine */ int dlartg_(doublereal *, doublereal *,
 	    doublereal *, doublereal *, doublereal *);
     doublereal safmax;
+#if 0
     extern /* Subroutine */ int xerbla_(const char *, integer *);
+#endif
     extern doublereal dlanst_(const char *, integer *, doublereal *, doublereal *);
     extern /* Subroutine */ int dlasrt_(const char *, integer *, doublereal *,
 	    integer *);

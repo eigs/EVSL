@@ -1,34 +1,10 @@
 #ifndef LAPACK_F2C_INCLUDE
 #define LAPACK_F2C_INCLUDE
 
-#include "../blas/f2c.h"
+/* do not use this file outside lapack directory */
 
-#ifndef EVSL_USING_EVSL_BLAS
-/* have these so that evsl's lapack can link external blas */
-#define evsl_daxpy daxpy_
-#define evsl_dcabs1 dcabs1_
-#define evsl_dcopy dcopy_
-#define evsl_ddot ddot_
-#define evsl_dgemm dgemm_
-#define evsl_dgemv dgemv_
-#define evsl_dger dger_
-#define evsl_dnrm2 dnrm2_
-#define evsl_dscal dscal_
-#define evsl_dswap dswap_
-#define evsl_dsymv dsymv_
-#define evsl_dsyr2 dsyr2_
-#define evsl_dsyr2k dsyr2k_
-#define evsl_dtrmm dtrmm_
-#define evsl_dtrmv dtrmv_
-#define evsl_izamax izamax_
-#define evsl_lsame lsame_
-#define evsl_xerbla xerbla_
-#define evsl_zgemm zgemm_
-#define evsl_zgeru zgeru_
-#define evsl_zscal zscal_
-#define evsl_zswap zswap_
-#define evsl_ztrsm ztrsm_
-#endif
+#include "../blas/f2c.h"
+#include "../blas/evsl_blas.h"
 
 /* add prefix evsl_ to all lapack subroutines,
  * so can live together with external lapack */

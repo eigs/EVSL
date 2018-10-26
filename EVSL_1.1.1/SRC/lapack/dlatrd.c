@@ -16,18 +16,22 @@ static doublereal c_b16 = 0.;
 
     /* Local variables */
     integer i__, iw;
+#if 0
     extern doublereal ddot_(integer *, doublereal *, integer *, doublereal *,
 	    integer *);
+#endif
     doublereal alpha;
+#if 0
     extern /* Subroutine */ int dscal_(integer *, doublereal *, doublereal *,
 	    integer *);
     extern logical lsame_(const char *, const char *);
-    extern /* Subroutine */ int dgemv_(const char *, integer *, integer *,
+#endif
+    extern /* Subroutine */ int /* dgemv_(const char *, integer *, integer *,
 	    doublereal *, doublereal *, integer *, doublereal *, integer *,
 	    doublereal *, doublereal *, integer *), daxpy_(integer *,
 	    doublereal *, doublereal *, integer *, doublereal *, integer *),
 	    dsymv_(const char *, integer *, doublereal *, doublereal *, integer *,
-	    doublereal *, integer *, doublereal *, doublereal *, integer *), dlarfg_(integer *, doublereal *, doublereal *, integer *,
+	    doublereal *, integer *, doublereal *, doublereal *, integer *),*/ dlarfg_(integer *, doublereal *, doublereal *, integer *,
 	     doublereal *);
 
 

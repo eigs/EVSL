@@ -16,7 +16,7 @@ doublereal dlanst_(const char *norm, integer *n, doublereal *d__, doublereal *e)
     /* Local variables */
     integer i__;
     doublereal sum, scale;
-    extern logical lsame_(const char *, const char *);
+    /* extern logical lsame_(const char *, const char *); */
     doublereal anorm=0.0;
     extern /* Subroutine */ int dlassq_(integer *, doublereal *, integer *,
 	    doublereal *, doublereal *);

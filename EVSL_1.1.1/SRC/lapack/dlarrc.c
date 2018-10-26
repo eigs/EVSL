@@ -12,7 +12,7 @@
     integer i__;
     doublereal sl, su, tmp, tmp2;
     logical matt;
-    extern logical lsame_(const char *, const char *);
+    /* extern logical lsame_(const char *, const char *); */
     doublereal lpivot, rpivot;
 
 

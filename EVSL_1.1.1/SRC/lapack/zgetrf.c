@@ -15,14 +15,14 @@ static integer c_n1 = -1;
 
     /* Local variables */
     integer i__, j, jb, nb, iinfo;
-    extern /* Subroutine */ int zgemm_(const char *, const char *, integer *, integer *,
+    extern /* Subroutine */ int /*zgemm_(const char *, const char *, integer *, integer *,
 	    integer *, doublecomplex *, doublecomplex *, integer *,
 	    doublecomplex *, integer *, doublecomplex *, doublecomplex *,
 	    integer *), ztrsm_(const char *, const char *, const char *, const char *,
 	     integer *, integer *, doublecomplex *, doublecomplex *, integer *
-, doublecomplex *, integer *),
+, doublecomplex *, integer *),*/
 	    zgetf2_(integer *, integer *, doublecomplex *, integer *, integer
-	    *, integer *), xerbla_(const char *, integer *);
+	    *, integer *)/*, xerbla_(const char *, integer *)*/;
     extern integer ilaenv_(integer *, const char *, const char *, integer *, integer *,
 	    integer *, integer *);
     extern /* Subroutine */ int zlaswp_(integer *, doublecomplex *, integer *,

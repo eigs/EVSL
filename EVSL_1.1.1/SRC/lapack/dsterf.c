@@ -34,7 +34,9 @@ static doublereal c_b32 = 1.;
 	    doublereal *, doublereal *, integer *, integer *, doublereal *,
 	    integer *, integer *);
     doublereal oldgam, safmin;
+#if 0
     extern /* Subroutine */ int xerbla_(const char *, integer *);
+#endif
     doublereal safmax;
     extern doublereal dlanst_(const char *, integer *, doublereal *, doublereal *);
     extern /* Subroutine */ int dlasrt_(const char *, integer *, doublereal *,

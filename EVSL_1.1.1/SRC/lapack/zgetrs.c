@@ -14,11 +14,13 @@ static integer c_n1 = -1;
     integer a_dim1, a_offset, b_dim1, b_offset, i__1;
 
     /* Local variables */
+#if 0
     extern logical lsame_(const char *, const char *);
     extern /* Subroutine */ int ztrsm_(const char *, const char *, const char *, const char *,
 	    integer *, integer *, doublecomplex *, doublecomplex *, integer *,
 	     doublecomplex *, integer *),
 	    xerbla_(const char *, integer *);
+#endif
     logical notran;
     extern /* Subroutine */ int zlaswp_(integer *, doublecomplex *, integer *,
 	     integer *, integer *, integer *, integer *);

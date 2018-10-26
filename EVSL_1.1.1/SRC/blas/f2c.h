@@ -6,6 +6,7 @@
 #include "EVSL_config.h"
 #include <stdio.h>
 #include <complex.h>
+#include <math.h>
 
 #define integer       EVSL_Int
 #define doublereal    EVSL_Real
@@ -36,8 +37,14 @@ typedef struct
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 #define max(a,b) ((a) >= (b) ? (a) : (b))
 
-/* add prefix evsl_ to all blas subroutines,
- * so can live together with external blas */
+#if !defined(LAPACK_F2C_INCLUDE) || defined(EVSL_USING_EVSL_BLAS)
+/* 1. for evsl blas:
+ *      add prefix evsl_ to all blas subroutines,
+ *      so can live together with external blas
+ * 2. for evsl lapack:
+ *      if using evsl blas, cast name to evsl_name
+ *      so that evsl lapack can link external blas
+ */
 #define daxpy_  evsl_daxpy
 #define dcabs1_ evsl_dcabs1
 #define dcopy_  evsl_dcopy
@@ -61,6 +68,8 @@ typedef struct
 #define zscal_  evsl_zscal
 #define zswap_  evsl_zswap
 #define ztrsm_  evsl_ztrsm
+#endif
+
 /* f2c */
 #define f__cabs evsl_f__cabs
 #define d_cnjg  evsl_d_cnjg

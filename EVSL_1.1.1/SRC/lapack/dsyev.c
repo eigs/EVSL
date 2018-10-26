@@ -25,10 +25,14 @@ static doublereal c_b17 = 1.;
     doublereal anrm;
     integer imax;
     doublereal rmin, rmax;
+#if 0
     extern /* Subroutine */ int dscal_(integer *, doublereal *, doublereal *,
 	    integer *);
+#endif
     doublereal sigma;
+#if 0
     extern logical lsame_(const char *, const char *);
+#endif
     integer iinfo;
     logical lower, wantz;
     extern doublereal dlamch_(const char *);

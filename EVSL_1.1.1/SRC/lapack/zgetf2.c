@@ -19,14 +19,16 @@ static integer c__1 = 1;
     /* Local variables */
     integer i__, j, jp;
     doublereal sfmin;
+#if 0
     extern /* Subroutine */ int zscal_(integer *, doublecomplex *,
 	    doublecomplex *, integer *), zgeru_(integer *, integer *,
 	    doublecomplex *, doublecomplex *, integer *, doublecomplex *,
 	    integer *, doublecomplex *, integer *), zswap_(integer *,
 	    doublecomplex *, integer *, doublecomplex *, integer *);
+#endif
     extern doublereal dlamch_(const char *);
     extern /* Subroutine */ int xerbla_(const char *, integer *);
-    extern integer izamax_(integer *, doublecomplex *, integer *);
+    /* extern integer izamax_(integer *, doublecomplex *, integer *);*/
 
 
 /*  -- LAPACK routine (version 3.1) -- */

@@ -13,9 +13,9 @@ static integer c__1 = 1;
 
     /* Local variables */
     integer i__, j, l, ii;
-    extern /* Subroutine */ int dscal_(integer *, doublereal *, doublereal *,
-	    integer *), dlarf_(const char *, integer *, integer *, doublereal *,
-	    integer *, doublereal *, doublereal *, integer *, doublereal *), xerbla_(const char *, integer *);
+    extern /* Subroutine */ int /* dscal_(integer *, doublereal *, doublereal *,
+	    integer *),*/ dlarf_(const char *, integer *, integer *, doublereal *,
+	    integer *, doublereal *, doublereal *, integer *, doublereal *)/*, xerbla_(const char *, integer *)*/;
 
 
 /*  -- LAPACK routine (version 3.1) -- */

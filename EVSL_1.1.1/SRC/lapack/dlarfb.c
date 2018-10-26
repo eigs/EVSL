@@ -17,6 +17,7 @@ static doublereal c_b25 = -1.;
 
     /* Local variables */
     integer i__, j;
+#if 0
     extern /* Subroutine */ int dgemm_(const char *, const char *, integer *, integer *,
 	    integer *, doublereal *, doublereal *, integer *, doublereal *,
 	    integer *, doublereal *, doublereal *, integer *);
@@ -25,6 +26,7 @@ static doublereal c_b25 = -1.;
 	    doublereal *, integer *), dtrmm_(const char *, const char *, const char *, const char *,
 	    integer *, integer *, doublereal *, doublereal *, integer *,
 	    doublereal *, integer *);
+#endif
     char transt[1];
 
 

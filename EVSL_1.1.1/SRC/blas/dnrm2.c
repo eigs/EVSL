@@ -7,7 +7,7 @@ doublereal dnrm2_(integer *n, doublereal *x, integer *incx)
     doublereal ret_val, d__1;
 
     /* Builtin functions */
-    double sqrt(doublereal);
+    /* double sqrt(doublereal); */
 
     /* Local variables */
     integer ix;

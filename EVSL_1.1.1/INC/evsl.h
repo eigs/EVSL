@@ -81,7 +81,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit, double tol, double *vi
 void set_pol_def(polparams *pol);
 int find_pol(double *intv, polparams *pol);
 void free_pol(polparams *pol);
-int ChebAv(polparams *pol, double *v, double *y, double *w);
+/* int ChebAv(polparams *pol, double *v, double *y, double *w); */
 
 /*- - - - - - - - - chebsi.c */
 int ChebSI(int nev, double *intv, int maxit, double tol, double *vinit, polparams *pol, int *nevo, double **lamo, double **Yo, double **reso, FILE *fstats);

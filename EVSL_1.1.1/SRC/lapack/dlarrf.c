@@ -26,8 +26,10 @@ static integer c__1 = 1;
     integer ktry;
     doublereal fail2, avgap, ldmax, rdmax;
     integer shift;
+#if 0
     extern /* Subroutine */ int dcopy_(integer *, doublereal *, integer *,
 	    doublereal *, integer *);
+#endif
     logical dorrr1;
     extern doublereal dlamch_(const char *);
     doublereal ldelta;

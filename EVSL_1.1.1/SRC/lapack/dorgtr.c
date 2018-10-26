@@ -13,7 +13,7 @@ static integer c_n1 = -1;
 
     /* Local variables */
     integer i__, j, nb;
-    extern logical lsame_(const char *, const char *);
+    /* extern logical lsame_(const char *, const char *);*/
     integer iinfo;
     logical upper;
     extern /* Subroutine */ int xerbla_(const char *, integer *);

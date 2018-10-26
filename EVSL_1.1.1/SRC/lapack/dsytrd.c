@@ -18,16 +18,16 @@ static doublereal c_b23 = 1.;
 
     /* Local variables */
     integer i__, j, nb, kk, nx, iws;
-    extern logical lsame_(const char *, const char *);
+   /* extern logical lsame_(const char *, const char *); */
     integer nbmin, iinfo;
     logical upper;
     extern /* Subroutine */ int dsytd2_(const char *, integer *, doublereal *,
-	    integer *, doublereal *, doublereal *, doublereal *, integer *), dsyr2k_(const char *, const char *, integer *, integer *, doublereal
+	    integer *, doublereal *, doublereal *, doublereal *, integer *), /* dsyr2k_(const char *, const char *, integer *, integer *, doublereal
 	    *, doublereal *, integer *, doublereal *, integer *, doublereal *,
-	     doublereal *, integer *), dlatrd_(const char *,
+	     doublereal *, integer *),*/ dlatrd_(const char *,
 	    integer *, integer *, doublereal *, integer *, doublereal *,
-	    doublereal *, doublereal *, integer *), xerbla_(const char *,
-	    integer *);
+	    doublereal *, doublereal *, integer *)/*, xerbla_(const char *,
+	    integer *)*/;
     extern integer ilaenv_(integer *, const char *, const char *, integer *, integer *,
 	    integer *, integer *);
     integer ldwork, lwkopt;

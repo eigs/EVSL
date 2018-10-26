@@ -1,5 +1,7 @@
 include ../../makefile.in
 
+MUTE=@
+
 # Object files
 LAPACK_SRC = \
 disnan.c    dlamch.c  dlar1v.c  dlarnv.c  dlarre.c  dlarrv.c  dlasq2.c  dlassq.c  dorg2r.c  dsteqr.c  dsytrd.c  zgetf2.c \

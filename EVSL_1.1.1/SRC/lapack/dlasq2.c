@@ -46,7 +46,9 @@ static integer c__11 = 11;
     extern doublereal dlamch_(const char *);
     integer iwhila, iwhilb;
     doublereal oldemn, safmin;
+#if 0
     extern /* Subroutine */ int xerbla_(const char *, integer *);
+#endif
     extern integer ilaenv_(integer *, const char *, const char *, integer *, integer *,
 	    integer *, integer *);
     extern /* Subroutine */ int dlasrt_(const char *, integer *, doublereal *,

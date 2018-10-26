@@ -36,8 +36,10 @@ static integer c__2 = 2;
     integer wend, iter;
     doublereal bstw;
     integer itmp1;
+#if 0
     extern /* Subroutine */ int dscal_(integer *, doublereal *, doublereal *,
 	    integer *);
+#endif
     integer indld;
     doublereal fudge;
     integer idone;
@@ -46,8 +48,10 @@ static integer c__2 = 2;
     doublereal resid;
     logical eskip;
     doublereal right;
+#if 0
     extern /* Subroutine */ int dcopy_(integer *, doublereal *, integer *,
 	    doublereal *, integer *);
+#endif
     integer nclus, zfrom;
     doublereal rqtol;
     integer iindc1, iindc2;

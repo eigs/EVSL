@@ -1,6 +1,6 @@
 include ../makefile.in
 
-SRC_DIRS=blas lapack
+SRC_DIRS = blas lapack
 
 INCLUDES = -I../INC
 ifeq ($(INTEL_MKL), 1)

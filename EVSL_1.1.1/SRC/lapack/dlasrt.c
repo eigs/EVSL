@@ -12,11 +12,15 @@
     integer dir;
     doublereal tmp;
     integer endd;
+#if 0
     extern logical lsame_(const char *, const char *);
+#endif
     integer stack[64]	/* was [2][32] */;
     doublereal dmnmx;
     integer start;
+#if 0
     extern /* Subroutine */ int xerbla_(const char *, integer *);
+#endif
     integer stkpnt;
 
 

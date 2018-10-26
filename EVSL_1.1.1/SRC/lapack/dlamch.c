@@ -28,7 +28,7 @@ doublereal dlamch_(const char *cmach)
     logical lrnd;
     static doublereal rmin, rmax;
     doublereal rmach = 0.0;
-    extern logical lsame_(const char *, const char *);
+    /* extern logical lsame_(const char *, const char *); */
     doublereal small;
     static doublereal sfmin;
     extern /* Subroutine */ int dlamc2_(integer *, integer *, logical *,

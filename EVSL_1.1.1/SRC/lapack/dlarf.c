@@ -15,6 +15,7 @@ static integer c__1 = 1;
     doublereal d__1;
 
     /* Local variables */
+#if 0
     extern /* Subroutine */ int dger_(integer *, integer *, doublereal *,
 	    doublereal *, integer *, doublereal *, integer *, doublereal *,
 	    integer *);
@@ -22,6 +23,7 @@ static integer c__1 = 1;
     extern /* Subroutine */ int dgemv_(const char *, integer *, integer *,
 	    doublereal *, doublereal *, integer *, doublereal *, integer *,
 	    doublereal *, doublereal *, integer *);
+#endif
 
 
 /*  -- LAPACK auxiliary routine (version 3.1) -- */

@@ -23,7 +23,7 @@ static integer c__2 = 2;
     /* Local variables */
     integer i__, j;
     doublereal s1, s2;
-    integer mb;
+    integer mb=0;
     doublereal gl;
     integer in, mm;
     doublereal gu;
@@ -35,14 +35,16 @@ static integer c__2 = 2;
     doublereal eold;
     integer indl;
     doublereal dmax__, emax;
-    integer wend, idum, indu;
+    integer wend=0, idum, indu;
     doublereal rtol;
     integer iseed[4];
     doublereal avgap, sigma;
-    extern logical lsame_(const char *, const char *);
+    /* extern logical lsame_(const char *, const char *); */
     integer iinfo;
+#if 0
     extern /* Subroutine */ int dcopy_(integer *, doublereal *, integer *,
 	    doublereal *, integer *);
+#endif
     logical norep;
     extern /* Subroutine */ int dlasq2_(integer *, doublereal *, integer *);
     extern doublereal dlamch_(const char *);
@@ -69,7 +71,7 @@ static integer c__2 = 2;
     extern /* Subroutine */ int dlarrk_(integer *, integer *, doublereal *,
 	    doublereal *, doublereal *, doublereal *, doublereal *,
 	    doublereal *, doublereal *, doublereal *, integer *);
-    logical usedqd;
+    logical usedqd=0;
     doublereal clwdth, isleft;
     extern /* Subroutine */ int dlarnv_(integer *, integer *, integer *,
 	    doublereal *);

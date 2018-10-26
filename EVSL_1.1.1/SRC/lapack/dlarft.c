@@ -16,12 +16,14 @@ static doublereal c_b8 = 0.;
     /* Local variables */
     integer i__, j;
     doublereal vii;
+#if 0
     extern logical lsame_(const char *, const char *);
     extern /* Subroutine */ int dgemv_(const char *, integer *, integer *,
 	    doublereal *, doublereal *, integer *, doublereal *, integer *,
 	    doublereal *, doublereal *, integer *), dtrmv_(const char *,
 	    const char *, const char *, integer *, doublereal *, integer *, doublereal *,
 	    integer *);
+#endif
 
 
 /*  -- LAPACK auxiliary routine (version 3.1) -- */

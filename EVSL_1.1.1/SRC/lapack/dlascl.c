@@ -12,12 +12,16 @@
     doublereal mul, cto1;
     logical done;
     doublereal ctoc;
+#if 0
     extern logical lsame_(const char *, const char *);
+#endif
     integer itype;
     doublereal cfrom1;
     extern doublereal dlamch_(const char *);
     doublereal cfromc;
+#if 0
     extern /* Subroutine */ int xerbla_(const char *, integer *);
+#endif
     doublereal bignum, smlnum;
 
 
