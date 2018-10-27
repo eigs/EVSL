@@ -335,10 +335,10 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       /*------------------ NOTE: z is used!!! [TODO: FIX ME] */
       ChebAv(pol, z, znew, work);
       it++;
-      /*-------------------- deflation: orthgonalize vs locked ones first */
+      /*-------------------- deflation: orthogonalize vs locked ones first */
       if (lock > 0) {
         if (ifGenEv) {
-          /* orthgonlize against locked vectors first, znew = znew - B*Y*Y'*znew */
+          /* orthogonalize against locked vectors first, znew = znew - B*Y*Y'*znew */
           CGS_DGKS2(n, lock, NGS_MAX, BY, Y, znew, work);
         } else {
           /*--------------------   vnew = vnew - Y*Y'*vnew */
