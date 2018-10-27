@@ -176,7 +176,7 @@ AS_HELP_STRING([--with-openmp],
 AC_ARG_WITH(blas-lib,
 AS_HELP_STRING([--with-blas-lib=LIB],
                [LIB is space-separated list (enclosed in quotes) of BLAS libraries
-                (full path and name, e.g., /usr/local/libblas.a]),
+                (full path and name, e.g., /usr/local/lib/libblas.a]),
 [for blas_lib in $withval; do
     LIBBLAS+="$blas_lib "
  done;
@@ -196,7 +196,7 @@ AS_HELP_STRING([--with-blas-lib-name=LIB],
 AC_ARG_WITH(blas-lib-dir,
 AS_HELP_STRING([--with-blas-lib-dir=DIR],
                [DIR is space-separated list (enclosed in quotes) of directories containing BLAS libraries that are
-                set by --with-blas-lib-name, e.g., /usr/lib]),
+                set by --with-blas-lib-name, e.g., /usr/local/lib]),
 [for blas_dir in $withval; do
     LIBBLAS_DIR+="-L$blas_dir "
  done;
@@ -206,7 +206,7 @@ AS_HELP_STRING([--with-blas-lib-dir=DIR],
 AC_ARG_WITH(lapack-lib,
 AS_HELP_STRING([--with-lapack-lib=LIB],
                [LIB is space-separated list (enclosed in quotes) of LAPACK libraries
-                (full path and name, e.g., /usr/local/liblapack.a]),
+                (full path and name, e.g., /usr/local/lib/liblapack.a]),
 [for lapack_lib in $withval; do
     LIBLAPACK+="$lapack_lib "
  done;
@@ -226,7 +226,7 @@ AS_HELP_STRING([--with-lapack-lib-name=LIB],
 AC_ARG_WITH(lapack-lib-dir,
 AS_HELP_STRING([--with-lapack-lib-dir=DIR],
                [DIR is space-separated list (enclosed in quotes) of directories containing LAPACK libraries that are
-                set by --with-lapack-lib-name, e.g., /usr/lib]),
+                set by --with-lapack-lib-name, e.g., /usr/local/lib]),
 [for lapack_dir in $withval; do
     LIBLAPACK_DIR+="-L$lapack_dir "
  done;
@@ -234,8 +234,8 @@ AS_HELP_STRING([--with-lapack-lib-dir=DIR],
 )
 
 AC_ARG_WITH(intel-mkl,
-AS_HELP_STRING([--with-intel-mkl (default is NO).],
-               [Use Intel MKL for BLAS, LAPACK and SpMV subroutines]),
+AS_HELP_STRING([--with-intel-mkl],
+               [Use Intel MKL for BLAS, LAPACK and SpMV subroutines (default is NO).]),
 [case "${withval}" in
     yes) evsl_using_intel_mkl=yes
          evsl_using_evsl_blas=no
@@ -247,8 +247,8 @@ AS_HELP_STRING([--with-intel-mkl (default is NO).],
 )
 
 AC_ARG_WITH(intel-mkl-static,
-AS_HELP_STRING([--with-intel-mkl-static (default is YES).],
-               [Use static linking with Intel MKL]),
+AS_HELP_STRING([--with-intel-mkl-static],
+               [Use static linking with Intel MKL (default is YES).]),
 [case "${withval}" in
     yes) evsl_using_intel_mkl_static=yes;;
     no)  evsl_using_intel_mkl_static=no;;
@@ -281,8 +281,8 @@ AS_HELP_STRING([--with-suitesparse-dir=DIR],
 )
 
 AC_ARG_WITH(mkl-pardiso,
-AS_HELP_STRING([--with-mkl-pardiso (default is NO).],
-               [Use Pardiso in MKL as direct solver. Must be used together with --with-intel-mkl]),
+AS_HELP_STRING([--with-mkl-pardiso],
+               [Use Pardiso in MKL as direct solver (default is NO). This option should be used together with --with-intel-mkl]),
 [case "${withval}" in
     yes) evsl_using_mkl_pardiso=yes
          evsl_using_evsl_cxsparse=no;;
