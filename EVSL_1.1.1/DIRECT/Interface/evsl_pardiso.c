@@ -1,11 +1,10 @@
-#ifdef USE_MKL
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "mkl.h"
+#include <complex.h>
+//#include "mkl.h"
 #include "mkl_pardiso.h"
-#include "mkl_types.h"
+//#include "mkl_types.h"
 #include "evsl_direct.h"
 
 /**
@@ -331,7 +330,7 @@ void FreeBSolDirectData(void *data) {
 int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
                           EVSL_Complex *zk, void **data) {
   double tms = evsl_timer();
-  int i, j, nrow, ncol, nnzUB, nnzUC, *map;
+  int i, j, nrow, /* ncol, */ nnzUB, nnzUC, *map;
   csrMat *B, UC, eye, UA, UB;
   /* the shifted matrix
    * C = A - s * B */
@@ -339,7 +338,7 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
   double *UCx;
   /* complex values of C */
   MKL_Complex16 *UCz;
-  ASBSolDataDirect *ASBdata, *ASBdata0;
+  ASBSolDataDirect *ASBdata, *ASBdata0=NULL;
 
   MKL_INT mtype = 6;       /* Complex and symmetric matrix */
   MKL_INT maxfct = num;
@@ -352,7 +351,7 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
   MKL_INT nrhs = 1;
 
   nrow = A->nrows;
-  ncol = A->ncols;
+  /* ncol = A->ncols; */
 
   if (BB) {
     B = BB;
@@ -407,8 +406,14 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
     for (j = 0; j < nnzUB; j++) {
       int p = map[j];
       double v = UB.a[j];
-      CHKERR(UCi[p] != UB.ja[j]);
-      CHKERR(!(p >= 0 && p < nnzUC));
+      if (UCi[p] != UB.ja[j]) {
+         fprintf(stderr, "error %s %d\n", __FILE__, __LINE__);
+         return 1;
+      }
+      if (!(p >= 0 && p < nnzUC)) {
+         fprintf(stderr,"error %s %d\n", __FILE__, __LINE__);
+         return 2;
+      }
       UCz[p].real -= zkr * v;
       UCz[p].imag -= zkc * v;
     }
@@ -520,7 +525,10 @@ void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
   /* Number of right hand sides. */
   MKL_INT nrhs = 1;
 
-  CHKERR(n != sol_data->n);
+  if (n != sol_data->n) {
+     fprintf(stderr, "error %s %d\n", __FILE__, __LINE__);
+     exit(-1);
+  }
   MKL_Complex16 *b = sol_data->b;
   MKL_Complex16 *x = sol_data->x;
 
@@ -615,6 +623,4 @@ void FreeASIGMABSolDirect(int num, void **data) {
     evsl_Free(sol_data);
   }
 }
-
-#endif
 

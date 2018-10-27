@@ -13,6 +13,10 @@
 
 #define EVSL_PI 3.14159265358979323846
 
+/** for comparing floating-point numbers (double)
+ *     for "a >= b", compare "a + EVSL_DBL_EPS_MULT * DBL_EPSILON >= b"
+ *     for "a <= b", compare "a - EVSL_DBL_EPS_MULT * DBL_EPSILON >= b"
+ */
 #define EVSL_DBL_EPS_MULT 10
 
 /*!
@@ -146,6 +150,8 @@ void matvec_csr(double *x, double *y, void *data);
 int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C, int *mapA, int *mapB);
 /* sparse identity */
 int speye(int n, csrMat *A);
+/* extract upper triangular part of A */
+void triuCsr(csrMat *A, csrMat *U);
 
 int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a, csrMat *A);
 /*- - - - - - - - - evsl.c */

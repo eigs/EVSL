@@ -1,5 +1,8 @@
 #include <string.h>
 #include "internal_header.h"
+#ifdef EVSL_USING_INTEL_MKL
+#include "mkl_spblas.h"
+#endif
 
 /**
  * @file spmat.c
@@ -302,7 +305,7 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
 */
 void matvec_csr(double *x, double *y, void *data) {
   csrMat *A = (csrMat *) data;
-#ifdef USE_MKL
+#ifdef EVSL_USING_INTEL_MKL
   char cN = 'N';
   /*
   double alp = 1.0, bet = 0.0;

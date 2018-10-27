@@ -97,11 +97,14 @@ evsl_with_fortran=yes
 evsl_with_debug=no
 evsl_using_evsl_cxsparse=yes
 evsl_using_suitesparse=no
+evsl_using_mkl_pardiso=no
 evsl_with_metis=no
 evsl_using_int=yes
 evsl_using_double=yes
 evsl_using_evsl_blas=yes
 evsl_using_evsl_lapack=yes
+evsl_using_intel_mkl=no
+evsl_using_intel_mkl_static=yes
 evsl_cholmod_use_long=yes
 evsl_using_shared_lib=no
 evsl_using_mac_frame_accelerate=no
@@ -128,32 +131,40 @@ dnl * Define optional features
 dnl *********************************************************************
 AC_ARG_ENABLE(debug,
 AS_HELP_STRING([--enable-debug],
-               [Set compiler flags for debugging (default is no)]),
-[evsl_with_debug=yes],
+               [Set compiler flags for debugging (default is NO)]),
+[case "${enableval}" in
+    yes) evsl_with_debug=yes;;
+    no)  evsl_with_debug=no;;
+    *)   AC_MSG_ERROR([Bad value ${enableval} for --enable-debug]) ;;
+ esac],
 [evsl_with_debug=no]
-)
-
-AC_ARG_WITH(cxxcompiler,
-AS_HELP_STRING([--with-cxxcompiler],
-               [Use C++ compiler for compiling (default is no)]),
-[evsl_using_CXXcompiler=yes],
-[evsl_using_CXXcompiler=no]
 )
 
 AC_ARG_ENABLE(shared,
 AS_HELP_STRING([--enable-shared],
                [Build shared libraries (default is NO).]),
 [case "${enableval}" in
-    yes) evsl_using_shared_lib=yes ;;
-    no)  evsl_using_shared_lib=no ;;
+    yes) evsl_using_shared_lib=yes;;
+    no)  evsl_using_shared_lib=no;;
     *)   AC_MSG_ERROR([Bad value ${enableval} for --enable-shared]) ;;
  esac],
 [evsl_using_shared_lib=no]
 )
 
+AC_ARG_WITH(cxxcompiler,
+AS_HELP_STRING([--with-cxxcompiler],
+               [Use C++ compiler for compiling (default is NO)]),
+[case "${withval}" in
+    yes) evsl_using_CXXcompiler=yes;;
+    no)  evsl_using_CXXcompiler=no;;
+    *)   AC_MSG_ERROR([Bad value ${withval} for --with-cxxcompiler]) ;;
+ esac],
+[evsl_using_CXXcompiler=no]
+)
+
 AC_ARG_WITH(openmp,
 AS_HELP_STRING([--with-openmp],
-               [Use OpenMP.  This may affect which compiler is chosen.]),
+               [Use OpenMP (default is NO). This may affect which compiler is chosen.]),
 [case "${withval}" in
     yes) evsl_using_openmp=yes;;
     no)  evsl_using_openmp=no ;;
@@ -222,14 +233,63 @@ AS_HELP_STRING([--with-lapack-lib-dir=DIR],
  evsl_using_evsl_lapack=no]
 )
 
+AC_ARG_WITH(intel-mkl,
+AS_HELP_STRING([--with-intel-mkl (default is NO).],
+               [Use Intel MKL for BLAS, LAPACK and SpMV subroutines]),
+[case "${withval}" in
+    yes) evsl_using_intel_mkl=yes
+         evsl_using_evsl_blas=no
+         evsl_using_evsl_lapack=no;;
+    no)  evsl_using_intel_mkl=no;;
+    *)   AC_MSG_ERROR([Bad value ${withval} for --with-intel-mkl]) ;;
+ esac],
+[evsl_using_intel_mkl=no]
+)
+
+AC_ARG_WITH(intel-mkl-static,
+AS_HELP_STRING([--with-intel-mkl-static (default is YES).],
+               [Use static linking with Intel MKL]),
+[case "${withval}" in
+    yes) evsl_using_intel_mkl_static=yes;;
+    no)  evsl_using_intel_mkl_static=no;;
+    *)   AC_MSG_ERROR([Bad value ${withval} for --with-intel-mkl-static]) ;;
+ esac],
+[evsl_using_intel_mkl_static=no]
+)
+
+AC_ARG_WITH(framework-accelerate,
+AS_HELP_STRING([--with-framework-accelerate],
+               [Use Apple Accelerate framework (default is NO, for Mac only)]),
+[case "${withval}" in
+    yes) evsl_using_mac_frame_accelerate=yes
+         evsl_using_evsl_blas=no
+         evsl_using_evsl_lapack=no;;
+    no)  evsl_using_mac_frame_accelerate=no;;
+    *)   AC_MSG_ERROR([Bad value ${withval} for --with-framework-accelerate]) ;;
+ esac],
+[evsl_using_mac_frame_accelerate=no]
+)
+
 AC_ARG_WITH(suitesparse-dir,
 AS_HELP_STRING([--with-suitesparse-dir=DIR],
-               [DIR is the root directory of SUITESPARSE (http://faculty.cse.tamu.edu/davis/suitesparse.html), e.g., /usr/local/SuiteSparse]),
+               [Use UMFPACK and CHOLMOD in Suitesparse as direct solvers. DIR is the root directory of SUITESPARSE (http://faculty.cse.tamu.edu/davis/suitesparse.html), e.g., /usr/local/SuiteSparse]),
 [for suitesparse_dir in $withval; do
     SUITESPARSE_DIR+="$suitesparse_dir"
  done;
  evsl_using_evsl_cxsparse=no
  evsl_using_suitesparse=yes]
+)
+
+AC_ARG_WITH(mkl-pardiso,
+AS_HELP_STRING([--with-mkl-pardiso (default is NO).],
+               [Use Pardiso in MKL as direct solver. Must be used together with --with-intel-mkl]),
+[case "${withval}" in
+    yes) evsl_using_mkl_pardiso=yes
+         evsl_using_evsl_cxsparse=no;;
+    no)  evsl_using_mkl_pardiso=no;;
+    *)   AC_MSG_ERROR([Bad value ${withval} for --with-mkl-pardiso]) ;;
+ esac],
+[evsl_using_mkl_pardiso=no]
 )
 
 AC_ARG_WITH(metis-dir,
@@ -259,12 +319,6 @@ AS_HELP_STRING([--with-extra-lib-dir=DIR],
  done]
 )
 
-AC_ARG_WITH(framework-accelerate,
-AS_HELP_STRING([--with-framework-accelerate],
-               [Using Apple's Accelerate framework (Mac only)]),
-[evsl_using_mac_frame_accelerate=yes]
-)
-
 dnl *********************************************************************
 dnl * Set default AR value if not defined by the user
 dnl *********************************************************************
@@ -292,7 +346,7 @@ dnl * Set default CFLAGS if not defined by the user
 dnl *********************************************************************
 if test "x$evsl_using_Ccompiler" = "xyes" -a "x$CFLAGS" = "x"
 then
-   CFLAGS="-O2 -Wall -Wno-unused-result"
+   CFLAGS="-O2 -Wall "
 fi
 
 dnl *********************************************************************
@@ -308,7 +362,7 @@ dnl * Set default FCFLAGS if not defined by the user
 dnl *********************************************************************
 if test "x$evsl_with_fortran" = "xyes" -a "x$FCFLAGS" = "x"
 then
-   FCFLAGS="-O2 -Wall -Wno-unused-variable -Wno-unused-dummy-argument"
+   FCFLAGS="-O2 "
 fi
 
 dnl *********************************************************************
@@ -320,25 +374,12 @@ then
 fi
 
 dnl *********************************************************************
-dnl * Set default CXXFLAGS if not defined by the user
-dnl *********************************************************************
-if test "x$evsl_using_CXXcompiler" = "xyes" -a "x$CXXFLAGS" = "x"
-then
-   CXXFLAGS="-O2 -Wall -Wno-unused-result"
-fi
-
-dnl *********************************************************************
 dnl * Check for compiler related programs 
 dnl * Most of these AC_PROG_ macros check to see if the compilers works.
 dnl *********************************************************************
 if test "x$evsl_using_Ccompiler" = "xyes"
 then
    AC_PROG_CC
-fi
-
-if test "x$evsl_using_CXXcompiler" = "xyes"
-then
-   AC_PROG_CXX
 fi
 
 if test "x$evsl_with_fortran" = "xyes"
@@ -349,11 +390,39 @@ fi
 
 if test "x$evsl_using_CXXcompiler" = "xyes"
 then
+   AC_PROG_CXX
+
    dnl use C++ compiler to compile C code
    CC=${CXX}
-   CFLAGS=${CXXFLAGS}
+   dnl use '-x' to specify c++ language
+   dnl if test "x$CC" = "xgcc" || test "x$CC" = "xicc"
+   dnl then
+   dnl CFLAGS+="-x c++ "
+   dnl fi
 fi
 
+dnl *********************************************************************
+dnl * add some default CFLAGS for gcc/g++/gfortran
+dnl *********************************************************************
+if test "x$CC" = "xgcc" || test "x$CC" = "xg++"
+then
+   CFLAGS+="-Wno-unused-result "
+fi
+
+if test "x$FC" = "xgfortran"
+then
+   FFLAGS+="-Wall -Wno-unused-variable -Wno-unused-dummy-argument "
+fi
+
+dnl *********************************************************************
+dnl * set default link
+dnl *********************************************************************
+LINK_CC=${CC}
+LINK_FC=${FC}
+
+dnl *********************************************************************
+dnl * set default libs
+dnl *********************************************************************
 LIBS+=${EXTRA_LIBS}
 
 if test "x$LIBS" = "x"
@@ -399,7 +468,7 @@ fi
 if test "x$HOSTARCH" = "xLinux"
 then
    AC_DEFINE(EVSL_ARCH_LINUX, 1, [Linux platforms])
-   LIBS="$LIBS -lrt"
+   LIBS+="-lrt "
 fi
 
 if test "x$HOSTARCH" = "xDarwin"
@@ -428,69 +497,11 @@ then
    SHARED_BUILD_FLAG="${SHARED_BUILD_FLAG} ${EXTRA_BUILD_FLAGS}"
    FFLAGS="${FFLAGS} ${SHARED_COMPILE_FLAG}"
    BUILD_FC_SHARED="${FC} ${SHARED_BUILD_FLAG}"
-   CFLAGS="${CFLAGS} ${SHARED_COMPILE_FLAG}"
+   CFLAGS="${CFLAGS} ${SHARED_COMPILE_FLAG} "
    BUILD_CC_SHARED="${CC} ${SHARED_BUILD_FLAG}"
-   if test "x$evsl_using_CXXcompiler" = "xyes"
-   then
-      CXXFLAGS="${CXXFLAGS} ${SHARED_COMPILE_FLAG}"
-      BUILD_CXX_SHARED="${CXX} ${SHARED_BUILD_FLAG}"
-   fi
 else
    EVSL_LIBSUFFIX=".a"
 fi
-
-dnl *********************************************************************
-dnl * Set default link commands and suffix values
-dnl *********************************************************************
-LINK_CC=${CC}
-LINK_CXX=${CXX}
-LINK_FC=${FC}
-
-dnl *********************************************************************
-dnl * AC_SUBST performs the variable substitutions so they may be used in
-dnl * the makefile.in files. Some macros call AC_SUBST for some of these
-dnl * variables, but it does no damage to call it again.
-dnl *********************************************************************
-
-dnl *********************************************************************
-dnl * compilers and load flags
-dnl *********************************************************************
-AC_SUBST(CC)
-AC_SUBST(CXX)
-AC_SUBST(FC)
-AC_SUBST(CFLAGS)
-AC_SUBST(CXXFLAGS)
-AC_SUBST(FCFLAGS)
-AC_SUBST(LDFLAGS)
-
-AC_SUBST(LINK_FC)
-AC_SUBST(LINK_CC)
-AC_SUBST(LINK_CXX)
-
-AC_SUBST(BUILD_FC_SHARED)
-AC_SUBST(BUILD_CC_SHARED)
-AC_SUBST(BUILD_CXX_SHARED)
-AC_SUBST(SHARED_SET_SONAME)
-AC_SUBST(SHARED_OPTIONS)
-
-dnl *********************************************************************
-dnl * Installation Directories
-dnl *********************************************************************
-dnl AC_SUBST(EVSL_INSTALLDIR)
-dnl AC_SUBST(EVSL_LIBINSTALL)
-dnl AC_SUBST(EVSL_INCINSTALL)
-
-dnl *********************************************************************
-dnl * General purpose header files, libraries and directories
-dnl *********************************************************************
-AC_SUBST(LIBS_DIR)
-AC_SUBST(LIBS)
-AC_SUBST(FLIBS)
-AC_SUBST(FCLIBS)
-dnl *********************************************************************
-dnl * suffix for evsl libraries
-dnl *********************************************************************
-AC_SUBST(EVSL_LIBSUFFIX)
 
 dnl *********************************************************************
 dnl * OpenMP
@@ -498,8 +509,8 @@ dnl *********************************************************************
 if test "x$evsl_using_openmp" = "xyes"
 then
    AC_DEFINE(EVSL_USING_OPENMP, 1, [Using OpenMP in EVSL])
-   CFLAGS="$CFLAGS -fopenmp"
-   LIBS="$LIBS -fopenmp"
+   CFLAGS="$CFLAGS -fopenmp "
+   LIBS="$LIBS -fopenmp "
 fi
 
 dnl *********************************************************************
@@ -508,43 +519,89 @@ dnl *********************************************************************
 if test "x$evsl_using_mac_frame_accelerate" = "xyes"
 then
    LIBS+="-framework Accelerate "
-else
-   if test "x$evsl_using_evsl_blas" = "xyes"
+fi
+
+if test "x$evsl_using_intel_mkl" = "xyes" || test "x$evsl_using_mkl_pardiso" = "xyes"
+then
+   AC_SUBST(MKLROOT)
+   AC_DEFINE(EVSL_USING_INTEL_MKL, 1, [ Using Intel MKL for BLAS, LAPACK and SpMV])
+   AC_CHECK_HEADERS(["${MKLROOT}/include/mkl.h"], [evsl_found_mkl=yes],[evsl_found_mkl=no])
+   if test "x$evsl_found_mkl" != "xyes"
    then
-      AC_DEFINE(EVSL_USING_EVSL_BLAS, 1, [Using internal BLAS routines in EVSL])
-   else
-      if test "x$LIBBLAS" = "x-lyes "
-      then
-         LIBBLAS="-lblas"
-      fi
+      AC_MSG_WARN([************************************************])
+      AC_MSG_WARN([unable to find mkl.h. Ensure that MKLROOT is set])
+      AC_MSG_WARN([************************************************])
    fi
 
-   if test "x$evsl_using_evsl_lapack" = "xyes"
+   dnl https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
+
+   if test "x$HOSTARCH" = "xLinux"
    then
-      AC_DEFINE(EVSL_USING_EVSL_LAPACK, 1, [Using internal LAPACK routines in EVSL])
-   else
-      if test "x$LIBLAPACK" = "x-lyes "
+      if test "x$CC" = "xgcc" || test "x$CC" = "xg++"
       then
-         LIBLAPACK="-llapack"
+         CFLAGS+="-m64 "
+      fi
+      if test "x$FC" = "xgfortran"
+      then
+         FCFLAGS+="-m64 "
+      fi
+      dnl LIBS
+      if test "x$evsl_using_openmp" = "xyes"
+      then
+         dnl openmp threading
+         if test "x$evsl_using_intel_mkl_static" = "xyes"
+         then
+            dnl static link
+            if test "x$LINK_CC" = "xicc"
+            then
+               LIBS+="-Wl,--start-group \${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \${MKLROOT}/lib/intel64/libmkl_intel_thread.a \${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -liomp5 -lpthread -lm -ldl "
+            else
+               LIBS+="-Wl,--start-group \${MKLROOT}/lib/intel64/libmkl_gf_lp64.a \${MKLROOT}/lib/intel64/libmkl_gnu_thread.a \${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -lgomp -lpthread -lm -ldl "
+            fi
+         else
+            dnl dynamic link
+            if test "x$LINK_CC" = "xicc"
+            then
+               LIBS+="-L\${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl "
+            else
+               LIBS+="-L\${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl "
+            fi
+         fi
+      else
+         dnl sequential
+         if test "x$evsl_using_intel_mkl_static" = "xyes"
+         then
+            dnl static link
+            LIBS+="-Wl,--start-group \${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \${MKLROOT}/lib/intel64/libmkl_sequential.a \${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl "
+         else
+            dnl dynamic link
+            if test "x$LINK_CC" = "xicc"
+            then
+               LIBS+="-L\${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl "
+            else
+               LIBS+="-L\${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl "
+            fi
+         fi
+      fi dnl openmp
+   else
+      if test "x$HOSTARCH" = "xDarwin"
+      then
+      dnl
+      LIBS+=" TODO "
       fi
    fi
 fi
 
-AC_SUBST(LIBBLAS)
-AC_SUBST(LIBBLAS_DIR)
-AC_SUBST(LIBLAPACK)
-AC_SUBST(LIBLAPACK_DIR)
+if test "x$evsl_using_evsl_blas" = "xyes"
+then
+   AC_DEFINE(EVSL_USING_EVSL_BLAS, 1, [Using internal BLAS routines in EVSL])
+fi
 
-dnl *********************************************************************
-dnl * INTEL MKL related information
-dnl *********************************************************************
-EVSL_USE_MKL=0
-AC_SUBST(EVSL_USE_INTEL_MKL)
-dnl *********************************************************************
-dnl * ar & ranlib substitution
-dnl *********************************************************************
-AC_SUBST(AR)
-AC_SUBST(RANLIB)
+if test "x$evsl_using_evsl_lapack" = "xyes"
+then
+   AC_DEFINE(EVSL_USING_EVSL_LAPACK, 1, [Using internal LAPACK routines in EVSL])
+fi
+
 
 dnl *********************************************************************
 dnl * direct solver option
@@ -607,11 +664,20 @@ then
    AC_DEFINE(EVSL_CHOLMOD_USE_LONG, 1, [Using long int version of Cholmod in SuiteSparse interface])
 fi
 
-AC_SUBST(DIRECTSOL)
-AC_SUBST(DIRECTSOL_INTERFACE)
-AC_SUBST(METIS_DIR)
-AC_SUBST(SUITESPARSE_DIR)
-AC_SUBST(LIBDIRECTSOL)
+if test "x$evsl_using_mkl_pardiso" = "xyes"
+then
+   AC_SUBST(MKLROOT)
+   AC_CHECK_HEADERS(["${MKLROOT}/include/mkl.h"], [evsl_found_mkl=yes],[evsl_found_mkl=no])
+   if test "x$evsl_found_mkl" != "xyes"
+   then
+      AC_MSG_WARN([************************************************])
+      AC_MSG_WARN([unable to find mkl.h. Ensure that MKLROOT is set])
+      AC_MSG_WARN([************************************************])
+   fi
+   DIRECTSOL="MKL_PARDISO"
+   DIRECTSOL_INTERFACE="evsl_pardiso.o"
+fi
+
 
 dnl *********************************************************************
 dnl * basic data types
@@ -628,6 +694,74 @@ then
   AC_DEFINE(EVSL_Real, [double], [EVSL data type for real])
   AC_DEFINE(EVSL_Complex, [double _Complex], [EVSL data type for complex])
 fi
+
+dnl *********************************************************************
+dnl * AC_SUBST performs the variable substitutions so they may be used in
+dnl * the makefile.in files. Some macros call AC_SUBST for some of these
+dnl * variables, but it does no damage to call it again.
+dnl *********************************************************************
+
+dnl *********************************************************************
+dnl * compilers and load flags
+dnl *********************************************************************
+AC_SUBST(CC)
+AC_SUBST(FC)
+AC_SUBST(CFLAGS)
+AC_SUBST(FCFLAGS)
+AC_SUBST(LDFLAGS)
+
+AC_SUBST(LINK_FC)
+AC_SUBST(LINK_CC)
+
+AC_SUBST(BUILD_FC_SHARED)
+AC_SUBST(BUILD_CC_SHARED)
+AC_SUBST(SHARED_SET_SONAME)
+AC_SUBST(SHARED_OPTIONS)
+
+AC_SUBST(LIBBLAS)
+AC_SUBST(LIBBLAS_DIR)
+AC_SUBST(LIBLAPACK)
+AC_SUBST(LIBLAPACK_DIR)
+
+dnl *********************************************************************
+dnl * INTEL MKL related information
+dnl *********************************************************************
+EVSL_USE_MKL=0
+AC_SUBST(EVSL_USE_INTEL_MKL)
+
+dnl *********************************************************************
+dnl * Direct solver
+dnl *********************************************************************
+AC_SUBST(DIRECTSOL)
+AC_SUBST(DIRECTSOL_INTERFACE)
+AC_SUBST(METIS_DIR)
+AC_SUBST(SUITESPARSE_DIR)
+AC_SUBST(LIBDIRECTSOL)
+
+dnl *********************************************************************
+dnl * ar & ranlib substitution
+dnl *********************************************************************
+AC_SUBST(AR)
+AC_SUBST(RANLIB)
+
+dnl *********************************************************************
+dnl * Installation Directories
+dnl *********************************************************************
+dnl AC_SUBST(EVSL_INSTALLDIR)
+dnl AC_SUBST(EVSL_LIBINSTALL)
+dnl AC_SUBST(EVSL_INCINSTALL)
+
+dnl *********************************************************************
+dnl * General purpose header files, libraries and directories
+dnl *********************************************************************
+AC_SUBST(LIBS_DIR)
+AC_SUBST(LIBS)
+AC_SUBST(FLIBS)
+AC_SUBST(FCLIBS)
+dnl *********************************************************************
+dnl * suffix for evsl libraries
+dnl *********************************************************************
+AC_SUBST(EVSL_LIBSUFFIX)
 
 dnl *********************************************************************
 dnl * Define the files to be configured and made 

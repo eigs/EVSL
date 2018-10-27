@@ -49,23 +49,15 @@ int time_seeder() {
 
 /* for Linux */
 #include <time.h>
-#ifdef USE_MKL
-#include <mkl.h>
-#endif
-
 /**
  * @brief cheblan timer
  * @return Returns current time in nanoseconds
  */
 double evsl_timer() {
-#ifdef USE_MKL
-  return dsecnd();
-#else
   /* POSIX C 1993 timer, requires -librt */
   struct timespec t ;
   clock_gettime (CLOCK_MONOTONIC /*CLOCK_PROCESS_CPUTIME_ID*/, &t) ;
   return ((double) (t.tv_sec) + 1e-9 * (double) (t.tv_nsec));
-#endif
 }
 
 /**

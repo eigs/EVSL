@@ -20,7 +20,7 @@
 /*- - - - - - - - - constants */
 #define orthTol 1e-14
 
-/*! max number of Gram–Schmidt process in orthogonalization */
+/*! max number of Gram-Schmidt process in orthogonalization */
 #define NGS_MAX 2
 
 /*- - - - - - - - - error handler */
@@ -71,8 +71,6 @@ void simpson(double *xi, double *yi, int npts);
 // memory allocation/reallocation for a CSR matrix
 void csr_resize(int nrow, int ncol, int nnz, csrMat *csr);
 void sortrow(csrMat *A);
-/* extract upper triangular part of A */
-void triuCsr(csrMat *A, csrMat *U);
 
 /*- - - - - - - - - timing.c */
 int time_seeder();

@@ -26,11 +26,11 @@
 /* Using internal LAPACK routines in EVSL */
 #undef EVSL_USING_EVSL_LAPACK
 
+/* Using Intel MKL for BLAS and LAPACK */
+#undef EVSL_USING_INTEL_MKL
+
 /* Using long int version of Cholmod in SuiteSparse interface */
 #undef EVSL_CHOLMOD_USE_LONG
-
-/* Using Intel MKL */
-#undef EVSL_USING_INTEL_MKL
 
 /* Enable OpenMP support */
 #undef EVSL_USING_OPENMP
