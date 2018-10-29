@@ -1,21 +1,15 @@
 #include <math.h>
 #include <float.h>
-#include "def.h"
-#include "struct.h"
-#include "internal_proto.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "lapl.h"
 
 /**-----------------------------------------------------------------------
  *
- * @brief Laplacean Matrix generator 
+ * @brief Laplacean Matrix generator
  *
  * @param[in] nx  Number of points in x-direction
  * @param[in] ny  Number of points in y-direction
  * @param[in] nz  Number of points in z-direction
- * @param[out] *Acoo matrix in coordinate format. 
+ * @param[out] *Acoo matrix in coordinate format.
  *
  -----------------------------------------------------------------------**/
 int lapgen(int nx, int ny, int nz, cooMat *Acoo) {
@@ -24,9 +18,9 @@ int lapgen(int nx, int ny, int nz, cooMat *Acoo) {
   Acoo->ncols = n;
 
   int nzmax = nz > 1 ? 7*n : 5*n;
-  Malloc(Acoo->ir, nzmax, int);
-  Malloc(Acoo->jc, nzmax, int);
-  Malloc(Acoo->vv, nzmax, double);
+  Acoo->ir = evsl_Malloc(nzmax, int);
+  Acoo->jc = evsl_Malloc(nzmax, int);
+  Acoo->vv = evsl_Malloc(nzmax, double);
 
   int ii, nnz=0;
   for (ii=0; ii<n; ii++) {
@@ -80,18 +74,18 @@ int lapgen(int nx, int ny, int nz, cooMat *Acoo) {
  * @param[in] nz  Number of points in z-direction
  * @param[in] a  Left bound
  * @param[in] b  Right bound
- * @param[out] m number of eigenvalues found 
- * @param[out] **vo pointer to array of eigenvalues found 
+ * @param[out] m number of eigenvalues found
+ * @param[out] **vo pointer to array of eigenvalues found
  *
  *-----------------------------------------------------------------------**/
 int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo) {
-  double thetax = 0.5 * PI / (nx + 1.0);
-  double thetay = 0.5 * PI / (ny + 1.0);
-  double thetaz = 0.5 * PI / (nz + 1.0);
+  double thetax = 0.5 * EVSL_PI / (nx + 1.0);
+  double thetay = 0.5 * EVSL_PI / (ny + 1.0);
+  double thetaz = 0.5 * EVSL_PI / (nz + 1.0);
   int i, j, k, l=0, n=nx*ny*nz;
   double *v;
   double tx, ty, tz, ev;
-  Malloc(v, n, double);
+  v = evsl_Malloc(n, double);
   for (i=1; i<=nx; i++) {
     tx = sin(i*thetax);
     for (j=1; j<=ny; j++) {
@@ -102,13 +96,13 @@ int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo) {
           tz = 0.0;
         }
         ev = 4*(tx*tx+ty*ty+tz*tz);
-        if (ev >= a - DBL_EPS_MULT * DBL_EPSILON && ev <= b + DBL_EPS_MULT * DBL_EPSILON) {
+        if (ev >= a - EVSL_DBL_EPS_MULT * DBL_EPSILON && ev <= b + EVSL_DBL_EPS_MULT * DBL_EPSILON) {
           v[l++] = ev;
         }
       }
     }
   }
-  Realloc(v, l, double);
+  v = evsl_Realloc(v, l, double);
   sort_double(l, v, NULL);
 
   *m = l;
@@ -116,6 +110,3 @@ int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo) {
   return 0;
 }
 
-#ifdef __cplusplus
-}
-#endif

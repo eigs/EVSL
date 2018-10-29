@@ -71,74 +71,105 @@ folder of the package in EVSL_1.1.x
 
 -----------------------------------------------------------------------
 
-**Library**: The user only needs to modify the file makefile.in [see makefile.in.example for samples 
-  of files makefile.in that are given for mac-os and for Linux].
-
-    cp makefile.in_Linux/MacOS.example makefile.in. 
-    modify makefile.in [provide C compiler and BLAS/LAPACK path]
-    make clean; make
+**Library**: To build the EVSL library on Unix-like operating system, such as Linux and macOS, 
+ the simplies way is to run, in the sub-directory `EVSL_1.1.1`,
+```
+./configure
+```
+which, upon successful completion, creates file `makefile.in`, EVSL configuration header file `./INC/EVSL_config.h`, file
+`config.status` containing information of the current configuration and file `config.log` containing  messages produced by compilers while running configure,
+then followed by
+```
+make
+```
+which compiles EVSL with default options and installs the library in `./EVSL/include` and `./EVSL/lib`.
+There are many options to `configure` and `make` to customize installation directories, compiler selections, compile and load flags, etc. For example,
+```
+./configure --prefix=evsl-install-dir
+make install
+```
+copies the built EVSL libraries and include files into `evsl-install-dir`, and
+```
+./configure --with-openmp
+```
+enables EVSL to use OpenMP threading. For a complete list of options and the descriptions, type
+```
+./configure --help
+```
+**The user may directly modify `makefile.in` and `./INC/EVSL_config.h` for customizations.**
 
 **Test programs**:
-   In the directories under TESTS/, you will find a number of
-   directories which contain makefiles to 
-   build sample drivers that test a few different situations.
+   In the directories under TESTS/, you will find a number of directories that contain sample drivers 
+   of different functions in EVSL for spectral slicing, computing eigenvalues, and computing DOS 
+   (density of states). To compile, type
+```
+make test
+```
+in sub-directory `EVSL_1.1.1`.
+
+-----------------------------------------------------------------------
+
+###  BLAS and LAPACK
+
+-----------------------------------------------------------------------
+**Note that EVSL can be built without external BLAS and LAPACK being provided** and
+can also optionally use external BLAS and LAPACK libraries provided by the user, by doing, e.g.,
+```
+./configure --with-blas-lib=/usr/local/lib/libblas.a --with-lapack-lib=/usr/local/lib/liblapack.a
+```
+or
+```
+./configure --with-blas-lib-name=blas --with-blas-lib-dir=/usr/local/lib --with-lapack-lib-name=lapack 
+            --with-lapack-lib-dir=/usr/lib
+```
+On macOS, configure EVSL to use Apple Accelerate framework by
+```
+./configure --with-framework-accelerate
+```
+
+
+-----------------------------------------------------------------------
+
+###  DIRECT SOLVERS
+
+-----------------------------------------------------------------------
 
 **CXSparse**
-   CXSparse is the default direct linear solver used in EVSL for the 
-   linear systems that arise in rational filtering methods and    in 
-   generalized eigenvalue problems. CXSparse is included only to allow quick 
-   testing. However,  be aware that it is significantly slower than other available
-    direct solvers such as those in SuiteSparse  for example  (see below).
-
-   NOTE: The compiler used to compile CXSparse is specified in the makefile
-   at EXTERNAL/CXSparse/Lib/Makefile.
+   CXSparse is the default direct linear solver used in EVSL for the linear systems 
+   with complex symmetric matrix (A-SIGMA I) or (A-SIGMA B) that arise in rational filtering methods and
+   linear systems with SPD matrix B in generalized eigenvalue problems.
+   A (modified) copy of CXSparse is included in `EVSL_1.1.1/DIRECT/CXSparse`. Using alternative high performance direct solvers (see below) can often yield better overall performance of EVSL.
 
 >  NOTE: CXSparse, which is  distributed with EVSL, is Copyrighted by
->  Timothy Davis. As noted above much better performance can be
->  achieved by other existing direct solvers. 
->  Refer to CXSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
+   Timothy Davis. As noted above much better performance can be
+   achieved by other existing direct solvers. 
+   Refer to CXSparse package for its License. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
+
 
 **SuiteSparse**:
-   As a replacement for CXSparse, bindings are provided for the package SuiteSparse.
-   Once SuiteSparse is installed, simply switch the DIRECTSOL variable
-   in the makefile.in, and add the path to
-   EXTERNAL/makefile_suitesparse.in.
+   EVSL can use UMFPACK in SuiteSparse to solve linear systems with (A-SIGMA I) or (A-SIGMA B),
+   and  CHOLMOD to solve linear systems with B. To configure EVSL with SuiteSparse, run
+   ```
+   ./configure --with-suitesparse-dir=DIR --with-blas-lib-name=LIB --with-lapack-lib-name=LIB
+               --with-metis-dir=DIR
+   ```
 
-   EVSL invokes SuiteSparse to solve linear systems with (A-SIGMA I) or (A-SIGMA B),
-   and  CHOLMOD for  solving linear systems with B.
-
-   Other solvers can also be used by providing the same interface as done for SuiteSparse.
-   Follow the examples implemented in EXTERNAL/evsl_suitesparse.c
- 
 >  NOTE:  SuiteSparse is NOT distributed with EVSL, and it is Copyrighted by Timothy Davis.  
 >  Refer to the SuiteSparse package for its license. [http://faculty.cse.tamu.edu/davis/suitesparse.html]
 
-**Pardiso**
-  Pardiso bindings are provided. The Pardiso web-site can be accessed at
-  [https://pardiso-project.org/]
+**Pardiso**:
+   Pardiso in Intel MKL [https://software.intel.com/en-us/mkl-developer-reference-fortran-intel-mkl-pardiso-parallel-direct-sparse-solver-interface] is also supported. To configure EVSL with MKL Pardiso, run
+   ```
+   ./configure --with-mkl-pardiso --with-intel-mkl
+   ```
+   ensuring that `MKLROOT` is set correctly.
 
------------------------------------------------------------------------
+**Interface**:
+   Interface functions to call CXSparse, SuiteSparse and Pardiso from EVSL are 
+   provided in `EVSL_1.1.1/DIRECT/Interface`.
+   Other solvers can also be used by writing an interface of the same type.
 
-###  LINKING  WITH  UMFPACK (SuiteSparse 4.5.3)
-
------------------------------------------------------------------------
-  UMFPACK and CHOLMOD requires AMD, COLAMD, CCOLAMD
-  and  CAMD,  and  optionally  METIS 5.1.0.   Compile  each  of  these
-  packages  to  have  the  library  file in  the  Lib  directory.   If
-  SuiteSparse  is configured  with METIS,  give the  path to  METIS (v
-  5.1.0)  as  well  to  make  libmetis.a,  in metis-5.1.0/ type
-
-      make  config; make
-
-  Please  refer to SuiteSparse and METIS for installation details.
-
------------------------------------------------------------------------
-
-  Bindings with Pardiso as a direct solver are also provided -- see the directory EXTERNAL 
-  for details.
-
------------------------------------------------------------------------
-
+   
 ###  RATIONAL FILTERING
 
 -----------------------------------------------------------------------
@@ -290,13 +321,14 @@ folder of the package in EVSL_1.1.x
 -----------------------------------------------------------------------
 
  * INC
-   - evsl.h           : user-level function prototypes and constant definitions
-   - blaslapack.h     : C API for BLAS/LAPACK functions used in evsl
-   - def.h            : miscellaneous macros 
-   - struct.h         : miscellaneous structs used in evsl
-   - internal_proto.h : internal function prototypes for SRC/
+   - EVSL_config.h     : configuration header file
+   - evsl.h            : user-level function prototypes and constant definitions
+   - internal_header.h : internal header file for SRC/
+   - struct.h          : miscellaneous structs used in evsl
     
  * SRC
+   - blas/         :  required C blas routines
+   - lapack/       :  required C lapack routines
    - cheblanNr.c   :  Polynomial Filtered no-restart Lanczos
    - cheblanTr.c   :  Polynomial Filtered thick restart Lanczos
    - chebpoly.c    :  Computing and applying polynomial filters
@@ -314,65 +346,64 @@ folder of the package in EVSL_1.1.x
    - ratlanNr.c    :  Rational Filtered no-restart Lanczos
    - ratlanTr.c    :  Rational Filtered thick restart Lanczos
    - spmat.c       :  Sparse matrix routines
-   - spslice.c    :  Spectrum slicing functions for Kernel Polynomial Method
-   - spslice2.c   :  Spectrum slicing functions for Lanczos 
+   - spslice.c     :  Spectrum slicing functions for Kernel Polynomial Method
+   - spslice2.c    :  Spectrum slicing functions for Lanczos 
    - timing.c      :  Timer
    - vect.c        :  Vector operations
 
- * libevsl.a       : library
-
  * TESTS/          : Test drivers
 
-   * Fortran/   : Fortran test drivers
+   * Fortran/      : Fortran test drivers
 
-   * PLanR         : Polynomial Filtered Thick Restart Lanczos test drivers
-     * LapPLanR.c         : Polynomial filtering T-R Lanczos (Lapliacian)
+   * PLanR           : Polynomial Filtered Thick Restart Lanczos test drivers
+     * LapPLanR.c    : Polynomial filtering T-R Lanczos (Lapliacian)
      * MMPLanR.c     : Polynomial filtering T-R Lanczos (Matrix Market)
      * MMPLanR_omp.c : Polynomial filtering T-R Lanczos (parallelized with OMP for slices) (Matrix Market)
 
-   * RLanR         : Rational Filtered Thick Restart Lanczos test drivers
-     * LapRLanR.c         : Rational filtering T-R Lanczos (Laplacian)
+   * RLanR           : Rational Filtered Thick Restart Lanczos test drivers
+     * LapRLanR.c    : Rational filtering T-R Lanczos (Laplacian)
      * MMRLanR.c     : Rational filtering T-R Lanczos (Matrix Market)
 
-   * PLanN         : Polynomial Filtered No-Restart Lanczos test drivers
-     * MMPLanN.c     : Polynomial filtering non-restart Lanczos (Matrix Market)
+   * PLanN                : Polynomial Filtered No-Restart Lanczos test drivers
+     * MMPLanN.c          : Polynomial filtering non-restart Lanczos (Matrix Market)
      * LapPLanN.c         : Polynomial filtering non-restart Lanczos (Laplacian)
      * LapPLanN_MatFree.c : "matrix-free" version: not forming matrix but passing mat-vec function (Laplacian)
 
-   * RLanN         : Rational Filtered No-Restart Lanczos test drivers
-     * LapRLanN.c         : Rational filtering non-restart Lanczos (Laplacian)
+   * RLanN           : Rational Filtered No-Restart Lanczos test drivers
+     * LapRLanN.c    : Rational filtering non-restart Lanczos (Laplacian)
      * MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market)
 
-   * GEN           : Test drivers for the generalized eigenvalue problem
+   * GEN             : Test drivers for the generalized eigenvalue problem
      * MMsimple.c    : A stripped down (no slicing) drivier based on MMPLanN.c
      * MMPLanN.c     : Polynomial filtering non-restart Lanczos (Matrix Market)
      * MMPLanR.c     : Polynomial filtering T-R Lanczos (Matrix Market) 
      * MMRLanN.c     : Rational filtering non-restart Lanczos (Matrix Market) 
      * MRLanR.c      : Rational filtering T-R Lanczos (Matrix Market) 
 
-   * PSI           : Test drivers for polynomial filter subspace iteration
-     * LapPSI.c     : Polynomial filtering subspace iterations (Laplacian)
-     * MMPSI.c      : Polynomial filtering subspace iterations (Matrix Market)
+   * PSI             : Test drivers for polynomial filter subspace iteration
+     * LapPSI.c      : Polynomial filtering subspace iterations (Laplacian)
+     * MMPSI.c       : Polynomial filtering subspace iterations (Matrix Market)
 
-   * COMMON        : Routines common to the test drivers
-      * io.c        : parse command-line input parameters
-      * lapl.c      : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
-      * mmio.c        : IO routines for the matrix market format
+   * COMMON          : Routines common to the test drivers
+      * io.c         : parse command-line input parameters
+      * lapl.c       : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
+      * mmio.c       : IO routines for the matrix market format
 
-   * COMMON_GEN    : Routines common to the test drivers for the generalized eigenvalue problem
-      * io.c        : parse command-line input parameters
-      * lapl.c      : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
-      * mmio.c        : IO routines for the matrix market format
+   * COMMON_GEN      : Routines common to the test drivers for the generalized eigenvalue problem
+      * io.c         : parse command-line input parameters
+      * lapl.c       : Build Laplacian matrices and compute the exact eigenvalues of Laplacians
+      * mmio.c       : IO routines for the matrix market format
 
    * TESTS/Landos    : test drivers for the lanDOS related functions.
-      * LanDos.c      : DOS for standard eigenvalue problem  using Lanczos 
-      * LanDosG.c     : DOS for generalized eigenvalue problem  using Lanczos 
+      * LanDos.c     : DOS for standard eigenvalue problem  using Lanczos 
+      * LanDosG.c    : DOS for generalized eigenvalue problem  using Lanczos 
 
- * EXTERNAL             : direct solver  interface for generalized eigenvalue problems
-   - evsl_suitesparse.c : suitesparse UMFPACK and CHOLMOD interface
-   - evsl_cxsparse.c    : cxsparse interface
-   - evsl_pardiso.c     : pardiso interface
-   - evsl_direct.h      : Direct solver interface
+ * DIRECT
+   - CXSparse/                    : a copy of modified CXSparse
+   - Interface/evsl_suitesparse.c : suitesparse UMFPACK and CHOLMOD interface
+   - Interface/evsl_cxsparse.c    : cxsparse interface
+   - Interface/evsl_pardiso.c     : pardiso interface
+   - Interface/evsl_direct.h      : header for all direct solver interface
 
 
  * FORTRAN         : Fortran interface

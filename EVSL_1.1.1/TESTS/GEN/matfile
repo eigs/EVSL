@@ -1,5 +1,5 @@
-2
-../../MATRICES/NM1A.mtx ../../MATRICES/NM1B.mtx nm1A nm1B MM1  3.947842e-07, 3.947842e-05 1
+1
+../../MATRICES/NM1A.mtx ../../MATRICES/NM1B.mtx nm1A nm1B MM1  3.947842e-07, 3.947842e-05 2
 ../../MATRICES/A.mtx ../../MATRICES/B.mtx stiff1 mass1 MM1  28.617629  1746.952 2
 ../../MATRICES/A5.mtx ../../MATRICES/B5.mtx stiff5 mass5 MM1  28.617629  1000.952 3
 ../../MATRICES/stiff0065536.mtx ../MATRICES/mass0065536.mtx stiff0065536 mass0065536 MM1  0.3  0.6 1

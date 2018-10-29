@@ -2,10 +2,7 @@
 #include <stdio.h>
 #include <float.h>
 #include <math.h>
-#include "def.h"
-#include "blaslapack.h"
-#include "struct.h"
-#include "internal_proto.h"
+#include "internal_header.h"
 
 #define NBUF 2
 /**
@@ -85,28 +82,28 @@ int ChebSI(int nev, double *intv, int maxit,
   int it = 0;
   /*-------------------- memory for projected matrix T=V'p(A)V and its eigenpairs (evecT,evalT) */
   double *T, *evecT, *evalT;
-  Malloc(T, nev2, double);
-  Malloc(evecT, nev2, double);
-  Malloc(evalT, nev, double);
+  T = evsl_Malloc(nev2, double);
+  evecT = evsl_Malloc(nev2, double);
+  evalT = evsl_Malloc(nev, double);
   ///*-------------------- memory for converged Ritz pairs (Y, Lam) */
   //    double *Y, *Lam;
-  //    Malloc(Y, nev2, double);
-  //    Malloc(Lam, nev2, double);
+  //    Y = evsl_Malloc(nev2, double);
+  //    Lam = evsl_Malloc(nev2, double);
 
   /*-------------------- memory for block of approx. eigenvectors/evals and their products with p(A)*/
   double *V, *Lam, *PV, *R, *res;
   double *V_out, *Lam_out, *res_out;
-  Malloc(V, nnev, double);
-  Malloc(PV, nnev, double);
-  Malloc(Lam, nev, double);
-  Malloc(R, nnev, double);   // block of residuals
-  Malloc(res, nev, double);  // residual norms w.r.t. A
+  V = evsl_Malloc(nnev, double);
+  PV = evsl_Malloc(nnev, double);
+  Lam = evsl_Malloc(nev, double);
+  R = evsl_Malloc(nnev, double);   // block of residuals
+  res = evsl_Malloc(nev, double);  // residual norms w.r.t. A
 
   /*-------------------- number of locked, and unconverged (active) pairs */
   int nlock, nact, nlock_ab;
   int *act_idx, *lock_idx;  // arrays used to store idices of active and locked columns of V
-  Malloc(act_idx, nev, int);
-  Malloc(lock_idx, nev, int);
+  act_idx = evsl_Malloc(nev, int);
+  lock_idx = evsl_Malloc(nev, int);
   nlock = 0;
   nact  = nev;
   nlock_ab = 0;  // number of locked eigenvalues that are in [a,b]
@@ -114,8 +111,8 @@ int ChebSI(int nev, double *intv, int maxit,
   /*-------------------- alloc some work space */
   double *work, *buf;
   int work_size = 3*n;
-  Malloc(work, work_size, double);
-  Malloc(buf, nnev, double);  // buffer for DGEMM calls
+  work = evsl_Malloc(work_size, double);
+  buf = evsl_Malloc(nnev, double);  // buffer for evsl_dgemm calls
 
   /*-------------------- orthonormalize initial V and compute PV = P(A)V */
   orth(vinit,n,nev,V,work);
@@ -134,15 +131,15 @@ int ChebSI(int nev, double *intv, int maxit,
     /*---  V <- orth(PV)  */
     int nnlock = n*nlock;                                      // pointer to the first active column
     int nnact  = n*nact;
-    DCOPY(&nnact, PV+nnlock, &one, V+nnlock, &one);
+    evsl_dcopy(&nnact, PV+nnlock, &one, V+nnlock, &one);
     /*---  Orthogonalize active columns V(:,nlock:nev-1) against locked columns V(:,0:nlocked-1)*/
     if ( nlock>0 ) {
-      DGEMM(&cT, &cN, &nlock, &nact, &n, &done, V, &n, V+nnlock, &n, &dzero, T, &nev);
-      DGEMM(&cN, &cN, &n, &nact, &nlock, &dmone, V, &n, T, &nev, &done, V+nnlock, &n);
+      evsl_dgemm(&cT, &cN, &nlock, &nact, &n, &done, V, &n, V+nnlock, &n, &dzero, T, &nev);
+      evsl_dgemm(&cN, &cN, &n, &nact, &nlock, &dmone, V, &n, T, &nev, &done, V+nnlock, &n);
     }
     /*--- Orthogonormalize columns of V(:,nlock:nev-1) */
     orth(V+nnlock, n, nact, buf, work);
-    DCOPY(&nnact, buf, &one, V+nnlock, &one);
+    evsl_dcopy(&nnact, buf, &one, V+nnlock, &one);
     /*---  PV <- P(A)*V */
     tm = evsl_timer();
     //polyfilt(A, deg, mu, dd, cc, V+nnlock, nact, PV+nnlock, work);
@@ -152,25 +149,25 @@ int ChebSI(int nev, double *intv, int maxit,
     nmv += deg*nact;
     // orthogonalize PVact against Vlocked
     if ( nlock>0 ) {
-      DGEMM(&cT, &cN, &nlock, &nact, &n, &done, V, &n, PV+nnlock, &n, &dzero, T, &nev);
-      DGEMM(&cN, &cN, &n, &nact, &nlock, &dmone, V, &n, T, &nev, &done, PV+nnlock, &n);
+      evsl_dgemm(&cT, &cN, &nlock, &nact, &n, &done, V, &n, PV+nnlock, &n, &dzero, T, &nev);
+      evsl_dgemm(&cN, &cN, &n, &nact, &nlock, &dmone, V, &n, T, &nev, &done, PV+nnlock, &n);
     }
     // end orthogonalize PVact against Vlocked
     /*---  Lock converged pairs */
     if ( ((it+1)%cvcheck == 0) || ((it+1)==maxit)  ) {
       //// Rayleigh--Ritz with unconverged columns V
       /*---  T = V'p(A)V; [evecT,evalT]=eig(T);    */
-      DGEMM(&cT,&cN,&nact,&nact,&n,&done,V+nnlock,&n,PV+nnlock,&n,&dzero,T,&nev);
+      evsl_dgemm(&cT,&cN,&nact,&nact,&n,&done,V+nnlock,&n,PV+nnlock,&n,&dzero,T,&nev);
       SymEigenSolver(nact, T, nev, evecT, nev, evalT+nlock);
       /*---  V <- V*evecT; p(A)V <- PV*evecT (update only active columns)    */
-      DGEMM(&cN,&cN,&n,&nact,&nact,&done,V+nnlock,&n,evecT,&nev,&dzero,buf,&n);
-      DCOPY(&nnact, buf, &one, V+nnlock, &one);
-      DGEMM(&cN,&cN,&n,&nact,&nact,&done,PV+nnlock,&n,evecT,&nev,&dzero,buf,&n);
-      DCOPY(&nnact, buf, &one, PV+nnlock, &one);
+      evsl_dgemm(&cN,&cN,&n,&nact,&nact,&done,V+nnlock,&n,evecT,&nev,&dzero,buf,&n);
+      evsl_dcopy(&nnact, buf, &one, V+nnlock, &one);
+      evsl_dgemm(&cN,&cN,&n,&nact,&nact,&done,PV+nnlock,&n,evecT,&nev,&dzero,buf,&n);
+      evsl_dcopy(&nnact, buf, &one, PV+nnlock, &one);
       /*---  Compute active residuals R = PV - V*diag(evalT)    */
       for (i=nlock; i<nev; i++) {
         double t = -evalT[i];
-        //DSCAL(&n, &t, R+i*n, &one);
+        //evsl_dscal(&n, &t, R+i*n, &one);
         for (j=0; j<n; j++) {
           R[i*n+j] = PV[i*n+j]+t*V[i*n+j];
         }
@@ -181,25 +178,25 @@ int ChebSI(int nev, double *intv, int maxit,
       nact = 0;
       for (i=nlock; i<nev; i++) {
         /*---  Compute norm of R(:,i)   */
-        double resP = sqrt(DDOT(&n, R+i*n, &one, R+i*n, &one));
+        double resP = sqrt(evsl_ddot(&n, R+i*n, &one, R+i*n, &one));
         if (resP < tolP) {
           /*---  Compute norm of AV(:,i) - V(:,i)*Lambda(i)   */
           tm = evsl_timer();
           matvec_A(V+i*n, buf);
           tmv += evsl_timer() - tm;
           nmv++;
-          double rq = DDOT(&n, V+i*n, &one, buf, &one);  // Rayleigh Quotient for A
+          double rq = evsl_ddot(&n, V+i*n, &one, buf, &one);  // Rayleigh Quotient for A
           for (j=0; j < n; j++) {
             R[i*n+j] = buf[j] - rq*V[i*n+j];
           }
-          double resA = sqrt(DDOT(&n, R+i*n, &one, R+i*n, &one));
+          double resA = sqrt(evsl_ddot(&n, R+i*n, &one, R+i*n, &one));
           if (resA < tol) {
             lock_idx[nlock_new] = i;
             res[nlock+nlock_new] = resA;
             Lam[nlock+nlock_new] = rq;
             nlock_new++;
             /*---  Determine if the newly locked eigenvalue is in [a,b] */
-            if ( rq >= aa - DBL_EPS_MULT * DBL_EPSILON && rq <= bb + DBL_EPS_MULT * DBL_EPSILON ) {
+            if ( rq >= aa - EVSL_DBL_EPS_MULT * DBL_EPSILON && rq <= bb + EVSL_DBL_EPS_MULT * DBL_EPSILON ) {
               nlock_ab_new++;
             }
           } else {
@@ -214,16 +211,16 @@ int ChebSI(int nev, double *intv, int maxit,
 
       /*---  Move newly locked eigenvectors to  columns nlock:nlock+nlock_new-1 of V */
       for (i = 0; i<nlock_new; i++) {
-        DCOPY(&n, V+lock_idx[i]*n, &one, buf+nnlock+i*n, &one);
-        DCOPY(&n, PV+lock_idx[i]*n, &one, R+nnlock+i*n, &one);
+        evsl_dcopy(&n, V+lock_idx[i]*n, &one, buf+nnlock+i*n, &one);
+        evsl_dcopy(&n, PV+lock_idx[i]*n, &one, R+nnlock+i*n, &one);
       }
       /*---  Move active columns to V(:, nlock:nev)*/
       for (i = 0; i<nact; i++) {
-        DCOPY(&n, V+act_idx[i]*n, &one, buf+nnlock+(nlock_new+i)*n, &one);
-        DCOPY(&n, PV+act_idx[i]*n, &one, R+nnlock+(nlock_new+i)*n, &one);
+        evsl_dcopy(&n, V+act_idx[i]*n, &one, buf+nnlock+(nlock_new+i)*n, &one);
+        evsl_dcopy(&n, PV+act_idx[i]*n, &one, R+nnlock+(nlock_new+i)*n, &one);
       }
-      DCOPY(&nnact, buf+nnlock, &one, V+nnlock, &one);
-      DCOPY(&nnact, R+nnlock, &one, PV+nnlock, &one);
+      evsl_dcopy(&nnact, buf+nnlock, &one, V+nnlock, &one);
+      evsl_dcopy(&nnact, R+nnlock, &one, PV+nnlock, &one);
 
       nlock += nlock_new;
       nlock_ab += nlock_ab_new;
@@ -246,16 +243,16 @@ int ChebSI(int nev, double *intv, int maxit,
   }
 
   /*-------------------- Postprocessing : remove eigenpairs not associated with [a,b]*/
-  Malloc(Lam_out, nev, double);
-  Malloc(res_out, nev, double);
-  Malloc(V_out, nnev, double);
+  Lam_out = evsl_Malloc(nev, double);
+  res_out = evsl_Malloc(nev, double);
+  V_out = evsl_Malloc(nnev, double);
   int idx=0;
   for (i=0; i<nlock;i++) {
     double t = Lam[i];
-    if ( t >= aa - DBL_EPS_MULT * DBL_EPSILON && t <= bb + DBL_EPS_MULT * DBL_EPSILON ) {
+    if ( t >= aa - EVSL_DBL_EPS_MULT * DBL_EPSILON && t <= bb + EVSL_DBL_EPS_MULT * DBL_EPSILON ) {
       Lam_out[idx] = t;
       res_out[idx] = res[i];
-      DCOPY(&n, V+i*n, &one, V_out+idx*n, &one);
+      evsl_dcopy(&n, V+i*n, &one, V_out+idx*n, &one);
       idx++;
     }
   }
@@ -266,18 +263,18 @@ int ChebSI(int nev, double *intv, int maxit,
   *Yo = V_out;
   *reso = res_out;
   /*-------------------- free arrays */
-  free(T);
-  free(evalT);
-  free(evecT);
-  free(R);
-  free(V);
-  free(PV);
-  free(Lam);
-  free(res);
-  free(act_idx);
-  free(lock_idx);
-  free(buf);
-  free(work);
+  evsl_Free(T);
+  evsl_Free(evalT);
+  evsl_Free(evecT);
+  evsl_Free(R);
+  evsl_Free(V);
+  evsl_Free(PV);
+  evsl_Free(Lam);
+  evsl_Free(res);
+  evsl_Free(act_idx);
+  evsl_Free(lock_idx);
+  evsl_Free(buf);
+  evsl_Free(work);
   /*-------------------- record stats */
   tall = evsl_timer() - tall;
   /*-------------------- print stat */

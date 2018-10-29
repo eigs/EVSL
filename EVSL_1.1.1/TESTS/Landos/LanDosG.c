@@ -12,19 +12,6 @@
 #include "evsl.h"
 #include "io.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*-------------------- protos */
-int exDOS(double *vals, int n, int npts, double *x, double *y, double *intv);
-int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
-int get_matrix_info(FILE *fmat, io_t *pio);
-int findarg(const char *argname, ARG_TYPE type, void *val, int argc,
-            char **argv);
-
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define min(a, b) ((a) < (b) ? (a) : (b))
 /**
  * Reads in a vector as an nx1 matrix.
  *
@@ -37,7 +24,7 @@ int readVec(const char *filename, int *npts, double **vec) {
   int i;
   FILE *ifp = fopen(filename, "r");
   fscanf(ifp, "%i", npts);
-  *vec = (double *)malloc(sizeof(double) * *npts);
+  *vec = evsl_Malloc(*npts, double);
   for (i = 0; i < (*npts); i++) {
     fscanf(ifp, "%lf", (&(*vec)[i]));
   }
@@ -66,7 +53,7 @@ int main(int argc, char *argv[]) {
      intv[2] and intv[3] are the smallest and largest eigenvalues of (A,B)
      */
   double intv[4];
-  int n = 0, i, ierr;
+  int n = 0, i;
 
   cooMat Acoo, Bcoo; /* A, B */
   csrMat Acsr, Bcsr; /* A, B */
@@ -99,8 +86,9 @@ int main(int argc, char *argv[]) {
     exit(3);
   }
   for (mat = 1; mat <= numat; mat++) {
-    if (get_matrix_info(fmat, &io) != 0) {
-      fprintf(flog, "Invalid format in matfile ...\n");
+    int ierr;
+    if ( (ierr = get_matrix_info(fmat, &io)) != 0 ) {
+      fprintf(flog, "Invalid format in matfile %d...\n", ierr);
       exit(5);
     }
     /*----------------input matrix and interval information -*/
@@ -146,7 +134,7 @@ int main(int argc, char *argv[]) {
         exit(6);
       }
       /*------------------ diagonal scaling for Acoo and Bcoo */
-      sqrtdiag = (double *)calloc(n, sizeof(double));
+      sqrtdiag = evsl_Calloc(n, double);
       /*-------------------- conversion from COO to CSR format */
       ierr = cooMat_to_csrMat(0, &Acoo, &Acsr);
       if (ierr) {
@@ -178,7 +166,7 @@ int main(int argc, char *argv[]) {
      *                 compute the range of the spectrum of B */
     SetStdEig();
     SetAMatrix(&Bcsr);
-    double *vinit = (double *)malloc(n * sizeof(double));
+    double *vinit = evsl_Malloc(n, double);
     rand_double(n, vinit);
     double lmin = 0.0, lmax = 0.0;
     ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
@@ -194,8 +182,7 @@ int main(int argc, char *argv[]) {
     SetBSol(BSolPol, (void *)&BInv);
     SetLTSol(BSolPol, (void *)&BSqrtInv);
     printf(" The degree for LS polynomial approximations to B^{-1} and B^{-1/2} "
-           "are %d and %d\n",
-           BInv.deg, BSqrtInv.deg);
+           "are %d and %d\n", BInv.deg, BSqrtInv.deg);
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
@@ -230,11 +217,11 @@ int main(int argc, char *argv[]) {
     double *yHist = NULL;
     /*-------------------- exact histogram and computed DOS */
     if (graph_exact_dos) {
-      xHist = (double *)malloc(npts * sizeof(double));
-      yHist = (double *)malloc(npts * sizeof(double));
+      xHist = evsl_Malloc(npts, double);
+      yHist = evsl_Malloc(npts, double);
     }
-    double *xdos = (double *)malloc(npts * sizeof(double));
-    double *ydos = (double *)malloc(npts * sizeof(double));
+    double *xdos = evsl_Malloc(npts, double);
+    double *ydos = evsl_Malloc(npts, double);
 
     double t0 = evsl_timer();
     /* ------------------- Calculate the computed DOS */
@@ -261,7 +248,7 @@ int main(int argc, char *argv[]) {
     free_coo(&Bcoo);
     free_csr(&Acsr);
     free_csr(&Bcsr);
-    free(vinit);
+    evsl_Free(vinit);
     FreeBSolPolData(&BInv);
     FreeBSolPolData(&BSqrtInv);
 
@@ -346,15 +333,15 @@ int main(int argc, char *argv[]) {
     }
 
     if (graph_exact_dos) {
-      free(xHist);
-      free(yHist);
+      evsl_Free(xHist);
+      evsl_Free(yHist);
     }
-    free(xdos);
-    free(ydos);        
-    if (ev)  free(ev);
+    evsl_Free(xdos);
+    evsl_Free(ydos);
+    if (ev)  evsl_Free(ev);
     fclose(fstats);
     if (sqrtdiag) {
-      free(sqrtdiag);
+      evsl_Free(sqrtdiag);
     }
   } /* matrix loop */
 
@@ -363,6 +350,4 @@ int main(int argc, char *argv[]) {
   EVSLFinish();
   return 0;
 }
-#ifdef __cplusplus
-}
-#endif
+

@@ -9,21 +9,9 @@
 #include "io.h"
 #include "evsl.h"
 #include "evsl_direct.h"
-#include "blaslapack.h"
-
-#ifdef __cplusplus
-extern "C" {
-#define max(a, b) std::max(a, b)
-#define min(a, b) std::min(a, b)
-#else
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#endif
+#include "../../SRC/blas/evsl_blas.h"
 
 #define NO_SOLVES /*  If defined uses no solves */
-/*-------------------- Protos */
-int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
-/*-------------------- End Protos */
 
 int main(int argc, char** argv) {
   /**--------------------------------------------------------------
@@ -32,12 +20,12 @@ int main(int argc, char** argv) {
    * This is a simple driver for the generalized eigenvalue problem.
    * It uses no factorizations, and only requires the matrix and, interval
    * and an estimate of the number of eigenvalues in the interval (greater than
-   * or equal to the exact number). Instead of reading the matrix info from 
-   * `matfile' it enters it in the driver itself. Only one matrix is tested 
-   * and only one interval is used [no slicing] 
+   * or equal to the exact number). Instead of reading the matrix info from
+   * `matfile' it enters it in the driver itself. Only one matrix is tested
+   * and only one interval is used [no slicing]
    *
    * While this is still a little long, the majority is boilerplate-esque code, and code
-   * to handle I/O. 
+   * to handle I/O.
    *
    * The matrix is specified in the matfile, while the number of eigenvalues
    * are specified as the only command argument.
@@ -47,7 +35,7 @@ int main(int argc, char** argv) {
   double a, b, lmax, lmin, ecount, tol;
   double xintv[4]; /**< Specifies the interval */
   double
-      sli[2]; /**< Contains the endpoints of each sub-interval, in this case 
+      sli[2]; /**< Contains the endpoints of each sub-interval, in this case
                    only 2*/
   double *alleigs;
   /* initial vector: random */
@@ -60,7 +48,7 @@ int main(int argc, char** argv) {
   /* slicer parameters */
   FILE *flog = stdout, *fstats = NULL;
   io_t io; /** Used for input */
-/*-------------------- Bsol */
+  /*-------------------- Bsol */
   int         Bsol_direct = 0; /* if using direct solver for B^{-1} */
   void       *Bsol = NULL;
   BSolDataPol BsolPol, BsqrtsolPol;
@@ -80,7 +68,7 @@ int main(int argc, char** argv) {
   strcpy(io.MatNam2,"nm1B");                     // short name for B
   a = 3.947842e-07;                              // a of interval [a b]
   b = 3.947842e-05;                              // b of interval [a b]
-  io.Fmt = 3;                                    // MM1 format 
+  io.Fmt = 3;                                    // MM1 format
   ecount = 60;                                   // estimate of eigenvalue count
   /*-------------------- print some info */
   fprintf(flog, "MATRIX A: %s...\n", io.MatNam1);
@@ -132,18 +120,18 @@ int main(int argc, char** argv) {
       exit(7);
     }
     /*-------------------- Finish with input  */
-    alleigs = malloc(n * sizeof(double));
+    alleigs = evsl_Malloc(n, double);
     /*-------------------- initial vector */
-    vinit = (double *)malloc(n * sizeof(double));
+    vinit = evsl_Malloc(n,  double);
     rand_double(n, vinit);/*  Fill with random */
     /*-------------------- B^{-1} */
     if (DiagScalB) {
-      /* For FEM matrices, diagonal scaling is often found useful to 
+      /* For FEM matrices, diagonal scaling is often found useful to
        * improve condition */
-      Sqrtdiag = (double *)calloc(n, sizeof(double));
+      Sqrtdiag = evsl_Calloc(n, double);
       extrDiagCsr(&Bcsr, Sqrtdiag);
       for (i = 0; i < n; i++) {
-	Sqrtdiag[i] = sqrt(Sqrtdiag[i]);
+        Sqrtdiag[i] = sqrt(Sqrtdiag[i]);
       }
       diagScalCsr(&Acsr, Sqrtdiag);
       diagScalCsr(&Bcsr, Sqrtdiag);
@@ -202,44 +190,43 @@ int main(int argc, char** argv) {
     //-------------------- Now determine polymomial
     find_pol(xintv, &pol);
     fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
-	    pol.type, pol.deg, pol.bar, pol.gam);
+            pol.type, pol.deg, pol.bar, pol.gam);
     // save_vec(pol.deg+1, pol.mu, "OUT/mu.txt");
     //-------------------- approximate number of eigenvalues wanted
     //-------------------- Dimension of Krylov subspace and maximal iterations
-    mlan = max(5 * (ecount+2), 300);
-    mlan = min(mlan, n);
+    mlan = evsl_max(5 * (ecount+2), 300);
+    mlan = evsl_min(mlan, n);
     //-------------------- then call ChenLanNr
-    ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res,
-		     fstats);
+    ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebLanTr error %d\n", ierr);
       return 1;
-    }    
+    }
     /* in the case of diagonal scaling, recover Y and recompute residual */
     if (Sqrtdiag) {
-      double *v1 = (double *) malloc(n*sizeof(double));
-      double *v2 = (double *) malloc(n*sizeof(double));
+      double *v1 = evsl_Malloc(n, double);
+      double *v2 = evsl_Malloc(n, double);
       int one = 1;
       for (i = 0; i < nev2; i++) {
-	double *yi = Y+i*n;
-	double t = -lam[i];
-	matvec_csr(yi, v1, &Acsr);
-	matvec_csr(yi, v2, &Bcsr);
-	DAXPY(&n, &t, v2, &one, v1, &one);
-	for (j = 0; j < n; j++) {
-	  v1[j] *= Sqrtdiag[j];
-	}
-	res[i] = DNRM2(&n, v1, &one);
-	for (j = 0; j < n; j++) {
-	  yi[j] /= Sqrtdiag[j];
-	}
+        double *yi = Y+i*n;
+        double t = -lam[i];
+        matvec_csr(yi, v1, &Acsr);
+        matvec_csr(yi, v2, &Bcsr);
+        evsl_daxpy(&n, &t, v2, &one, v1, &one);
+        for (j = 0; j < n; j++) {
+          v1[j] *= Sqrtdiag[j];
+        }
+        res[i] = evsl_dnrm2(&n, v1, &one);
+        for (j = 0; j < n; j++) {
+          yi[j] /= Sqrtdiag[j];
+        }
       }
-      free(v1);
-      free(v2);
+      evsl_Free(v1);
+      evsl_Free(v2);
     }
     /* sort the eigenvals: ascending order
      * ind: keep the original indices */
-    ind = (int *)malloc(nev2 * sizeof(int));
+    ind = evsl_Malloc(nev2, int);
     sort_double(nev2, lam, ind);
     printf(" number of eigenvalues found: %d\n", nev2);
     /*-------------------- print eigenvalues */
@@ -249,23 +236,23 @@ int main(int argc, char** argv) {
       fprintf(fstats, "% .15e  %.15e\n", lam[i], res[ind[i]]);
     }
     fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - "
-	    "- - - - - - - - - - - - - - - - - -\n");
+                    "- - - - - - - - - - - - - - - - - -\n");
     /*  Copy to array of all eigenvalues */
     memcpy(&alleigs[totcnt], lam, nev2 * sizeof(double));
-    
+
     totcnt += nev2;
     //-------------------- free allocated space withing this scope
     if (lam) {
-      free(lam);
+      evsl_Free(lam);
     }
     if (Y) {
-      free(Y);
+      evsl_Free(Y);
     }
     if (res) {
-      free(res);
+      evsl_Free(res);
     }
     free_pol(&pol);
-    free(ind);
+    evsl_Free(ind);
     //-------------------- free other allocated space
     fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
     sprintf(path, "OUT/EigsOut_MMsimple_(%s_%s)", io.MatNam1, io.MatNam2);
@@ -276,21 +263,21 @@ int main(int argc, char** argv) {
       }
       fclose(fmtout);
     }
-    free(vinit);
+    evsl_Free(vinit);
     free_coo(&Acoo);
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
-    free(alleigs);
+    evsl_Free(alleigs);
     if (fstats != stdout) {
       fclose(fstats);
     }
     if (Sqrtdiag) {
-      free(Sqrtdiag);
+      evsl_Free(Sqrtdiag);
     }
     if (Bsol_direct) {
       FreeBSolDirectData(Bsol);
-    } else { 
+    } else {
       FreeBSolPolData(&BsolPol);
       FreeBSolPolData(&BsqrtsolPol);
     }
@@ -302,6 +289,3 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-#ifdef __cplusplus
-}
-#endif

@@ -6,22 +6,7 @@
 #include "io.h"
 #include "evsl.h"
 #include "evsl_direct.h"
-#include "blaslapack.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#define max(a, b) std::max(a, b)
-#define min(a, b) std::min(a, b)
-#else
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
-/*-------------------- Protos */
-int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
-int get_matrix_info(FILE *fmat, io_t *pio);
-/*-------------------- End Protos */
+#include "../../SRC/blas/evsl_blas.h"
 
 int main() {
   /*--------------------------------------------------------------
@@ -60,17 +45,6 @@ int main() {
   int         DiagScalB = 1;  /* Apply diagonal scaling to A and B */
   double     *Sqrtdiag = NULL;
 
-#if CXSPARSE == 1
-  if (Bsol_direct) {
-    printf("-----------------------------------------\n");
-    printf(" \n \
-    *** Note: You are using CXSparse for the  direct  solver.   CXSparse is  not\n \
-    recommended if you  want to obtain a reasonable performance.  See the readme\n \
-    file for options based on SuiteSparse for example.  Results with SuiteSparse\n \
-    can be orders of magnitude faster. \n\n"); 
-    printf("-----------------------------------------\n");
-  }
-#endif
   /*-------------------- stopping tol */
   tol = 1e-6;
   /*-------------------- start EVSL */
@@ -117,10 +91,10 @@ int main() {
     }
     fprintf(fstats, "MATRIX A: %s...\n", io.MatNam1);
     fprintf(fstats, "MATRIX B: %s...\n", io.MatNam2);
-    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n", 
+    fprintf(fstats, "Partition the interval of interest [%f,%f] into %d slices\n",
             a, b, nslices);
-    counts = malloc(nslices * sizeof(int));
-    sli = malloc((nslices + 1) * sizeof(double));
+    counts = evsl_Malloc(nslices, int);
+    sli = evsl_Malloc(nslices+1, double);
     /*-------------------- Read matrix - case: COO/MatrixMarket formats */
     if (io.Fmt > HB) {
       ierr = read_coo_MM(io.Fname1, 1, 0, &Acoo);
@@ -151,9 +125,9 @@ int main() {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
-    alleigs = malloc(n * sizeof(double));
+    alleigs = evsl_Malloc(n, double);
     /*-------------------- initial vector */
-    vinit = (double *)malloc(n * sizeof(double));
+    vinit = evsl_Malloc(n, double);
     rand_double(n, vinit);
     /*-------------------- B^{-1} */
     if (Bsol_direct) {
@@ -168,9 +142,9 @@ int main() {
         csr_copy(&Acsr, &Acsr0, 1);
         csr_copy(&Bcsr, &Bcsr0, 1);
         */
-        /* For FEM matrices, diagonal scaling is often found useful to 
+        /* For FEM matrices, diagonal scaling is often found useful to
          * improve condition */
-        Sqrtdiag = (double *)calloc(n, sizeof(double));
+        Sqrtdiag = evsl_Calloc(n, double);
         extrDiagCsr(&Bcsr, Sqrtdiag);
         for (i = 0; i < n; i++) {
           Sqrtdiag[i] = sqrt(Sqrtdiag[i]);
@@ -212,8 +186,8 @@ int main() {
     /*-------------------- call LanczosDOS for spectrum slicing */
     /*-------------------- define landos parameters */
     double t = evsl_timer();
-    double *xdos = (double *)calloc(npts, sizeof(double));
-    double *ydos = (double *)calloc(npts, sizeof(double));
+    double *xdos = evsl_Calloc(npts, double);
+    double *ydos = evsl_Calloc(npts, double);
     ierr = LanDosG(nvec, msteps, npts, xdos, ydos, &ecount, xintv);
     t = evsl_timer() - t;
     if (ierr) {
@@ -262,8 +236,8 @@ int main() {
       //-------------------- approximate number of eigenvalues wanted
       nev = ev_int + 2;
       //-------------------- Dimension of Krylov subspace and maximal iterations
-      mlan = max(5 * nev, 300);
-      mlan = min(mlan, n);
+      mlan = evsl_max(5 * nev, 300);
+      mlan = evsl_min(mlan, n);
       //-------------------- then call ChenLanNr
       ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res,
                        fstats);
@@ -274,20 +248,20 @@ int main() {
 
       /* in the case of digonal scaling, recover Y and recompute residual */
       if (Sqrtdiag) {
-        double *v1 = (double *) malloc(n*sizeof(double));
-        double *v2 = (double *) malloc(n*sizeof(double));
+        double *v1 = evsl_Malloc(n, double);
+        double *v2 = evsl_Malloc(n, double);
         int one = 1;
         for (i = 0; i < nev2; i++) {
           double *yi = Y+i*n;
           double t = -lam[i];
           matvec_csr(yi, v1, &Acsr);
           matvec_csr(yi, v2, &Bcsr);
-          DAXPY(&n, &t, v2, &one, v1, &one);
+          evsl_daxpy(&n, &t, v2, &one, v1, &one);
           for (j = 0; j < n; j++) {
             v1[j] *= Sqrtdiag[j];
           }
-          res[i] = DNRM2(&n, v1, &one);
-          
+          res[i] = evsl_dnrm2(&n, v1, &one);
+
           for (j = 0; j < n; j++) {
             yi[j] /= Sqrtdiag[j];
           }
@@ -298,13 +272,13 @@ int main() {
           res[i] = DNRM2(&n, v1, &one);
           */
         }
-        free(v1);
-        free(v2);
+        evsl_Free(v1);
+        evsl_Free(v2);
       }
 
       /* sort the eigenvals: ascending order
        * ind: keep the orginal indices */
-      ind = (int *)malloc(nev2 * sizeof(int));
+      ind = evsl_Malloc(nev2, int);
       sort_double(nev2, lam, ind);
       printf(" number of eigenvalues found: %d\n", nev2);
       /* print eigenvalues */
@@ -320,16 +294,16 @@ int main() {
       counts[sl] = nev2;
       //-------------------- free allocated space withing this scope
       if (lam) {
-        free(lam);
+        evsl_Free(lam);
       }
       if (Y) {
-        free(Y);
+        evsl_Free(Y);
       }
       if (res) {
-        free(res);
+        evsl_Free(res);
       }
       free_pol(&pol);
-      free(ind);
+      evsl_Free(ind);
     } // for (sl=0; sl<nslices; sl++)
     //-------------------- free other allocated space
     fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
@@ -341,25 +315,25 @@ int main() {
       }
       fclose(fmtout);
     }
-    free(vinit);
-    free(sli);
+    evsl_Free(vinit);
+    evsl_Free(sli);
     free_coo(&Acoo);
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
-    free(alleigs);
-    free(counts);
-    free(xdos);
-    free(ydos);
+    evsl_Free(alleigs);
+    evsl_Free(counts);
+    evsl_Free(xdos);
+    evsl_Free(ydos);
     if (fstats != stdout) {
       fclose(fstats);
     }
     if (Sqrtdiag) {
-      free(Sqrtdiag);
+      evsl_Free(Sqrtdiag);
     }
     if (Bsol_direct) {
       FreeBSolDirectData(Bsol);
-    } else { 
+    } else {
       FreeBSolPolData(&BsolPol);
       FreeBSolPolData(&BsqrtsolPol);
     }
@@ -374,6 +348,3 @@ int main() {
   return 0;
 }
 
-#ifdef __cplusplus
-}
-#endif

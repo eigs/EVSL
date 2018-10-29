@@ -3,10 +3,7 @@
 #include <math.h>
 #include <float.h>
 #include <string.h>
-#include "def.h"
-#include "blaslapack.h"
-#include "struct.h"
-#include "internal_proto.h"
+#include "internal_header.h"
 /**
  * @file chebpoly.c
  * @brief Computing and applying polynomial filters
@@ -43,12 +40,12 @@ int dampcf(int m, int damping, double *jac) {
   double thetJ = 0.0, thetL = 0.0, a1 = 0.0, a2 = 0.0, dm = (double) m;
   int k, k1;
   if (damping==1){
-    thetJ = PI/(dm+2);
+    thetJ = EVSL_PI/(dm+2);
     a1 = 1/(dm+2);
     a2 = sin(thetJ);
   }
   if (damping == 2)
-    thetL = PI/(dm+1);
+    thetL = EVSL_PI/(dm+1);
   jac[0] = 0.5;    // <<-- Note this is instead of 1 - in order
   // to reflect  the 1/2 factor in zeroth term
   // of Chebyshev expansion
@@ -108,9 +105,9 @@ double dif_eval(double *v, int m, double thc, double *jac){
 int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
   int k, j, one = 1, n = npts;
   double scal, *vkm1, *vkp1, *vk;
-  Malloc(vkm1, n, double);
-  Malloc(vkp1, n, double);
-  Malloc(vk, n, double);
+  vkm1 = evsl_Malloc(n, double);
+  vkp1 = evsl_Malloc(n, double);
+  vk = evsl_Malloc(n, double);
   double *tmp;
   //-------------------- compute p(xi)
   memset(vkm1, 0, n*sizeof(double));
@@ -128,12 +125,12 @@ int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
     vk   = vkp1;
     vkp1 = tmp;
     //-------------------- accumulation of vector.
-    DAXPY(&n, &mu[k+1], vk, &one, yi, &one) ;
+    evsl_daxpy(&n, &mu[k+1], vk, &one, yi, &one) ;
   }
   //-------------------- done
-  free(vkm1);
-  free(vkp1);
-  free(vk);
+  evsl_Free(vkm1);
+  evsl_Free(vkp1);
+  evsl_Free(vk);
   return 0;
 }
 
@@ -211,7 +208,7 @@ void chext(polparams *pol, double aIn, double bIn){
   sigma1 = e/(gam-c);
   sigma  = sigma1;
   /*-------------------- alloc some work space for coef. of cheby. expansions*/
-  Calloc(t0, work_size, double);
+  t0 = evsl_Calloc(work_size, double);
   t1 = t0+m1;
   tnew = t1+m1;
   // t0 = 1
@@ -258,7 +255,7 @@ void chext(polparams *pol, double aIn, double bIn){
   pol->deg = mbest;
   pol->bar = bar;
   pol->gam = gam;
-  free(t0);
+  evsl_Free(t0);
 }
 
 /**
@@ -374,10 +371,10 @@ int find_pol(double *intv, polparams *pol) {
     return -1;
   }
   /*-------------------- A few parameters to be set or reset */
-  Malloc(mu, max_deg+1, double);
+  mu = evsl_Malloc(max_deg+1, double);
   pol->mu = mu;
-  Malloc(v, max_deg+1, double);
-  Malloc(jac, max_deg+1, double);
+  v = evsl_Malloc(max_deg+1, double);
+  jac = evsl_Malloc(max_deg+1, double);
   /*-------------------- A parameter for interval check */
   // double IntTol = 2*DBL_EPSILON; // If b*IntTol>1 accept [a b] extreme
   //double IntTol = 0.0005;
@@ -485,8 +482,8 @@ int find_pol(double *intv, polparams *pol) {
     pol->deg = mbest;
   }
   //save_vec(pol->deg+1, mu, "OUT/mu.mtx");
-  free(v);
-  free(jac);
+  evsl_Free(v);
+  evsl_Free(jac);
   return 0;
 }
 
@@ -497,7 +494,7 @@ int find_pol(double *intv, polparams *pol) {
  * */
 void free_pol(polparams *pol) {
   if (pol->mu) {
-    free(pol->mu);
+    evsl_Free(pol->mu);
   }
 }
 
@@ -550,7 +547,7 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
   }
   */
   memcpy(y, v, n*sizeof(double));
-  DSCAL(&n, &s, y, &one);
+  evsl_dscal(&n, &s, y, &one);
 
   /*-------------------- degree loop. k IS the degree */
   for (k=1; k<=m; k++) {
@@ -574,12 +571,12 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
     }
     */
     double ts = evsl_timer();
-    DAXPY(&n, &ncc, vk, &one, vkp1, &one);
-    DSCAL(&n, &t, vkp1, &one);
+    evsl_daxpy(&n, &ncc, vk, &one, vkp1, &one);
+    evsl_dscal(&n, &t, vkp1, &one);
     if (k > 1) {
-      DAXPY(&n, &dmone, vkm1, &one, vkp1, &one);
+      evsl_daxpy(&n, &dmone, vkm1, &one, vkp1, &one);
     }
-    DAXPY(&n, &s, vkp1, &one, y, &one);
+    evsl_daxpy(&n, &s, vkp1, &one, y, &one);
     evslstat.t_sth += evsl_timer() - ts;
 
     /*-------------------- next: rotate vectors via pointer exchange */

@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include "def.h"
-#include "struct.h"
-#include "internal_proto.h"
+#include "internal_header.h"
 /**
  * @file vect.c
  * @brief Vector operations
@@ -131,7 +129,7 @@ void sort_double(int n, double *v, int *ind) {
     return;
   }
   doubleint *vv;
-  Malloc(vv, n, doubleint);
+  vv = evsl_Malloc(n, doubleint);
   int i;
   for (i=0; i<n; i++) {
     vv[i].d = v[i];
@@ -142,7 +140,7 @@ void sort_double(int n, double *v, int *ind) {
     v[i] = vv[i].d;
     ind[i] = vv[i].i;
   }
-  free(vv);
+  evsl_Free(vv);
 }
 
 /** @brief y = x(p)

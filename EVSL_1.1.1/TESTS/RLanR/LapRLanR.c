@@ -9,21 +9,6 @@
 #include "io.h"
 #include "lapl.h"
 
-#ifdef __cplusplus
-extern "C" {
-
-#define max(a, b) std::max(a, b)
-#define min(a, b) std::min(a, b)
-#else
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
-int findarg(const char *argname, ARG_TYPE type, void *val, int argc,
-            char **argv);
-int lapgen(int nx, int ny, int nz, cooMat *Acoo);
-int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
-
 int main(int argc, char *argv[]) {
   /*------------------------------------------------------------
     generates a laplacean matrix on an nx x ny x nz mesh
@@ -64,15 +49,6 @@ int main(int argc, char *argv[]) {
   /*-------------------- matrix A: coo format and csr format */
   cooMat Acoo;
   csrMat Acsr;
-#if CXSPARSE == 1
-  printf("-----------------------------------------\n");
-  printf(
-      "Note: You are using CXSparse for the direct solver. \n We recommend a "
-      "more performance based direct solver for anything more than basic "
-      "tests. \n SuiteSparse is supported with a makefile change. \n Using "
-      "SuiteSparse can result in magnitudes faster times. \n\n ");
-  printf("-----------------------------------------\n");
-#endif
   /*-------------------- default values */
   nx = 41;
   ny = 53;
@@ -85,9 +61,8 @@ int main(int argc, char *argv[]) {
   /* user input from command line */
   flg = findarg("help", NA, NULL, argc, argv);
   if (flg) {
-    printf(
-        "Usage: ./testL.ex -nx [int] -ny [int] -nz [int] -a [double] -b "
-        "[double] -nslices [int]\n");
+    printf("Usage: ./testL.ex -nx [int] -ny [int] -nz [int] -a [double] -b "
+           "[double] -nslices [int]\n");
     return 0;
   }
   findarg("nx", INT, &nx, argc, argv);
@@ -130,7 +105,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- set the left-hand side matrix A */
   SetAMatrix(&Acsr);
   //-------------------- call kpmdos
-  mu = (double *) malloc((Mdeg + 1) * sizeof(double));
+  mu = evsl_Malloc(Mdeg+1, double);
   double t = evsl_timer();
   ierr = kpmdos(Mdeg, 1, nvec, xintv, mu, &ecount);
   t = evsl_timer() - t;
@@ -142,7 +117,7 @@ int main(int argc, char *argv[]) {
   fprintf(fstats, " estimated eig count in interval: %10.2e \n", ecount);
   //-------------------- call splicer to slice the spectrum
   npts = 10 * ecount;
-  sli = (double *) malloc((nslices + 1) * sizeof(double));
+  sli = evsl_Malloc(nslices+1, double);
   ierr = spslicer(sli, mu, Mdeg, xintv, nslices, npts);
   if (ierr) {
     printf("spslicer error %d\n", ierr);
@@ -155,7 +130,7 @@ int main(int argc, char *argv[]) {
   //-------------------- # eigs per slice
   ev_int = (int)(1 + ecount / ((double)nslices));
   //-------------------- initial vector
-  vinit = (double *)malloc(n * sizeof(double));
+  vinit = evsl_Malloc(n, double);
   rand_double(n, vinit);
   //-------------------- For each slice call RatLanrTr
   for (sl = 0; sl < nslices; sl++) {
@@ -185,16 +160,18 @@ int main(int argc, char *argv[]) {
     // now determine rational filter
     find_ratf(intv, &rat);
     // use direct solver function
-    void **solshiftdata = (void **)malloc(num * sizeof(void *));
+    void **solshiftdata = evsl_Malloc(num, void *);
     /*------------ factoring the shifted matrices and store the factors */
     SetupASIGMABSolDirect(&Acsr, NULL, num, rat.zk, solshiftdata);
-    /*------------ give the data to rat */
-    SetASigmaBSol(&rat, NULL, ASIGMABSolDirect, solshiftdata);
+    /*------------ set the solver for A-sI in rat */
+    for (i=0; i<rat.num; i++) {
+       SetASigmaBSol(&rat, i, ASIGMABSolDirect, solshiftdata[i]);
+    }
     //-------------------- approximate number of eigenvalues wanted
     nev = ev_int + 2;
     //-------------------- Dimension of Krylov subspace and maximal iterations
-    mlan = max(4 * nev, 300);
-    mlan = min(mlan, n);
+    mlan = evsl_max(4 * nev, 300);
+    mlan = evsl_min(mlan, n);
     max_its = 3 * mlan;
     //-------------------- RationalLanTr
     ierr = RatLanTr(mlan, nev, intv, max_its, tol, vinit, &rat, &nev2, &lam, &Y,
@@ -206,7 +183,7 @@ int main(int argc, char *argv[]) {
     /* [compute residual] already computed in res */
     /* sort the eigenvals: ascending order
      * ind: keep the orginal indices */
-    ind = (int *)malloc(nev2 * sizeof(int));
+    ind = evsl_Malloc(nev2, int);
     sort_double(nev2, lam, ind);
     /* compute exact eigenvalues */
     exeiglap3(nx, ny, nz, a, b, &nev_ex, &lam_ex);
@@ -220,7 +197,7 @@ int main(int argc, char *argv[]) {
       fprintf(fstats, "                 Err");
     }
     fprintf(fstats, "\n");
-    for (i = 0; i < max(nev2, nev_ex); i++) {
+    for (i = 0; i < evsl_max(nev2, nev_ex); i++) {
       if (i < nev2) {
         fprintf(fstats, "% .15e  %.1e", lam[i], res[ind[i]]);
       } else {
@@ -239,27 +216,24 @@ int main(int argc, char *argv[]) {
       }
     }
     //-------------------- free allocated space withing this scope
-    if (lam) free(lam);
-    if (Y) free(Y);
-    if (res) free(res);
+    if (lam) evsl_Free(lam);
+    if (Y) evsl_Free(Y);
+    if (res) evsl_Free(res);
     FreeASIGMABSolDirect(rat.num, solshiftdata);
-    free(solshiftdata);
-    free(ind);
-    free(lam_ex);
+    evsl_Free(solshiftdata);
+    evsl_Free(ind);
+    evsl_Free(lam_ex);
     free_rat(&rat);
   }  // for (sl=0; sl<nslices; sl++)
   //-------------------- free other allocated space
-  free(vinit);
-  free(sli);
+  evsl_Free(vinit);
+  evsl_Free(sli);
   free_coo(&Acoo);
   free_csr(&Acsr);
-  free(mu);
+  evsl_Free(mu);
   fclose(fstats);
   /*-------------------- finalize EVSL */
   EVSLFinish();
   return 0;
 }
 
-#ifdef __cplusplus
-}
-#endif

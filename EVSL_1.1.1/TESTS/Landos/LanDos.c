@@ -13,19 +13,7 @@
 #include "io.h"
 #include "lapl.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*-------------------- protos */
 int exDOS(double *vals, int n, int npts, double *x, double *y, double *intv);
-int findarg(const char *argname, ARG_TYPE type, void *val, int argc,
-            char **argv);
-int lapgen(int nx, int ny, int nz, cooMat *Acoo);
-int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
-
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define min(a, b) ((a) < (b) ? (a) : (b))
 
 /**
  *-----------------------------------------------------------------------
@@ -54,7 +42,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- start EVSL */
   EVSLStart();
   /*  Generate the Laplacian matrix (which we can trivially get eigenvalues for*/
-  lapgen(num, num, num, &Acoo); 
+  lapgen(num, num, num, &Acoo);
   cooMat_to_csrMat(0, &Acoo, &Acsr);
 
   // /*-------------------- path to write the output files*/
@@ -77,17 +65,16 @@ int main(int argc, char *argv[]) {
   double *xHist = NULL;
   double *yHist = NULL;
   if (graph_exact_dos) {
-    xHist = (double *)malloc(npts * sizeof(double)); /*Exact DOS x values */
-    yHist = (double *)malloc(npts * sizeof(double)); /* Exact DOS y values */
+    xHist = evsl_Malloc(npts, double); /*Exact DOS x values */
+    yHist = evsl_Malloc(npts, double); /* Exact DOS y values */
   }
-  double *xdos =
-      (double *)malloc(npts * sizeof(double)); /* Calculated DOS x vals */
-  double *ydos = (double *)malloc(npts * sizeof(double)); /* Calculated DOS y */
+  double *xdos = evsl_Malloc(npts, double); /* Calculated DOS x vals */
+  double *ydos = evsl_Malloc(npts, double); /* Calculated DOS y */
 
   SetStdEig();
   SetAMatrix(&Acsr);
 
-  double *vinit = (double *)malloc(n * sizeof(double));
+  double *vinit = evsl_Malloc(n, double);
   rand_double(n, vinit);
   double lmin = 0.0, lmax = 0.0;
   ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
@@ -116,7 +103,7 @@ int main(int argc, char *argv[]) {
   }
   free_coo(&Acoo);
   free_csr(&Acsr);
-  free(vinit);
+  evsl_Free(vinit);
   /* --------------------Make OUT dir if it doesn't exist */
   struct stat st = {0};
   if (stat("OUT", &st) == -1) {
@@ -126,7 +113,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- Write to  output files */
   char computed_path[1024];
   strcpy(computed_path, "OUT/LanDos_Approx_DOS_");
-  strcat(computed_path, io.MatNam);
+  strcat(computed_path, io.MatNam1);
   FILE *ofp = fopen(computed_path, "w");
   for (i = 0; i < npts; i++) {
     fprintf(ofp, " %10.4f  %10.4f\n", xdos[i], ydos[i]);
@@ -136,7 +123,7 @@ int main(int argc, char *argv[]) {
   if (graph_exact_dos) {
     /*-------------------- save exact DOS */
     strcpy(path, "OUT/LanDos_Exact_DOS_");
-    strcat(path, io.MatNam);
+    strcat(path, io.MatNam1);
     ofp = fopen(path, "w");
     for (i = 0; i < npts; i++)
       fprintf(ofp, " %10.4f  %10.4f\n", xHist[i], yHist[i]);
@@ -191,18 +178,16 @@ int main(int argc, char *argv[]) {
   }
 
   if (graph_exact_dos) {
-    free(xHist);
-    free(yHist);
+    evsl_Free(xHist);
+    evsl_Free(yHist);
   }
-  free(xdos);
-  free(ydos);
+  evsl_Free(xdos);
+  evsl_Free(ydos);
   if (ev) {
-    free(ev);
+    evsl_Free(ev);
   }
   fclose(fstats);
   EVSLFinish();
   return 0;
 }
-#ifdef __cplusplus
-}
-#endif
+

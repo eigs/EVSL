@@ -1,43 +1,33 @@
-.SUFFIXES : .c .o
-
 include ../../makefile.in
 
-FLAGS ?= -DUNIX -O3 -g -Wall 
+INCLUDES = -I${EVSL_BUILD_DIR}/include -I../COMMON
+EXTRA = ../COMMON/io.o ../COMMON/mmio.o ../COMMON/lapl.o
 
-INCLUDES = -I../../INC -I../../EXTERNAL   -I ../COMMON
-
-EXTRA =  ../COMMON/io.o ../COMMON/mmio.o ../COMMON/lapl.o
 # Object files
-OBJS_L  =  LapPLanN.o $(EXTRA)
-OBJS_MM  = MMPLanN.o $(EXTRA)
+OBJS_L          = LapPLanN.o         $(EXTRA)
+OBJS_MM         = MMPLanN.o          $(EXTRA)
 OBJS_PN_MatFree = LapPLanN_MatFree.o $(EXTRA)
 
-LIB = -L../../ -levsl 
+LIB = -L${EVSL_BUILD_DIR}/lib -levsl
+LIB_EXT = $(LIBLAPACK_DIR) $(LIBLAPACK) $(LIBBLAS_DIR) $(LIBBLAS) $(LIBS_DIR) $(LIBS)
 
-ALLEXE = LapPLanN.ex LapPLanN_MatFree.ex  MMPLanN.ex
-
-
-# Rules
-default: LapPLanN.ex
-
-%.o : %.c
-	$(CC) $(FLAGS) $(INCLUDES) -o $@ -x c -c $<
+all: LapPLanN.ex LapPLanN_MatFree.ex MMPLanN.ex
 
 # Exe
-## polynomial
 LapPLanN.ex: $(OBJS_L)
-	$(LINK) -o LapPLanN.ex $(OBJS_L) $(LIB) $(LIBLAPACK) $(LIB0)
+	$(LINK_CC) $(LDFLAGS) -o $@ $(OBJS_L) $(LIB) $(LIB_EXT)
+	@mkdir -p OUT
 
 LapPLanN_MatFree.ex: $(OBJS_PN_MatFree)
-	$(LINK) -o LapPLanN_MatFree.ex $(OBJS_PN_MatFree) $(LIB) $(LIBLAPACK) $(LIB0)
+	$(LINK_CC) $(LDFLAGS) -o $@ $(OBJS_PN_MatFree) $(LIB) $(LIB_EXT)
+	@mkdir -p OUT
 
 MMPLanN.ex: $(OBJS_MM)
-	$(LINK) -o MMPLanN.ex $(OBJS_MM) $(LIB) $(LIBLAPACK) $(LIB0)
-
-all: $(ALLEXE)
+	$(LINK_CC) $(LDFLAGS) -o $@ $(OBJS_MM) $(LIB) $(LIB_EXT)
+	@mkdir -p OUT
 
 clean:
 	rm -f *.o *.ex
 
-cleanall:
-	rm -f *.o *.ex OUT/*
+distclean:
+	rm -rf *.o *.ex OUT

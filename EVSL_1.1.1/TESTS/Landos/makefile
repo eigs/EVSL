@@ -1,50 +1,28 @@
-.SUFFIXES : .c .o
-
 include ../../makefile.in
 
-FLAGS ?= -DUNIX -O3 -g -Wall
-
-GEN_INCLUDES = -I../../INC  -I ../COMMON_GEN
-STD_INCLUDES = -I../../INC  -I ../COMMON
-
-ifeq ($(INTEL), 1)
-GEN_INCLUDES += -I${MKLROOT}/include
-STD_INCLUDES += -I${MKLROOT}/include
-endif
-
-GEN_EXTRA = ../COMMON_GEN/io.o ../COMMON_GEN/mmio.o ../COMMON_GEN/lapl.o
-
-STD_EXTRA = ../COMMON/io.o ../COMMON/mmio.o ../COMMON/lapl.o
+INCLUDES = -I${EVSL_BUILD_DIR}/include  -I../COMMON
+EXTRA = ../COMMON/io.o ../COMMON/mmio.o ../COMMON/lapl.o
 
 # Object files
-OBJS_LD = LanDos.o exDOS.o  $(STD_EXTRA)
-OBJS_LDG = LanDosG.o exDOS.o  $(GEN_EXTRA)
+OBJS_LD  = LanDos.o $(EXTRA)
+OBJS_LDG = LanDosG.o $(EXTRA)
 
-LIB = -L../../ -levsl
+LIB = -L${EVSL_BUILD_DIR}/lib -levsl
+LIB_EXT = $(LIBLAPACK_DIR) $(LIBLAPACK) $(LIBBLAS_DIR) $(LIBBLAS) $(LIBS_DIR) $(LIBS)
 
-
-LIB_EXT =  $(OMP) $(LIBLAPACK) $(LIB0)
-
-# Rules
-default: LanDos.ex LanDosG.ex
 all: LanDos.ex LanDosG.ex
-
-%G.o : %G.c
-	$(CC) $(FLAGS) $(GEN_INCLUDES) -o $@ -x c -c $<
-
-%.o : %.c
-	$(CC) $(FLAGS) $(STD_INCLUDES) -o $@ -x c -c $<
-
 
 # Exe
 LanDos.ex: $(OBJS_LD)
-	$(LINK) -o LanDos.ex $(OBJS_LD) $(LIB) $(LIB_EXT)
+	$(LINK_CC) $(LDFLAGS) -o LanDos.ex $(OBJS_LD) $(LIB) $(LIB_EXT)
+	@mkdir -p OUT
 
 LanDosG.ex: $(OBJS_LDG)
-	$(LINK) -o LanDosG.ex $(OBJS_LDG) $(LIB) $(LIB_EXT)
+	$(LINK_CC) $(LDFLAGS) -o LanDosG.ex $(OBJS_LDG) $(LIB) $(LIB_EXT)
+	@mkdir -p OUT
 
 clean:
 	rm -f *.o *.ex
 
-cleanall:
-	rm -f *.o *.ex OUT/*
+distclean:
+	rm -rf *.o *.ex OUT

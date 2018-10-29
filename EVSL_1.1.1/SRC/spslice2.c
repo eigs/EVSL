@@ -1,11 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "blaslapack.h"
-#include "def.h"
-#include "internal_proto.h"
-#include "string.h"  //for memset
-#include "struct.h"
+#include "internal_header.h"
 
 /**
  * @file spslice2.c

@@ -3,10 +3,8 @@
 #include <math.h>
 #include <string.h>
 #include <float.h>
-#include "def.h"
-#include "blaslapack.h"
-#include "struct.h"
-#include "internal_proto.h"
+#include "internal_header.h"
+
 /**
  * @file cheblanNr.c
  * @brief Polynomial Filtered no-restart Lanczos
@@ -121,53 +119,53 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   }
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
-  Malloc(V, n_l*(maxit+1), double);
+  V = evsl_Malloc(n_l*(maxit+1), double);
   if (ifGenEv) {
     /* storage for Z = B * V */
-    Malloc(Z, n_l*(maxit+1), double);
+    Z = evsl_Malloc(n_l*(maxit+1), double);
   } else {
     /* Z and V are the same */
     Z = V;
   }
   /*-------------------- diag. subdiag of Tridiagional matrix */
-  Malloc(dT, maxit, double);
-  Malloc(eT, maxit, double);
+  dT = evsl_Malloc(maxit, double);
+  eT = evsl_Malloc(maxit, double);
   double *Rvec, *Lam, *res, *EvalT, *EvecT;
   /*-------------------- Lam, Rvec: the converged (locked) Ritz values vecs*/
-  Malloc(Lam,   maxit, double);       // holds computed Ritz values
-  Malloc(res,   maxit, double);       // residual norms (w.r.t. ro(A))
-  Malloc(EvalT, maxit, double);       // eigenvalues of tridiag matrix T
+  Lam = evsl_Malloc(maxit, double);       // holds computed Ritz values
+  res = evsl_Malloc(maxit, double);       // residual norms (w.r.t. ro(A))
+  EvalT = evsl_Malloc(maxit, double);       // eigenvalues of tridiag matrix T
   /*-------------------- nev = current number of converged e-pairs
                          nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
   /*-------------------- u is just a pointer. wk == work space */
   double *u, *wk, *w2, *vrand = NULL;
   size_t wk_size = ifGenEv ? 4*n_l : 3*n_l;
-  Malloc(wk, wk_size, double);
+  wk = evsl_Malloc(wk_size, double);
   w2 = wk + n;
   /*-------------------- copy initial vector to Z(:,1) */
 #if FILTER_VINIT
   /*-------------------- compute w = p[(A-cc)/dd] * v */
   /*-------------------- Filter the initial vector */
   ChebAv(pol, vinit, V, wk);
-  Malloc(vrand, n, double);
+  vrand = evsl_Malloc(n, double);
 #else
   /*-------------------- copy initial vector to V(:,1) */
-  DCOPY(&n, vinit, &one, V, &one);
+  evsl_dcopy(&n, vinit, &one, V, &one);
 #endif
   /*-------------------- normalize it */
   double t, nt, res0;
   if (ifGenEv) {
     /* B norm */
     matvec_B(V, Z);
-    t = 1.0 / sqrt(DDOT(&n, V, &one, Z, &one));
-    DSCAL(&n, &t, Z, &one);
+    t = 1.0 / sqrt(evsl_ddot(&n, V, &one, Z, &one));
+    evsl_dscal(&n, &t, Z, &one);
   } else {
     /* 2-norm */
-    t = 1.0 / DNRM2(&n, V, &one); // add a test here.
+    t = 1.0 / evsl_dnrm2(&n, V, &one); // add a test here.
   }
   /* unit B-norm or 2-norm */
-  DSCAL(&n, &t, V, &one);
+  evsl_dscal(&n, &t, V, &one);
   /*-------------------- for ortho test */
   double wn = 0.0;
   int nwn = 0;
@@ -198,16 +196,16 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     /*------------------ znew = znew - beta*zold */
     if (zold) {
       nbeta = -beta;
-      DAXPY(&n, &nbeta, zold, &one, znew, &one);
+      evsl_daxpy(&n, &nbeta, zold, &one, znew, &one);
     }
     /*-------------------- alpha = znew'*v */
-    alpha = DDOT(&n, v, &one, znew, &one);
+    alpha = evsl_ddot(&n, v, &one, znew, &one);
     /*-------------------- T(k,k) = alpha */
     dT[k] = alpha;
     wn += fabs(alpha);
     /*-------------------- znew = znew - alpha*z */
     nalpha = -alpha;
-    DAXPY(&n, &nalpha, z, &one, znew, &one);
+    evsl_daxpy(&n, &nalpha, z, &one, znew, &one);
     /*-------------------- FULL reortho to all previous Lan vectors */
     if (ifGenEv) {
       /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
@@ -215,7 +213,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       /* vnew = B \ znew */
       solve_B(znew, vnew);
       /*-------------------- beta = (vnew, znew)^{1/2} */
-      beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+      beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
     } else {
       /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
       /* beta = norm(vnew) */
@@ -240,12 +238,12 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
         /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
         CGS_DGKS2(n, k+1, NGS_MAX, V, Z, vnew, wk);
         matvec_B(vnew, znew);
-        beta = sqrt(DDOT(&n, vnew, &one, znew, &one));
+        beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
         /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
-        DSCAL(&n, &t, vnew, &one);
+        evsl_dscal(&n, &t, vnew, &one);
 	/*-------------------- znew = znew / beta */
-        DSCAL(&n, &t, znew, &one);
+        evsl_dscal(&n, &t, znew, &one);
         beta = 0.0;
       } else {
         /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
@@ -253,36 +251,36 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
         CGS_DGKS(n, k+1, NGS_MAX, V, vnew, &beta, wk);
         /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
-        DSCAL(&n, &t, vnew, &one);
+        evsl_dscal(&n, &t, vnew, &one);
         beta = 0.0;
       }
     } else {
       /*-------------------- vnew = vnew / beta */
       t = 1.0 / beta;
-      DSCAL(&n, &t, vnew, &one);
+      evsl_dscal(&n, &t, vnew, &one);
       if (ifGenEv) {
         /*-------------------- znew = znew / beta */
-        DSCAL(&n, &t, znew, &one);
+        evsl_dscal(&n, &t, znew, &one);
       }
     }
     /*-------------------- T(k+1,k) = beta */
     eT[k] = beta;
 #if 0
-    /*-------------------- Reallocate memory if maxit is smaller than # of eigs */
+    /*-------------------- re-allocate memory if maxit is smaller than # of eigs */
     if (k == maxit-1) {
       maxit = 1 + (int) (maxit * 1.5);
-      Realloc(V, (maxit+1)*n_l, double);
+      V = evsl_Realloc(V, (maxit+1)*n_l, double);
       if (ifGenEv) {
-	Realloc(Z, (maxit+1)*n_l, double);
+        Z = evsl_Realloc(Z, (maxit+1)*n_l, double);
       } else {
-        /* make sure Z == V since V may be changed in the Realloc above */
+        /* make sure Z == V since V may be changed in the re-alloc above */
         Z = V;
       }
-      Realloc(dT,    maxit, double);
-      Realloc(eT,    maxit, double);
-      Realloc(Lam,   maxit, double);
-      Realloc(res,   maxit, double);
-      Realloc(EvalT, maxit, double);
+      dT = evsl_Realloc(dT,    maxit, double);
+      eT = evsl_Realloc(eT,    maxit, double);
+      Lam = evsl_Realloc(Lam,   maxit, double);
+      rest = evsl_Realloc(res,   maxit, double);
+      EvalT = evsl_Realloc(EvalT, maxit, double);
     }
 #endif
     /*---------------------- test for Ritz vectors */
@@ -311,7 +309,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     //Used for convergence test
     for (i=0; i<count; i++) {
       flami = EvalT[i];
-      if (flami + DBL_EPS_MULT * DBL_EPSILON >= bar) {
+      if (flami + EVSL_DBL_EPS_MULT * DBL_EPSILON >= bar) {
         tr1+= flami;
         nconv++;
       }
@@ -335,12 +333,12 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
 
   /*-------------------- compute eig vals and vector */
   size_t kdim_l = kdim; /* just in case if kdim is > 65K */
-  Malloc(EvecT, kdim_l*kdim_l, double); // Eigen vectors of T
+  EvecT = evsl_Malloc(kdim_l*kdim_l, double); // Eigen vectors of T
   SymmTridEig(EvalT, EvecT, kdim, dT, eT);
 
   tt = evsl_timer();
   /*-------------------- done == compute Ritz vectors */
-  Malloc(Rvec, nconv*n_l, double);       // holds computed Ritz vectors
+  Rvec = evsl_Malloc(nconv*n_l, double);       // holds computed Ritz vectors
 
   nev = 0;
   for (i=0; i<count; i++) {
@@ -352,21 +350,21 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     y = &EvecT[i*kdim_l];
     /*-------------------- make sure to normalize */
     /*
-    t = DNRM2(&kdim, y, &one);
+    t = evsl_dnrm2(&kdim, y, &one);
     t = 1.0 / t;
-    DSCAL(&kdim, &t, y, &one);
+    evsl_dscal(&kdim, &t, y, &one);
     */
     /*-------------------- compute Ritz vectors */
     u = &Rvec[nev*n_l];
-    DGEMV(&cN, &n, &kdim, &done, V, &n, y, &one, &dzero, u, &one);
+    evsl_dgemv(&cN, &n, &kdim, &done, V, &n, y, &one, &dzero, u, &one);
     /*-------------------- normalize u */
     if (ifGenEv) {
       /* B-norm, w2 = B*u */
       matvec_B(u, w2);
-      t = sqrt(DDOT(&n, u, &one, w2, &one)); /* should be one */
+      t = sqrt(evsl_ddot(&n, u, &one, w2, &one)); /* should be one */
     } else {
       /* 2-norm */
-      t = DNRM2(&n, u, &one); /* should be one */
+      t = evsl_dnrm2(&n, u, &one); /* should be one */
     }
     /*-------------------- return code 2 --> zero eigenvector found */
     if (t == 0.0) {
@@ -374,32 +372,32 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     }
     /*-------------------- scal u */
     t = 1.0 / t;
-    DSCAL(&n, &t, u, &one);
+    evsl_dscal(&n, &t, u, &one);
     /*-------------------- scal B*u */
     if (ifGenEv) {
       /*------------------ w2 = B*u */
-      DSCAL(&n, &t, w2, &one);
+      evsl_dscal(&n, &t, w2, &one);
     }
     /*-------------------- w = A*u */
     matvec_A(u, wk);
     /*-------------------- Ritz val: t = (u'*w)/(u'*u)
                                      t = (u'*w)/(u'*B*u) */
-    t = DDOT(&n, wk, &one, u, &one);
+    t = evsl_ddot(&n, wk, &one, u, &one);
     /*-------------------- if lambda (==t) is in [a,b] */
-    if (t < aa - DBL_EPS_MULT * DBL_EPSILON || t > bb + DBL_EPS_MULT * DBL_EPSILON) {
+    if (t < aa - EVSL_DBL_EPS_MULT * DBL_EPSILON || t > bb + EVSL_DBL_EPS_MULT * DBL_EPSILON) {
       continue;
     }
     /*-------------------- compute residual wrt A for this pair */
     nt = -t;
     if (ifGenEv) {
       /*-------------------- w = w - t*B*u */
-      DAXPY(&n, &nt, w2, &one, wk, &one);
+      evsl_daxpy(&n, &nt, w2, &one, wk, &one);
     } else {
       /*-------------------- w = w - t*u */
-      DAXPY(&n, &nt, u, &one, wk, &one);
+      evsl_daxpy(&n, &nt, u, &one, wk, &one);
     }
     /*-------------------- res0 = 2-norm(wk) */
-    res0 = DNRM2(&n, wk, &one);
+    res0 = evsl_dnrm2(&n, wk, &one);
     /*--------------------   accept (t, y) */
     if (res0 < tol) {
       Lam[nev] = t;
@@ -415,17 +413,17 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   *Wo = Rvec;
   *reso = res;
   /*-------------------- free arrays */
-  free(V);
-  free(dT);
-  free(eT);
-  free(EvalT);
-  free(EvecT);
-  free(wk);
+  evsl_Free(V);
+  evsl_Free(dT);
+  evsl_Free(eT);
+  evsl_Free(EvalT);
+  evsl_Free(EvecT);
+  evsl_Free(wk);
   if (vrand) {
-    free(vrand);
+    evsl_Free(vrand);
   }
   if (ifGenEv) {
-    free(Z);
+    evsl_Free(Z);
   }
   /*-------------------- record stats */
   tall = evsl_timer() - tall;

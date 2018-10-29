@@ -1,5 +1,0 @@
-# Do not remove this file. Will preserve this directory
-# Ignore everything in this directory
-*
-# Except this file
-!.gitignore
