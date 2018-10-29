@@ -321,7 +321,7 @@ On macOS, configure EVSL to use Apple Accelerate framework by
 -----------------------------------------------------------------------
 
  * INC
-   - EVSL_config.h     : configuration header file
+   - EVSL_config.h     : configuration header file (created from CONFIG/EVSL_config.h.in)
    - evsl.h            : user-level function prototypes and constant definitions
    - internal_header.h : internal header file for SRC/
    - struct.h          : miscellaneous structs used in evsl
