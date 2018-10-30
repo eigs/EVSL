@@ -1,6 +1,6 @@
 
 
-## EVSL:  EigenValues Slicing Library (Version 1.1.0)         
+## EVSL:  EigenValues Slicing Library (Version 1.1.1)         
 
  ![Alt](evsl_logo3.png "EVSL-logo")
 
