@@ -72,7 +72,7 @@ folder of the package in EVSL_1.1.x
 -----------------------------------------------------------------------
 
 **Library**: To build the EVSL library on Unix-like operating system, such as Linux and macOS, 
- the simplies way is to run, in the sub-directory `EVSL_1.1.1`,
+ the simplest way is to run, in the sub-directory `EVSL_1.1.1`,
 ```
 ./configure
 ```
