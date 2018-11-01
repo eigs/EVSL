@@ -1,4 +1,10 @@
-include makefile.in
+MAKE_FILE_IN = makefile.in
+
+ifneq ("$(wildcard $(MAKE_FILE_IN))","")
+  include $(MAKE_FILE_IN)
+else
+  $(error $(MAKE_FILE_IN) does not exist. Run ./configure first)
+endif
 
 EVSL_DIRS = \
   SRC       \
