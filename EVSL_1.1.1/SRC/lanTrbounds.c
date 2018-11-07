@@ -107,7 +107,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   /*-------------------- normalize it */
   if (ifGenEv) {
     /* B norm */
-    matvec_B(V, Z);
+    matvec_B(V, Z, 1);
     t = 1.0 / sqrt(evsl_ddot(&n, V, &one, Z, &one));
     /* z = B*v */
     evsl_dscal(&n, &t, Z, &one);
@@ -142,7 +142,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
       double *vnew = v + n;
       double *znew = z + n;
       /*------------------ znew = A * v */
-      matvec_A(v, znew);
+      matvec_A(v, znew, 1);
       /*-------------------- restart with 'trlen' Ritz values/vectors
                              T = diag(Rval(1:trlen)) */
       for (i=0; i<trlen; i++) {
@@ -179,7 +179,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
-          matvec_B(vnew, znew);
+          matvec_B(vnew, znew, 1);
           beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
           evsl_dscal(&n, &ibeta, vnew, &one);
@@ -222,7 +222,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
       double *vnew = v + n;
       double *znew = z + n;
       /*------------------ znew = A * v */
-      matvec_A(v, znew);
+      matvec_A(v, znew, 1);
       it++;
       /*-------------------- znew = znew - beta*zold */
       if (zold) {
@@ -264,7 +264,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
-          matvec_B(vnew, znew);
+          matvec_B(vnew, znew, 1);
           beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
           evsl_dscal(&n, &ibeta, vnew, &one);
@@ -343,9 +343,9 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
     for (i=0; i<2; i++) {
       double *y = Rvec + i*n_l;
       double nt = -Rval[i];
-      matvec_A(y, w1);
+      matvec_A(y, w1, 1);
       if (ifGenEv) {
-        matvec_B(y, w2);
+        matvec_B(y, w2, 1);
         evsl_daxpy(&n, &nt, w2, &one, w1, &one);
         solve_B(w1, w2);
         rr[i] = sqrt(evsl_ddot(&n, w1, &one, w2, &one));

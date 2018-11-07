@@ -512,7 +512,7 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
  * @warning: This function MUST be of this prototype
  *
  *------------------------------------------------------------------*/
-void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
+void ASIGMABSolDirect(int n, int l, double *br, double *bi, double *xr,
                       double *xz, void *data) {
 
   ASBSolDataDirect *sol_data = (ASBSolDataDirect *) data;
@@ -523,7 +523,7 @@ void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
   /* Integer dummy. */
   MKL_INT idum;
   /* Number of right hand sides. */
-  MKL_INT nrhs = 1;
+  MKL_INT nrhs = l;
 
   if (n != sol_data->n) {
      fprintf(stderr, "error %s %d\n", __FILE__, __LINE__);
@@ -533,7 +533,7 @@ void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
   MKL_Complex16 *x = sol_data->x;
 
   /* copy rhs */
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n*l; i++) {
     b[i].real = br[i];
     b[i].imag = bi[i];
   }
@@ -574,7 +574,7 @@ void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
   */
 
   /* copy sol */
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n*l; i++) {
     xr[i] = x[i].real;
     xz[i] = x[i].imag;
   }

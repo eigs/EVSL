@@ -81,7 +81,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
       /*  w = L^{-T}*v */
       solve_LT(v, w);
       /* v = B*w */
-      matvec_B(w, v);
+      matvec_B(w, v, 1);
       t = evsl_ddot(&n, v, &one, w, &one);
       memcpy(vk, w, n*sizeof(double));
     } else {
@@ -101,10 +101,10 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
       /*-------------------- Cheb. recurrence */
       if (ifGenEv) {
         /* v_{k+1} := B \ A * v_k (partial result) */
-        matvec_A(vk, w);
+        matvec_A(vk, w, 1);
         solve_B(w, vkp1);
       } else {
-        matvec_A(vk, vkp1);
+        matvec_A(vk, vkp1, 1);
       }
       scal = k==0 ? 1.0 : 2.0;
       scal /= wid;

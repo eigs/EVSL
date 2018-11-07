@@ -558,10 +558,10 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
     if (ifGenEv) {
       /*-------------------- Vkp1 = A*B\Vk - cc*Vk */
       solve_B(vk, w2);
-      matvec_A(w2, vkp1);
+      matvec_A(w2, vkp1, 1);
     } else {
       /*-------------------- Vkp1 = A*Vk - cc*Vk */
-      matvec_A(vk, vkp1);
+      matvec_A(vk, vkp1, 1);
     }
 
     /*

@@ -136,6 +136,10 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit, ratparams *rat,
 /*- - - - - - - - - ratlanTr.c */
 int RatLanTr(int lanm, int nev, double *intv, int maxit, double tol, double *vinit, ratparams *rat, int *nev2, double **vals, double **W, double **resW, FILE *fstats);
 
+/*- - - - - - - - - ratsi.c   */
+int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
+	int *neig, double **eigvalout, double **eigvecout, double **resout);
+
 /*- - - - - - - - - spmat.c */
 void csr_copy(csrMat *A, csrMat *B, int allocB);
 // convert a COO matrix to a CSR matrix
@@ -145,7 +149,7 @@ void free_csr(csrMat *csr);
 // free a COO
 void free_coo(cooMat *coo);
 // matvec y = A*x
-void matvec_csr(double *x, double *y, void *data);
+void matvec_csr(double *x, double *y, int k, void *data);
 /* add two csr matrices */
 int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C, int *mapA, int *mapB);
 /* sparse identity */
@@ -168,6 +172,8 @@ int SetLTSol(SolFuncR func, void *data);
 int SetASigmaBSol(ratparams *rat, int i, SolFuncC func, void *data);
 int SetStdEig();
 int SetGenEig();
+
+int SetBlock();
 /* start EVSL */
 int EVSLStart();
 /* finalize EVSL */

@@ -108,7 +108,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
     double t;
     if (ifGenEv) {
       /* B norm */
-      matvec_B(V, Z);
+      matvec_B(V, Z, 1);
       t = 1.0 / sqrt(evsl_ddot(&n, V, &one, Z, &one));
       evsl_dscal(&n, &t, Z, &one);
     } else {
@@ -139,7 +139,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
       vnew = v + n;
       /*-------------------- next Lanczos vector Z(:,k+1)*/
       znew = z + n;
-      matvec_A(v, znew);
+      matvec_A(v, znew, 1);
       /*------------------ znew = znew - beta*zold */
       if (zold) {
         nbeta = -beta;
@@ -175,7 +175,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
           /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
           CGS_DGKS2(n, k + 1, NGS_MAX, V, Z, vnew, wk);
           /* -------------- NOTE: B-matvec */
-          matvec_B(vnew, znew);
+          matvec_B(vnew, znew, 1);
           beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
           /*-------------------- vnew = vnew / beta */
           t = 1.0 / beta;

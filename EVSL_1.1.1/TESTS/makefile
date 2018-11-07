@@ -9,7 +9,8 @@ TEST_DIRS = \
  PLanR      \
  RLanN      \
  RLanR      \
- PSI
+ PSI        \
+ RSI
 
 all:
 	@ \

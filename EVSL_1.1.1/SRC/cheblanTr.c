@@ -188,7 +188,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   double t;
   if (ifGenEv) {
     /* B norm */
-    matvec_B(V, Z);
+    matvec_B(V, Z, 1);
     t = 1.0 / sqrt(evsl_ddot(&n, V, &one, Z, &one));
     /* z = B*v */
     evsl_dscal(&n, &t, Z, &one);
@@ -284,7 +284,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           CGS_DGKS2(n, lock, NGS_MAX, Y, BY, vnew, work);
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
-          matvec_B(vnew, znew);
+          matvec_B(vnew, znew, 1);
           beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
           evsl_dscal(&n, &ibeta, vnew, &one);
@@ -393,7 +393,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           CGS_DGKS2(n, lock, NGS_MAX, Y, BY, vnew, work);
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
-          matvec_B(vnew, znew);
+          matvec_B(vnew, znew, 1);
           beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
           evsl_dscal(&n, &ibeta, vnew, &one);
@@ -545,7 +545,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       /*------------------ normalize just in case. */
       if (ifGenEv) {
         /* B-norm, w2 = B*y */
-        matvec_B(y, w2);
+        matvec_B(y, w2, 1);
         t = sqrt(evsl_ddot(&n, y, &one, w2, &one));
       } else {
         /* 2-norm */
@@ -563,7 +563,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         evsl_dscal(&n, &t, w2, &one);
       }
       /*-------------------- w = A*y */
-      matvec_A(y, w);
+      matvec_A(y, w, 1);
       /*-------------------- Ritzval: t3 = (y'*w)/(y'*y) or
        *                              t3 = (y'*w)/(y'*B*y) */
       /*-------------------- Rayleigh quotient */

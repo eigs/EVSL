@@ -28,6 +28,12 @@
 #define evsl_zscal  zscal_
 #define evsl_zswap  zswap_
 #define evsl_ztrsm  ztrsm_
+
+#define evsl_dtrsm  dtrsm_
+#define evsl_dsyrk  dsyrk_
+#define evsl_dsymm  dsymm_
+#define evsl_dtrsv  dtrsv_
+
 #endif
 
 #if defined(__cplusplus) && !defined(EVSL_USING_EVSL_BLAS)
@@ -41,6 +47,7 @@ int evsl_dgemv(const char *trans, EVSL_Int *m, EVSL_Int *n, EVSL_Real *alpha, EV
 EVSL_Real evsl_dnrm2(EVSL_Int *n, EVSL_Real *x, EVSL_Int *incx);
 int evsl_dscal(EVSL_Int *n, EVSL_Real *da, EVSL_Real *dx, EVSL_Int *incx);
 int evsl_dcopy(EVSL_Int *n, EVSL_Real *dx, EVSL_Int *incx, EVSL_Real *dy, EVSL_Int *incy);
+int evsl_dswap(EVSL_Int *n, EVSL_Real *dx, EVSL_Int *incx, EVSL_Real *dy, EVSL_Int *incy);
 #if defined(LAPACK_F2C_INCLUDE)
 /* blas needed from evsl lapack */
 int evsl_dtrmm(const char *side, const char *uplo, const char *transa, const char *diag, EVSL_Int *m, EVSL_Int *n, EVSL_Real *alpha, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *b, EVSL_Int *ldb);
@@ -56,8 +63,13 @@ EVSL_Int evsl_izamax(EVSL_Int *n, doublecomplex *zx, EVSL_Int *incx);
 int evsl_zswap(EVSL_Int *n, doublecomplex *zx, EVSL_Int *incx, doublecomplex *zy, EVSL_Int *incy);
 int evsl_zscal(EVSL_Int *n, doublecomplex *za, doublecomplex *zx, EVSL_Int *incx);
 int evsl_dtrmv(const char *uplo, const char *trans, const char *diag, EVSL_Int *n, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *x, EVSL_Int *incx);
-int evsl_dswap(EVSL_Int *n, EVSL_Real *dx, EVSL_Int *incx, EVSL_Real *dy, EVSL_Int *incy);
 int evsl_dsyr2(const char *uplo, EVSL_Int *n, EVSL_Real *alpha, EVSL_Real *x, EVSL_Int *incx, EVSL_Real *y, EVSL_Int *incy, EVSL_Real *a, EVSL_Int *lda);
+
+int evsl_dtrsm(const char *side, const char *uplo, const char *transa, const char *diag, EVSL_Int *m, EVSL_Int *n, EVSL_Real *alpha, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *b, EVSL_Int *ldb);
+int evsl_dsyrk(const char *uplo, const char *trans, EVSL_Int *n, EVSL_Int *k, EVSL_Real *alpha, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *beta, EVSL_Real *c__, EVSL_Int *ldc);
+int evsl_dsymm(const char *side, const char *uplo, EVSL_Int *m, EVSL_Int *n, EVSL_Real *alpha, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *b, EVSL_Int *ldb, EVSL_Real *beta, EVSL_Real *c__, EVSL_Int *ldc);
+int evsl_dtrsv(const char *uplo, const char *trans, const char *diag, EVSL_Int *n, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *x, EVSL_Int *incx);
+
 #endif
 #if defined(__cplusplus) && !defined(EVSL_USING_EVSL_BLAS)
 }

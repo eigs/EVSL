@@ -186,7 +186,7 @@ int pnav(double *mu, const int m, const double cc, const double dd, double *v,
     double *v_old = k == 2 ? v : vkm1;
     double t = k == 1 ? t1 : t2;
 
-    matvec_B(v_cur, vkp1);
+    matvec_B(v_cur, vkp1, 1);
     evsl_daxpy(&n, &ncc, v_cur, &one, vkp1, &one);
     /*-------------------- y = mu[k]*Vk + y */
     evsl_dscal(&n, &t, vkp1, &one);

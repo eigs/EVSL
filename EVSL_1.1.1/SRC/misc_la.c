@@ -193,6 +193,7 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
   evslstat.t_eig += tme - tms;
 }
 
+
 /**
  * @brief Classical GS reortho with Daniel, Gragg, Kaufman, Stewart test
  * @param[in] n Number of rows in Q
@@ -304,3 +305,37 @@ void orth(double *V, int n, int k, double *Vo, double *work) {
   }
 }
 
+// orthogonalize columns
+// input is overwritten on output
+void orth2(double *a, int lda, int n, int k, double *work) {
+  // dgeqrf
+  int lwork = -1, info;
+  double *tau;
+  tau = evsl_Malloc(k, double);
+
+  evsl_dgeqrf(&n, &k, a, &lda, tau, work, &lwork, &info);
+  if (info != 0) {
+    fprintf(stdout, "DGEQRF error [query call]: %d\n", info);
+    exit(0);
+  }
+
+  lwork = (int) work[0];
+  evsl_dgeqrf(&n, &k, a, &lda, tau, work, &lwork, &info);
+  if (info != 0) {
+    fprintf(stdout, "DGEQRF error [comp call]: %d\n", info);
+    exit(0);
+  }
+
+  // dorgqr
+  lwork = -1;
+  evsl_dorgqr(&n, &k, &k, a, &lda, tau, work, &lwork, &info);
+  if (info != 0) {
+    fprintf(stdout, "DORGQR error [query call]: %d\n", info);
+    exit(0);
+  }
+
+  lwork = (int) work[0];
+  evsl_dorgqr(&n, &k, &k, a, &lda, tau, work, &lwork, &info);
+
+  evsl_Free(tau);
+}

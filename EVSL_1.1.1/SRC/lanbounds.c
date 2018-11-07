@@ -41,7 +41,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
   /* init vector */
   if (ifGenEv) {
     /* B norm */
-    matvec_B(v, Z);
+    matvec_B(v, Z, 1);
     t = 1.0 / sqrt(evsl_ddot(&n, v, &one, Z, &one));
     evsl_dscal(&n, &t, Z, &one);
   } else {
@@ -58,7 +58,7 @@ int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
     int i;
     /* znew = A*v */
     /* vnew = A*v */
-    matvec_A(&V[j*n_l], &Z[(j+1)*n_l]);
+    matvec_A(&V[j*n_l], &Z[(j+1)*n_l], 1);
     /* znew = znew - bet * zold */
     /* vnew = vnew - bet * vold */
     if (j) {

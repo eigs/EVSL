@@ -21,7 +21,7 @@ static integer c__2 = 2;
 	    dlarfb_(const char *, const char *, const char *, const char *, integer *, integer *,
 	    integer *, doublereal *, integer *, doublereal *, integer *,
 	    doublereal *, integer *, doublereal *, integer *), dlarft_(const char *, const char *, integer *, integer *,
-	    doublereal *, integer *, doublereal *, doublereal *, integer *), xerbla_(const char *, integer *);
+	    doublereal *, integer *, doublereal *, doublereal *, integer *) /*, xerbla_(const char *, integer *) */;
     extern integer ilaenv_(integer *, const char *, const char *, integer *, integer *,
 	    integer *, integer *);
     integer ldwork, lwkopt;

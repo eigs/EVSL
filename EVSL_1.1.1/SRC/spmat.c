@@ -251,29 +251,70 @@ double dcsrinfnrm(csrMat *A){
  * @param[in] x Input vector
  * @param[out] y Output vector
  */
-void dcsrmv(char trans, int nrow, int ncol, double *a,
+void dcsrmv(char trans, int nrow, int ncol, int k, double *a,
     int *ia, int *ja, double *x, double *y) {
   int  len, jj=nrow;
   if (trans == 'N') {
-    //#pragma omp parallel for schedule(guided)
-    double r;
-    /*for (i=0; i<nrow; i++) {
-      r = 0.0;
-      for (j=ia[i]; j<ia[i+1]; j++) {
-      r += a[j] * x[ja[j]];
+      if ( k == 1) {
+      //#pragma omp parallel for schedule(guided)
+      double r;
+      /*for (i=0; i<nrow; i++) {
+        r = 0.0;
+        for (j=ia[i]; j<ia[i+1]; j++) {
+        r += a[j] * x[ja[j]];
+        }
+        y[i] = r;
+        }
+        */
+      while (jj--) {
+        len = *(ia+1) - *ia; // 
+        ia++;
+        r = 0.0;
+        while (len--)
+          r += x[*ja++]*(*a++);
+        *y++ = r;
       }
-      y[i] = r;
-      }
-      */
-    while (jj--) {
-      len = *(ia+1) - *ia;
-      ia++;
-      r = 0.0;
-      while (len--)
-        r += x[*ja++]*(*a++);
-      *y++ = r;
     }
-  } else {
+    else {
+      int i, l = 0, one = 1;
+      double *r, v;
+      r = evsl_Malloc(k, double);
+
+      while (jj--) {
+        len = *(ia+1) - *ia;
+
+        for (i = 0; i < k; ++i)
+          r[i] = 0.0;
+
+        while (len--) {
+          v = *a++;
+
+          for (i = 0; i < k; ++i) {
+            r[i] += v*x[*(ja+i*ncol)];
+          }
+
+          ja++;
+        }
+
+        // for (i = 0; i < k; ++i) {
+        //   y[l+i*ncol] = r[i];
+        // }
+        evsl_dcopy(&k, r, &one, y+l, &ncol);
+
+        l++;
+
+      }
+
+      evsl_Free(r);
+    }
+  } 
+  else {
+
+    if (k != 1) {
+      fprintf(stdout, "dcsrmv with trans='T' and k>1 is not implemented yet.\n");
+      exit(-1);
+    }
+    
     double xi;
     int jj, len;
     jj = nrow;
@@ -303,21 +344,35 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
 * @param[out] y Output vector
 * @param[in] data CSR matrix
 */
-void matvec_csr(double *x, double *y, void *data) {
-  csrMat *A = (csrMat *) data;
+void matvec_csr(double *x, double *y, int k, void *data) {
 #ifdef EVSL_USING_INTEL_MKL
-  char cN = 'N';
-  /*
-  double alp = 1.0, bet = 0.0;
-  mkl_dcsrmv(&cN, &(A->nrows), &(A->ncols), &alp, "GXXCXX",
-             A->a, A->ja, A->ia, A->ia+1, x, &bet, y);
-  */
-  mkl_cspblas_dcsrgemv(&cN, &A->nrows, A->a, A->ia, A->ja, x, y);
+  if (k == 1) {
+    csrMat *A = (csrMat *) data;
+    char cN = 'N';
+    mkl_cspblas_dcsrgemv(&cN, &A->nrows, A->a, A->ia, A->ja, x, y);
+  }
+  else {
+    sparse_status_t ierr;
+    sparse_matrix_t *A = (sparse_matrix_t *) data;
+
+    struct matrix_descr descr;
+    descr.type = SPARSE_MATRIX_TYPE_SYMMETRIC;
+    descr.mode = SPARSE_FILL_MODE_UPPER;
+    descr.diag = SPARSE_DIAG_NON_UNIT;
+
+    ierr = mkl_sparse_d_mm(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, *A, descr,
+     SPARSE_LAYOUT_COLUMN_MAJOR, x, k, evsldata.n, 0.0, y, evsldata.n);
+
+    if (ierr != SPARSE_STATUS_SUCCESS) {
+      fprintf(stdout, "Error in mkl_sparse_d_mm with code %d.\n", ierr);
+      exit(-1);
+    }
+  }
 #else
-  dcsrmv('N', A->nrows, A->ncols, A->a, A->ia, A->ja, x, y);
+  csrMat *A = (csrMat *) data;
+  dcsrmv('N', A->nrows, A->ncols, k, A->a, A->ia, A->ja, x, y);
 #endif
 }
-
 
 /** @brief inline function used by matadd
  * insert an element pointed by j of A (times t) to location k in C (row i)

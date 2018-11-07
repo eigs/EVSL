@@ -125,7 +125,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- copy initial vector to Z(:,1) */
 #if FILTER_VINIT
   /* Filter the initial vector */
-  RatFiltApply(n, rat, vinit, V, wk);
+  RatFiltApply(n, 1, rat, vinit, V, wk);
   vrand = evsl_Malloc(n, double);
   if(ifGenEv){
     evsl_dcopy(&n, V, &one, Z, &one);
@@ -137,7 +137,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   double t, nt, res0;
   if (ifGenEv) {
     /* B norm */
-    matvec_B(Z, V);
+    matvec_B(Z, V, 1);
     t = 1.0 / sqrt(evsl_ddot(&n, V, &one, Z, &one));
     evsl_dscal(&n, &t, Z, &one);
   } else {
@@ -171,7 +171,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- next Lanczos vector Z(:,k+1)*/
     znew = z + n;
     /*-------------------- compute w = rat * v */
-    RatFiltApply(n, rat, v, znew, wk);
+    RatFiltApply(n, 1, rat, v, znew, wk);
     /*------------------ znew = znew - beta*zold */
     if (zold) {
       nbeta = -beta;
@@ -191,7 +191,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       CGS_DGKS2(n, k+1, NGS_MAX, Z, V, znew, wk);
       /* -------------- NOTE: B-matvec
        *                vnew = B * znew */
-      matvec_B(znew, vnew);
+      matvec_B(znew, vnew, 1);
       /*-------------------- beta = (vnew, znew)^{1/2} */
       beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
     } else {
@@ -210,7 +210,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       /*------------------ generate a new init vector in znew */
       rand_double(n, vrand);
       /* Filter the initial vector */
-      RatFiltApply(n, rat, vrand, znew, wk);
+      RatFiltApply(n, 1, rat, vrand, znew, wk);
 #else
       rand_double(n, znew);
 #endif
@@ -218,7 +218,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
 	/* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k+1, NGS_MAX, Z, V, znew, wk);
 	/* -------------- NOTE: B-matvec */
-        matvec_B(znew, vnew);
+        matvec_B(znew, vnew, 1);
         beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
 	/*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
@@ -341,7 +341,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- normalize u */
     if (ifGenEv) {
       /* B-norm, w2 = B*u */
-      matvec_B(u, w2);
+      matvec_B(u, w2, 1);
       t = sqrt(evsl_ddot(&n, u, &one, w2, &one)); /* should be one */
     } else {
       /* 2-norm */
@@ -360,7 +360,7 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
       evsl_dscal(&n, &t, w2, &one);
     }
     /*-------------------- w = A*u */
-    matvec_A(u, wk);
+    matvec_A(u, wk, 1);
     /*-------------------- Ritz val: t = (u'*w)/(u'*u)
                                      t = (u'*w)/(u'*B*u) */
     t = evsl_ddot(&n, wk, &one, u, &one);

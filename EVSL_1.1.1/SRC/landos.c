@@ -98,7 +98,7 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
     /*-------------------- main Lanczos loop */
     for (j = 0; j < msteps; j++) {
       // w = A*v
-      matvec_A(&V[j * n_l], &V[(j + 1) * n_l]);
+      matvec_A(&V[j * n_l], &V[(j + 1) * n_l], 1);
       // w = w - bet * vold
       if (j) {
         nbet = -bet[j - 1];

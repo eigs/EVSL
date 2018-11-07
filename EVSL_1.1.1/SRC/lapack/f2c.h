@@ -68,4 +68,14 @@
 #define zgetrs_   evsl_zgetrs
 #define zlaswp_   evsl_zlaswp
 
+#define dpotrf_   evsl_dpotrf
+#define dtrtrs_   evsl_dtrtrs
+#define dpotf2_   evsl_dpotf2
+#define dsygst_   evsl_dsygst
+#define dsygs2_   evsl_dsygs2
+#define dtrtrs_   evsl_dtrtrs
+#define dgeqrf_   evsl_dgeqrf
+#define dgeqr2_   evsl_dgeqr2
+#define dorgqr_   evsl_dorgqr
+
 #endif

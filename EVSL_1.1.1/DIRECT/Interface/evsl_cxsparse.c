@@ -320,8 +320,12 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
  * @warning: This function MUST be of this prototype
  *
  *------------------------------------------------------------------*/
-void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
+void ASIGMABSolDirect(int n, int l, double *br, double *bi, double *xr,
                       double *xz, void *data) {
+  if (l != 1) {
+    fprintf(stderr, "CXSparse can't handle multiple right-hand side.\n");
+    exit(-1);
+  }
 
   int i;
 

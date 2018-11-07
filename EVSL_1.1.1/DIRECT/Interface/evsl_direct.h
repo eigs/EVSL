@@ -21,7 +21,7 @@ void FreeBSolDirectData(void *data);
 
 /* functions for A-SIGMA*B solve */
 int  SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num, EVSL_Complex *zk, void **data);
-void ASIGMABSolDirect(int n, double *br, double *bi, double *xr, double *xz, void *data);
+void ASIGMABSolDirect(int n, int l, double *br, double *bi, double *xr, double *xz, void *data);
 void FreeASIGMABSolDirect(int num, void **data);
 
 /* evsl_direct_f90.c */

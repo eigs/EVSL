@@ -157,7 +157,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   double t, nt, res0;
   if (ifGenEv) {
     /* B norm */
-    matvec_B(V, Z);
+    matvec_B(V, Z, 1);
     t = 1.0 / sqrt(evsl_ddot(&n, V, &one, Z, &one));
     evsl_dscal(&n, &t, Z, &one);
   } else {
@@ -237,7 +237,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       if (ifGenEv) {
         /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
         CGS_DGKS2(n, k+1, NGS_MAX, V, Z, vnew, wk);
-        matvec_B(vnew, znew);
+        matvec_B(vnew, znew, 1);
         beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
         /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
@@ -360,7 +360,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     /*-------------------- normalize u */
     if (ifGenEv) {
       /* B-norm, w2 = B*u */
-      matvec_B(u, w2);
+      matvec_B(u, w2, 1);
       t = sqrt(evsl_ddot(&n, u, &one, w2, &one)); /* should be one */
     } else {
       /* 2-norm */
@@ -379,7 +379,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       evsl_dscal(&n, &t, w2, &one);
     }
     /*-------------------- w = A*u */
-    matvec_A(u, wk);
+    matvec_A(u, wk, 1);
     /*-------------------- Ritz val: t = (u'*w)/(u'*u)
                                      t = (u'*w)/(u'*B*u) */
     t = evsl_ddot(&n, wk, &one, u, &one);

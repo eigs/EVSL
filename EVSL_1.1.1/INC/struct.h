@@ -80,7 +80,7 @@ typedef struct _polparams {
  * be the  solution (complex vector),  and "data" contains  all the
  * data  needed  by  the  solver.
  */
-typedef void (*SolFuncC)(int n, double *br, double *bz, double *xr, double *xz, void *data);
+typedef void (*SolFuncC)(int n, int l, double *br, double *bz, double *xr, double *xz, void *data);
 
 /**
  * @brief function prototype for applying the solve B x = b
@@ -90,7 +90,7 @@ typedef void (*SolFuncR)(double *b, double *x, void *data);
 /**
  * @brief matvec function prototype
  */
-typedef void (*MVFunc)(double *x, double *y, void *data);
+typedef void (*MVFunc)(double *x, double *y, int k, void *data);
 
 /*!
  * @brief user-provided function and data for solving (A - SIGMA*B) x = b
@@ -167,6 +167,8 @@ typedef struct _evsldata {
   EVSLLTSol *LTsol;         /**< function and data for LT solve */
   double *ds;               /**< diagonal scaling matrix D,
                                  D^{-1}*A*D^{-1} = lambda * D^{-1}*B*D^{-1} */
+
+  int ifBlock;        // if block method is used
 } evslData;
 
 /*

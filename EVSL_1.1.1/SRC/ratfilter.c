@@ -434,15 +434,20 @@ void free_rat(ratparams *rat) {
  * @param[in] rat ratparams struct
  * @param[in] n Length of array
  * @param[in] b x = L * b
- * @param w6 Work array of size 4*n for standard ev problem,
- *                         size 6*n for generalized ev problem
+ * @param w6 Work array of size 4*n*l for standard ev problem,
+ *                         size 6*n*l for generalized ev problem
  *
  * @param[out] x Becomes R(A)b
  *
  */
-void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
+
+ // modified to block version
+void RatFiltApply(int n, int l, ratparams *rat, double *b, double *x, double *w6) {
   double tt = evsl_timer();
+
   const int ifGenEv = evsldata.ifGenEv;
+  // const int ifBlock = evsldata.ifBlock;
+
   int jj, kk, k=0, kf;
   int *mulp = rat->mulp;
   int num = rat->num;
@@ -450,21 +455,23 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
   double dtwo = 2.0;
   double done = 1.0;
   int one = 1;
+  int nl = n*l;
 
   double *xr, *xz, *bz, *br, *yr=NULL, *yz=NULL;
   double zkr, zkc;
   xr = w6;
-  xz = xr + n;
-  bz = xz + n;
-  br = bz + n;
+  xz = xr + n*l;
+  bz = xz + n*l;
+  br = bz + n*l;
   if (ifGenEv) {
-    yr = br + n;
-    yz = yr + n;
+    yr = br + n*l;
+    yz = yr + n*l;
   }
   /*------------------ loop through each pole */
   for (kk=0; kk<num; kk++) {
     /*---------------- solver for A-s[kk]*B */
     EVSLASIGMABSol *sol = &rat->ASIGBsol[kk];
+
     kf = k + mulp[kk];
     /*------------------ power loop */
     for (jj=kf-1; jj>=k; jj--) {
@@ -472,37 +479,39 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
       zkr = creal(omega[jj]);
       zkc = cimag(omega[jj]);
       /*---------------- initilize the right hand side */
-      memcpy(br, b, n*sizeof(double));
-      memcpy(bz, b, n*sizeof(double));
-      evsl_dscal(&n, &zkr, br, &one);
-      evsl_dscal(&n, &zkc, bz, &one);
+      memcpy(br, b, n*l*sizeof(double));
+      memcpy(bz, b, n*l*sizeof(double));
+
+      evsl_dscal(&nl, &zkr, br, &one);
+      evsl_dscal(&nl, &zkc, bz, &one);
+
       if (jj != kf-1) {
-        evsl_daxpy(&n, &done, xr, &one, br, &one);
-        evsl_daxpy(&n, &done, xz, &one, bz, &one);
+        evsl_daxpy(&nl, &done, xr, &one, br, &one);
+        evsl_daxpy(&nl, &done, xz, &one, bz, &one);
       }
       /*---------------- solve shifted system */
       if (ifGenEv) {
         if (jj > k) {
           //(sol->func)(n, br, bz, yr, yz, sol->data);
-          solve_ASigB(sol, n, br, bz, yr, yz);
-          matvec_B(yr, xr);
-          matvec_B(yz, xz);
+          solve_ASigB(sol, n, l, br, bz, yr, yz);
+          matvec_B(yr, xr, l);
+          matvec_B(yz, xz, l);
         } else {
           /*------------- jj == k */
           //(sol->func)(n, br, bz, xr, xz, sol->data);
-          solve_ASigB(sol, n, br, bz, xr, xz);
+          solve_ASigB(sol, n, l, br, bz, xr, xz);
         }
       } else {
         //(sol->func)(n, br, bz, xr, xz, sol->data);
-        solve_ASigB(sol, n, br, bz, xr, xz);
+        solve_ASigB(sol, n, l, br, bz, xr, xz);
       }
     }
     /*------------------ solution (real part) */
     if (kk) {
-      evsl_daxpy(&n, &dtwo, xr, &one, x, &one);
+      evsl_daxpy(&nl, &dtwo, xr, &one, x, &one);
     } else {
-      memcpy(x, xr, n*sizeof(double));
-      evsl_dscal(&n, &dtwo, x, &one);
+      memcpy(x, xr, nl*sizeof(double));
+      evsl_dscal(&nl, &dtwo, x, &one);
     }
     k = kf;
   }
@@ -510,4 +519,3 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
   evslstat.n_ratAv ++;
   evslstat.t_ratAv += evsl_timer() - tt;
 }
-

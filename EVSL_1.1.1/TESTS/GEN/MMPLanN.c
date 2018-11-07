@@ -254,8 +254,8 @@ int main() {
         for (i = 0; i < nev2; i++) {
           double *yi = Y+i*n;
           double t = -lam[i];
-          matvec_csr(yi, v1, &Acsr);
-          matvec_csr(yi, v2, &Bcsr);
+          matvec_csr(yi, v1, 1, &Acsr);
+          matvec_csr(yi, v2, 1, &Bcsr);
           evsl_daxpy(&n, &t, v2, &one, v1, &one);
           for (j = 0; j < n; j++) {
             v1[j] *= Sqrtdiag[j];

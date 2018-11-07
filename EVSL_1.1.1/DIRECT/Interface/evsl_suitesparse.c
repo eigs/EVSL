@@ -246,8 +246,13 @@ void LTSolDirect(double *b, double *x, void *data) {
  * @warning: This function MUST be of this prototype
  *
  *------------------------------------------------------------------*/
-void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
+void ASIGMABSolDirect(int n, int l, double *br, double *bi, double *xr,
                       double *xz, void *data) {
+  if (l != 1) {
+    fprintf(stderr, "UMFPACK can't handle multiple right-hand side.\n");
+    exit(-1);
+  }
+
   void* Numeric = data;
   double Control[UMFPACK_CONTROL];
   umfpack_zl_defaults(Control);

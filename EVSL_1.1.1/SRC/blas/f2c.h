@@ -68,6 +68,12 @@ typedef struct
 #define zscal_  evsl_zscal
 #define zswap_  evsl_zswap
 #define ztrsm_  evsl_ztrsm
+
+#define dtrsm_  evsl_dtrsm
+#define dsyrk_  evsl_dsyrk
+#define dsymm_  evsl_dsymm
+#define dtrsv_  evsl_dtrsv
+
 #endif
 
 /* f2c */

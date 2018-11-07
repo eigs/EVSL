@@ -52,6 +52,7 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam);
 void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, double *w);
 void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q, double *v, double *w);
 void orth(double *V, int n, int k, double *Vo, double *work);
+void orth2(double *a, int lda, int n, int k, double *work);
 
 /*- - - - - - - - - ratfilter.c */
 void contQuad(int method, int n, EVSL_Complex *zk);
@@ -62,7 +63,7 @@ void weights(int n, EVSL_Complex* zk, int* pow, double lambda, EVSL_Complex* ome
 int scaleweigthts(int n, double a, double b, EVSL_Complex *zk, int* pow, EVSL_Complex* omegaM);
 
 /*- - - - - - - - - ratlanNr.c */
-void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w3);
+void RatFiltApply(int n, int l, ratparams *rat, double *b, double *x, double *w3);
 
 /*- - - - - - - - - - simpson.c */
 void simpson(double *xi, double *yi, int npts);
@@ -85,10 +86,10 @@ void vec_iperm(int n, int *p, double *x, double *y);
 * @brief y = A * x
 * This is the matvec function for the matrix A in evsldata
 */
-static inline void matvec_A(double *x, double *y) {
+static inline void matvec_A(double *x, double *y, int k) {
   CHKERR(!evsldata.Amv);
   double tms = evsl_timer();
-  evsldata.Amv->func(x, y, evsldata.Amv->data);
+  evsldata.Amv->func(x, y, k, evsldata.Amv->data);
   double tme = evsl_timer();
   evslstat.t_mvA += tme - tms;
   evslstat.n_mvA ++;
@@ -98,10 +99,10 @@ static inline void matvec_A(double *x, double *y) {
 * @brief y = B * x
 * This is the matvec function for the matrix B in evsldata
 */
-static inline void matvec_B(double *x, double *y) {
+static inline void matvec_B(double *x, double *y, int k) {
   CHKERR(!evsldata.Bmv);
   double tms = evsl_timer();
-  evsldata.Bmv->func(x, y, evsldata.Bmv->data);
+  evsldata.Bmv->func(x, y, k, evsldata.Bmv->data);
   double tme = evsl_timer();
   evslstat.t_mvB += tme - tms;
   evslstat.n_mvB ++;
@@ -137,11 +138,11 @@ static inline void solve_LT(double *x, double *y) {
 * @brief y = (A- sB) \ x
 * This is the solve function for the complex shifted matrix
 */
-static inline void solve_ASigB(EVSLASIGMABSol *sol, int n,
+static inline void solve_ASigB(EVSLASIGMABSol *sol, int n, int l,
                                double *br, double *bz,
                                double *xr, double *xz) {
   double tms = evsl_timer();
-  (sol->func)(n, br, bz, xr, xz, sol->data);
+  (sol->func)(n, l, br, bz, xr, xz, sol->data);
   double tme = evsl_timer();
   evslstat.t_svASigB+= tme - tms;
   evslstat.n_svASigB ++;

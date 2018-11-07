@@ -13,7 +13,7 @@
  * We provide a matvec routine, which only needs the stencil and grid sizes
  * The matvec routine and the associated data will need to be registered */
 /* matvec routine [it must be of this prototype] */
-void Lap2D3DMatvec(double *x, double *y, void *data);
+void Lap2D3DMatvec(double *x, double *y, int l, void *data);
 /* datatype for performing matvec for Laplacians */
 typedef struct _lapmv_t {
   int nx, ny, nz;
@@ -236,33 +236,40 @@ int main(int argc, char *argv[]) {
 }
 
 /*----------------- external matvec routine provided by users */
-void Lap2D3DMatvec(double *x, double *y, void *data) {
+void Lap2D3DMatvec(double *x, double *y, int l, void *data) {
   /* y = A * x
    * data: pointer to a struct that contains all needed data
    */
-  lapmv_t *lapmv = (lapmv_t *) data;
-  int nx = lapmv->nx;
-  int ny = lapmv->ny;
-  int nz = lapmv->nz;
-  double *stencil = lapmv->stencil;
-  int i,j,k,p;
 
-  for (k=0; k<nz; k++) {
-    for (j=0; j<ny; j++) {
-      for (i=0; i<nx; i++) {
-        p = k*nx*ny + j*nx + i;
-        y[p] = stencil[0] * x[p];
-        // x-1, x+1
-        if (i>0)    { y[p] += stencil[1] * x[p-1]; }
-        if (i<nx-1) { y[p] += stencil[2] * x[p+1]; }
-        // y-1, y+1
-        if (j>0)    { y[p] += stencil[3] * x[p-nx]; }
-        if (j<ny-1) { y[p] += stencil[4] * x[p+nx]; }
-        // z-1, z+1
-        if (k>0)    { y[p] += stencil[5] * x[p-nx*ny]; }
-        if (k<nz-1) { y[p] += stencil[6] * x[p+nx*ny]; }
+  if (l == 1) {
+    lapmv_t *lapmv = (lapmv_t *) data;
+    int nx = lapmv->nx;
+    int ny = lapmv->ny;
+    int nz = lapmv->nz;
+    double *stencil = lapmv->stencil;
+    int i,j,k,p;
+
+    for (k=0; k<nz; k++) {
+      for (j=0; j<ny; j++) {
+        for (i=0; i<nx; i++) {
+          p = k*nx*ny + j*nx + i;
+          y[p] = stencil[0] * x[p];
+          // x-1, x+1
+          if (i>0)    { y[p] += stencil[1] * x[p-1]; }
+          if (i<nx-1) { y[p] += stencil[2] * x[p+1]; }
+          // y-1, y+1
+          if (j>0)    { y[p] += stencil[3] * x[p-nx]; }
+          if (j<ny-1) { y[p] += stencil[4] * x[p+nx]; }
+          // z-1, z+1
+          if (k>0)    { y[p] += stencil[5] * x[p-nx*ny]; }
+          if (k<nz-1) { y[p] += stencil[6] * x[p+nx*ny]; }
+        }
       }
     }
+  }
+  else {
+    fprintf(stdout, "Block Lap2D3Dmatvec not implemented yet!\n");
+    exit(-1);
   }
 }
 

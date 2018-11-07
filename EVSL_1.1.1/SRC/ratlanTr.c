@@ -167,7 +167,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   size_t work_size = ifGenEv ? 6*n_l : 4*n_l;
   work = evsl_Malloc(work_size, double);
 #if FILTER_VINIT
-  RatFiltApply(n, rat, vinit, V, work);
+  RatFiltApply(n, 1, rat, vinit, V, work);
   vrand = evsl_Malloc(n, double);
   /*-------------------- copy initial vector to Z(:,1)   */
   if(ifGenEv){
@@ -181,7 +181,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   double t;
   if (ifGenEv) {
     /* v = B*z */
-    matvec_B(Z, V);
+    matvec_B(Z, V, 1);
     /* B norm of z*/
     t = 1.0 / sqrt(evsl_ddot(&n, V, &one, Z, &one));
     evsl_dscal(&n, &t, Z, &one);
@@ -218,7 +218,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       double *vnew = v + n;
       double *znew = z + n;
       /*------------------ znew = R(A) * v */
-      RatFiltApply(n, rat, v, znew, work);
+      RatFiltApply(n, 1, rat, v, znew, work);
       /*------------------ deflation */
       if (lock > 0) {
         if (ifGenEv) {
@@ -250,7 +250,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       wn += fabs(s[k1]);
       if (ifGenEv) {
         /*-------------------- vnew = B * znew */
-        matvec_B(znew, vnew);
+        matvec_B(znew, vnew, 1);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
       } else {
@@ -268,7 +268,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
         /*------------------ generate a new init vector in znew */
         rand_double(n, vrand);
         /* Filter the initial vector */
-        RatFiltApply(n, rat, vrand, znew, work);
+        RatFiltApply(n, 1, rat, vrand, znew, work);
 #else
         rand_double(n, znew);
 #endif
@@ -277,7 +277,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
           CGS_DGKS2(n, lock, NGS_MAX, Q, Y, znew, work);
           /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
           CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);
-          matvec_B(znew, vnew);
+          matvec_B(znew, vnew, 1);
           beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
           evsl_dscal(&n, &ibeta, vnew, &one);
@@ -325,7 +325,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       double *vnew = v + n;
       double *znew = z + n;
       /*------------------ znew = R(A) * v */
-      RatFiltApply(n, rat, v, znew, work);
+      RatFiltApply(n, 1, rat, v, znew, work);
       it++;
       /*-------------------- deflation: orthgonalize vs locked ones first */
       if (lock > 0) {
@@ -355,7 +355,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);
         /*-------------------- vnew = B * znew */
-        matvec_B(znew, vnew);
+        matvec_B(znew, vnew, 1);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
       } else {
@@ -376,7 +376,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
         /*------------------ generate a new init vector in znew */
         rand_double(n, vrand);
         /* Filter the initial vector */
-        RatFiltApply(n, rat, vrand, znew, work);
+        RatFiltApply(n, 1, rat, vrand, znew, work);
 #else
         rand_double(n, znew);
 #endif
@@ -385,7 +385,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
           CGS_DGKS2(n, lock, NGS_MAX, Q, Y, znew, work);
           /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
           CGS_DGKS2(n, k, NGS_MAX, Z, V, znew, work);
-          matvec_B(znew, vnew);
+          matvec_B(znew, vnew, 1);
           beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
           evsl_dscal(&n, &ibeta, vnew, &one);
@@ -535,7 +535,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
       /*------------------ normalize just in case. */
       if (ifGenEv) {
         /* B-norm, w2 = B*y */
-        matvec_B(y, w2);
+        matvec_B(y, w2, 1);
         t = sqrt(evsl_ddot(&n, y, &one, w2, &one));
       } else {
         /* 2-norm */
@@ -553,7 +553,7 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
         evsl_dscal(&n, &t, w2, &one);
       }
       /*-------------------- w = A*y */
-      matvec_A(y, w);
+      matvec_A(y, w, 1);
       /*-------------------- Ritzval: t3 = (y'*w)/(y'*y) or
        *                              t3 = (y'*w)/(y'*B*y) */
       /*-------------------- Rayleigh quotient */

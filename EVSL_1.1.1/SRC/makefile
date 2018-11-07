@@ -11,7 +11,7 @@ endif
 SRC = \
 cheblanNr.c  chebsi.c     evsl.c         exDOS.c      landosG.c      ratfilter.c  simpson.c   spslice.c  vect.c \
 cheblanTr.c  dos_utils.c  evsl_f90.c     lanbounds.c  lanTrbounds.c  ratlanNr.c   spmat.c     stats.c           \
-chebpoly.c   dumps.c      evsl_memory.c  landos.c     misc_la.c      ratlanTr.c   spslice2.c  timing.c
+chebpoly.c   dumps.c      evsl_memory.c  landos.c     misc_la.c      ratlanTr.c   spslice2.c  timing.c   ratsi.c
 
 OBJS = ${SRC:.c=.o}
 
