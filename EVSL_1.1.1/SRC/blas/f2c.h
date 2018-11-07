@@ -1,7 +1,7 @@
 #ifndef BLAS_F2C_INCLUDE
 #define BLAS_F2C_INCLUDE
 
-/* do not use this file outside blas and lapack directories */
+/* do not use this file outside blas or lapack directory */
 
 #include "EVSL_config.h"
 #include <stdio.h>
