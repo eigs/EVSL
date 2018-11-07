@@ -42,7 +42,7 @@ EVSL_Real evsl_dnrm2(EVSL_Int *n, EVSL_Real *x, EVSL_Int *incx);
 int evsl_dscal(EVSL_Int *n, EVSL_Real *da, EVSL_Real *dx, EVSL_Int *incx);
 int evsl_dcopy(EVSL_Int *n, EVSL_Real *dx, EVSL_Int *incx, EVSL_Real *dy, EVSL_Int *incy);
 #if defined(LAPACK_F2C_INCLUDE)
-/* blas needed from evsl lapack */
+/* blas needed from evsl lapack only */
 int evsl_dtrmm(const char *side, const char *uplo, const char *transa, const char *diag, EVSL_Int *m, EVSL_Int *n, EVSL_Real *alpha, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *b, EVSL_Int *ldb);
 int evsl_dsyr2k(const char *uplo, const char *trans, EVSL_Int *n, EVSL_Int *k, EVSL_Real *alpha, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *b, EVSL_Int *ldb, EVSL_Real *beta, EVSL_Real *c__, EVSL_Int *ldc);
 int evsl_dsymv(const char *uplo, EVSL_Int *n, EVSL_Real *alpha, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *x, EVSL_Int *incx, EVSL_Real *beta, EVSL_Real *y, EVSL_Int *incy);

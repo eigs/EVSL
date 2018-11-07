@@ -177,32 +177,28 @@ On macOS, configure EVSL to use Apple Accelerate framework by
   coefficient matrix  is the  original matrix  shifted by  a **complex**
   shift).  A linear solver routine  must be provided.  
 
-  After  having  computed  the  rational  filter  by
+  After  having  computed  the  rational  filter  by calling
 
-      find_ratf(intv, &rat),
+```
+int find_ratf(double *intv, ratparams *rat)
+```
+  the users  can call
+```
+int SetASigmaBSol(ratparams *rat, int i, SolFuncC func, void *data)
+```
+  to set a linear solver for the ith pole of the rational filter, where
+  `func` is a function pointer  for solving  linear systems  with  pole `i`, of  which the
+  coefficient matrix  is `A - s_i I` or `A - s_i B` for generalized eigenvalue problems with `s_i = rat->zk[i]`
+  being the *complex* shift, and  `data`  points to the data that are needed  by `func`.   
 
-  users  can call
-
-      SetASigmaBSol(&rat, func, allf, data)
-
-  to set the solver functions and associated data for all the poles of 
-  the rational filter.
-  `func` is an array of function pointers of  length num of  poles, i.e.,  `rat->num`. 
-  So, `func[i]`  is the  function  to solve  the systems  with  pole `i`,  the
-  coefficient matrix of  which is `A - s_i I(or, B)`,  where `s_i = rat->zk[i]`
-  is the  complex shift.  `data`  is an array  of `(void*)` of  the same
-  length,  where `data[i]`  is the  data needed  by `func[i]`.   
-
-  Each "func[i]" must be of the following prototype
-
-      void SolFuncC(int n, double *br, double *bz, double *xr, double *xz, void *data);
-
+  Note that `func` must be of the following prototype
+```
+void SolFuncC(int n, double *br, double *bz, double *xr, double *xz, void *data);
+```
   where `n`  is the size  of the system,  `br`, `bz` are  the right-hand
   side (real and  imaginary parts of complex vector),  `xr`, `xz` will
   hold the  solution (complex vector) on return,  and `data` contains  all the
   data  needed  for  the  solver.    
-
-  If all `func[i]` are the same, one can set `func==NULL` and set `allf` to the function   
 
   Once `SetASigmaBSol` is executed, rational filtering Lanczos methods 
   should be ready to use.
