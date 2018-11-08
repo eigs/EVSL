@@ -55,11 +55,15 @@ typedef struct
 #define dnrm2_  evsl_dnrm2
 #define dscal_  evsl_dscal
 #define dswap_  evsl_dswap
+#define dsymm_  evsl_dsymm
 #define dsymv_  evsl_dsymv
 #define dsyr2_  evsl_dsyr2
 #define dsyr2k_ evsl_dsyr2k
+#define dsyrk_  evsl_dsyrk
 #define dtrmm_  evsl_dtrmm
 #define dtrmv_  evsl_dtrmv
+#define dtrsm_  evsl_dtrsm
+#define dtrsv_  evsl_dtrsv
 #define izamax_ evsl_izamax
 #define lsame_  evsl_lsame
 #define xerbla_ evsl_xerbla
@@ -68,12 +72,6 @@ typedef struct
 #define zscal_  evsl_zscal
 #define zswap_  evsl_zswap
 #define ztrsm_  evsl_ztrsm
-
-#define dtrsm_  evsl_dtrsm
-#define dsyrk_  evsl_dsyrk
-#define dsymm_  evsl_dsymm
-#define dtrsv_  evsl_dtrsv
-
 #endif
 
 /* f2c */

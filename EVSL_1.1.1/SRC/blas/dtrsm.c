@@ -1,6 +1,6 @@
 #include "f2c.h"
 
-/* Subroutine */ int dtrsm_(char *side, char *uplo, char *transa, char *diag, 
+/* Subroutine */ int dtrsm_(const char *side, const char *uplo, const char *transa, const char *diag,
 	integer *m, integer *n, doublereal *alpha, doublereal *a, integer *
 	lda, doublereal *b, integer *ldb)
 {
@@ -11,10 +11,10 @@
     integer i__, j, k, info;
     doublereal temp;
     logical lside;
-    extern logical lsame_(char *, char *);
+    extern logical lsame_(const char *, const char *);
     integer nrowa;
     logical upper;
-    extern /* Subroutine */ int xerbla_(char *, integer *);
+    extern /* Subroutine */ int xerbla_(const char *, integer *);
     logical nounit;
 
 /*     .. Scalar Arguments .. */
@@ -177,10 +177,10 @@
 	info = 1;
     } else if (! upper && ! lsame_(uplo, "L")) {
 	info = 2;
-    } else if (! lsame_(transa, "N") && ! lsame_(transa, 
+    } else if (! lsame_(transa, "N") && ! lsame_(transa,
 	     "T") && ! lsame_(transa, "C")) {
 	info = 3;
-    } else if (! lsame_(diag, "U") && ! lsame_(diag, 
+    } else if (! lsame_(diag, "U") && ! lsame_(diag,
 	    "N")) {
 	info = 4;
     } else if (*m < 0) {
@@ -415,7 +415,7 @@
 			    temp = a[j + k * a_dim1];
 			    i__2 = *m;
 			    for (i__ = 1; i__ <= i__2; ++i__) {
-				b[i__ + j * b_dim1] -= temp * b[i__ + k * 
+				b[i__ + j * b_dim1] -= temp * b[i__ + k *
 					b_dim1];
 /* L280: */
 			    }
@@ -449,7 +449,7 @@
 			    temp = a[j + k * a_dim1];
 			    i__3 = *m;
 			    for (i__ = 1; i__ <= i__3; ++i__) {
-				b[i__ + j * b_dim1] -= temp * b[i__ + k * 
+				b[i__ + j * b_dim1] -= temp * b[i__ + k *
 					b_dim1];
 /* L330: */
 			    }

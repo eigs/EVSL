@@ -6,7 +6,7 @@ static integer c__1 = 1;
 static doublereal c_b10 = -1.;
 static doublereal c_b12 = 1.;
 
-/* Subroutine */ int dpotf2_(char *uplo, integer *n, doublereal *a, integer *
+/* Subroutine */ int dpotf2_(const char *uplo, integer *n, doublereal *a, integer *
 	lda, integer *info)
 {
     /* System generated locals */
@@ -19,16 +19,16 @@ static doublereal c_b12 = 1.;
     /* Local variables */
     integer j;
     doublereal ajj;
-    // extern doublereal ddot_(integer *, doublereal *, integer *, doublereal *, 
+    // extern doublereal ddot_(integer *, doublereal *, integer *, doublereal *,
 	   //  integer *);
-    // extern /* Subroutine */ int dscal_(integer *, doublereal *, doublereal *, 
+    // extern /* Subroutine */ int dscal_(integer *, doublereal *, doublereal *,
 	   //  integer *);
-    // extern logical lsame_(char *, char *);
-    // extern /* Subroutine */ int dgemv_(char *, integer *, integer *, 
-	   //  doublereal *, doublereal *, integer *, doublereal *, integer *, 
+    // extern logical lsame_(const char *, const char *);
+    // extern /* Subroutine */ int dgemv_(const char *, integer *, integer *,
+	   //  doublereal *, doublereal *, integer *, doublereal *, integer *,
 	   //  doublereal *, doublereal *, integer *);
     logical upper;
-    // extern /* Subroutine */ int xerbla_(char *, integer *);
+    // extern /* Subroutine */ int xerbla_(const char *, integer *);
 
 /*  -- LAPACK routine (version 3.1) -- */
 /*     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd.. */
@@ -139,7 +139,7 @@ static doublereal c_b12 = 1.;
 /*           Compute U(J,J) and test for non-positive-definiteness. */
 
 	    i__2 = j - 1;
-	    ajj = a[j + j * a_dim1] - ddot_(&i__2, &a[j * a_dim1 + 1], &c__1, 
+	    ajj = a[j + j * a_dim1] - ddot_(&i__2, &a[j * a_dim1 + 1], &c__1,
 		    &a[j * a_dim1 + 1], &c__1);
 	    if (ajj <= 0.) {
 		a[j + j * a_dim1] = ajj;
@@ -153,7 +153,7 @@ static doublereal c_b12 = 1.;
 	    if (j < *n) {
 		i__2 = j - 1;
 		i__3 = *n - j;
-		dgemv_("Transpose", &i__2, &i__3, &c_b10, &a[(j + 1) * a_dim1 
+		dgemv_("Transpose", &i__2, &i__3, &c_b10, &a[(j + 1) * a_dim1
 			+ 1], lda, &a[j * a_dim1 + 1], &c__1, &c_b12, &a[j + (
 			j + 1) * a_dim1], lda);
 		i__2 = *n - j;
@@ -172,7 +172,7 @@ static doublereal c_b12 = 1.;
 /*           Compute L(J,J) and test for non-positive-definiteness. */
 
 	    i__2 = j - 1;
-	    ajj = a[j + j * a_dim1] - ddot_(&i__2, &a[j + a_dim1], lda, &a[j 
+	    ajj = a[j + j * a_dim1] - ddot_(&i__2, &a[j + a_dim1], lda, &a[j
 		    + a_dim1], lda);
 	    if (ajj <= 0.) {
 		a[j + j * a_dim1] = ajj;
@@ -186,8 +186,8 @@ static doublereal c_b12 = 1.;
 	    if (j < *n) {
 		i__2 = *n - j;
 		i__3 = j - 1;
-		dgemv_("No transpose", &i__2, &i__3, &c_b10, &a[j + 1 + 
-			a_dim1], lda, &a[j + a_dim1], lda, &c_b12, &a[j + 1 + 
+		dgemv_("No transpose", &i__2, &i__3, &c_b10, &a[j + 1 +
+			a_dim1], lda, &a[j + a_dim1], lda, &c_b12, &a[j + 1 +
 			j * a_dim1], &c__1);
 		i__2 = *n - j;
 		d__1 = 1. / ajj;
