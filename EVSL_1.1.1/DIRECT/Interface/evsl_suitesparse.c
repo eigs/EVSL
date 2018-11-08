@@ -249,7 +249,7 @@ void LTSolDirect(double *b, double *x, void *data) {
 void ASIGMABSolDirect(int n, int l, double *br, double *bi, double *xr,
                       double *xz, void *data) {
   if (l != 1) {
-    fprintf(stderr, "UMFPACK can't handle multiple right-hand side.\n");
+    fprintf(stderr, "UMFPACK can't handle multiple right-hand side.\nUse other direct solver.");
     exit(-1);
   }
 

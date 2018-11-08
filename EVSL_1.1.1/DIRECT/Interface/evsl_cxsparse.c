@@ -323,7 +323,7 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
 void ASIGMABSolDirect(int n, int l, double *br, double *bi, double *xr,
                       double *xz, void *data) {
   if (l != 1) {
-    fprintf(stderr, "CXSparse can't handle multiple right-hand side.\n");
+    fprintf(stderr, "CXSparse can't handle multiple right-hand side.\nUse other direct solver.");
     exit(-1);
   }
 
