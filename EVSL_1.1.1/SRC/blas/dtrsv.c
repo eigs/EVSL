@@ -1,16 +1,16 @@
 #include "f2c.h"
 
-/* Subroutine */ int dtrsv_(char *uplo, char *trans, char *diag, integer *n, 
+/* Subroutine */ int dtrsv_(const char *uplo, const char *trans, const char *diag, integer *n,
 	doublereal *a, integer *lda, doublereal *x, integer *incx)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2;
 
     /* Local variables */
-    integer i__, j, ix, jx, kx, info;
+    integer i__, j, ix, jx, kx=0, info;
     doublereal temp;
-    extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int xerbla_(char *, integer *);
+    extern logical lsame_(const char *, const char *);
+    extern /* Subroutine */ int xerbla_(const char *, integer *);
     logical nounit;
 
 /*     .. Scalar Arguments .. */
@@ -135,10 +135,10 @@
     info = 0;
     if (! lsame_(uplo, "U") && ! lsame_(uplo, "L")) {
 	info = 1;
-    } else if (! lsame_(trans, "N") && ! lsame_(trans, 
+    } else if (! lsame_(trans, "N") && ! lsame_(trans,
 	    "T") && ! lsame_(trans, "C")) {
 	info = 2;
-    } else if (! lsame_(diag, "U") && ! lsame_(diag, 
+    } else if (! lsame_(diag, "U") && ! lsame_(diag,
 	    "N")) {
 	info = 3;
     } else if (*n < 0) {

@@ -7,7 +7,7 @@ static integer c_n1 = -1;
 static doublereal c_b13 = -1.;
 static doublereal c_b14 = 1.;
 
-/* Subroutine */ int dpotrf_(char *uplo, integer *n, doublereal *a, integer *
+/* Subroutine */ int dpotrf_(const char *uplo, integer *n, doublereal *a, integer *
 	lda, integer *info)
 {
     /* System generated locals */
@@ -15,20 +15,20 @@ static doublereal c_b14 = 1.;
 
     /* Local variables */
     integer j, jb, nb;
-    // extern /* Subroutine */ int dgemm_(char *, char *, integer *, integer *, 
-	   //  integer *, doublereal *, doublereal *, integer *, doublereal *, 
+    // extern /* Subroutine */ int dgemm_(const char *, const char *, integer *, integer *,
+	   //  integer *, doublereal *, doublereal *, integer *, doublereal *,
 	   //  integer *, doublereal *, doublereal *, integer *);
-    // extern logical lsame_(char *, char *);
-    // extern /* Subroutine */ int dtrsm_(char *, char *, char *, char *, 
-	   //  integer *, integer *, doublereal *, doublereal *, integer *, 
+    // extern logical lsame_(const char *, const char *);
+    // extern /* Subroutine */ int dtrsm_(const char *, const char *, const char *, const char *,
+	   //  integer *, integer *, doublereal *, doublereal *, integer *,
 	   //  doublereal *, integer *);
     logical upper;
-    extern /* Subroutine */ int /* dsyrk_(char *, char *, integer *, integer *, 
-	    doublereal *, doublereal *, integer *, doublereal *, doublereal *, 
-	     integer *),*/ dpotf2_(char *, integer *, 
-	    doublereal *, integer *, integer *) /*, xerbla_(char *, 
+    extern /* Subroutine */ int /* dsyrk_(const char *, const char *, integer *, integer *,
+	    doublereal *, doublereal *, integer *, doublereal *, doublereal *,
+	     integer *),*/ dpotf2_(const char *, integer *,
+	    doublereal *, integer *, integer *) /*, xerbla_(const char *,
 	    integer *) */;
-    extern integer ilaenv_(integer *, char *, char *, integer *, integer *, 
+    extern integer ilaenv_(integer *, const char *, const char *, integer *, integer *,
 	    integer *, integer *);
 
 
@@ -156,7 +156,7 @@ static doublereal c_b14 = 1.;
 		i__3 = nb, i__4 = *n - j + 1;
 		jb = min(i__3,i__4);
 		i__3 = j - 1;
-		dsyrk_("Upper", "Transpose", &jb, &i__3, &c_b13, &a[j * 
+		dsyrk_("Upper", "Transpose", &jb, &i__3, &c_b13, &a[j *
 			a_dim1 + 1], lda, &c_b14, &a[j + j * a_dim1], lda);
 		dpotf2_("Upper", &jb, &a[j + j * a_dim1], lda, info);
 		if (*info != 0) {
@@ -169,12 +169,12 @@ static doublereal c_b14 = 1.;
 		    i__3 = *n - j - jb + 1;
 		    i__4 = j - 1;
 		    dgemm_("Transpose", "No transpose", &jb, &i__3, &i__4, &
-			    c_b13, &a[j * a_dim1 + 1], lda, &a[(j + jb) * 
-			    a_dim1 + 1], lda, &c_b14, &a[j + (j + jb) * 
+			    c_b13, &a[j * a_dim1 + 1], lda, &a[(j + jb) *
+			    a_dim1 + 1], lda, &c_b14, &a[j + (j + jb) *
 			    a_dim1], lda);
 		    i__3 = *n - j - jb + 1;
 		    dtrsm_("Left", "Upper", "Transpose", "Non-unit", &jb, &
-			    i__3, &c_b14, &a[j + j * a_dim1], lda, &a[j + (j 
+			    i__3, &c_b14, &a[j + j * a_dim1], lda, &a[j + (j
 			    + jb) * a_dim1], lda);
 		}
 /* L10: */
@@ -195,7 +195,7 @@ static doublereal c_b14 = 1.;
 		i__3 = nb, i__4 = *n - j + 1;
 		jb = min(i__3,i__4);
 		i__3 = j - 1;
-		dsyrk_("Lower", "No transpose", &jb, &i__3, &c_b13, &a[j + 
+		dsyrk_("Lower", "No transpose", &jb, &i__3, &c_b13, &a[j +
 			a_dim1], lda, &c_b14, &a[j + j * a_dim1], lda);
 		dpotf2_("Lower", &jb, &a[j + j * a_dim1], lda, info);
 		if (*info != 0) {
@@ -208,11 +208,11 @@ static doublereal c_b14 = 1.;
 		    i__3 = *n - j - jb + 1;
 		    i__4 = j - 1;
 		    dgemm_("No transpose", "Transpose", &i__3, &jb, &i__4, &
-			    c_b13, &a[j + jb + a_dim1], lda, &a[j + a_dim1], 
+			    c_b13, &a[j + jb + a_dim1], lda, &a[j + a_dim1],
 			    lda, &c_b14, &a[j + jb + j * a_dim1], lda);
 		    i__3 = *n - j - jb + 1;
 		    dtrsm_("Right", "Lower", "Transpose", "Non-unit", &i__3, &
-			    jb, &c_b14, &a[j + j * a_dim1], lda, &a[j + jb + 
+			    jb, &c_b14, &a[j + j * a_dim1], lda, &a[j + jb +
 			    j * a_dim1], lda);
 		}
 /* L20: */

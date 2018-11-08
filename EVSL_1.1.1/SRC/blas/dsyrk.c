@@ -1,7 +1,7 @@
 #include "f2c.h"
 
-/* Subroutine */ int dsyrk_(char *uplo, char *trans, integer *n, integer *k, 
-	doublereal *alpha, doublereal *a, integer *lda, doublereal *beta, 
+/* Subroutine */ int dsyrk_(const char *uplo, const char *trans, integer *n, integer *k,
+	doublereal *alpha, doublereal *a, integer *lda, doublereal *beta,
 	doublereal *c__, integer *ldc)
 {
     /* System generated locals */
@@ -10,10 +10,10 @@
     /* Local variables */
     integer i__, j, l, info;
     doublereal temp;
-    extern logical lsame_(char *, char *);
+    extern logical lsame_(const char *, const char *);
     integer nrowa;
     logical upper;
-    extern /* Subroutine */ int xerbla_(char *, integer *);
+    extern /* Subroutine */ int xerbla_(const char *, integer *);
 
 /*     .. Scalar Arguments .. */
 /*     .. */
@@ -160,7 +160,7 @@
     info = 0;
     if (! upper && ! lsame_(uplo, "L")) {
 	info = 1;
-    } else if (! lsame_(trans, "N") && ! lsame_(trans, 
+    } else if (! lsame_(trans, "N") && ! lsame_(trans,
 	    "T") && ! lsame_(trans, "C")) {
 	info = 2;
     } else if (*n < 0) {
@@ -262,7 +262,7 @@
 			temp = *alpha * a[j + l * a_dim1];
 			i__3 = j;
 			for (i__ = 1; i__ <= i__3; ++i__) {
-			    c__[i__ + j * c_dim1] += temp * a[i__ + l * 
+			    c__[i__ + j * c_dim1] += temp * a[i__ + l *
 				    a_dim1];
 /* L110: */
 			}
@@ -293,7 +293,7 @@
 			temp = *alpha * a[j + l * a_dim1];
 			i__3 = *n;
 			for (i__ = j; i__ <= i__3; ++i__) {
-			    c__[i__ + j * c_dim1] += temp * a[i__ + l * 
+			    c__[i__ + j * c_dim1] += temp * a[i__ + l *
 				    a_dim1];
 /* L160: */
 			}

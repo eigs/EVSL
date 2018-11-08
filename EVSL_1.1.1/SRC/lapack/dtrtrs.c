@@ -4,7 +4,7 @@
 
 static doublereal c_b12 = 1.;
 
-/* Subroutine */ int dtrtrs_(char *uplo, char *trans, char *diag, integer *n, 
+/* Subroutine */ int dtrtrs_(const char *uplo, const char *trans, const char *diag, integer *n,
 	integer *nrhs, doublereal *a, integer *lda, doublereal *b, integer *
 	ldb, integer *info)
 {
@@ -12,11 +12,11 @@ static doublereal c_b12 = 1.;
     integer a_dim1, a_offset, b_dim1, b_offset, i__1;
 
     /* Local variables */
-    // extern logical lsame_(char *, char *);
-    // extern /* Subroutine */ int dtrsm_(char *, char *, char *, char *, 
-	   //  integer *, integer *, doublereal *, doublereal *, integer *, 
+    // extern logical lsame_(const char *, const char *);
+    // extern /* Subroutine */ int dtrsm_(const char *, const char *, const char *, const char *,
+	   //  integer *, integer *, doublereal *, doublereal *, integer *,
 	   //  doublereal *, integer *), xerbla_(
-	   //  char *, integer *);
+	   //  const char *, integer *);
     logical nounit;
 
 
@@ -119,7 +119,7 @@ static doublereal c_b12 = 1.;
     nounit = lsame_(diag, "N");
     if (! lsame_(uplo, "U") && ! lsame_(uplo, "L")) {
 	*info = -1;
-    } else if (! lsame_(trans, "N") && ! lsame_(trans, 
+    } else if (! lsame_(trans, "N") && ! lsame_(trans,
 	    "T") && ! lsame_(trans, "C")) {
 	*info = -2;
     } else if (! nounit && ! lsame_(diag, "U")) {

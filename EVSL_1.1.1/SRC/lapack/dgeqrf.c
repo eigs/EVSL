@@ -15,13 +15,13 @@ static integer c__2 = 2;
 
     /* Local variables */
     integer i__, k, ib, nb, nx, iws, nbmin, iinfo;
-    extern /* Subroutine */ int dgeqr2_(integer *, integer *, doublereal *, 
-	    integer *, doublereal *, doublereal *, integer *), dlarfb_(char *, 
-	     char *, char *, char *, integer *, integer *, integer *, 
-	    doublereal *, integer *, doublereal *, integer *, doublereal *, 
-	    integer *, doublereal *, integer *), dlarft_(char *, char *, integer *, integer *, doublereal 
-	    *, integer *, doublereal *, doublereal *, integer *) /*, xerbla_(char *, integer *) */; 
-    extern integer ilaenv_(integer *, char *, char *, integer *, integer *, 
+    extern /* Subroutine */ int dgeqr2_(integer *, integer *, doublereal *,
+	    integer *, doublereal *, doublereal *, integer *), dlarfb_(const char *,
+	     const char *, const char *, const char *, integer *, integer *, integer *,
+	    doublereal *, integer *, doublereal *, integer *, doublereal *,
+	    integer *, doublereal *, integer *), dlarft_(const char *, const char *, integer *, integer *, doublereal
+	    *, integer *, doublereal *, doublereal *, integer *) /*, xerbla_(const char *, integer *) */;
+    extern integer ilaenv_(integer *, const char *, const char *, integer *, integer *,
 	    integer *, integer *);
     integer ldwork, lwkopt;
     logical lquery;
@@ -204,7 +204,7 @@ static integer c__2 = 2;
 /*              H = H(i) H(i+1) . . . H(i+ib-1) */
 
 		i__3 = *m - i__ + 1;
-		dlarft_("Forward", "Columnwise", &i__3, &ib, &a[i__ + i__ * 
+		dlarft_("Forward", "Columnwise", &i__3, &ib, &a[i__ + i__ *
 			a_dim1], lda, &tau[i__], &work[1], &ldwork);
 
 /*              Apply H' to A(i:m,i+ib:n) from the left */
@@ -213,7 +213,7 @@ static integer c__2 = 2;
 		i__4 = *n - i__ - ib + 1;
 		dlarfb_("Left", "Transpose", "Forward", "Columnwise", &i__3, &
 			i__4, &ib, &a[i__ + i__ * a_dim1], lda, &work[1], &
-			ldwork, &a[i__ + (i__ + ib) * a_dim1], lda, &work[ib 
+			ldwork, &a[i__ + (i__ + ib) * a_dim1], lda, &work[ib
 			+ 1], &ldwork);
 	    }
 /* L10: */

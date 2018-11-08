@@ -1,20 +1,20 @@
 #include "f2c.h"
 
-/* Subroutine */ int dsymm_(char *side, char *uplo, integer *m, integer *n, 
-	doublereal *alpha, doublereal *a, integer *lda, doublereal *b, 
+/* Subroutine */ int dsymm_(const char *side, const char *uplo, integer *m, integer *n,
+	doublereal *alpha, doublereal *a, integer *lda, doublereal *b,
 	integer *ldb, doublereal *beta, doublereal *c__, integer *ldc)
 {
     /* System generated locals */
-    integer a_dim1, a_offset, b_dim1, b_offset, c_dim1, c_offset, i__1, i__2, 
+    integer a_dim1, a_offset, b_dim1, b_offset, c_dim1, c_offset, i__1, i__2,
 	    i__3;
 
     /* Local variables */
     integer i__, j, k, info;
     doublereal temp1, temp2;
-    extern logical lsame_(char *, char *);
+    extern logical lsame_(const char *, const char *);
     integer nrowa;
     logical upper;
-    extern /* Subroutine */ int xerbla_(char *, integer *);
+    extern /* Subroutine */ int xerbla_(const char *, integer *);
 
 /*     .. Scalar Arguments .. */
 /*     .. */
@@ -253,11 +253,11 @@
 /* L50: */
 		    }
 		    if (*beta == 0.) {
-			c__[i__ + j * c_dim1] = temp1 * a[i__ + i__ * a_dim1] 
+			c__[i__ + j * c_dim1] = temp1 * a[i__ + i__ * a_dim1]
 				+ *alpha * temp2;
 		    } else {
-			c__[i__ + j * c_dim1] = *beta * c__[i__ + j * c_dim1] 
-				+ temp1 * a[i__ + i__ * a_dim1] + *alpha * 
+			c__[i__ + j * c_dim1] = *beta * c__[i__ + j * c_dim1]
+				+ temp1 * a[i__ + i__ * a_dim1] + *alpha *
 				temp2;
 		    }
 /* L60: */
@@ -277,11 +277,11 @@
 /* L80: */
 		    }
 		    if (*beta == 0.) {
-			c__[i__ + j * c_dim1] = temp1 * a[i__ + i__ * a_dim1] 
+			c__[i__ + j * c_dim1] = temp1 * a[i__ + i__ * a_dim1]
 				+ *alpha * temp2;
 		    } else {
-			c__[i__ + j * c_dim1] = *beta * c__[i__ + j * c_dim1] 
-				+ temp1 * a[i__ + i__ * a_dim1] + *alpha * 
+			c__[i__ + j * c_dim1] = *beta * c__[i__ + j * c_dim1]
+				+ temp1 * a[i__ + i__ * a_dim1] + *alpha *
 				temp2;
 		    }
 /* L90: */
@@ -305,7 +305,7 @@
 	    } else {
 		i__2 = *m;
 		for (i__ = 1; i__ <= i__2; ++i__) {
-		    c__[i__ + j * c_dim1] = *beta * c__[i__ + j * c_dim1] + 
+		    c__[i__ + j * c_dim1] = *beta * c__[i__ + j * c_dim1] +
 			    temp1 * b[i__ + j * b_dim1];
 /* L120: */
 		}
