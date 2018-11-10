@@ -278,8 +278,3 @@ void SetDiagScal(double *ds) {
   evsldata.ds = ds;
 }
 
-int SetBlock() {
-  evsldata.ifBlock = 1;
-
-  return 0;
-}

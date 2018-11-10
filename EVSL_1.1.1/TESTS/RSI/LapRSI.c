@@ -95,7 +95,6 @@ int main(int argc, char *argv[]) {
   nvec = 60;
   /*-------------------- start EVSL */
   EVSLStart();
-  SetBlock();
   /*-------------------- set the left-hand side matrix A */
   SetAMatrix(&Acsr);
   //-------------------- call kpmdos

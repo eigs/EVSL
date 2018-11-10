@@ -172,8 +172,6 @@ int SetLTSol(SolFuncR func, void *data);
 int SetASigmaBSol(ratparams *rat, int i, SolFuncC func, void *data);
 int SetStdEig();
 int SetGenEig();
-
-int SetBlock();
 /* start EVSL */
 int EVSLStart();
 /* finalize EVSL */
