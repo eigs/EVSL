@@ -72,7 +72,9 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 
 	// work space and temp
 	double *work, *temp, t;
-	int work_size = 6*n*nest;
+	int work_size = 4*n*nest;
+	if (ifGenEv)
+		work_size += 2*n*nest;
 	work = evsl_Malloc(work_size, double);
 	temp = evsl_Malloc(2*n*nest, double);
 
@@ -81,15 +83,16 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 	int find_more = 1;
 	while ( (it < maxit) && (find_more) ) {
 
-		fprintf(stdout,"it = %d\tnlock = %d\tnout = %d\n",it, nlock, nout);
+		fprintf(stdout,"it = %d\tnl = %d\tno = %d\n",it, nlock, nout);
 
 		int nnlock = n*nlock;
 		int nnact = n*nact;
 		int nnout = n*nout;
 
 		for (i = 0; i < check; ++i) {
-			// apply filter to V(:,nlock+1:nest)
+			// apply filter to V(:,nlock+1:nest) -> temp
 			RatFiltApply(n, nact, rat, V+nnlock, temp, work);
+			evsl_dcopy(&nact, temp, &one, V+nnlock, &one);
 
 			// orth against V(:,1:nlock)
 			if (nlock) {

@@ -47,6 +47,7 @@ void EVSLFORT(setup_asigmabsol_direct,SETUP_ASIGMABSOL_DIRECT)(uintptr_t *Af90,
                                                                int       *flagB,
                                                                uintptr_t *Bf90,
                                                                uintptr_t *ratf90,
+                                                               int       *l,
                                                                uintptr_t *solshiftf90) {
   int i;
   /* cast csr pointer of A */
@@ -57,7 +58,7 @@ void EVSLFORT(setup_asigmabsol_direct,SETUP_ASIGMABSOL_DIRECT)(uintptr_t *Af90,
   ratparams *rat = (ratparams *) (*ratf90);
   /* allocate and setup solshiftdata */
   void **solshiftdata = evsl_Malloc(rat->num, void *);
-  SetupASIGMABSolDirect(A, B, rat->num, rat->zk, solshiftdata);
+  SetupASIGMABSolDirect(A, B, rat->num, *l, rat->zk, solshiftdata);
   /* set solver for A-sB in rat
    * call F90 interface to pretend this is from Fortran */
   for (i = 0; i < rat->num; i++) {

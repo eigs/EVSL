@@ -1,15 +1,6 @@
 default: all
 
 TEST_DIRS = \
- COMMON     \
- Fortran    \
- GEN        \
- Landos     \
- PLanN      \
- PLanR      \
- RLanN      \
- RLanR      \
- PSI        \
  RSI
 
 all:

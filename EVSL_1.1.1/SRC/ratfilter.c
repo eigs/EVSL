@@ -460,9 +460,9 @@ void RatFiltApply(int n, int l, ratparams *rat, double *b, double *x, double *w6
   double *xr, *xz, *bz, *br, *yr=NULL, *yz=NULL;
   double zkr, zkc;
   xr = w6;
-  xz = xr + n*l;
-  bz = xz + n*l;
-  br = bz + n*l;
+  xz = xr + nl;
+  bz = xz + nl;
+  br = bz + nl;
   if (ifGenEv) {
     yr = br + n*l;
     yz = yr + n*l;
@@ -479,8 +479,8 @@ void RatFiltApply(int n, int l, ratparams *rat, double *b, double *x, double *w6
       zkr = creal(omega[jj]);
       zkc = cimag(omega[jj]);
       /*---------------- initilize the right hand side */
-      memcpy(br, b, n*l*sizeof(double));
-      memcpy(bz, b, n*l*sizeof(double));
+      memcpy(br, b, nl*sizeof(double));
+      memcpy(bz, b, nl*sizeof(double));
 
       evsl_dscal(&nl, &zkr, br, &one);
       evsl_dscal(&nl, &zkc, bz, &one);

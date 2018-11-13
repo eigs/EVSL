@@ -34,8 +34,6 @@ int EVSLStart() {
   evsldata.LTsol = NULL;
   evsldata.ds = NULL;
 
-  evsldata.ifBlock = 0;
-
   StatsReset();
 
   /* do a dummy timer call to improve accuracy of timing */
@@ -74,37 +72,36 @@ int EVSLFinish() {
 int SetAMatrix(csrMat *A) {
   evsldata.n = A->ncols;
   if (!evsldata.Amv) {
-     evsldata.Amv = evsl_Calloc(1, EVSLMatvec);
-  }
-  evsldata.Amv->func = matvec_csr;
+   evsldata.Amv = evsl_Calloc(1, EVSLMatvec);
+ }
+ evsldata.Amv->func = matvec_csr;
 
-  if (!evsldata.ifBlock) {
-    evsldata.Amv->data = (void *) A;
-  }
-  else {
-    // block matvec
 #ifdef EVSL_USING_INTEL_MKL
     // prepare data for mkl_sparse_d_mm
-    sparse_status_t ierr;
-    sparse_matrix_t *A_mkl;
-    A_mkl = evsl_Malloc(1, sparse_matrix_t);
+   sparse_status_t ierr;
+   sparse_matrix_t *A_mkl;
+   A_mkl = evsl_Malloc(1, sparse_matrix_t);
 
-    ierr = mkl_sparse_d_create_csr(A_mkl ,SPARSE_INDEX_BASE_ZERO, A->nrows, A->ncols,
-     A->ia, A->ia+1, A->ja, A->a);
+  ierr = mkl_sparse_d_create_csr(A_mkl ,SPARSE_INDEX_BASE_ZERO, A->nrows, A->ncols,
+    A->ia, A->ia+1, A->ja, A->a);
 
-    if (ierr != SPARSE_STATUS_SUCCESS) {
-      fprintf(stdout, "Error in mkl_sparse_d_create_csr with code %d.\n", ierr);
-      exit(-1);
-    }
-
-    evsldata.Amv->data = (void *) A_mkl;
-#else
-    // data for blas block matvec
-    evsldata.Amv->data = (void *) A;
-#endif
+  if (ierr != SPARSE_STATUS_SUCCESS) {
+    fprintf(stdout, "Error in mkl_sparse_d_create_csr with code %d.\n", ierr);
+    exit(-1);
   }
 
-  return 0;
+    // ierr = mkl_sparse_optimize(*A_mkl);
+    // if (ierr != SPARSE_STATUS_SUCCESS) {
+    //   fprintf(stdout, "Error in mkl_sparse_optimize with code %d.\n",ierr);
+    //   exit(-1);
+    // }
+
+  evsldata.Amv->data = (void *) A_mkl;
+#else
+  evsldata.Amv->data = (void *) A;
+#endif
+
+return 0;
 }
 
 /**
@@ -119,11 +116,6 @@ int SetBMatrix(csrMat *B) {
   }
   evsldata.Bmv->func = matvec_csr;
 
-  if (!evsldata.ifBlock) {
-    evsldata.Bmv->data = (void *) B;
-  }
-  else {
-    // block matvec
 #ifdef EVSL_USING_INTEL_MKL
     // prepare data for mkl_sparse_d_mm
     sparse_status_t ierr;
@@ -141,10 +133,8 @@ int SetBMatrix(csrMat *B) {
 
     evsldata.Bmv->data = (void *) B_mkl;
 #else
-    // data for blas block matvec
     evsldata.Bmv->data = (void *) B;
 #endif
-  }
 
   return 0;
 }
@@ -277,4 +267,3 @@ int SetLTSol(SolFuncR func, void *data) {
 void SetDiagScal(double *ds) {
   evsldata.ds = ds;
 }
-

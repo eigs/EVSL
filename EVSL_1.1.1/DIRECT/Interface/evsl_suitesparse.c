@@ -274,7 +274,7 @@ void ASIGMABSolDirect(int n, int l, double *br, double *bi, double *xr,
  * @param zk       array of SIGMA's of length num
  * @param data    all data that are needed for solving the system
  * */
-int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
+int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num, int l,
                           EVSL_Complex *zk, void **data) {
   int i, j, nrow, ncol, nnzB, nnzC, *map, status;
   csrMat *B, C, eye;

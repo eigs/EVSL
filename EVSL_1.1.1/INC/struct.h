@@ -167,8 +167,6 @@ typedef struct _evsldata {
   EVSLLTSol *LTsol;         /**< function and data for LT solve */
   double *ds;               /**< diagonal scaling matrix D,
                                  D^{-1}*A*D^{-1} = lambda * D^{-1}*B*D^{-1} */
-
-  int ifBlock;        // if block method is used
 } evslData;
 
 /*

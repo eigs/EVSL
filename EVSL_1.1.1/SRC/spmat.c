@@ -346,27 +346,44 @@ void dcsrmv(char trans, int nrow, int ncol, int k, double *a,
 */
 void matvec_csr(double *x, double *y, int k, void *data) {
 #ifdef EVSL_USING_INTEL_MKL
+  // fprintf(stdout, "MKL matvec init\n");
+  sparse_status_t ierr;
+  sparse_matrix_t *A = (sparse_matrix_t *) data;
+
+  // fprintf(stdout, "MKL matvec descr\n");
+  struct matrix_descr descrA;
+  descrA.type = SPARSE_MATRIX_TYPE_SYMMETRIC;
+  descrA.mode = SPARSE_FILL_MODE_UPPER;
+  descrA.diag = SPARSE_DIAG_NON_UNIT;
+
+  // fprintf(stdout, "MKL matvec hint\t");
+  MKL_INT expected_calls = 1;
   if (k == 1) {
-    csrMat *A = (csrMat *) data;
-    char cN = 'N';
-    mkl_cspblas_dcsrgemv(&cN, &A->nrows, A->a, A->ia, A->ja, x, y);
+    ierr = mkl_sparse_set_mv_hint(*A, SPARSE_OPERATION_NON_TRANSPOSE, descrA, expected_calls);
   }
   else {
-    sparse_status_t ierr;
-    sparse_matrix_t *A = (sparse_matrix_t *) data;
+    MKL_INT dense_matrix_size = k;
+    ierr = mkl_sparse_set_mm_hint(*A, SPARSE_OPERATION_NON_TRANSPOSE, descrA,
+     SPARSE_LAYOUT_COLUMN_MAJOR, dense_matrix_size, expected_calls);
+  }
+  if (ierr != SPARSE_STATUS_SUCCESS) {
+    fprintf(stdout, "Error in mkl_sparse_set_m?_hint with code %d.\n", ierr);
+    exit(-1);
+  }
 
-    struct matrix_descr descr;
-    descr.type = SPARSE_MATRIX_TYPE_SYMMETRIC;
-    descr.mode = SPARSE_FILL_MODE_UPPER;
-    descr.diag = SPARSE_DIAG_NON_UNIT;
+  // fprintf(stdout, "MKL matvec mat");
+  double alpha = 1.0, beta = 0.0;
+  if (k == 1) {
+    ierr = mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, alpha, *A, descrA, x, beta, y);
+  }
+  else {
+    ierr = mkl_sparse_d_mm(SPARSE_OPERATION_NON_TRANSPOSE, alpha, *A, descrA,
+      SPARSE_LAYOUT_COLUMN_MAJOR, x, k, evsldata.n, beta, y, evsldata.n);
+  }
 
-    ierr = mkl_sparse_d_mm(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, *A, descr,
-     SPARSE_LAYOUT_COLUMN_MAJOR, x, k, evsldata.n, 0.0, y, evsldata.n);
-
-    if (ierr != SPARSE_STATUS_SUCCESS) {
-      fprintf(stdout, "Error in mkl_sparse_d_mm with code %d.\n", ierr);
-      exit(-1);
-    }
+  if (ierr != SPARSE_STATUS_SUCCESS) {
+    fprintf(stdout, "Error in mkl_sparse_d_m? with code %d.\n", ierr);
+    exit(-1);
   }
 #else
   csrMat *A = (csrMat *) data;
@@ -375,7 +392,7 @@ void matvec_csr(double *x, double *y, int k, void *data) {
 }
 
 /** @brief inline function used by matadd
- * insert an element pointed by j of A (times t) to location k in C (row i)
+ * i nsert an element pointed by j of A (times t) to location k in C (row i)
  * */
 inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k,
                           int *j, int *map) {

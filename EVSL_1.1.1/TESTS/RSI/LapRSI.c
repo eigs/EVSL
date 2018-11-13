@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
     
     // set up direct solver
     void **solshiftdata = evsl_Malloc(rat.num, void *);
-    SetupASIGMABSolDirect(&Acsr, NULL, rat.num, rat.zk, solshiftdata);
+    SetupASIGMABSolDirect(&Acsr, NULL, rat.num, nev, rat.zk, solshiftdata);
     for (i=0; i<rat.num; i++) {
        SetASigmaBSol(&rat, i, ASIGMABSolDirect, solshiftdata[i]);
     }
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
     ierr = RatSI(nev, intv, max_its, tol, &rat, &nevOut, &lam, &Y, &res);
 
     if (ierr) {
-      printf("ChebSI error %d\n", ierr);
+      printf("RatSI error %d\n", ierr);
       return 1;
     }
 

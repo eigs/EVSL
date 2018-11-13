@@ -37,6 +37,7 @@ typedef struct _ASBSolDataDirect {
   MKL_Complex16 *a;
   /* workspace for solve, of size n */
   MKL_Complex16 *b, *x;
+  MKL_INT nrhs;
 } ASBSolDataDirect;
 
 /** @brief Setup the B-sol by computing the Cholesky factorization of B
@@ -327,7 +328,7 @@ void FreeBSolDirectData(void *data) {
  * @param zk       array of SIGMA's of length num
  * @param data    all data that are needed for solving the system
  * */
-int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
+int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num, int l,
                           EVSL_Complex *zk, void **data) {
   double tms = evsl_timer();
   int i, j, nrow, /* ncol, */ nnzUB, nnzUC, *map;
@@ -481,8 +482,8 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
     ASBdata->ia = UCp;
     ASBdata->ja = UCi;
     ASBdata->a = UCz;
-    ASBdata->b = evsl_Malloc(nrow, MKL_Complex16);
-    ASBdata->x = evsl_Malloc(nrow, MKL_Complex16);
+    ASBdata->b = evsl_Malloc(nrow*l, MKL_Complex16);
+    ASBdata->x = evsl_Malloc(nrow*l, MKL_Complex16);
     data[i] = ASBdata;
   } /* for (i=...)*/
 
