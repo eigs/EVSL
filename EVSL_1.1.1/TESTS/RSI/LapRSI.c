@@ -137,9 +137,10 @@ int main(int argc, char *argv[]) {
     // this factor insures that #eigs per slice is slightly overestimated
     double fac = 1.2;
     nev = (int) (1 + ecount / ((double) nslices));  // # eigs per slice
-    nev = (int)(fac*nev);                        // want an overestimate of ev_int
+    nev = evsl_max( (int)(fac*nev), nev+5 );                        // want an overestimate of ev_int
     max_its = 1000;
-    
+    //printf(" nev = %d\n",nev);
+ 
     // rat filter
     double intv[4];
     intv[0] = a;

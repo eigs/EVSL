@@ -17,12 +17,13 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 	if (tol > 1e-12) {
 		printf("Tolerance is recommended to be no larger than 1e-12.\n");
 	}
-
 	// check residual every 'check' filter applications
 	int check = 3;
 
 	// misc
 	int i;
+	
+	int n = evsldata.n;
 
 	// constants
 	char cT = 'T';
@@ -33,9 +34,10 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 	double dzero = 0.0;
 	int one = 1;
 	int nest2 = nest*nest;
+	int nnest = n*nest;
 
 	// problem properties
-	int n = evsldata.n;
+	// int n = evsldata.n;
 	const int ifGenEv = evsldata.ifGenEv;
 	// interval
 	double aa = intv[0];
@@ -53,8 +55,8 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 	srand(time(0)); 
 	// genearte random initial subspace
 	double *V; // subspace
-	V = evsl_Malloc(n*nest, double);
-	for (i = 0; i < n*nest; ++i){
+	V = evsl_Malloc(nnest, double);
+	for (i = 0; i < nnest; ++i){
 		V[i] = rand() / ((double)RAND_MAX);
 	}
 
@@ -66,25 +68,25 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 	// store V(:,1:lock)'*V(:,nlock+1:nlock+nact) and the reduced matrices
 	double *T;
 	if (ifGenEv)
-		T = evsl_Malloc(2*nest*nest, double);
+		T = evsl_Malloc(2*nest2, double);
 	else
-		T = evsl_Malloc(nest*nest, double);
+		T = evsl_Malloc(nest2, double);
+	double *Vt;
+	Vt = evsl_Malloc(nest2, double);
 
 	// work space and temp
 	double *work, *temp, t;
-	int work_size = 4*n*nest;
+	int work_size = 4*nnest;
 	if (ifGenEv)
-		work_size += 2*n*nest;
+		work_size += 2*nnest;
 	work = evsl_Malloc(work_size, double);
-	temp = evsl_Malloc(2*n*nest, double);
+	temp = evsl_Malloc(2*nnest, double);
 
 	// subspace iteration
 	int it = 0;
 	int find_more = 1;
 	while ( (it < maxit) && (find_more) ) {
-
-		fprintf(stdout,"it = %d\tnl = %d\tno = %d\n",it, nlock, nout);
-
+		
 		int nnlock = n*nlock;
 		int nnact = n*nact;
 		int nnout = n*nout;
@@ -92,7 +94,7 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 		for (i = 0; i < check; ++i) {
 			// apply filter to V(:,nlock+1:nest) -> temp
 			RatFiltApply(n, nact, rat, V+nnlock, temp, work);
-			evsl_dcopy(&nact, temp, &one, V+nnlock, &one);
+			evsl_dcopy(&nnact, temp, &one, V+nnlock, &one);
 
 			// orth against V(:,1:nlock)
 			if (nlock) {
@@ -143,14 +145,15 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 		}
 
 		// solve reduced eig problem
-		SymEigenSolver(nact, T, nest, temp, n, eig+nlock);
+		SymEigenSolver(nact, T, nest, Vt, nest, eig+nlock);
 
 		// recover eigenvector
 		if (ifGenEv) {
 			int info;
-			evsl_dtrtrs(&uplo, &cN, &cN, &nact, &nact, T+nest2, &nest, temp, &n, &info);
+			evsl_dtrtrs(&uplo, &cN, &cN, &nact, &nact, T+nest2, &nest, Vt, &nest, &info);
 		}
-		evsl_dgemm(&cN, &cN, &n, &nact, &nact, &done, V+nnlock, &n, temp, &n, &dzero, V+nnlock, &n);
+		evsl_dgemm(&cN, &cN, &n, &nact, &nact, &done, V+nnlock, &n, Vt, &nest, &dzero, temp, &n);
+		evsl_dcopy(&nnact, temp, &one, V+nnlock, &one);
 
 		// compute residual
 		// block mat-vec: A*V(:,nlock+1:nest) -> temp
@@ -160,31 +163,31 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 		}
 
 		if (ifGenEv) {
-			// block mat-vec: B*V(:,nlock+1:nest) -> temp+nest2
-			matvec_B(V+nnlock, temp+nest2, nact);
+			// block mat-vec: B*V(:,nlock+1:nest) -> temp+nnest
+			matvec_B(V+nnlock, temp+nnest, nact);
 		}
 		else {
-			evsl_dcopy(&nnact, V+nnlock, &one, temp+nest2, &one);
+			evsl_dcopy(&nnact, V+nnlock, &one, temp+nnest, &one);
 		}
 
 		for (i = 0; i < nact; ++i) {
 			t = -eig[i+nlock];
 
 			if (ifGenEv) {
-				res[i+nlock] += fabs(t)*sqrt(evsl_ddot(&n, temp+nest2+i*n, &one, temp+nest2+i*n, &one));
+				res[i+nlock] += fabs(t)*sqrt(evsl_ddot(&n, temp+nnest+i*n, &one, temp+nnest+i*n, &one));
 			}
 			else {
 				res[i+nlock] += fabs(t);
 			}
 
-			evsl_daxpy(&n, &t, temp+nest2+i*n, &one, temp+i*n, &one);
+			evsl_daxpy(&n, &t, temp+nnest+i*n, &one, temp+i*n, &one);
 			res[i+nlock] = sqrt(evsl_ddot(&n, temp+i*n, &one, temp+i*n, &one))/res[i+nlock];
 		}
 
 		// collect converged eigenvalue
 		nlock_new = 0;
 		for (i = nlock; i < nest; ++i) {
-
+			// fprintf(stdout, "it=%d\tnl=%d\ti=%d\tres=%e\n",it,nlock,i,res[i]);
 			if (res[i] < tol) {
 
 				if (i != nlock+nlock_new) {
@@ -238,11 +241,14 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 		nlock += nlock_new;
 		nact -= nlock_new;
 		it++;
-
+	
 		// check termination
 		if ( ( nout >= NBUF ) || ( nlock == nest ) ) {
 			find_more = 0;
 		}
+
+		if (!(it%5) || !find_more || (it == maxit))
+			fprintf(stdout, "it:%5d\tnl:%5d\tno:%5d\n",it,nlock,nout);
 	}
 
 	// post-processing
@@ -263,6 +269,7 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 	*resout = res_out;
 
 	// free memory
+	evsl_Free(Vt);
 	evsl_Free(V);
 	evsl_Free(eig);
 	evsl_Free(res);
