@@ -1,6 +1,15 @@
 default: all
 
 TEST_DIRS = \
+ COMMON     \
+ Fortran    \
+ GEN        \
+ Landos     \
+ PLanN      \
+ PLanR      \
+ RLanN      \
+ RLanR      \
+ PSI        \
  RSI
 
 all:
@@ -29,4 +38,3 @@ distclean:
 	   (cd $$i && $(MAKE) $@) || exit 1; \
 	   echo ""; \
 	done
-

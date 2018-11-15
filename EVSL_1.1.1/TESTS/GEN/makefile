@@ -9,11 +9,12 @@ OBJS_PN = MMPLanN.o $(EXTRA) ${DIRECTSOL_INTERFACE}
 OBJS_PR = MMPLanR.o $(EXTRA) ${DIRECTSOL_INTERFACE}
 OBJS_RN = MMRLanN.o $(EXTRA) ${DIRECTSOL_INTERFACE}
 OBJS_RR = MMRLanR.o $(EXTRA) ${DIRECTSOL_INTERFACE}
+OBJS_RS = MMRSI.o   $(EXTRA) ${DIRECTSOL_INTERFACE}
 
 LIB = -L${EVSL_BUILD_DIR}/lib -levsl
 LIB_EXT = $(LIBDIRECTSOL) $(LIBLAPACK_DIR) $(LIBLAPACK) $(LIBBLAS_DIR) $(LIBBLAS) $(LIBS_DIR) $(LIBS)
 
-all: MMPLanR.ex MMPLanN.ex MMRLanR.ex MMRLanN.ex MMsimple.ex
+all: MMPLanR.ex MMPLanN.ex MMRLanR.ex MMRLanN.ex MMsimple.ex MMRSI.ex
 
 # Exe
 MMRLanN.ex: $(OBJS_RN)
@@ -35,6 +36,10 @@ MMPLanN.ex: $(OBJS_PN)
 MMsimple.ex: $(OBJS_S)
 	$(LINK_CC) $(LDFLAGS) -o $@ $(OBJS_S) $(LIB) $(LIB_EXT)
 	@mkdir -p OUT
+
+MMRSI.ex: $(OBJS_RS)
+	$(LINK_CC) $(LDFLAGS) -o $@ $(OBJS_RS) $(LIB) $(LIB_EXT)
+	@mkdir -p OUT	
 
 clean:
 	rm -f *.o *.ex

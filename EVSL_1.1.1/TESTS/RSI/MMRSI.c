@@ -5,6 +5,7 @@
 #include <math.h>
 #include "evsl.h"
 #include "io.h"
+#include "evsl_direct.h"
 
 #define TRIV_SLICER 0
 
@@ -29,7 +30,6 @@ int main () {
   /*-------------------- matrix A: coo format and csr format */
   cooMat Acoo;
   csrMat Acsr;
-  polparams pol;
   /* tolerance to accept ev */
   double tol;
   /* stats */
@@ -55,7 +55,7 @@ int main () {
 
   //  /* ------- Ga10As10H30 --------------*/
   //  a = -1.215;  b = 1.6877208;
-  tol = 1e-10;
+  tol = 1e-12;
   // set parameters
   npnts = 1000;
   Mdeg = 300;
@@ -104,7 +104,7 @@ int main () {
     }
 
     char path[1024] ;   // path to write the output files
-    strcpy( path, "OUT/MMPSI_");
+    strcpy( path, "OUT/MMRSI_");
     strcat( path, io.MatNam1);
     //-------------------- where to write output
     fstats = fopen(path,"w"); // write all the output to the file io.MatNam
@@ -181,13 +181,6 @@ int main () {
     fprintf(fstats, "Step 1b: Slices found: \n");
     for (j=0; j<n_intv;j++)
       fprintf(fstats,"[% 12.4e , % 12.4e]\n", sli[j],sli[j+1]);
-    //-------------------- # eigs per slice
-    //-------------------- approximate number of eigenvalues wanted
-    //    nev = 2 + (int) (1 + ecount / ((double) n_intv));
-    double fac = 1.2;   // this factor insures that # of eigs per slice is slightly overestimated
-    nev = (int) (1 + ecount / ((double) n_intv));  // # eigs per slice
-    nev = (int)(fac*nev);                        // want an overestimate of ev_int
-    fprintf(fstats,"Step 2: In each slice compute %d eigenvalues ... \n", nev);
     /*-------------------- MAIN intv LOOP: for each sclice Do: */
     totcnt = 0;
     for (sl =0; sl<n_intv; sl++){
@@ -198,30 +191,41 @@ int main () {
       a = sli[sl];
       b = sli[sl+1];
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b);
-      //-------------------- Parameters for ChebLanTr
+
+      double fac = 1.2;
+      nev = (int) (1 + ecount / ((double) n_intv));  // # eigs per slice
+      nev = evsl_max( (int)(fac*nev), nev+5 );                        // want an overestimate of ev_int
+      max_its = 1000;
+
       fprintf(fstats, "Filtered subspace iteration with block size %d\n", nev);
       fprintf(fstats, "Max steps %d\n", max_its);
-      xintv[0] = a;
-      xintv[1] = b;
-      //-------------------- random initial guess
-      double *V0;
-      V0 = evsl_Malloc(n*nev, double);
-      for (i=0; i<n*nev; i++){
-        V0[i] = rand() / ((double)RAND_MAX);
+   
+      // rat filter
+      double intv[4];
+      intv[0] = a;
+      intv[1] = b;
+      intv[2] = lmin;
+      intv[3] = lmax;
+      // find the rational filter on this slice
+      ratparams rat;
+      // setup default parameters for rat
+      set_ratf_def(&rat);
+      // now determine rational filter
+      find_ratf(intv, &rat);
+      
+      // set up direct solver
+      void **solshiftdata = evsl_Malloc(rat.num, void *);
+      SetupASIGMABSolDirect(&Acsr, NULL, rat.num, nev, rat.zk, solshiftdata);
+      for (i=0; i<rat.num; i++) {
+         SetASigmaBSol(&rat, i, ASIGMABSolDirect, solshiftdata[i]);
       }
-      //-------------------- filtered subspace iteration
-      set_pol_def(&pol);
-      // can change default values here e.g.
-      pol.damping = 0;  pol.thresh_int = 0.5;
-      find_pol(xintv, &pol);
-      fprintf(fstats, " polynomial deg %d, bar %e gam %e\n",pol.deg,pol.bar, pol.gam);
-      ierr = ChebSI(nev, xintv, max_its, tol, V0,
-          &pol, &nevOut, &lam, &Y, &res, fstats);
+
+      ierr = RatSI(nev, intv, max_its, tol, &rat, &nevOut, &lam, &Y, &res);
 
       if (ierr) {
-        printf("ChebSI error %d\n", ierr);
-        return 1;
+        printf("RatSI error %d\n", ierr);
       }
+
       /* sort the eigenvals: ascending order
        * ind: keep the orginal indices */
       ind = evsl_Malloc(nevOut, int);
@@ -248,9 +252,9 @@ int main () {
       if (lam)  evsl_Free(lam);
       if (Y)  evsl_Free(Y);
       if (res)  evsl_Free(res);
-      evsl_Free(ind);
-      free_pol(&pol);
-      evsl_Free(V0);
+      FreeASIGMABSolDirect(rat.num, solshiftdata);
+      evsl_Free(solshiftdata);
+      free_rat(&rat);
       /*-------------------- end slice loop */
     }
     fprintf(fstats," --> Total eigenvalues found = %d\n",totcnt);

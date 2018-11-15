@@ -446,7 +446,6 @@ void RatFiltApply(int n, int l, ratparams *rat, double *b, double *x, double *w6
   double tt = evsl_timer();
 
   const int ifGenEv = evsldata.ifGenEv;
-  // const int ifBlock = evsldata.ifBlock;
 
   int jj, kk, k=0, kf;
   int *mulp = rat->mulp;
@@ -464,8 +463,8 @@ void RatFiltApply(int n, int l, ratparams *rat, double *b, double *x, double *w6
   bz = xz + nl;
   br = bz + nl;
   if (ifGenEv) {
-    yr = br + n*l;
-    yz = yr + n*l;
+    yr = br + nl;
+    yz = yr + nl;
   }
   /*------------------ loop through each pole */
   for (kk=0; kk<num; kk++) {

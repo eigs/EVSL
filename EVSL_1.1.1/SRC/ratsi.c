@@ -17,31 +17,32 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 	if (tol > 1e-12) {
 		printf("Tolerance is recommended to be no larger than 1e-12.\n");
 	}
+	if (nest <= 5) {
+		printf("Increase initial subspace size for better performance.\n");
+	}
+
 	// check residual every 'check' filter applications
 	int check = 3;
 
 	// misc
 	int i;
-	
+
+	// problem properties
 	int n = evsldata.n;
+	const int ifGenEv = evsldata.ifGenEv;
+	// interval
+	double aa = intv[0];
+	double bb = intv[1];
 
 	// constants
 	char cT = 'T';
 	char cN = 'N';
-	char uplo = 'U';
 	double done = 1.0;
 	double dmone = -1.0;
 	double dzero = 0.0;
 	int one = 1;
 	int nest2 = nest*nest;
 	int nnest = n*nest;
-
-	// problem properties
-	// int n = evsldata.n;
-	const int ifGenEv = evsldata.ifGenEv;
-	// interval
-	double aa = intv[0];
-	double bb = intv[1];
 
 	// # converged and active eigenvectors
 	int nlock = 0;
@@ -71,6 +72,7 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 		T = evsl_Malloc(2*nest2, double);
 	else
 		T = evsl_Malloc(nest2, double);
+	// eigenvector for reduced problem
 	double *Vt;
 	Vt = evsl_Malloc(nest2, double);
 
@@ -93,8 +95,10 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 
 		for (i = 0; i < check; ++i) {
 			// apply filter to V(:,nlock+1:nest) -> temp
-			RatFiltApply(n, nact, rat, V+nnlock, temp, work);
-			evsl_dcopy(&nnact, temp, &one, V+nnlock, &one);
+			matvec_B(V+nnlock, temp, nact);
+			// RatFiltApply is optimized for Lanczos
+			// one less matvec with B is done in it
+			RatFiltApply(n, nact, rat, temp, V+nnlock, work);			
 
 			// orth against V(:,1:nlock)
 			if (nlock) {
@@ -111,10 +115,6 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 			}
 
 			// orth against itself
-			// ???????????????????
-			// to be replaced by a new function operates directly on the input
-			// orth(V+nnlock, n, nact, temp, work);
-			// evsl_dcopy(&nnact, temp, &one, V+nnlock, &one);
 			orth2(V+nnlock, n, n, nact, work);
 
 		}
@@ -131,27 +131,18 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 			matvec_B(V+nnlock, temp, nact);
 
 			// Bt = V'*B*V -> T(nest+1:nest+nact,1:nact)
-			evsl_dgemm(&cT, &cN, &nact, &nact, &n, &done, V+nnlock, &n, temp, &n, &dzero, T+nest2, &nest2);
-
-			// convert to standard problem
-
-			// cholesky factorization of B
-			int info;
-			evsl_dpotrf(&uplo, &nact, T+nest2, &nest, &info);
-
-			// convert to stardard problem
-			int itype = 1;
-			evsl_dsygst(&itype, &uplo, &nact, T, &nest, T+nest2, &nest, &info);
+			evsl_dgemm(&cT, &cN, &nact, &nact, &n, &done, V+nnlock, &n, temp, &n, &dzero, T+nest2, &nest);
 		}
 
 		// solve reduced eig problem
-		SymEigenSolver(nact, T, nest, Vt, nest, eig+nlock);
+		if (ifGenEv) {
+			GenEigenSolver(nact, T, nest, T+nest2, nest, Vt, nest, eig+nlock, work);
+		}
+		else {
+			SymEigenSolver(nact, T, nest, Vt, nest, eig+nlock);
+		}
 
 		// recover eigenvector
-		if (ifGenEv) {
-			int info;
-			evsl_dtrtrs(&uplo, &cN, &cN, &nact, &nact, T+nest2, &nest, Vt, &nest, &info);
-		}
 		evsl_dgemm(&cN, &cN, &n, &nact, &nact, &done, V+nnlock, &n, Vt, &nest, &dzero, temp, &n);
 		evsl_dcopy(&nnact, temp, &one, V+nnlock, &one);
 
@@ -166,9 +157,6 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 			// block mat-vec: B*V(:,nlock+1:nest) -> temp+nnest
 			matvec_B(V+nnlock, temp+nnest, nact);
 		}
-		else {
-			evsl_dcopy(&nnact, V+nnlock, &one, temp+nnest, &one);
-		}
 
 		for (i = 0; i < nact; ++i) {
 			t = -eig[i+nlock];
@@ -180,7 +168,13 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 				res[i+nlock] += fabs(t);
 			}
 
-			evsl_daxpy(&n, &t, temp+nnest+i*n, &one, temp+i*n, &one);
+			if (ifGenEv) {
+				evsl_daxpy(&n, &t, temp+nnest+i*n, &one, temp+i*n, &one);
+			}
+			else {
+				evsl_daxpy(&n, &t, V+nnlock+i*n, &one, temp+i*n, &one);
+			}
+			
 			res[i+nlock] = sqrt(evsl_ddot(&n, temp+i*n, &one, temp+i*n, &one))/res[i+nlock];
 		}
 
@@ -207,21 +201,10 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 			}
 		}
 
-		// normalize newly converged eigenvectors
-		if (ifGenEv) {
-			// block mat-vec: B*V(:,nlock+1:nlock+nlock_new) -> temp
-			matvec_B(V+nnlock, temp, nlock_new);
-			for (i = 0; i < nlock_new; ++i) {
-				t = 1.0/sqrt(evsl_ddot(&n, V+nnlock+i*n, &one, temp+i*n, &one));
-				evsl_dscal(&n, &t, V+nnlock+i*n, &one);
-			}
-		}
-
 		// check if eigval is inside interval
 		nout_new = 0;
 		for (i = 0; i < nlock_new; ++i) {
-			if ( ( eig[nlock+i] < aa - EVSL_DBL_EPS_MULT * DBL_EPSILON ) || 
-				( eig[nlock+i] > bb + EVSL_DBL_EPS_MULT * DBL_EPSILON ) ) {
+			if ( ( eig[nlock+i] < aa - EVSL_DBL_EPS_MULT * DBL_EPSILON ) || ( eig[nlock+i] > bb + EVSL_DBL_EPS_MULT * DBL_EPSILON ) ) {
 				// swap nout+nout_new and nlock+i
 				evsl_dswap(&n, V+nnout+nout_new*n, &one, V+nnlock+i*n, &one);
 
@@ -241,14 +224,14 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 		nlock += nlock_new;
 		nact -= nlock_new;
 		it++;
-	
+		
 		// check termination
 		if ( ( nout >= NBUF ) || ( nlock == nest ) ) {
 			find_more = 0;
 		}
 
 		if (!(it%5) || !find_more || (it == maxit))
-			fprintf(stdout, "it:%5d\tnl:%5d\tno:%5d\n",it,nlock,nout);
+			fprintf(stdout, "it:%3d\tnt:%3d\tnl:%3d\tno:%3d\n",it,nest,nlock,nout);
 	}
 
 	// post-processing
@@ -263,6 +246,15 @@ int RatSI(int nest, double *intv, int maxit, double tol, ratparams *rat,
 	evsl_dcopy(neig, eig+nout, &one, eigval_out, &one);
 	evsl_dcopy(&nneig, V+n*nout, &one, eigvec_out, &one);
 	evsl_dcopy(neig, res+nout, &one, res_out, &one);
+
+	// diagonal scale eigenvector
+	if (evsldata.ds) {
+		// V <- D^-1 * V
+		for (i = 0; i < n; ++i) {
+			t = 1.0/evsldata.ds[i];
+			evsl_dscal(neig, &t, eigvec_out+i, &n);
+		}
+	}
 
 	*eigvalout = eigval_out;
 	*eigvecout = eigvec_out;

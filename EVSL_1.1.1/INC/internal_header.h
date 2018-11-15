@@ -49,6 +49,7 @@ void save_vec(int n, const double *x, const char fn[]);
 int SymmTridEig(double *eigVal, double *eigVec, int n, const double *diag, const double *sdiag);
 int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu, int *nevO, const double *diag, const double *sdiag);
 void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam);
+void GenEigenSolver(int n, double *a, int lda, double *b, int ldb, double *v, int ldv, double *lam, double *work);
 void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, double *w);
 void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q, double *v, double *w);
 void orth(double *V, int n, int k, double *Vo, double *work);

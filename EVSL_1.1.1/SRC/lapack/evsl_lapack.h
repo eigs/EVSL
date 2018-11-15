@@ -18,6 +18,8 @@
 #define evsl_dgeqrf dgeqrf_
 #define evsl_dgeqr2 dgeqr2_
 #define evsl_dorgqr dorgqr_
+#define evsl_dsygv  dsygv_
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,6 +40,7 @@ int evsl_dtrtrs(const char *uplo, const char *trans, const char *diag, EVSL_Int 
 int evsl_dgeqrf(EVSL_Int *m, EVSL_Int *n, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *tau, EVSL_Real *work, EVSL_Int *lwork, EVSL_Int *info);
 int evsl_dgeqr2(EVSL_Int *m, EVSL_Int *n, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *tau, EVSL_Real *work, EVSL_Int *info);
 int evsl_dorgqr(EVSL_Int *m, EVSL_Int *n, EVSL_Int *k, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *tau, EVSL_Real *work, EVSL_Int *lwork, EVSL_Int *info);
+int evsl_dsygv(EVSL_Int *itype, const char *jobz, const char *uplo, EVSL_Int *n, EVSL_Real *a, EVSL_Int *lda, EVSL_Real *b, EVSL_Int *ldb, EVSL_Real *w, EVSL_Real *work, EVSL_Int *lwork, EVSL_Int *info);
 
 #ifndef EVSL_USING_EVSL_LAPACK
 #ifdef __cplusplus

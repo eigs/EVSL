@@ -73,16 +73,16 @@ int SetAMatrix(csrMat *A) {
   evsldata.n = A->ncols;
   if (!evsldata.Amv) {
    evsldata.Amv = evsl_Calloc(1, EVSLMatvec);
- }
- evsldata.Amv->func = matvec_csr;
+  }
+  evsldata.Amv->func = matvec_csr;
 
 #ifdef EVSL_USING_INTEL_MKL
-    // prepare data for mkl_sparse_d_mm
-   sparse_status_t ierr;
-   sparse_matrix_t *A_mkl;
-   A_mkl = evsl_Malloc(1, sparse_matrix_t);
+  // prepare data for mkl_sparse_d_mm
+  sparse_status_t ierr;
+  sparse_matrix_t *A_mkl;
+  A_mkl = evsl_Malloc(1, sparse_matrix_t);
 
-  ierr = mkl_sparse_d_create_csr(A_mkl ,SPARSE_INDEX_BASE_ZERO, A->nrows, A->ncols,
+  ierr = mkl_sparse_d_create_csr(A_mkl ,SPARSE_INDEX_BASE_ZERO, A->nrows, A->ncols, 
     A->ia, A->ia+1, A->ja, A->a);
 
   if (ierr != SPARSE_STATUS_SUCCESS) {
@@ -90,11 +90,11 @@ int SetAMatrix(csrMat *A) {
     exit(-1);
   }
 
-    // ierr = mkl_sparse_optimize(*A_mkl);
-    // if (ierr != SPARSE_STATUS_SUCCESS) {
-    //   fprintf(stdout, "Error in mkl_sparse_optimize with code %d.\n",ierr);
-    //   exit(-1);
-    // }
+  ierr = mkl_sparse_optimize(*A_mkl);
+  if (ierr != SPARSE_STATUS_SUCCESS) {
+    fprintf(stdout, "Error in mkl_sparse_optimize with code %d.\n",ierr);
+    exit(-1);
+  }
 
   evsldata.Amv->data = (void *) A_mkl;
 #else
@@ -128,6 +128,12 @@ int SetBMatrix(csrMat *B) {
 
     if (ierr != SPARSE_STATUS_SUCCESS) {
       fprintf(stdout, "Error in mkl_sparse_d_create_csr with code %d.\n", ierr);
+      exit(-1);
+    }
+
+    ierr = mkl_sparse_optimize(*B_mkl);
+    if (ierr != SPARSE_STATUS_SUCCESS) {
+      fprintf(stdout, "Error in mkl_sparse_optimize with code %d.\n",ierr);
       exit(-1);
     }
 

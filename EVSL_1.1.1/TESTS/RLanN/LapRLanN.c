@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
     /*------------ use direct solver function  */
     void **solshiftdata = evsl_Malloc(rat.num, void *);
     /*------------ factoring the shifted matrices and store the factors */
-    SetupASIGMABSolDirect(&Acsr, NULL, rat.num, rat.zk, solshiftdata);
+    SetupASIGMABSolDirect(&Acsr, NULL, rat.num, 1, rat.zk, solshiftdata);
     /*------------ set the solver for A-sI in rat */
     for (i=0; i<rat.num; i++) {
        SetASigmaBSol(&rat, i, ASIGMABSolDirect, solshiftdata[i]);

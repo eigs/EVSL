@@ -139,7 +139,6 @@ int main(int argc, char *argv[]) {
     nev = (int) (1 + ecount / ((double) nslices));  // # eigs per slice
     nev = evsl_max( (int)(fac*nev), nev+5 );                        // want an overestimate of ev_int
     max_its = 1000;
-    //printf(" nev = %d\n",nev);
  
     // rat filter
     double intv[4];
@@ -165,7 +164,6 @@ int main(int argc, char *argv[]) {
 
     if (ierr) {
       printf("RatSI error %d\n", ierr);
-      return 1;
     }
 
     /* sort the eigenvals: ascending order
@@ -223,4 +221,3 @@ int main(int argc, char *argv[]) {
   EVSLFinish();
   return 0;
 }
-

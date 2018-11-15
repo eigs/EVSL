@@ -194,6 +194,38 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
 }
 
 
+/* 
+     Symmetric definite generalized eigensolver
+ */
+void GenEigenSolver(int n, double *a, int lda, double *b, int ldb, 
+  double *v, int ldv, double *lam, double *work) {
+
+  int itype = 1, lwork = -1, info;
+  char jobz = 'V', uplo = 'U';
+
+  // copy a to v
+  int i,j;
+  for (i = 0; i < n; ++i) {
+    for (j = 0; j < n; ++j) {
+      // v[i,j] = a[i,j]
+      v[i+j*ldv] = a[i+j*lda];
+    }
+  }
+
+  evsl_dsygv(&itype, &jobz, &uplo, &n, v, &ldv, b, &ldb, lam, work, &lwork, &info);
+  if (info) {
+    fprintf(stdout, "DSYGV error [query call]: %d\n", info);
+    exit(0);
+  }
+
+  lwork = (int) work[0];
+  evsl_dsygv(&itype, &jobz, &uplo, &n, v, &ldv, b, &ldb, lam, work, &lwork, &info);
+  if (info) {
+    fprintf(stdout, "DSYGV error [comp call]: %d\n", info);
+    exit(0);
+  }
+}
+
 /**
  * @brief Classical GS reortho with Daniel, Gragg, Kaufman, Stewart test
  * @param[in] n Number of rows in Q

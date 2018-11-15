@@ -77,5 +77,6 @@
 #define dgeqrf_   evsl_dgeqrf
 #define dgeqr2_   evsl_dgeqr2
 #define dorgqr_   evsl_dorgqr
+#define dsygv_    evsl_dsygv
 
 #endif

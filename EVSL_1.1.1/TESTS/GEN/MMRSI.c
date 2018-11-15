@@ -13,7 +13,7 @@ int main() {
    * read in matrix format -- using
    * Thick-Restarted Lanczos with rational filtering.
    *-------------------------------------------------------------*/
-  int n = 0, i, j, npts, nslices, nvec, nev, max_its, ev_int, sl, ierr,
+  int n = 0, i, j, npts, nslices, nvec, max_its, ev_int, sl, ierr,
       totcnt;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli;
@@ -42,7 +42,8 @@ int main() {
   int numat, mat;
   char line[MAX_LINE];
   /*-------------------- stopping tol */
-  tol = 1e-6;
+  tol = 1e-12;
+  max_its = 200;
   /*-------------------- Polynomial approximation to B and sqrtB*/
   BSolDataPol Bsol, Bsqrtsol;
   /*-------------------- start EVSL */
@@ -80,7 +81,7 @@ int main() {
     }
 
     char path[1024]; // path to write the output files
-    strcpy(path, "OUT/LAN_MMRLanN_");
+    strcpy(path, "OUT/LAN_MMRSI_");
     strcat(path, io.MatNam1);
     fstats = fopen(path, "w"); // write all the output to the file io.MatNam
     if (!fstats) {
@@ -122,6 +123,10 @@ int main() {
       exit(7);
     }
 
+    /*-------------------- backup A and B */
+    csr_copy(&Acsr, &Acsr0, 1); /* 1 stands for memory alloc */
+    csr_copy(&Bcsr, &Bcsr0, 1);
+
     /*-------------------- diagonal scaling for L-S poly. approx.
      *                     of B^{-1} and B^{-1/2},
      *                     which will be used in the DOS */
@@ -130,15 +135,9 @@ int main() {
     for (i=0; i<n; i++) {
       sqrtdiag[i] = sqrt(sqrtdiag[i]);
     }
-    /*-------------------- backup A and B */
-    csr_copy(&Acsr, &Acsr0, 1); /* 1 stands for memory alloc */
-    csr_copy(&Bcsr, &Bcsr0, 1);
     /*-------------------- Scale A and B */
     diagScalCsr(&Acsr, sqrtdiag);
     diagScalCsr(&Bcsr, sqrtdiag);
-    if (sqrtdiag) {
-      evsl_Free(sqrtdiag);
-    }
 
     /*---------------- Set EVSL to solve std eig problem to
      *---------------- compute the range of the spectrum of B */
@@ -199,16 +198,16 @@ int main() {
     FreeBSolPolData(&Bsol);
     FreeBSolPolData(&Bsqrtsol);
 
+    csr_copy(&Acsr0, &Acsr, 0); /* 0 stands for no memory alloc */
+    csr_copy(&Bcsr0, &Bcsr, 0);
+
+    SetAMatrix(&Acsr);
+    SetBMatrix(&Bcsr);
+
     //-------------------- # eigs per slice
     ev_int = (int)(1 + ecount / ((double)nslices));
     totcnt = 0;
     alleigs = evsl_Malloc(n, double);
-
-    /* recover the original matrices A and B before scaling
-     * Note that B-sol and sqrt(B)-sol will not be needed in RatLan,
-     * so we can recover them */
-    csr_copy(&Acsr0, &Acsr, 0); /* 0 stands for no memory alloc */
-    csr_copy(&Bcsr0, &Bcsr, 0);
 
     //-------------------- For each slice call RatLanrNr
     for (sl = 0; sl < nslices; sl++) {
@@ -236,24 +235,20 @@ int main() {
       // now determine rational filter
       find_ratf(intv, &rat);
       // use direct solver function
-      void **solshiftdata = evsl_Malloc(num, void *);
-      /*------------ factoring the shifted matrices and store the factors */
-      SetupASIGMABSolDirect(&Acsr, &Bcsr, num, 1, rat.zk, solshiftdata);
-      /*------------ set the solver for A-sB in rat */
-      for (i = 0; i < rat.num; i++) {
-        SetASigmaBSol(&rat, i, ASIGMABSolDirect, solshiftdata[i]);
+
+      int nev = evsl_max( (int)(3*ev_int) , ev_int+5 );
+
+      void **solshiftdata = evsl_Malloc(rat.num, void *);
+      SetupASIGMABSolDirect(&Acsr, &Bcsr, rat.num, nev, rat.zk, solshiftdata);
+      for (i=0; i<rat.num; i++) {
+         SetASigmaBSol(&rat, i, ASIGMABSolDirect, solshiftdata[i]);
       }
-      //-------------------- approximate number of eigenvalues wanted
-      nev = ev_int + 2;
-      //-------------------- maximal Lanczos iterations
-      max_its = evsl_max(4 * nev, 300);
-      max_its = evsl_min(max_its, n);
-      //-------------------- RationalLanNr
-      ierr = RatLanNr(intv, max_its, tol, vinit, &rat, &nev2, &lam, &Y, &res,
-                      fstats);
+
+      printf("RSI starts.\n");
+      ierr = RatSI(nev, intv, max_its, tol, &rat, &nev2, &lam, &Y, &res);
+
       if (ierr) {
-        printf("RatLanNr error %d\n", ierr);
-        return 1;
+        printf("RatSI error %d\n", ierr);
       }
 
       /* sort the eigenvals: ascending order
@@ -299,12 +294,11 @@ int main() {
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
-    free_csr(&Acsr0);
-    free_csr(&Bcsr0);
     evsl_Free(alleigs);
     evsl_Free(counts);
     evsl_Free(xdos);
     evsl_Free(ydos);
+    evsl_Free(sqrtdiag);
     if (fstats != stdout) {
       fclose(fstats);
     }
