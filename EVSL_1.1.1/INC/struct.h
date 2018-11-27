@@ -80,12 +80,12 @@ typedef struct _polparams {
  * be the  solution (complex vector),  and "data" contains  all the
  * data  needed  by  the  solver.
  */
-typedef void (*SolFuncC)(int n, double const * const br, double const * const bz, double *xr, double *xz, void *data);
+typedef void (*SolFuncC)(int n, const double *br, const double *bz, double *xr, double *xz, void *data);
 
 /**
  * @brief function prototype for applying the solve B x = b
  */
-typedef void (*SolFuncR)(double const * const b, double *x, void *data);
+typedef void (*SolFuncR)(const double *b, double *x, void *data);
 
 /**
  * @brief matvec function prototype

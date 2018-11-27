@@ -55,7 +55,7 @@
  *
  * ------------------------------------------------------------ */
 int ChebLanNr(const double * intv, int maxit, double tol, const double * vinit,
-              polparams const * const pol, int *nevOut, double **lamo, double **Wo,
+              const polparams *pol, int *nevOut, double **lamo, double **Wo,
               double **reso, FILE *fstats) {
   //-------------------- to report timings/
   double tall, tm1 = 0.0, tt;

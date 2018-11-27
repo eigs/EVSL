@@ -37,7 +37,7 @@
  */
 
 int ChebSI(int nev, const double * intv, int maxit,
-           double tol, const double * vinit, polparams const * const pol, int *nevo,
+           double tol, const double * vinit, const polparams *pol, int *nevo,
            double **lamo, double **Yo, double **reso, FILE *fstats) {
   /*-------------------- for stats */
   double tm, tall=0.0, tmv=0.0;

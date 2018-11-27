@@ -98,7 +98,7 @@ static inline void matvec_A(const double *x, double *y) {
 * @brief y = B * x
 * This is the matvec function for the matrix B in evsldata
 */
-static inline void matvec_B(double const * const x, double *y) {
+static inline void matvec_B(const double *x, double *y) {
   CHKERR(!evsldata.Bmv);
   const double tms = evsl_timer();
   evsldata.Bmv->func(x, y, evsldata.Bmv->data);
@@ -111,7 +111,7 @@ static inline void matvec_B(double const * const x, double *y) {
 * @brief y = B \ x
 * This is the solve function for the matrix B in evsldata
 */
-static inline void solve_B(double const * const x, double *y) {
+static inline void solve_B(const double *x, double *y) {
   CHKERR(!evsldata.Bsol);
   const double tms = evsl_timer();
   evsldata.Bsol->func(x, y, evsldata.Bsol->data);
@@ -124,7 +124,7 @@ static inline void solve_B(double const * const x, double *y) {
 * @brief y = LT \ x or y = SQRT(B) \ x
 * This is the solve function for the matrix B in evsldata
 */
-static inline void solve_LT(double const * const x, double *y) {
+static inline void solve_LT(const double *x, double *y) {
   CHKERR(!evsldata.LTsol);
   const double tms = evsl_timer();
   evsldata.LTsol->func(x, y, evsldata.LTsol->data);
@@ -138,7 +138,7 @@ static inline void solve_LT(double const * const x, double *y) {
 * This is the solve function for the complex shifted matrix
 */
 static inline void solve_ASigB(EVSLASIGMABSol *sol, int n,
-                               double const * const br, double const * const bz,
+                               const double *br, const double *bz,
                                double *xr, double *xz) {
   const double tms = evsl_timer();
   (sol->func)(n, br, bz, xr, xz, sol->data);
@@ -150,7 +150,7 @@ static inline void solve_ASigB(EVSLASIGMABSol *sol, int n,
 /**
  * @brief check if an interval is valid
  * */
-static inline int check_intv(double const * const intv, FILE *fstats) {
+static inline int check_intv(const double *intv, FILE *fstats) {
   /* intv[4]: ( intv[0], intv[1] ) is the inteval of interest
    *          ( intv[2], intv[3] ) is the spectrum bounds
    * return   0: ok
