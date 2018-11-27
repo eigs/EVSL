@@ -54,7 +54,7 @@
  * @warning memory allocation for Wo/lamo/reso within this function
  *
  * ------------------------------------------------------------ */
-int ChebLanNr(const double * intv, int maxit, double tol, const double * vinit,
+int ChebLanNr(const double *intv, int maxit, double tol, const double *vinit,
               const polparams *pol, int *nevOut, double **lamo, double **Wo,
               double **reso, FILE *fstats) {
   //-------------------- to report timings/

@@ -140,8 +140,8 @@ int apfun(double c, double h, const double *const xi,
  * @b Workspace
  * @param[in,out] w Work vector of length 3*n [allocate before call
  **/
-int pnav(const double * mu, int m, double cc, const double dd,
-         const double * v, double *y, double *w) {  // Really just ChebAv
+int pnav(const double *mu, int m, double cc, const double dd,
+         const double *v, double *y, double *w) {  // Really just ChebAv
   const int n = evsldata.n;
   /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   double *vk = w;

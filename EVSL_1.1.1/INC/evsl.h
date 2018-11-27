@@ -76,10 +76,10 @@
 )
 
 /*- - - - - - - - - cheblanNr.c */
-int ChebLanNr(const double * intv, int maxit, double tol, const double * vinit, const polparams* pol, int *nevOut, double **lamo, double **Wo, double **reso, FILE *fstats);
+int ChebLanNr(const double *intv, int maxit, double tol, const double *vinit, const polparams* pol, int *nevOut, double **lamo, double **Wo, double **reso, FILE *fstats);
 
 /*- - - - - - - - - cheblanTr.c */
-int ChebLanTr(int lanm, int nev, const double * intv, int maxit, double tol, const double * vinit, const polparams *pol, int *nev2, double **vals, double **W, double **resW, FILE *fstats);
+int ChebLanTr(int lanm, int nev, const double *intv, int maxit, double tol, const double *vinit, const polparams *pol, int *nev2, double **vals, double **W, double **resW, FILE *fstats);
 
 /*- - - - - - - - - chebpoly.c */
 void set_pol_def(polparams *pol);

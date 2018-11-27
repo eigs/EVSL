@@ -21,8 +21,8 @@
  * @param[in] a Values
  * @param[in] fn filename
  */
-void save_mtx_basic(int nrow, int ncol, const int * ia,
-                    const int * ja, const double * a, const char *fn) {
+void save_mtx_basic(int nrow, int ncol, const int *ia,
+                    const int *ja, const double *a, const char *fn) {
   int i,j,nnz;
   FILE *fp = fopen(fn, "w");
 

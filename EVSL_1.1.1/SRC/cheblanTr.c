@@ -56,8 +56,8 @@
  * @warning memory allocation for W/vals/resW within this function
  *
  **/
-int ChebLanTr(int lanm, int nev, const double * intv, int maxit,
-              double tol, const double * vinit, const polparams* const pol, int *nev2,
+int ChebLanTr(int lanm, int nev, const double *intv, int maxit,
+              double tol, const double *vinit, const polparams* const pol, int *nev2,
               double **vals, double **W, double **resW, FILE *fstats) {
   const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */

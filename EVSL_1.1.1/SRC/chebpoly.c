@@ -75,7 +75,7 @@ int dampcf(int m, int damping, double *jac) {
  * @param[in] jac vector of damping coefficients
 **/
 
-double dif_eval(const double * v, int m, double thc, const double * jac){
+double dif_eval(const double *v, int m, double thc, const double *jac){
   double fval = 0.0;
   int j;
   for (j=0; j<=m; j++)
@@ -267,7 +267,7 @@ void chext(polparams *pol, double aIn, double bIn){
  * @param[in] size size of the arry
  * @return index of smallest entry in array
 **/
-int indexofSmallestElement(const double * array, int size){
+int indexofSmallestElement(const double *array, int size){
   int index = 0, i;
   for(i = 1; i < size; i++){
     if(array[i] < array[index])
@@ -288,7 +288,7 @@ int indexofSmallestElement(const double * array, int size){
  *
  * @warning mu must be preallocated
 **/
-int rootchb(int m, const double * v, const double * jac, double tha, double thb, double *mu,
+int rootchb(int m, const double *v, const double *jac, double tha, double thb, double *mu,
 	    double *thcOut){
   int MaxIterBalan = 30;     // max steps in Newton to balance interval
   double tolBal;
@@ -363,7 +363,7 @@ int rootchb(int m, const double * v, const double * jac, double tha, double thb,
  *  ChebAv]
  *
 **/
-int find_pol(const double * intv, polparams *pol) {
+int find_pol(const double *intv, polparams *pol) {
   double *mu, *v, *jac, t=0.0, itv[2],  vals[2];
   int max_deg=pol->max_deg;
   int min_deg=pol->min_deg;
