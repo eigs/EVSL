@@ -14,7 +14,7 @@
  * @param[out] y y coordinates for dos plot
  * @note Both x and y are expected to be preallocated.
  */
-int exDOS(double *vals, int n, int npts, double *x, double *y, double *intv) {
+int exDOS(const double *vals, int n, int npts, double *x, double *y, const double *intv) {
 /* sigma = coefficient for gaussian
    we select sigma so that at end of subinterval
    we have exp[-0.5 [H/sigma]^2] = 1/K. */

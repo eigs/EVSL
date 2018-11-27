@@ -36,39 +36,42 @@
  *   @warning Memory allocation for Yo/lamo/reso within this function
  */
 
-int ChebSI(int nev, double *intv, int maxit,
-           double tol, double *vinit, polparams *pol, int *nevo,
+int ChebSI(int nev, const double * intv, int maxit,
+           double tol, const double * vinit, polparams const * const pol, int *nevo,
            double **lamo, double **Yo, double **reso, FILE *fstats) {
   /*-------------------- for stats */
   double tm, tall=0.0, tmv=0.0;
   int icol, nmv = 0;
-  double tolP = tol*0.01;
+  const double tolP = tol*0.01;
   tall = evsl_timer();
   //    int max_deg = pol->max_deg,   min_deg = pol->min_deg;
   /*-------------------   size of A */
-  int n = evsldata.n;
+  const int n = evsldata.n;
   /*--------------------   some constants frequently used */
-  char cT = 'T';
-  char cN = 'N';
-  int one = 1;
-  int nev2 = nev*nev;
-  int nnev = n*nev;
-  double done=1.0,dmone=-1.0,dzero=0.0;
+  const char cT = 'T';
+  const char cN = 'N';
+  const int one = 1;
+  const int nev2 = nev*nev;
+  const int nnev = n*nev;
+  const double done=1.0;
+  const double dmone=-1.0;
+  const double dzero=0.0;
   if (check_intv(intv, fstats) < 0) {
     *nevo = 0;
     return 0;
   }
-  double aa = intv[0];
-  double bb = intv[1];
+  const double aa = intv[0];
+  const double bb = intv[1];
   /*--------------------   frequency of convergence checks (check every cvcheck iterations) */
-  int cvcheck = 5;
+  const int cvcheck = 5;
   /*-------------------   misc */
   int i,j;
   // this code(step 1)is the same as in cheblan; to be moved
   // to a separate file for reuse
   /*-------------------- unpack some values from pol */
-  int deg =pol->deg;
-  double gamB=pol->gam, bar=pol->bar;
+  const int deg =pol->deg;
+  const double gamB=pol->gam;
+  const double bar=pol->bar;
   fprintf(fstats, "Cheb Poly- deg = %d, gam = %.15e, bar: %.15e\n",
       deg, gamB, bar);
   /*-------------------- gamB must be within [-1, 1] */
@@ -166,7 +169,7 @@ int ChebSI(int nev, double *intv, int maxit,
       evsl_dcopy(&nnact, buf, &one, PV+nnlock, &one);
       /*---  Compute active residuals R = PV - V*diag(evalT)    */
       for (i=nlock; i<nev; i++) {
-        double t = -evalT[i];
+        const double t = -evalT[i];
         //evsl_dscal(&n, &t, R+i*n, &one);
         for (j=0; j<n; j++) {
           R[i*n+j] = PV[i*n+j]+t*V[i*n+j];
@@ -178,18 +181,18 @@ int ChebSI(int nev, double *intv, int maxit,
       nact = 0;
       for (i=nlock; i<nev; i++) {
         /*---  Compute norm of R(:,i)   */
-        double resP = sqrt(evsl_ddot(&n, R+i*n, &one, R+i*n, &one));
+        const double resP = sqrt(evsl_ddot(&n, R+i*n, &one, R+i*n, &one));
         if (resP < tolP) {
           /*---  Compute norm of AV(:,i) - V(:,i)*Lambda(i)   */
           tm = evsl_timer();
           matvec_A(V+i*n, buf);
           tmv += evsl_timer() - tm;
           nmv++;
-          double rq = evsl_ddot(&n, V+i*n, &one, buf, &one);  // Rayleigh Quotient for A
+          const double rq = evsl_ddot(&n, V+i*n, &one, buf, &one);  // Rayleigh Quotient for A
           for (j=0; j < n; j++) {
             R[i*n+j] = buf[j] - rq*V[i*n+j];
           }
-          double resA = sqrt(evsl_ddot(&n, R+i*n, &one, R+i*n, &one));
+          const double resA = sqrt(evsl_ddot(&n, R+i*n, &one, R+i*n, &one));
           if (resA < tol) {
             lock_idx[nlock_new] = i;
             res[nlock+nlock_new] = resA;
@@ -248,7 +251,7 @@ int ChebSI(int nev, double *intv, int maxit,
   V_out = evsl_Malloc(nnev, double);
   int idx=0;
   for (i=0; i<nlock;i++) {
-    double t = Lam[i];
+    const double t = Lam[i];
     if ( t >= aa - EVSL_DBL_EPS_MULT * DBL_EPSILON && t <= bb + EVSL_DBL_EPS_MULT * DBL_EPSILON ) {
       Lam_out[idx] = t;
       res_out[idx] = res[i];

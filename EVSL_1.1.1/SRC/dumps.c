@@ -21,8 +21,8 @@
  * @param[in] a Values
  * @param[in] fn filename
  */
-void save_mtx_basic(int nrow, int ncol, int *ia,
-                    int *ja, double *a, const char *fn) {
+void save_mtx_basic(int nrow, int ncol, const int * ia,
+                    const int * ja, const double * a, const char *fn) {
   int i,j,nnz;
   FILE *fp = fopen(fn, "w");
 
@@ -43,7 +43,7 @@ void save_mtx_basic(int nrow, int ncol, int *ia,
  * @param[in] A csr matrix to save
  * @param[in] fn filename
  */
-void savemat(csrMat *A, const char *fn) {
+void savemat(const csrMat *A, const char *fn) {
   fprintf(stdout, " * saving a matrix into %s\n", fn);
   save_mtx_basic(A->nrows, A->ncols, A->ia, A->ja, A->a, fn);
 }
@@ -74,7 +74,7 @@ void save_vec(int n, const double *x, const char fn[]) {
  * @param[in] n num cols
  * @param[in] fn filename
  */
-void savedensemat(double *A, int lda, int m, int n, const char *fn) {
+void savedensemat(const double *A, int lda, int m, int n, const char *fn) {
   fprintf(stdout, " * saving a matrix into %s\n", fn);
   FILE *fp = fopen(fn, "w");
   int i,j;

@@ -62,8 +62,8 @@ void contQuad(int method, int n, EVSL_Complex* zk) {
    * @param[out] xx    : function values at real locations z
    *
    *----------------------------------------------------------------------*/
-void ratf2p2(int n, int *mulp, EVSL_Complex *zk, EVSL_Complex* alp, int m,
-             double *z, double *xx) {
+void ratf2p2(int n, const int *mulp, const EVSL_Complex *zk, const EVSL_Complex* alp, int m,
+             const double *z, double *xx) {
   EVSL_Complex y, x, t;
   int i, j, k, k1, k2;
   for (k2=0; k2<m; k2++) {
@@ -162,13 +162,13 @@ EVSL_Complex integg2(EVSL_Complex s1, EVSL_Complex s2,
  * @param[out] omega LS weight for each pole
  *
  *----------------------------------------------------------------------*/
-void weights(int n, EVSL_Complex* zk, int* mulp, double lambda,
+void weights(int n, const EVSL_Complex* zk, const int* mulp, double lambda,
              EVSL_Complex* omega) {
   int INFO;
-  int nrhs = 1;
+  const int nrhs = 1;
   int *ipiv;
   int m;
-  double mu = 10.0;
+  const double mu = 10.0;
   int i, j, ii, jj, ki, kj, n1, n2, nf=0, k1, k2;
   EVSL_Complex s1, s2, s3, t;
   EVSL_Complex *rhs, *A, *B, *mat, *alp, *bet;
@@ -306,7 +306,7 @@ void weights(int n, EVSL_Complex* zk, int* mulp, double lambda,
    * @param[out] omegaM: multiple LS weights
    *
    *----------------------------------------------------------------------*/
-int scaleweigthts(int n, double a, double b, EVSL_Complex *zk, int* mulp,
+int scaleweigthts(int n, double a, double b, EVSL_Complex *zk, const int* mulp,
                   EVSL_Complex* omegaM) {
   int i, j, k, nf=0;
   double c, h;
@@ -367,7 +367,7 @@ void set_ratf_def(ratparams *rat) {
  *    cc  : ..center of interval\n
  *
  *--------------------------------------------------------------------*/
-int find_ratf(double *intv, ratparams *rat) {
+int find_ratf(const double *intv, ratparams *rat) {
   EVSL_Complex *omega; // weights of the poles
   EVSL_Complex *zk;    // location of the poles
   int *mulp;             // multiplicity of the each pole
@@ -440,16 +440,16 @@ void free_rat(ratparams *rat) {
  * @param[out] x Becomes R(A)b
  *
  */
-void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
+void RatFiltApply(int n, const ratparams *rat, const double *b, double *x, double *w6) {
   double tt = evsl_timer();
   const int ifGenEv = evsldata.ifGenEv;
   int jj, kk, k=0, kf;
   int *mulp = rat->mulp;
   int num = rat->num;
   EVSL_Complex *omega = rat->omega;
-  double dtwo = 2.0;
-  double done = 1.0;
-  int one = 1;
+  const double dtwo = 2.0;
+  const double done = 1.0;
+  const int one = 1;
 
   double *xr, *xz, *bz, *br, *yr=NULL, *yz=NULL;
   double zkr, zkc;

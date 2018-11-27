@@ -75,7 +75,7 @@ int dampcf(int m, int damping, double *jac) {
  * @param[in] jac vector of damping coefficients
 **/
 
-double dif_eval(double *v, int m, double thc, double *jac){
+double dif_eval(const double * v, int m, double thc, const double * jac){
   double fval = 0.0;
   int j;
   for (j=0; j<=m; j++)
@@ -102,8 +102,10 @@ double dif_eval(double *v, int m, double thc, double *jac){
  *  @param[out] yi       = pn(xi(:) )
  *  @return 0
  **/
-int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
-  int k, j, one = 1, n = npts;
+int chebxPltd(int m, const double *mu, int npts, const double *xi, double *yi) {
+  int k, j;
+  const int one = 1;
+  const int n = npts;
   double scal, *vkm1, *vkp1, *vk;
   vkm1 = evsl_Malloc(n, double);
   vkp1 = evsl_Malloc(n, double);
@@ -171,19 +173,20 @@ void chext(polparams *pol, double aIn, double bIn){
   int max_deg = pol->max_deg;
   // int min_deg = pol->min_deg;   NOT used
   double thresh = pol->thresh_ext;
-  double *mu = pol->mu;
+  double * mu = pol->mu;
   //-------------------- local variables
-  double del = 0.1*sqrt((bIn-aIn)*0.5);
+  const double del = 0.1*sqrt((bIn-aIn)*0.5);
   //double del = 0.0;
-  double eps = 1e-13;
+  const double eps = 1e-13;
   //double eps = 0.0;
   double a, b, x, e, c, sigma, sigma1, sigma_new, g0, g1, gnew, s1, s2, s3;
   double *t0, *t1, *tnew; // coef. of three consecutive cheby. expansions
   double bar, gam;
   int mbest=0;
-  int m1 = max_deg+1, j, k;
+  const int m1 = max_deg+1;
+  int j, k;
   //-------------------- local work space
-  int work_size = 3*m1;
+  const int work_size = 3*m1;
   //-------------------- this is for the forced degree case
   if (pol->deg > 0){
     thresh = -1.0;
@@ -264,7 +267,7 @@ void chext(polparams *pol, double aIn, double bIn){
  * @param[in] size size of the arry
  * @return index of smallest entry in array
 **/
-int indexofSmallestElement(double *array, int size){
+int indexofSmallestElement(const double * array, int size){
   int index = 0, i;
   for(i = 1; i < size; i++){
     if(array[i] < array[index])
@@ -285,7 +288,7 @@ int indexofSmallestElement(double *array, int size){
  *
  * @warning mu must be preallocated
 **/
-int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
+int rootchb(int m, const double * v, const double * jac, double tha, double thb, double *mu,
 	    double *thcOut){
   int MaxIterBalan = 30;     // max steps in Newton to balance interval
   double tolBal;
@@ -360,9 +363,11 @@ int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
  *  ChebAv]
  *
 **/
-int find_pol(double *intv, polparams *pol) {
+int find_pol(const double * intv, polparams *pol) {
   double *mu, *v, *jac, t=0.0, itv[2],  vals[2];
-  int max_deg=pol->max_deg, min_deg=pol->min_deg, damping=pol->damping;
+  int max_deg=pol->max_deg;
+  int min_deg=pol->min_deg;
+  const int damping=pol->damping;
   double tha=0.0, thb=0.0, thc=0.0;
   double gam,  thresh;
   int m, j, nitv, mbest;
@@ -378,17 +383,18 @@ int find_pol(double *intv, polparams *pol) {
   /*-------------------- A parameter for interval check */
   // double IntTol = 2*DBL_EPSILON; // If b*IntTol>1 accept [a b] extreme
   //double IntTol = 0.0005;
-  double IntTol = pol->intvtol;
+  const double IntTol = pol->intvtol;
   double aa, bb;
   aa = evsl_max(intv[0], intv[2]);  bb = evsl_min(intv[1], intv[3]);
   if (intv[0] < intv[2] || intv[1] > intv[3]) {
     fprintf(stdout, " warning [%s (%d)]: interval (%e, %e) is adjusted to (%e, %e)\n",
         __FILE__, __LINE__, intv[0], intv[1], aa, bb);
   }
-  double lmin = intv[2], lmax = intv[3];
+  const double lmin = intv[2];
+  const double lmax = intv[3];
   /*-------------------- cc, rr: center and half-width of [lmin, lmax] */
-  double cc = 0.5 * (lmax + lmin);
-  double dd = 0.5 * (lmax - lmin);
+  const double cc = 0.5 * (lmax + lmin);
+  const double dd = 0.5 * (lmax - lmin);
   pol->cc = cc;
   pol->dd = dd;
   /*-------------------- adjust intervals just in case. */
@@ -514,18 +520,18 @@ void free_pol(polparams *pol) {
  * @param[in, out] w Work vector of length 3*n [allocate before call]
  * @param[in, out] v is untouched
  **/
-int ChebAv(polparams *pol, double *v, double *y, double *w) {
-  double tt = evsl_timer();
+int ChebAv(const polparams *pol, const double *v, double *y, double *w) {
+  const double tt = evsl_timer();
   const int ifGenEv = evsldata.ifGenEv;
-  int n = evsldata.n;
+  const int n = evsldata.n;
   /*-------------------- unpack pol */
-  double *mu = pol->mu;
-  double dd = pol->dd;
-  double cc = pol->cc;
-  double ncc = -cc;
-  int m = pol->deg;
-  int one = 1;
-  double dmone = -1.0;
+  const double *mu = pol->mu;
+  const double dd = pol->dd;
+  const double cc = pol->cc;
+  const double ncc = -cc;
+  const int m = pol->deg;
+  const int one = 1;
+  const double dmone = -1.0;
   /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   double *vk   = w;
   double *vkp1 = w+n;

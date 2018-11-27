@@ -26,7 +26,7 @@
  * @param[out] ecnt estimated num of eigenvalues in the interval of interest
  *
  *----------------------------------------------------------------------*/
-int kpmdos(int Mdeg, int damping, int nvec, double *intv,
+int kpmdos(int Mdeg, int damping, int nvec, const double *intv,
     double *mu, double *ecnt) {
   /*-------------------- initialize variables */
   const int ifGenEv = evsldata.ifGenEv;
@@ -148,7 +148,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
  *  where p(t) is the approximate DOS as given in the KPM method
  *  in the expanded form:  \f$\sum mu_i C_i /\sqrt{1-t^2}\f$
  **/
-void intChx(const int Mdeg, double *mu, const int npts, double *xi, double *yi) {
+void intChx(const int Mdeg, const double *mu, const int npts, const double *xi, double *yi) {
   //
   int ndp1, j, k;
   if(npts <= 0) {
@@ -198,7 +198,7 @@ void intChx(const int Mdeg, double *mu, const int npts, double *xi, double *yi) 
  *                of eigenvalues in the interval [a b] (input).
  *
  *----------------------------------------------------------------------*/
-int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts) {
+int spslicer(double *sli, const double *mu, int Mdeg, const double *intv, int n_int, int npts) {
   int ls, ii, err=0;
   double  ctr, wid, aL, bL, target, aa, bb;
 

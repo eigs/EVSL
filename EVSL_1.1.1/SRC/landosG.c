@@ -38,7 +38,7 @@
  *----------------------------------------------------------------------*/
 
 int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *ydos,
-            double *neig, const double *const intv) {
+            double *neig, const double *intv) {
 
   int i, j, k;
   int maxit = msteps, m;  /* Max number of iterations */

@@ -32,7 +32,7 @@
  * @return Returns 0 on success
  *
  **/
-int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
+int LanTrbounds(int lanm, int maxit, double tol, const double *vinit,
                 int bndtype,
                 double *lammin, double *lammax, FILE *fstats) {
   const int ifGenEv = evsldata.ifGenEv;

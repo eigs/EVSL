@@ -53,8 +53,8 @@
  * @warning memory allocation for W/vals/resW within this function
  *
  **/
-int RatLanTr(int lanm, int nev, double *intv, int maxit,
-             double tol, double *vinit, ratparams *rat, int *nev2,
+int RatLanTr(int lanm, int nev, const double *intv, int maxit,
+             double tol, const double *vinit, ratparams *rat, int *nev2,
              double **vals, double **W, double **resW, FILE *fstats) {
   const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */
@@ -68,11 +68,11 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     do_print = 0;
   }
   /* size of the matrix */
-  int n = evsldata.n;
-  size_t n_l = n;
+  const int n = evsldata.n;
+  const size_t n_l = n;
   /*--------------------- adjust lanm and maxit */
   lanm = evsl_min(lanm, n);
-  int lanm1=lanm+1;
+  const int lanm1=lanm+1;
   size_t lanm1_l = lanm1;
   /*  if use full lanczos, should not do more than n iterations */
   if (lanm == n) {
@@ -86,13 +86,15 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
   //int evFrac = 2;
   /*--------------------   some constants frequently used */
   /* char cT='T'; */
-  char cN = 'N';
-  int one = 1;
-  double done=1.0, dmone=-1.0, dzero=0.0;
+  const char cN = 'N';
+  const int one = 1;
+  const double done=1.0;
+  const double dmone=-1.0;
+  const double dzero=0.0;
   /*-------------------- Ntest = when to start testing convergence */
   int Ntest = evsl_min(lanm, nev+50);
   /*--------------------   how often to test */
-  int cycle = 30;
+  const int cycle = 30;
   int i, ll, /* count, last_count,*/ jl, last_jl;
   /*-----------------------------------------------------------------------
     -----------------------------------------------------------------------*/
@@ -102,10 +104,10 @@ int RatLanTr(int lanm, int nev, double *intv, int maxit,
     *vals = NULL; *W = NULL; *resW = NULL;
     return 0;
   }
-  double aa = intv[0];
-  double bb = intv[1];
+  const double aa = intv[0];
+  const double bb = intv[1];
   //int deg = rat->pow;
-  double bar = 0.5; // for the scaled rational filter
+  const double bar = 0.5; // for the scaled rational filter
   /*-----------------------------------------------------------------------*
    * *thick restarted* Lanczos step
    *-----------------------------------------------------------------------*/
