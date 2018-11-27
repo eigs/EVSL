@@ -57,7 +57,7 @@
  *
  **/
 int ChebLanTr(int lanm, int nev, const double *intv, int maxit,
-              double tol, const double *vinit, const polparams* const pol, int *nev2,
+              double tol, const double *vinit, const polparams *pol, int *nev2,
               double **vals, double **W, double **resW, FILE *fstats) {
   const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */
