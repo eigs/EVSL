@@ -13,8 +13,6 @@
 #include "io.h"
 #include "lapl.h"
 
-int exDOS(double *vals, int n, int npts, double *x, double *y, double *intv);
-
 /**
  *-----------------------------------------------------------------------
  * Tests landos.c -- Includes graphical comparison of exact DOS and calculated.

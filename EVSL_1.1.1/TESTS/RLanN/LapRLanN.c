@@ -3,7 +3,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <math.h>
-#include <complex.h>
 #include "evsl.h"
 #include "io.h"
 #include "evsl_direct.h"

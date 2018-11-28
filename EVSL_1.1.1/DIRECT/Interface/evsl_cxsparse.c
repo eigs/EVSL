@@ -129,7 +129,7 @@ int SetupBSolDirect(csrMat *B, void **data) {
 /** @brief Solver function of B
  *
  * */
-void BSolDirect(double *b, double *x, void *data) {
+void BSolDirect(const double *b, double *x, void *data) {
   BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
   cs_dis *S = Bsol_data->S;
   cs_din *N = Bsol_data->N;
@@ -145,7 +145,7 @@ void BSolDirect(double *b, double *x, void *data) {
 /** @brief Solver function of L^{T}
  *  x = L^{-T}*b
  * */
-void LTSolDirect(double *b, double *x, void *data) {
+void LTSolDirect(const double *b, double *x, void *data) {
   BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
   cs_dis *S = Bsol_data->S;
   cs_din *N = Bsol_data->N;
@@ -320,7 +320,7 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
  * @warning: This function MUST be of this prototype
  *
  *------------------------------------------------------------------*/
-void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
+void ASIGMABSolDirect(int n, const double *br, const double *bi, double *xr,
                       double *xz, void *data) {
 
   int i;
