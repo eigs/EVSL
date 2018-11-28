@@ -29,6 +29,12 @@
 /* Using Intel MKL for BLAS and LAPACK */
 #undef EVSL_USING_INTEL_MKL
 
+/* Using NVIDIA GPU with CUDA */
+#undef EVSL_USING_CUDA_GPU
+
+/* Using device memory */
+#undef EVSL_USING_DEVICE_MEMORY
+
 /* Using long int version of Cholmod in SuiteSparse interface */
 #undef EVSL_CHOLMOD_USE_LONG
 

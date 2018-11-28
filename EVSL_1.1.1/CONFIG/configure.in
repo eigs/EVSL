@@ -108,6 +108,7 @@ evsl_using_intel_mkl_static=yes
 evsl_cholmod_use_long=yes
 evsl_using_shared_lib=no
 evsl_using_mac_frame_accelerate=no
+evsl_using_cuda=no
 dnl *********************************************************************
 dnl * Determine BUILD, HOST, and TARGET types
 dnl *********************************************************************
@@ -319,6 +320,18 @@ AS_HELP_STRING([--with-extra-lib-dir=DIR],
  done]
 )
 
+AC_ARG_WITH(cuda,
+AS_HELP_STRING([--with-cuda],
+               [Use CUDA. Require cuda-5.0 or higher (default is NO).]),
+[case "$withval" in
+    yes) evsl_using_cuda=yes;;
+    no)  evsl_using_cuda=no ;;
+    *)   evsl_using_cuda=no ;;
+ esac],
+[evsl_using_cuda=no]
+)
+
+
 dnl *********************************************************************
 dnl * Set default AR value if not defined by the user
 dnl *********************************************************************
@@ -414,6 +427,18 @@ then
    FFLAGS+="-Wall -Wno-unused-variable -Wno-unused-dummy-argument "
 fi
 
+if test "$evsl_using_cuda" = "yes"
+then
+   AC_SUBST(CUDA_HOME)
+   AC_CHECK_HEADERS(["${CUDA_HOME}/include/cuda.h"], [evsl_found_cuda=yes], [evsl_found_cuda=no])
+   if test "x$evsl_found_cuda" != "xyes"
+   then
+      AC_MSG_WARN([****************************************************])
+      AC_MSG_ERROR([unable to find cuda.h. Ensure that CUDA_HOME is set])
+      AC_MSG_WARN([****************************************************])
+   fi
+fi
+
 dnl *********************************************************************
 dnl * set default link
 dnl *********************************************************************
@@ -479,6 +504,30 @@ else
 fi
 
 dnl *********************************************************************
+dnl * Set cuda options
+dnl *********************************************************************
+if test "$evsl_using_cuda" = "yes"
+then
+   AC_DEFINE(EVSL_USING_CUDA_GPU, 1, [CUDA being used])
+   AC_DEFINE(EVSL_USING_DEVICE_MEMORY, 1, [EVSL WITH DEVICE MEMORY])
+   dnl let CC/CXX and LINK be CUCC and let host compiler be CC
+   AC_CHECK_PROGS(CUCC, nvcc)
+   NVCCBIN=${CC}
+   CC=${CUCC}
+   LINK_CC=${CUCC}
+   dnl CUDA SM
+   if test "x$EVSL_CUDA_SM" = "x"
+   then
+      EVSL_CUDA_SM=60
+   fi
+   EVSL_CUDA_GENCODE="-gencode arch=compute_${EVSL_CUDA_SM},\"code=sm_${EVSL_CUDA_SM}\""
+   CUFLAGS+="-O2 -ccbin=$NVCCBIN ${EVSL_CUDA_GENCODE} -dc --x cu"
+   CFLAGS="${CUFLAGS} -Xcompiler \"${CXXFLAGS}\""
+   LDFLAGS="-ccbin=$NVCCBIN ${EVSL_CUDA_GENCODE} -Xcompiler \"${LDFLAGS}\""
+   LIBS+="-L\${CUDA_HOME}/lib64 -lcudart "
+fi
+
+dnl *********************************************************************
 dnl * Shared libraries
 dnl *********************************************************************
 if test "x$evsl_using_shared_lib" = "xyes"
@@ -494,6 +543,10 @@ then
                                    SHARED_OPTIONS="-Wl,-z,defs"
                                    SHARED_COMPILE_FLAG="-fPIC" ;;
    esac
+   if test "$evsl_using_cuda" = "yes"
+   then
+      SHARED_BUILD_FLAG="${SHARED_BUILD_FLAG} ${EVSL_CUDA_GENCODE}"
+   fi
    SHARED_BUILD_FLAG="${SHARED_BUILD_FLAG} ${EXTRA_BUILD_FLAGS}"
    FFLAGS="${FFLAGS} ${SHARED_COMPILE_FLAG}"
    BUILD_FC_SHARED="${FC} ${SHARED_BUILD_FLAG}"
@@ -524,7 +577,7 @@ fi
 if test "x$evsl_using_intel_mkl" = "xyes" || test "x$evsl_using_mkl_pardiso" = "xyes"
 then
    AC_SUBST(MKLROOT)
-   AC_DEFINE(EVSL_USING_INTEL_MKL, 1, [ Using Intel MKL for BLAS, LAPACK and SpMV])
+   AC_DEFINE(EVSL_USING_INTEL_MKL, 1, [Using Intel MKL for BLAS, LAPACK and SpMV])
    AC_CHECK_HEADERS(["${MKLROOT}/include/mkl.h"], [evsl_found_mkl=yes],[evsl_found_mkl=no])
    if test "x$evsl_found_mkl" != "xyes"
    then
