@@ -68,8 +68,8 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   jac[0] = 1.0;
   memset(mu,0,(Mdeg+1)*sizeof(double));
   /*-------------------- seed the random generator */
-  i = time_seeder();
-  srand(i);
+  //i = time_seeder();
+  //srand(i);
   tcnt = 0.0;
   /*-------------------- for random loop */
   for (m=0; m<nvec; m++) {
@@ -82,7 +82,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
       solve_LT(v, w);
       /* v = B*w */
       matvec_B(w, v);
-      t = evsl_ddot(&n, v, &one, w, &one);
+      //t = evsl_ddot(&n, v, &one, w, &one);
       memcpy(vk, w, n*sizeof(double));
     } else {
       /* unit 2-norm */
