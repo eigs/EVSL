@@ -7,7 +7,7 @@
     integer i__1, i__2, i__3;
 
     /* Builtin functions */
-    double log(doublereal), sqrt(doublereal), cos(doublereal);
+    /* double log(doublereal), sqrt(doublereal), cos(doublereal); */
 
     /* Local variables */
     integer i__;

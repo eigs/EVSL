@@ -7,7 +7,7 @@
     doublereal d__1;
 
     /* Builtin functions */
-    double sqrt(doublereal);
+    /* double sqrt(doublereal); */
 
     /* Local variables */
     doublereal ab, df, tb, sm, rt, adf, acmn, acmx;

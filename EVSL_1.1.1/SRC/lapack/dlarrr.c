@@ -8,7 +8,7 @@
     doublereal d__1;
 
     /* Builtin functions */
-    double sqrt(doublereal);
+    /*double sqrt(doublereal);*/
 
     /* Local variables */
     integer i__;

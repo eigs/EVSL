@@ -46,6 +46,7 @@ cs_ci *cs_i_complex (cs_di *A, int real)
     return (C) ;
 }
 
+#if 0
 /* convert from complex to real (cs_long_t version) */
 /* C = real(A) if real is true, imag(A) otherwise */
 cs_dl *cs_l_real (cs_cl *A, cs_long_t real)
@@ -91,3 +92,5 @@ cs_cl *cs_l_complex (cs_dl *A, cs_long_t real)
     if (triplet) C->nz = nz ;
     return (C) ;
 }
+#endif
+

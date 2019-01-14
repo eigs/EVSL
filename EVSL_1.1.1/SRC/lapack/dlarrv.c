@@ -20,7 +20,7 @@ static integer c__2 = 2;
     logical L__1;
 
     /* Builtin functions */
-    double log(doublereal);
+    /* double log(doublereal); */
 
     /* Local variables */
     integer minwsize, i__, j, k, p, q, miniwsize, ii;

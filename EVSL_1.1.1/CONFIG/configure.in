@@ -434,7 +434,7 @@ then
    if test "x$evsl_found_cuda" != "xyes"
    then
       AC_MSG_WARN([****************************************************])
-      AC_MSG_ERROR([unable to find cuda.h. Ensure that CUDA_HOME is set])
+      AC_MSG_WARN([unable to find cuda.h. Ensure that CUDA_HOME is set])
       AC_MSG_WARN([****************************************************])
    fi
 fi

@@ -8,7 +8,7 @@ integer iparmq_(integer *ispec, const char *name__, const char *opts, integer *n
     real r__1;
 
     /* Builtin functions */
-    double log(doublereal);
+    /*double log(doublereal);*/
     integer i_nint(real *);
 
     /* Local variables */

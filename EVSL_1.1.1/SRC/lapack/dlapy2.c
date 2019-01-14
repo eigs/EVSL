@@ -6,7 +6,7 @@ doublereal dlapy2_(doublereal *x, doublereal *y)
     doublereal ret_val, d__1;
 
     /* Builtin functions */
-    double sqrt(doublereal);
+    /*double sqrt(doublereal);*/
 
     /* Local variables */
     doublereal w, z__, xabs, yabs;

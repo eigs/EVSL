@@ -11,7 +11,7 @@
     doublereal d__1, d__2;
 
     /* Builtin functions */
-    double log(doublereal);
+    /*double log(doublereal);*/
 
     /* Local variables */
     integer i__, k, r__, i1, ii, ip;

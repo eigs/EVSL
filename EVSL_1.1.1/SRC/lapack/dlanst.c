@@ -11,7 +11,7 @@ doublereal dlanst_(const char *norm, integer *n, doublereal *d__, doublereal *e)
     doublereal ret_val, d__1, d__2, d__3, d__4, d__5;
 
     /* Builtin functions */
-    double sqrt(doublereal);
+    /*double sqrt(doublereal);*/
 
     /* Local variables */
     integer i__;
