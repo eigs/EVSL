@@ -36,9 +36,6 @@ int EVSLStart() {
   evsl_timer();
 
 #ifdef EVSL_USING_CUDA_GPU
-  evsldata.evsl_create_cusparse_hybA = 0;
-  evsldata.evsl_create_cusparse_hybB = 0;
-
   cusparseStatus_t cusparseStat = cusparseCreate(&evsldata.cusparseH);
   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
 
@@ -70,10 +67,6 @@ int EVSLFinish() {
 
   curandStatus_t curandStatus = curandDestroyGenerator(evsldata.curandGen);
   CHKERR(CURAND_STATUS_SUCCESS != curandStatus);
-
-  if (evsldata.evsl_create_cusparse_hybA) {
-     evsl_free_hybMat((hybMat *) evsldata.Amv->data);
-  }
 #endif
   if (evsldata.Amv) {
     evsl_Free(evsldata.Amv);
@@ -100,9 +93,6 @@ int EVSLFinish() {
  * @param[in] A The matrix to set
  * */
 int SetAMatrix(csrMat *A) {
-#ifdef EVSL_USING_CUDA_GPU
-  return SetAMatrix_device(A);
-#else
   evsldata.n = A->ncols;
   if (!evsldata.Amv) {
      evsldata.Amv = evsl_Calloc(1, EVSLMatvec);
@@ -111,7 +101,6 @@ int SetAMatrix(csrMat *A) {
   evsldata.Amv->data = (void *) A;
 
   return 0;
-#endif
 }
 
 /**
@@ -260,21 +249,25 @@ void SetDiagScal(double *ds) {
 }
 
 #ifdef EVSL_USING_CUDA_GPU
-/**
- * @brief Set the matrix A on GPU
- *
- * @param[in] A The CSR matrix to set [on host].
- * A cusparse HYB matrix will be generated and stored
- * */
-int SetAMatrix_device(csrMat *A) {
+int SetAMatrix_device(hybMat *A) {
   evsldata.n = A->ncols;
   if (!evsldata.Amv) {
      evsldata.Amv = evsl_Calloc(1, EVSLMatvec);
   }
+  evsldata.Amv->func = matvec_cusparse;
+  evsldata.Amv->data = (void *) A;
 
-  evsldata.evsl_create_cusparse_hybA = 1;
+  return 0;
+}
 
-  hybMat *Ahyb = evsl_Malloc(1, hybMat);
+/**
+ * @brief create HYB matrix A on GPU
+ *
+ * @param[in] A The CSR matrix to set [on host].
+ * A cusparse HYB matrix will be generated
+ * */
+int evsl_CreateHybMat(csrMat *A, hybMat *Ahyb) {
+
   Ahyb->nrows = A->nrows;
   Ahyb->ncols = A->ncols;
 
@@ -298,9 +291,6 @@ int SetAMatrix_device(csrMat *A) {
   CHKERR(cusparseStat != CUSPARSE_STATUS_SUCCESS);
 
   evsl_free_csr_gpu(&Agpu);
-
-  evsldata.Amv->func = matvec_cusparse;
-  evsldata.Amv->data = (void *) Ahyb;
 
   return 0;
 }

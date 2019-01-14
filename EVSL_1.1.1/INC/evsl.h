@@ -260,7 +260,8 @@ int EVSLStart();
 int EVSLFinish();
 void SetDiagScal(double *ds);
 #ifdef EVSL_USING_CUDA_GPU
-int SetAMatrix_device(csrMat *A);
+int evsl_CreateHybMat(csrMat *A, hybMat *hyb);
+int SetAMatrix_device(hybMat *A);
 void evsl_device_query(int dev);
 void evsl_last_device_err();
 #endif

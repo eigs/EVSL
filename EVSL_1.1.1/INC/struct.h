@@ -180,8 +180,6 @@ typedef struct _evsldata {
   double *ds;               /**< diagonal scaling matrix D,
                                  D^{-1}*A*D^{-1} = lambda * D^{-1}*B*D^{-1} */
 #ifdef EVSL_USING_CUDA_GPU
-  int evsl_create_cusparse_hybA;  /**< if evsl created HYB for A */
-  int evsl_create_cusparse_hybB;  /**< if evsl created HYB for B */
   cublasHandle_t cublasH;
   cusparseHandle_t cusparseH;
   curandGenerator_t curandGen;

@@ -99,9 +99,13 @@ int main(int argc, char *argv[]) {
   EVSLStart();
 #ifdef EVSL_USING_CUDA_GPU
   evsl_device_query(0);
-#endif
+  hybMat Ahyb;
+  evsl_CreateHybMat(&Acsr, &Ahyb);
+  SetAMatrix_device(&Ahyb);
+#else
   /*-------------------- set matrix A */
   SetAMatrix(&Acsr);
+#endif
   /*-------------------- call LanDos */
   mu = evsl_Malloc(Mdeg+1, double);
   double t = evsl_timer();
@@ -265,6 +269,9 @@ int main(int argc, char *argv[]) {
   evsl_Free(sli);
   free_coo(&Acoo);
   free_csr(&Acsr);
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_free_hybMat(&Ahyb);
+#endif
   evsl_Free(mu);
   fclose(fstats);
   /*-------------------- finalize EVSL */
