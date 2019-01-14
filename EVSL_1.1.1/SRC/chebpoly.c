@@ -537,17 +537,12 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
   /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
   /* we have to do this copy, because we don't want to alter the
    * elements in v */
-  memcpy(vk, v, n*sizeof(double));
+  evsl_memcpy_device_to_device(vk, v, n*sizeof(double));
   //memset(vkm1, 0, n*sizeof(double));
   /*-------------------- special case: k == 0 */
   s = mu[0];
-  /*
-  for (i=0; i<n; i++) {
-    y[i] = s*vk[i];
-  }
-  */
-  memcpy(y, v, n*sizeof(double));
-  evsl_dscal(&n, &s, y, &one);
+  evsl_memcpy_device_to_device(y, v, n*sizeof(double));
+  evsl_dscal_device(&n, &s, y, &one);
 
   /*-------------------- degree loop. k IS the degree */
   for (k=1; k<=m; k++) {
@@ -571,12 +566,12 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
     }
     */
     double ts = evsl_timer();
-    evsl_daxpy(&n, &ncc, vk, &one, vkp1, &one);
-    evsl_dscal(&n, &t, vkp1, &one);
+    evsl_daxpy_device(&n, &ncc, vk, &one, vkp1, &one);
+    evsl_dscal_device(&n, &t, vkp1, &one);
     if (k > 1) {
-      evsl_daxpy(&n, &dmone, vkm1, &one, vkp1, &one);
+      evsl_daxpy_device(&n, &dmone, vkm1, &one, vkp1, &one);
     }
-    evsl_daxpy(&n, &s, vkp1, &one, y, &one);
+    evsl_daxpy_device(&n, &s, vkp1, &one, y, &one);
     evslstat.t_sth += evsl_timer() - ts;
 
     /*-------------------- next: rotate vectors via pointer exchange */

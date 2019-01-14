@@ -97,7 +97,10 @@ int main(int argc, char *argv[]) {
   nvec = 60;
   /*-------------------- start EVSL */
   EVSLStart();
-  /*-------------------- set  matrix A */
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_device_query(0);
+#endif
+  /*-------------------- set matrix A */
   SetAMatrix(&Acsr);
   /*-------------------- call LanDos */
   mu = evsl_Malloc(Mdeg+1, double);
@@ -158,8 +161,8 @@ int main(int argc, char *argv[]) {
   //-------------------- # eigs per slice
   ev_int = (int) (1 + ecount / ((double) nslices));
   //-------------------- initial vector
-  vinit = evsl_Malloc(n, double);
-  rand_double(n, vinit);
+  vinit = evsl_Malloc_device(n, double);
+  rand_double_device(n, vinit);
   //-------------------- debug only :
   //  save_vec(n, vinit, "OUT/vinit.mtx");
   //-------------------- For each slice call ChebLanr
@@ -200,7 +203,8 @@ int main(int argc, char *argv[]) {
 
     fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
             pol.type, pol.deg, pol.bar, pol.gam);
-    //-------------------- then call ChenLanNr
+    /*-------------------- then call ChenLanNr: note that when using CUDA
+                           vinit (input) and Y (output) are device memory */
     ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebLanNr error %d\n", ierr);
@@ -242,16 +246,22 @@ int main(int argc, char *argv[]) {
       }
     }
     //-------------------- free allocated space withing this scope
-    if (lam)  evsl_Free(lam);
-    if (Y)  evsl_Free(Y);
-    if (res)  evsl_Free(res);
+    if (lam) {
+       evsl_Free(lam);
+    }
+    if (Y) {
+       evsl_Free_device(Y);
+    }
+    if (res) {
+       evsl_Free(res);
+    }
     free_pol(&pol);
     evsl_Free(ind);
     evsl_Free(lam_ex);
     StatsPrint(fstats);
   }
   //-------------------- free other allocated space
-  evsl_Free(vinit);
+  evsl_Free_device(vinit);
   evsl_Free(sli);
   free_coo(&Acoo);
   free_csr(&Acsr);

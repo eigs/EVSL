@@ -35,6 +35,18 @@ typedef struct _csrMat {
   double *a;   /**< numeric values (of size nnz) */
 } csrMat;
 
+#ifdef EVSL_USING_CUDA_GPU
+/*!
+ * @brief cusparse HYB matrix format on GPU
+ */
+typedef struct _hybMat {
+  int nrows,   /**< number of rows */
+      ncols;   /**< number of columns */
+  cusparseMatDescr_t descr;
+  cusparseHybMat_t   hyb;
+} hybMat;
+#endif
+
 /*!
  * @brief  parameters for polynomial filter
  *
@@ -167,6 +179,13 @@ typedef struct _evsldata {
   EVSLLTSol *LTsol;         /**< function and data for LT solve */
   double *ds;               /**< diagonal scaling matrix D,
                                  D^{-1}*A*D^{-1} = lambda * D^{-1}*B*D^{-1} */
+#ifdef EVSL_USING_CUDA_GPU
+  int evsl_create_cusparse_hybA;  /**< if evsl created HYB for A */
+  int evsl_create_cusparse_hybB;  /**< if evsl created HYB for B */
+  cublasHandle_t cublasH;
+  cusparseHandle_t cusparseH;
+  curandGenerator_t curandGen;
+#endif
 } evslData;
 
 /*

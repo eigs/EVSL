@@ -35,6 +35,23 @@ int EVSLStart() {
   /* do a dummy timer call to improve accuracy of timing */
   evsl_timer();
 
+#ifdef EVSL_USING_CUDA_GPU
+  evsldata.evsl_create_cusparse_hybA = 0;
+  evsldata.evsl_create_cusparse_hybB = 0;
+
+  cusparseStatus_t cusparseStat = cusparseCreate(&evsldata.cusparseH);
+  CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+
+  cublasStatus_t cublasStat = cublasCreate(&evsldata.cublasH);
+  CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+
+  curandStatus_t curandStatus = curandCreateGenerator(&evsldata.curandGen,
+                                                      CURAND_RNG_PSEUDO_DEFAULT);
+  CHKERR(CURAND_STATUS_SUCCESS != curandStatus);
+
+  //curandSetPseudoRandomGeneratorSeed(evsldata.randGen ,1234ULL);
+#endif
+
   return 0;
 }
 
@@ -44,6 +61,20 @@ int EVSLStart() {
  * Frees parts of the evsldata struct
  * */
 int EVSLFinish() {
+#ifdef EVSL_USING_CUDA_GPU
+  cusparseStatus_t cusparseStat = cusparseDestroy(evsldata.cusparseH);
+  CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+
+  cublasStatus_t cublasStat = cublasDestroy(evsldata.cublasH);
+  CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+
+  curandStatus_t curandStatus = curandDestroyGenerator(evsldata.curandGen);
+  CHKERR(CURAND_STATUS_SUCCESS != curandStatus);
+
+  if (evsldata.evsl_create_cusparse_hybA) {
+     evsl_free_hybMat((hybMat *) evsldata.Amv->data);
+  }
+#endif
   if (evsldata.Amv) {
     evsl_Free(evsldata.Amv);
   }
@@ -56,6 +87,9 @@ int EVSLFinish() {
   if (evsldata.LTsol) {
     evsl_Free(evsldata.LTsol);
   }
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_last_device_err();
+#endif
   return 0;
 }
 
@@ -66,6 +100,9 @@ int EVSLFinish() {
  * @param[in] A The matrix to set
  * */
 int SetAMatrix(csrMat *A) {
+#ifdef EVSL_USING_CUDA_GPU
+  return SetAMatrix_device(A);
+#else
   evsldata.n = A->ncols;
   if (!evsldata.Amv) {
      evsldata.Amv = evsl_Calloc(1, EVSLMatvec);
@@ -74,6 +111,7 @@ int SetAMatrix(csrMat *A) {
   evsldata.Amv->data = (void *) A;
 
   return 0;
+#endif
 }
 
 /**
@@ -220,4 +258,104 @@ int SetLTSol(SolFuncR func, void *data) {
 void SetDiagScal(double *ds) {
   evsldata.ds = ds;
 }
+
+#ifdef EVSL_USING_CUDA_GPU
+/**
+ * @brief Set the matrix A on GPU
+ *
+ * @param[in] A The CSR matrix to set [on host].
+ * A cusparse HYB matrix will be generated and stored
+ * */
+int SetAMatrix_device(csrMat *A) {
+  evsldata.n = A->ncols;
+  if (!evsldata.Amv) {
+     evsldata.Amv = evsl_Calloc(1, EVSLMatvec);
+  }
+
+  evsldata.evsl_create_cusparse_hybA = 1;
+
+  hybMat *Ahyb = evsl_Malloc(1, hybMat);
+  Ahyb->nrows = A->nrows;
+  Ahyb->ncols = A->ncols;
+
+  cusparseStatus_t cusparseStat = cusparseCreateMatDescr(&Ahyb->descr);
+  CHKERR(cusparseStat != CUSPARSE_STATUS_SUCCESS);
+
+  cusparseStat = cusparseCreateHybMat(&Ahyb->hyb);
+  CHKERR(cusparseStat != CUSPARSE_STATUS_SUCCESS);
+
+  cusparseSetMatIndexBase(Ahyb->descr, CUSPARSE_INDEX_BASE_ZERO);
+  cusparseSetMatType(Ahyb->descr, CUSPARSE_MATRIX_TYPE_GENERAL);
+
+  /* CSR on GPU */
+  csrMat Agpu;
+  evsl_copy_csr_to_gpu(A, &Agpu);
+
+  /* convert to hyb */
+  cusparseStat = cusparseDcsr2hyb(evsldata.cusparseH, A->nrows, A->ncols,
+                                  Ahyb->descr, Agpu.a, Agpu.ia, Agpu.ja,
+                                  Ahyb->hyb, -1, CUSPARSE_HYB_PARTITION_AUTO);
+  CHKERR(cusparseStat != CUSPARSE_STATUS_SUCCESS);
+
+  evsl_free_csr_gpu(&Agpu);
+
+  evsldata.Amv->func = matvec_cusparse;
+  evsldata.Amv->data = (void *) Ahyb;
+
+  return 0;
+}
+
+/**
+ * @brief Query CUDA device and set device
+ *
+ * @param[in] set_dev: the device number to set
+ * */
+void evsl_device_query(int set_dev) {
+  int deviceCount, dev;
+  cudaGetDeviceCount(&deviceCount);
+  printf("=========================================\n");
+  if (deviceCount == 0) {
+    printf("There is no device supporting CUDA\n");
+  }
+
+  for (dev = 0; dev < deviceCount; ++dev) {
+    cudaDeviceProp deviceProp;
+    cudaGetDeviceProperties(&deviceProp, dev);
+    if (dev == 0) {
+      if (deviceProp.major == 9999 && deviceProp.minor == 9999)
+        printf("There is no device supporting CUDA.\n");
+      else if (deviceCount == 1)
+        printf("There is 1 device supporting CUDA\n");
+      else
+        printf("There are %d devices supporting CUDA\n", deviceCount);
+    }
+    printf("\nDevice %d: \"%s\"\n", dev, deviceProp.name);
+    printf("  Major revision number:          %d\n",
+           deviceProp.major);
+    printf("  Minor revision number:          %d\n",
+           deviceProp.minor);
+    printf("  Total amount of global memory:  %.2f GB\n",
+           deviceProp.totalGlobalMem/1e9);
+  }
+
+  dev = set_dev;
+  CHKERR(dev < 0 || dev >= deviceCount);
+  cudaSetDevice(dev);
+  cudaDeviceProp deviceProp;
+  cudaGetDeviceProperties(&deviceProp, dev);
+  printf("\nRunning on Device %d: \"%s\"\n", dev, deviceProp.name);
+  printf("=========================================\n");
+}
+
+/**
+ * @brief Get the last CUDA device error
+ * */
+void evsl_last_device_err() {
+  cudaError_t cudaerr = cudaGetLastError();
+  if (cudaerr != cudaSuccess) {
+    printf(" EVSL CUDA error: %s\n",cudaGetErrorString(cudaerr));
+    CHKERR(1);
+  }
+}
+#endif
 

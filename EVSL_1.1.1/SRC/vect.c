@@ -8,6 +8,9 @@
  * @param[out] n vector
  */
 
+/**
+ * Generates a uniform distributed random vector of length n, [-1, 1]
+ */
 void rand_double(int n, double *v) {
   int i;
   double t = ((double) RAND_MAX)/2.0;
@@ -43,6 +46,54 @@ void randn_double(int n, double *v) {
     Z1 = sqrt(-2.0 * log(U1)) * sin(two_pi  * U2);
     v[i] = Z0;
   }
+}
+
+/* https://docs.nvidia.com/cuda/curand/group__HOST.html#group__HOST*/
+
+#define CURAND_METHOD 2 /* 1: generate 32-bit quasirandom numbers, and then convert to double
+                           2: generate uniformly distributed doubles */
+
+#ifdef EVSL_USING_CUDA_GPU
+#if CURAND_METHOD == 1
+__global__ void evsl_rand_double_cudakernel(int n, unsigned int *ui, double *d) {
+   int tid = threadIdx.x + blockIdx.x * blockDim.x;
+   if (tid < n) {
+      const double t = ((double) 0xFFFFFFFF) / 2.0;
+      d[tid] = (ui[tid] - t) / t;
+   }
+}
+#else
+__global__ void evsl_rand_double_cudakernel(int n, double *d) {
+   int tid = threadIdx.x + blockIdx.x * blockDim.x;
+   if (tid < n) {
+      d[tid] = d[tid] * 2.0 - 1.0;
+   }
+}
+#endif
+#endif
+
+/**
+ * Generates a uniform distributed random vector of length n, [-1, 1]
+ * on device
+ */
+void rand_double_device(int n, double *v) {
+#ifdef EVSL_USING_CUDA_GPU
+  int bDim = 512;
+  int gDim = (n + bDim - 1) / bDim;
+#if CURAND_METHOD == 1
+  unsigned int *d_uint = evsl_Malloc_device(n, unsigned int);
+  curandStatus_t curandStatus = curandGenerate(evsldata.curandGen, d_uint, n);
+  CHKERR(CURAND_STATUS_SUCCESS != curandStatus);
+  evsl_rand_double_cudakernel<<<gDim, bDim>>>(n, d_uint, v);
+  evsl_Free_device(d_uint);
+#else
+  curandStatus_t curandStatus = curandGenerateUniformDouble(evsldata.curandGen, v, n);
+  CHKERR(CURAND_STATUS_SUCCESS != curandStatus);
+  evsl_rand_double_cudakernel<<<gDim, bDim>>>(n, v);
+#endif
+#else
+  rand_double(n, v);
+#endif
 }
 
 /**
@@ -176,3 +227,69 @@ void vec_iperm(int n, int *p, double *x, double *y) {
     }
   }
 }
+
+/**
+ * BLAS routines that are performed on device (CUBLAS)
+ * When EVSL is not configured with CUDA, these are just wrappers to BLAS calls
+ */
+double evsl_dnrm2_device(int *n, double *x, int *incr) {
+   double t;
+#ifdef EVSL_USING_CUDA_GPU
+   cublasStatus_t cublasStat = cublasDnrm2(evsldata.cublasH, *n, x, *incr, &t);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   t = evsl_dnrm2(n, x, incr);
+#endif
+   return t;
+}
+
+void evsl_dscal_device(int *n, double *a, double *x, int *incr) {
+#ifdef EVSL_USING_CUDA_GPU
+   cublasStatus_t cublasStat = cublasDscal(evsldata.cublasH, *n, a, x, *incr);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   evsl_dscal(n, a, x, incr);
+#endif
+}
+
+double evsl_ddot_device(int *n, double *x, int *incx, double *y, int *incy) {
+   double t;
+#ifdef EVSL_USING_CUDA_GPU
+   cublasStatus_t cublasStat = cublasDdot(evsldata.cublasH, *n, x, *incx, y, *incy, &t);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   t = evsl_ddot(n, x, incx, y, incy);
+#endif
+   return t;
+}
+
+void evsl_daxpy_device(int *n, double *a, double *x, int *incx, double *y, int *incy) {
+#ifdef EVSL_USING_CUDA_GPU
+   cublasStatus_t cublasStat = cublasDaxpy(evsldata.cublasH, *n, a, x, *incx, y, *incy);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   evsl_daxpy(n, a, x, incx, y, incy);
+#endif
+}
+
+void evsl_dcopy_device(int *n, double *x, int *incx, double *y, int *incy) {
+#ifdef EVSL_USING_CUDA_GPU
+   cublasStatus_t cublasStat = cublasDcopy(evsldata.cublasH, *n, x, *incx, y, *incy);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   evsl_dcopy(n, x, incx, y, incy);
+#endif
+}
+
+void evsl_dgemv_device(const char *trans, int *m, int *n, double *alpha, double *a, int *lda,
+                       double *x, int *incx, double *beta, double *y, int *incy) {
+#ifdef EVSL_USING_CUDA_GPU
+   cublasOperation_t cublas_trans = (*trans == 'T' || *trans == 't') ? CUBLAS_OP_T : CUBLAS_OP_N;
+   cublasStatus_t cublasStat = cublasDgemv(evsldata.cublasH, cublas_trans, *m, *n,
+                                           alpha, a, *lda, x, *incx, beta, y, *incy);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   evsl_dgemv(trans, m, n, alpha, a, lda, x, incx, beta, y, incy);
+#endif
+}
+

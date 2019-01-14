@@ -524,7 +524,7 @@ then
    CUFLAGS+="-O2 -ccbin=$NVCCBIN ${EVSL_CUDA_GENCODE} -dc --x cu"
    CFLAGS="${CUFLAGS} -Xcompiler \"${CXXFLAGS}\""
    LDFLAGS="-ccbin=$NVCCBIN ${EVSL_CUDA_GENCODE} -Xcompiler \"${LDFLAGS}\""
-   LIBS+="-L\${CUDA_HOME}/lib64 -lcudart "
+   LIBS+="-L\${CUDA_HOME}/lib64 -lcudart -lcublas -lcusparse -lcurand"
 fi
 
 dnl *********************************************************************
