@@ -238,17 +238,14 @@ int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv
             outint = (int *) val;
             *outint = atoi(argv[i+1]);
             return 1;
-            /* break; */
           case DOUBLE:
             outdouble = (double *) val;
             *outdouble = atof(argv[i+1]);
             return 1;
-            /* break; */
           case STR:
             outchar = (char *) val;
             sprintf(outchar, "%s", argv[i+1]);
             return 1;
-            /* break; */
           default:
             printf("unknown arg type\n");
         }

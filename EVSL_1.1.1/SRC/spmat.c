@@ -510,3 +510,69 @@ void triuCsr(csrMat *A, csrMat *U) {
   CHKERR(k != nnzu);
 }
 
+
+#ifdef EVSL_USING_CUDA_GPU
+/**
+* @brief matvec for a cusparse HYB matrix, y = A*x.
+* void *data points to hybMat,
+* compatible form with EVSLMatvec (see struct.h)
+*
+* @param[in] x Input vector
+* @param[out] y Output vector
+* @param[in] data HYB matrix
+*/
+void matvec_cusparse(double *x, double *y, void *data) {
+   hybMat *A = (hybMat *) data;
+   const double alpha = 1.0;
+   const double beta = 0.0;
+   cusparseStatus_t cusparseStat =
+      cusparseDhybmv(evsldata.cusparseH, CUSPARSE_OPERATION_NON_TRANSPOSE,
+                     &alpha, A->descr, A->hyb, x, &beta, y);
+}
+
+/**
+* @brief create CSR on GPU and copy from host
+*/
+void evsl_copy_csr_to_gpu(csrMat *Acpu, csrMat *Agpu)
+{
+  int nnzA = Acpu->ia[Acpu->nrows];
+
+  Agpu->owndata = 2;
+  Agpu->nrows = Acpu->nrows;
+  Agpu->ncols = Acpu->ncols;
+
+  Agpu->ia = evsl_Malloc_device(Acpu->nrows + 1, int);
+  Agpu->ja = evsl_Malloc_device(nnzA, int);
+  Agpu->a  = evsl_Malloc_device(nnzA, double);
+
+  cudaMemcpy(Agpu->ia, Acpu->ia, (Acpu->nrows+1)*sizeof(int), cudaMemcpyHostToDevice);
+  cudaMemcpy(Agpu->ja, Acpu->ja, nnzA*sizeof(int),            cudaMemcpyHostToDevice);
+  cudaMemcpy(Agpu->a,  Acpu->a,  nnzA*sizeof(double),         cudaMemcpyHostToDevice);
+}
+
+/**
+* @brief free CSR on GPU
+*/
+void evsl_free_csr_gpu(csrMat *csr)
+{
+  /* if it does not own the data, do nothing */
+  if (!csr->owndata) {
+    return;
+  }
+  evsl_Free_device(csr->ia);
+  evsl_Free_device(csr->ja);
+  evsl_Free_device(csr->a);
+}
+
+/**
+* @brief free HYB on GPU
+*/
+void evsl_free_hybMat(hybMat *hyb) {
+   cusparseStatus_t cusparseStat = cusparseDestroyMatDescr(hyb->descr);
+   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+
+   cusparseStat = cusparseDestroyHybMat(hyb->hyb);
+   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+}
+#endif
+

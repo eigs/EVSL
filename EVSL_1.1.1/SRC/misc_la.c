@@ -211,21 +211,21 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
   char cT = 'T', cN = 'N';
   double done=1.0, dmone=-1.0, dzero=0.0;
 #endif
-  double old_nrm = evsl_dnrm2(&n, v, &one);
+  double old_nrm = evsl_dnrm2_device(&n, v, &one);
   double new_nrm = 0.0;
 
   for (i=0; i<i_max; i++) {
 #if USE_DGEMV
-    evsl_dgemv(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
-    evsl_dgemv(&cN, &n, &k, &dmone, Q, &n, w, &one, &done,  v, &one);
+    evsl_dgemv_device(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
+    evsl_dgemv_device(&cN, &n, &k, &dmone, Q, &n, w, &one, &done,  v, &one);
 #else
     int j;
     for (j=0; j<k; j++) {
-       double t = -evsl_ddot(&n, &Q[j*n], &one, v, &one);
-       evsl_daxpy(&n, &t, &Q[j*n], &one, v, &one);
+       double t = -evsl_ddot_device(&n, &Q[j*n], &one, v, &one);
+       evsl_daxpy_device(&n, &t, &Q[j*n], &one, v, &one);
     }
 #endif
-    new_nrm = evsl_dnrm2(&n, v, &one);
+    new_nrm = evsl_dnrm2_device(&n, v, &one);
     if (new_nrm > eta * old_nrm) {
       break;
     }
@@ -261,13 +261,13 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
 #endif
   for (i=0; i<i_max; i++) {
 #if USE_DGEMV
-    evsl_dgemv(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
-    evsl_dgemv(&cN, &n, &k, &dmone, Z, &n, w, &one, &done,  v, &one);
+    evsl_dgemv_device(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
+    evsl_dgemv_device(&cN, &n, &k, &dmone, Z, &n, w, &one, &done,  v, &one);
 #else
     int j;
     for (j=0; j<k; j++) {
-       double t = -evsl_ddot(&n, &Q[j*n], &one, v, &one);
-       evsl_daxpy(&n, &t, &Z[j*n], &one, v, &one);
+       double t = -evsl_ddot_device(&n, &Q[j*n], &one, v, &one);
+       evsl_daxpy_device(&n, &t, &Z[j*n], &one, v, &one);
     }
 #endif
   }
