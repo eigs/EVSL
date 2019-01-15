@@ -87,7 +87,7 @@ int EVSLFinish() {
 }
 
 /**
- * @brief Set the matrix A
+ * @brief Set the CSR matrix A
  *
  *
  * @param[in] A The matrix to set
@@ -249,6 +249,10 @@ void SetDiagScal(double *ds) {
 }
 
 #ifdef EVSL_USING_CUDA_GPU
+/**
+ * @brief Set the GPU HYB matrix A
+ * @param[in] A The matrix to set
+ * */
 int SetAMatrix_device(hybMat *A) {
   evsldata.n = A->ncols;
   if (!evsldata.Amv) {
@@ -256,6 +260,21 @@ int SetAMatrix_device(hybMat *A) {
   }
   evsldata.Amv->func = matvec_cusparse;
   evsldata.Amv->data = (void *) A;
+
+  return 0;
+}
+
+/**
+ * @brief Set the GPU HYB matrix B
+ * @param[in] B The matrix to set
+ * */
+int SetBMatrix_device(hybMat *B) {
+  evsldata.n = B->ncols;
+  if (!evsldata.Bmv) {
+     evsldata.Bmv = evsl_Calloc(1, EVSLMatvec);
+  }
+  evsldata.Bmv->func = matvec_cusparse;
+  evsldata.Bmv->data = (void *) B;
 
   return 0;
 }

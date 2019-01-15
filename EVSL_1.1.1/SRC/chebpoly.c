@@ -286,7 +286,7 @@ int indexofSmallestElement(double *array, int size){
  * @warning mu must be preallocated
 **/
 int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
-	    double *thcOut){
+            double *thcOut){
   int MaxIterBalan = 30;     // max steps in Newton to balance interval
   double tolBal;
   // do 2 newton steps -- if OK exit otherwise
@@ -318,12 +318,12 @@ int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
    /*-------------------- test for doing a form of bisection */
     if (fval >0){
       if((thN < thb) || (thN > tha))
-	thN = 0.5*(thc+tha);
+         thN = 0.5*(thc+tha);
       thb = thc;
       thc = thN;
     } else {
       if((thN < thb) || (thN > tha) )
-	thN = 0.5*(thc+thb);
+         thN = 0.5*(thc+thb);
       tha = thc;
       thc = thN;
     }

@@ -262,6 +262,7 @@ void SetDiagScal(double *ds);
 #ifdef EVSL_USING_CUDA_GPU
 int evsl_CreateHybMat(csrMat *A, hybMat *hyb);
 int SetAMatrix_device(hybMat *A);
+int SetBMatrix_device(hybMat *B);
 void evsl_device_query(int dev);
 void evsl_last_device_err();
 #endif
@@ -282,6 +283,7 @@ void rand_double(int n, double *v);
 void rand_double_device(int n, double *v);
 // generate a normally distributed random vector
 void randn_double(int n, double *v);
+void randn_double_device(int n, double *v);
 // sort a vector
 void sort_double(int n, double *v, int *ind);
 void linspace(double a, double b, int num, double *arr);
@@ -293,6 +295,8 @@ void evsl_daxpy_device(int *n, double *a, double *x, int *incx, double *y, int *
 void evsl_dcopy_device(int *n, double *x, int *incx, double *y, int *incy);
 void evsl_dgemv_device(const char *trans, int *m, int *n, double *alpha, double *a, int *lda,
                        double *x, int *incx, double *beta, double *y, int *incy);
+void evsl_element_mult_device(int n, double *a, double *b);
+void evsl_element_divide_device(int n, double *a, double *b);
 
 /*- - - - - - - - - stats.c */
 void StatsPrint(FILE *fstats);

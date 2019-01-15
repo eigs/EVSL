@@ -39,7 +39,7 @@ void SetupBPol(int n, int max_deg, double tol, double lmin, double lmax,
   data->intv[1] = lmax;
   data->tol = tol;
   data->mu = evsl_Calloc(max_deg, double);
-  data->wk = evsl_Malloc(3*n, double);
+  data->wk = evsl_Malloc_device(3*n, double);
   /* determine degree and compute poly coeff */
   lsPol(ffun, data);
 }
@@ -81,7 +81,7 @@ void SetupPolSqrt(int n, int max_deg, double tol, double lmin, double lmax,
  * @param[in, out] data struct to free data
  */
 void FreeBSolPolData(BSolDataPol *data) {
-  evsl_Free(data->wk);
+  evsl_Free_device(data->wk);
   evsl_Free(data->mu);
 }
 
@@ -178,8 +178,8 @@ int pnav(double *mu, const int m, const double cc, const double dd, double *v,
     }
 #else
   /* OPTIMIZATION */
-  memcpy( y, v, n * sizeof(double));
-  evsl_dscal(&n, mu, y, &one);
+  evsl_memcpy_device_to_device(y, v, n*sizeof(double));
+  evsl_dscal_device(&n, mu, y, &one);
   /*-------------------- degree loop. k IS the degree */
   for (k = 1; k <= m; k++) {
     double *v_cur = k == 1 ? v : vk;
@@ -187,14 +187,14 @@ int pnav(double *mu, const int m, const double cc, const double dd, double *v,
     double t = k == 1 ? t1 : t2;
 
     matvec_B(v_cur, vkp1);
-    evsl_daxpy(&n, &ncc, v_cur, &one, vkp1, &one);
+    evsl_daxpy_device(&n, &ncc, v_cur, &one, vkp1, &one);
     /*-------------------- y = mu[k]*Vk + y */
-    evsl_dscal(&n, &t, vkp1, &one);
+    evsl_dscal_device(&n, &t, vkp1, &one);
     if (k > 1) {
-      evsl_daxpy(&n, &dmone, v_old, &one, vkp1, &one);
+      evsl_daxpy_device(&n, &dmone, v_old, &one, vkp1, &one);
     }
     /*-------------------- for degree 2 and up: */
-    evsl_daxpy(&n, &mu[k], vkp1, &one, y, &one);
+    evsl_daxpy_device(&n, &mu[k], vkp1, &one, y, &one);
 #endif
     /*-------------------- next: rotate vectors via pointer exchange */
     double *tmp = vkm1;

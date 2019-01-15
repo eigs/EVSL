@@ -32,8 +32,7 @@
  * @return Returns 0 on success
  *
  **/
-int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
-                int bndtype,
+int LanTrbounds(int lanm, int maxit, double tol, double *vinit, int bndtype,
                 double *lammin, double *lammax, FILE *fstats) {
   const int ifGenEv = evsldata.ifGenEv;
   double lmin=0.0, lmax=0.0, t, t1, t2;
@@ -57,7 +56,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   /* char cT='T'; */
   char cN = 'N';
   int one = 1;
-  double done=1.0, dmone=-1.0, dzero=0.0;
+  double done=1.0, dzero=0.0;
   int i;
   /*-----------------------------------------------------------------------*
    * *thick restarted* Lanczos step
@@ -73,11 +72,11 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   int it = 0;
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *T;
-  V = evsl_Malloc(n_l*lanm1, double);
+  V = evsl_Malloc_device(n_l*lanm1, double);
   /*-------------------- for gen eig prob, storage for Z = B * V */
   double *Z;
   if (ifGenEv) {
-    Z = evsl_Malloc(n_l*lanm1, double);
+    Z = evsl_Malloc_device(n_l*lanm1, double);
   } else {
     Z = V;
   }
@@ -89,34 +88,40 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   double *Rval, *Rvec, *BRvec=NULL;
   Rval = evsl_Malloc(lanm, double);
   /*-------------------- Only compute 2 Ritz vectors */
-  Rvec = evsl_Malloc(n_l*2, double);
+  Rvec = evsl_Malloc_device(n_l*2, double);
   if (ifGenEv) {
-    BRvec = evsl_Malloc(n_l*2, double);
+    BRvec = evsl_Malloc_device(n_l*2, double);
   }
   /*-------------------- Eigen vectors of T */
-  double *EvecT;
+  double *EvecT, *EvecT_device;
   EvecT = evsl_Malloc(lanm1_l*lanm1_l, double);
+#if EVSL_USING_CUDA_GPU
+  /* EvecT is on the host. Copy to device to compute Ritz vectors */
+  EvecT_device = evsl_Malloc_device(lanm1_l*lanm1_l, double);
+#else
+  EvecT_device = EvecT;
+#endif
   /*-------------------- s used by TR (the ``spike'' of 1st block in Tm)*/
   double s[3];
   /*-------------------- alloc some work space */
   double *work;
   size_t work_size = 2*n_l;
-  work = evsl_Malloc(work_size, double);
+  work = evsl_Malloc_device(work_size, double);
   /*-------------------- copy initial vector to V(:,1)   */
-  evsl_dcopy(&n, vinit, &one, V, &one);
+  evsl_dcopy_device(&n, vinit, &one, V, &one);
   /*-------------------- normalize it */
   if (ifGenEv) {
     /* B norm */
     matvec_B(V, Z);
-    t = 1.0 / sqrt(evsl_ddot(&n, V, &one, Z, &one));
+    t = 1.0 / sqrt(evsl_ddot_device(&n, V, &one, Z, &one));
     /* z = B*v */
-    evsl_dscal(&n, &t, Z, &one);
+    evsl_dscal_device(&n, &t, Z, &one);
   } else {
     /* 2-norm */
-    t = 1.0 / evsl_dnrm2(&n, V, &one);
+    t = 1.0 / evsl_dnrm2_device(&n, V, &one);
   }
   /* unit B-norm or 2-norm */
-  evsl_dscal(&n, &t, V, &one);
+  evsl_dscal_device(&n, &t, V, &one);
   /*-------------------- main (restarted Lan) outer loop */
   while (it < maxit) {
     /*-------------------- for ortho test */
@@ -150,9 +155,19 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         wn += fabs(Rval[i]);
       }
       /*--------------------- s(k) = V(:,k)'* znew */
-      s[k1] = evsl_ddot(&n, v, &one, znew, &one);
+      s[k1] = evsl_ddot_device(&n, v, &one, znew, &one);
       /*--------------------- znew = znew - Z(:,1:k)*s(1:k) */
+#if EVSL_USING_CUDA_GPU
+      /* the dimension of s is very small <= 3, so do axpy's instead of dgemv to avoid
+       * copy s to device */
+      for (i=0; i<k; i++) {
+         double ns = -s[i];
+         evsl_daxpy_device(&n, &ns, Z+i*n_l, &one, znew, &one);
+      }
+#else
+      double dmone = -1.0;
       evsl_dgemv(&cN, &n, &k, &dmone, Z, &n, s, &one, &done, znew, &one);
+#endif
       /*-------------------- expand T matrix to k-by-k, arrow-head shape
                              T = [T, s(1:k-1)] then T = [T; s(1:k)'] */
       for (i=0; i<k1; i++) {
@@ -166,39 +181,39 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         /*-------------------- vnew = B \ znew */
         solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
-        beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
+        beta = sqrt(evsl_ddot_device(&n, vnew, &one, znew, &one));
       } else {
         /*-------------------- beta = norm(w) */
-        beta = evsl_dnrm2(&n, vnew, &one);
+         beta = evsl_dnrm2_device(&n, vnew, &one);
       }
       wn += 2.0 * beta;
       nwn += 3*k;
       /*   beta ~ 0 */
       if (beta*nwn < orthTol*wn) {
-        rand_double(n, vnew);
+        rand_double_device(n, vnew);
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
           matvec_B(vnew, znew);
-          beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
+          beta = sqrt(evsl_ddot_device(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
-          evsl_dscal(&n, &ibeta, vnew, &one);
-          evsl_dscal(&n, &ibeta, znew, &one);
+          evsl_dscal_device(&n, &ibeta, vnew, &one);
+          evsl_dscal_device(&n, &ibeta, znew, &one);
           beta = 0.0;
         } else {
           /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
           /*   beta = norm(w) */
           CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
           double ibeta = 1.0 / beta;
-          evsl_dscal(&n, &ibeta, vnew, &one);
+          evsl_dscal_device(&n, &ibeta, vnew, &one);
           beta = 0.0;
         }
       } else {
         /*------------------- w = w / beta */
         double ibeta = 1.0 / beta;
-        evsl_dscal(&n, &ibeta, vnew, &one);
+        evsl_dscal_device(&n, &ibeta, vnew, &one);
         if (ifGenEv) {
-          evsl_dscal(&n, &ibeta, znew, &one);
+          evsl_dscal_device(&n, &ibeta, znew, &one);
         }
       }
       /*------------------- T(k+1,k) = beta; T(k,k+1) = beta; */
@@ -227,16 +242,16 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
       /*-------------------- znew = znew - beta*zold */
       if (zold) {
         double nbeta = -beta;
-        evsl_daxpy(&n, &nbeta, zold, &one, znew, &one);
+        evsl_daxpy_device(&n, &nbeta, zold, &one, znew, &one);
       }
       /*-------------------- alpha = znew'*v */
-      double alpha = evsl_ddot(&n, v, &one, znew, &one);
+      double alpha = evsl_ddot_device(&n, v, &one, znew, &one);
       /*-------------------- T(k,k) = alpha */
       T[(k-1)*lanm1_l+(k-1)] = alpha;
       wn += fabs(alpha);
       /*-------------------- znew = znew - alpha*z */
       double nalpha = -alpha;
-      evsl_daxpy(&n, &nalpha, z, &one, znew, &one);
+      evsl_daxpy_device(&n, &nalpha, z, &one, znew, &one);
       /*-------------------- FULL reortho to all previous Lan vectors */
       if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
@@ -244,7 +259,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
         /* vnew = B \ znew */
         solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
-        beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
+        beta = sqrt(evsl_ddot_device(&n, vnew, &one, znew, &one));
       } else {
         /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
         /*   beta = norm(w) */
@@ -260,31 +275,31 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
           fprintf(fstats, "it %4d: Lucky breakdown, beta = %.15e\n", it, beta);
         }
         /* generate a new init vector*/
-        rand_double(n, vnew);
+        rand_double_device(n, vnew);
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
           matvec_B(vnew, znew);
-          beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
+          beta = sqrt(evsl_ddot_device(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
-          evsl_dscal(&n, &ibeta, vnew, &one);
-          evsl_dscal(&n, &ibeta, znew, &one);
+          evsl_dscal_device(&n, &ibeta, vnew, &one);
+          evsl_dscal_device(&n, &ibeta, znew, &one);
           beta = 0.0;
         } else {
           /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
           /*   beta = norm(w) */
           CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
           double ibeta = 1.0 / beta;
-          evsl_dscal(&n, &ibeta, vnew, &one);
+          evsl_dscal_device(&n, &ibeta, vnew, &one);
           beta = 0.0;
         }
       } else {
         /*---------------------- vnew = vnew / beta */
         double ibeta = 1.0 / beta;
-        evsl_dscal(&n, &ibeta, vnew, &one);
+        evsl_dscal_device(&n, &ibeta, vnew, &one);
         if (ifGenEv) {
           /*-------------------- znew = znew / beta */
-          evsl_dscal(&n, &ibeta, znew, &one);
+          evsl_dscal_device(&n, &ibeta, znew, &one);
         }
       }
       /*-------------------- T(k,k+1) = T(k+1,k) = beta */
@@ -295,6 +310,11 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
     /*-------------------- solve eigen-problem for T(1:k,1:k)
                            vals in Rval, vecs in EvecT */
     SymEigenSolver(k, T, lanm1, EvecT, lanm1, Rval);
+
+#if EVSL_USING_CUDA_GPU
+    /* EvecT is on the host. Copy to device to compute Ritz vectors */
+    evsl_memcpy_host_to_device(EvecT_device, EvecT, lanm1_l*lanm1_l*sizeof(double));
+#endif
 
     /*-------------------- Rval is in ascending order */
     /*-------------------- Rval[0] is smallest, Rval[k-1] is largest */
@@ -317,20 +337,22 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
     /*---------------------- Compute two Ritz vectors:
      *                       Rvec(:,1) = V(:,1:k) * EvecT(:,1)
      *                       Rvec(:,end) = V(:,1:k) * EvecT(:,end) */
-    evsl_dgemv(&cN, &n, &k, &done, V, &n, EvecT, &one, &dzero, Rvec, &one);
-    evsl_dgemv(&cN, &n, &k, &done, V, &n, EvecT+(k-1)*lanm1_l, &one, &dzero, Rvec+n, &one);
+    evsl_dgemv_device(&cN, &n, &k, &done, V, &n, EvecT_device, &one, &dzero, Rvec, &one);
+    evsl_dgemv_device(&cN, &n, &k, &done, V, &n, EvecT_device+(k-1)*lanm1_l,
+                      &one, &dzero, Rvec+n, &one);
     if (ifGenEv) {
-      evsl_dgemv(&cN, &n, &k, &done, Z, &n, EvecT, &one, &dzero, BRvec, &one);
-      evsl_dgemv(&cN, &n, &k, &done, Z, &n, EvecT+(k-1)*lanm1_l, &one, &dzero, BRvec+n, &one);
+      evsl_dgemv_device(&cN, &n, &k, &done, Z, &n, EvecT_device, &one, &dzero, BRvec, &one);
+      evsl_dgemv_device(&cN, &n, &k, &done, Z, &n, EvecT_device+(k-1)*lanm1_l,
+                        &one, &dzero, BRvec+n, &one);
     }
     /*---------------------- Copy two Rval and Rvec to TR set */
     trlen = 2;
     for (i=0; i<2; i++) {
       double *y = Rvec + i*n_l;
-      evsl_dcopy(&n, y, &one, V+i*n_l, &one);
+      evsl_dcopy_device(&n, y, &one, V+i*n_l, &one);
       if (ifGenEv) {
         double *By = BRvec + i*n_l;
-        evsl_dcopy(&n, By, &one, Z+i*n_l, &one);
+        evsl_dcopy_device(&n, By, &one, Z+i*n_l, &one);
       }
     }
     Rval[1] = Rval[k-1];
@@ -346,12 +368,12 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
       matvec_A(y, w1);
       if (ifGenEv) {
         matvec_B(y, w2);
-        evsl_daxpy(&n, &nt, w2, &one, w1, &one);
+        evsl_daxpy_device(&n, &nt, w2, &one, w1, &one);
         solve_B(w1, w2);
-        rr[i] = sqrt(evsl_ddot(&n, w1, &one, w2, &one));
+        rr[i] = sqrt(evsl_ddot_device(&n, w1, &one, w2, &one));
       } else {
-        evsl_daxpy(&n, &nt, y, &one, w1, &one);
-        rr[i] = evsl_dnrm2(&n, w1, &one);
+        evsl_daxpy_device(&n, &nt, y, &one, w1, &one);
+        rr[i] = evsl_dnrm2_device(&n, w1, &one);
       }
     }
     if (do_print) {
@@ -371,9 +393,9 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
     /*-------------------- prepare to restart.  First zero out all T */
     memset(T, 0, lanm1_l*lanm1_l*sizeof(double));
     /*-------------------- move starting vector vector V(:,k+1);  V(:,trlen+1) = V(:,k+1) */
-    evsl_dcopy(&n, V+k*n_l, &one, V+trlen*n_l, &one);
+    evsl_dcopy_device(&n, V+k*n_l, &one, V+trlen*n_l, &one);
     if (ifGenEv) {
-      evsl_dcopy(&n, Z+k*n_l, &one, Z+trlen*n_l, &one);
+      evsl_dcopy_device(&n, Z+k*n_l, &one, Z+trlen*n_l, &one);
     }
   } /* outer loop (it) */
 
@@ -381,15 +403,18 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit,
   *lammin = lmin;
   *lammax = lmax;
   /*-------------------- free arrays */
-  evsl_Free(V);
+  evsl_Free_device(V);
   evsl_Free(T);
   evsl_Free(Rval);
   evsl_Free(EvecT);
-  evsl_Free(Rvec);
-  evsl_Free(work);
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_Free_device(EvecT_device);
+#endif
+  evsl_Free_device(Rvec);
+  evsl_Free_device(work);
   if (ifGenEv) {
-    evsl_Free(Z);
-    evsl_Free(BRvec);
+    evsl_Free_device(Z);
+    evsl_Free_device(BRvec);
   }
 
   return 0;
