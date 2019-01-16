@@ -207,7 +207,7 @@ int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a,
                          csrMat *A) {
   int nnz = ia[nrow];
 
-  csr->nnz = nnz;
+  A->nnz = nnz;
   csr_resize(nrow, ncol, nnz, A);
 
   memcpy(A->ia, ia, (nrow+1)*sizeof(int));
