@@ -427,18 +427,6 @@ then
    FFLAGS+="-Wall -Wno-unused-variable -Wno-unused-dummy-argument "
 fi
 
-if test "$evsl_using_cuda" = "yes"
-then
-   AC_SUBST(CUDA_HOME)
-   AC_CHECK_HEADERS(["${CUDA_HOME}/include/cuda.h"], [evsl_found_cuda=yes], [evsl_found_cuda=no])
-   if test "x$evsl_found_cuda" != "xyes"
-   then
-      AC_MSG_WARN([****************************************************])
-      AC_MSG_WARN([unable to find cuda.h. Ensure that CUDA_HOME is set])
-      AC_MSG_WARN([****************************************************])
-   fi
-fi
-
 dnl *********************************************************************
 dnl * set default link
 dnl *********************************************************************
@@ -504,66 +492,18 @@ else
 fi
 
 dnl *********************************************************************
-dnl * Set cuda options
-dnl *********************************************************************
-if test "$evsl_using_cuda" = "yes"
-then
-   AC_DEFINE(EVSL_USING_CUDA_GPU, 1, [CUDA being used])
-   AC_DEFINE(EVSL_USING_DEVICE_MEMORY, 1, [EVSL WITH DEVICE MEMORY])
-   dnl let CC/CXX and LINK be CUCC and let host compiler be CC
-   AC_CHECK_PROGS(CUCC, nvcc)
-   NVCCBIN=${CC}
-   CC=${CUCC}
-   LINK_CC=${CUCC}
-   dnl CUDA SM
-   if test "x$EVSL_CUDA_SM" = "x"
-   then
-      EVSL_CUDA_SM=60
-   fi
-   EVSL_CUDA_GENCODE="-gencode arch=compute_${EVSL_CUDA_SM},\"code=sm_${EVSL_CUDA_SM}\""
-   CUFLAGS+="-O2 -ccbin=$NVCCBIN ${EVSL_CUDA_GENCODE} -dc --x cu"
-   CFLAGS="${CUFLAGS} -Xcompiler \"${CXXFLAGS}\""
-   LDFLAGS="-ccbin=$NVCCBIN ${EVSL_CUDA_GENCODE} -Xcompiler \"${LDFLAGS}\""
-   LIBS+="-L\${CUDA_HOME}/lib64 -lcudart -lcublas -lcusparse -lcurand"
-fi
-
-dnl *********************************************************************
-dnl * Shared libraries
-dnl *********************************************************************
-if test "x$evsl_using_shared_lib" = "xyes"
-then
-   case $HOSTARCH in
-      DARWIN* | darwin* | Darwin*) SHARED_BUILD_FLAG="-dynamiclib -undefined dynamic_lookup"
-                                   EVSL_LIBSUFFIX=".dylib"
-                                   SHARED_SET_SONAME="-install_name @rpath/"
-                                   SHARED_OPTIONS="-undefined error" ;;
-      LINUX* | linux* | Linux*)    SHARED_BUILD_FLAG="-shared"
-                                   EVSL_LIBSUFFIX=".so"
-                                   SHARED_SET_SONAME="-Wl,-soname,"
-                                   SHARED_OPTIONS="-Wl,-z,defs"
-                                   SHARED_COMPILE_FLAG="-fPIC" ;;
-   esac
-   if test "$evsl_using_cuda" = "yes"
-   then
-      SHARED_BUILD_FLAG="${SHARED_BUILD_FLAG} ${EVSL_CUDA_GENCODE}"
-   fi
-   SHARED_BUILD_FLAG="${SHARED_BUILD_FLAG} ${EXTRA_BUILD_FLAGS}"
-   FFLAGS="${FFLAGS} ${SHARED_COMPILE_FLAG}"
-   BUILD_FC_SHARED="${FC} ${SHARED_BUILD_FLAG}"
-   CFLAGS="${CFLAGS} ${SHARED_COMPILE_FLAG} "
-   BUILD_CC_SHARED="${CC} ${SHARED_BUILD_FLAG}"
-else
-   EVSL_LIBSUFFIX=".a"
-fi
-
-dnl *********************************************************************
 dnl * OpenMP
 dnl *********************************************************************
 if test "x$evsl_using_openmp" = "xyes"
 then
    AC_DEFINE(EVSL_USING_OPENMP, 1, [Using OpenMP in EVSL])
    CFLAGS="$CFLAGS -fopenmp "
-   LIBS="$LIBS -fopenmp "
+   if test "$evsl_using_cuda" = "yes"
+   then
+      LIBS="$LIBS -Xcompiler \"-fopenmp\" "
+   else
+      LIBS="$LIBS -fopenmp "
+   fi
 fi
 
 dnl *********************************************************************
@@ -574,6 +514,9 @@ then
    LIBS+="-framework Accelerate "
 fi
 
+dnl *********************************************************************
+dnl * MKL
+dnl *********************************************************************
 if test "x$evsl_using_intel_mkl" = "xyes" || test "x$evsl_using_mkl_pardiso" = "xyes"
 then
    AC_SUBST(MKLROOT)
@@ -617,7 +560,12 @@ then
             then
                LIBS+="-L\${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl "
             else
-               LIBS+="-L\${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl "
+               if test "$evsl_using_cuda" = "yes"
+               then
+                  LIBS+="-L\${MKLROOT}/lib/intel64 -Xlinker \"--no-as-needed\" -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl "
+               else
+                  LIBS+="-L\${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl "
+               fi
             fi
          fi
       else
@@ -643,6 +591,67 @@ then
       LIBS+=" TODO "
       fi
    fi
+fi
+
+dnl *********************************************************************
+dnl * CUDA
+dnl *********************************************************************
+if test "$evsl_using_cuda" = "yes"
+then
+   AC_SUBST(CUDA_HOME)
+   AC_CHECK_HEADERS(["${CUDA_HOME}/include/cuda.h"], [evsl_found_cuda=yes], [evsl_found_cuda=no])
+   if test "x$evsl_found_cuda" != "xyes"
+   then
+      AC_MSG_WARN([****************************************************])
+      AC_MSG_WARN([unable to find cuda.h. Ensure that CUDA_HOME is set])
+      AC_MSG_WARN([****************************************************])
+   fi
+   AC_DEFINE(EVSL_USING_CUDA_GPU, 1, [CUDA being used])
+   AC_DEFINE(EVSL_USING_DEVICE_MEMORY, 1, [EVSL WITH DEVICE MEMORY])
+   dnl let CC/CXX and LINK be CUCC and let host compiler be CC
+   AC_CHECK_PROGS(CUCC, nvcc)
+   NVCCBIN=${CC}
+   CC="${CUCC} -ccbin=$NVCCBIN"
+   LINK_CC="${CUCC} -ccbin=$NVCCBIN"
+   dnl CUDA SM
+   if test "x$EVSL_CUDA_SM" = "x"
+   then
+      EVSL_CUDA_SM=60
+   fi
+   EVSL_CUDA_GENCODE="-gencode arch=compute_${EVSL_CUDA_SM},\"code=sm_${EVSL_CUDA_SM}\""
+   CUFLAGS+="-O2 ${EVSL_CUDA_GENCODE} -dc --x cu"
+   CFLAGS="${CUFLAGS} -Xcompiler \"${CFLAGS}\""
+   LDFLAGS="${EVSL_CUDA_GENCODE} -Xcompiler \"${LDFLAGS}\""
+   LIBS+="-L\${CUDA_HOME}/lib64 -lcudart -lcublas -lcusparse -lcurand "
+fi
+
+dnl *********************************************************************
+dnl * Shared libraries
+dnl *********************************************************************
+if test "x$evsl_using_shared_lib" = "xyes"
+then
+   case $HOSTARCH in
+      DARWIN* | darwin* | Darwin*) SHARED_BUILD_FLAG="-dynamiclib -undefined dynamic_lookup"
+                                   EVSL_LIBSUFFIX=".dylib"
+                                   SHARED_SET_SONAME="-install_name @rpath/"
+                                   SHARED_OPTIONS="-undefined error" ;;
+      LINUX* | linux* | Linux*)    SHARED_BUILD_FLAG="-shared"
+                                   EVSL_LIBSUFFIX=".so"
+                                   SHARED_SET_SONAME="-Wl,-soname,"
+                                   SHARED_OPTIONS="-Wl,-z,defs"
+                                   SHARED_COMPILE_FLAG="-fPIC" ;;
+   esac
+   if test "$evsl_using_cuda" = "yes"
+   then
+      SHARED_BUILD_FLAG="${SHARED_BUILD_FLAG} ${EVSL_CUDA_GENCODE}"
+   fi
+   SHARED_BUILD_FLAG="${SHARED_BUILD_FLAG} ${EXTRA_BUILD_FLAGS}"
+   FFLAGS="${FFLAGS} ${SHARED_COMPILE_FLAG}"
+   BUILD_FC_SHARED="${FC} ${SHARED_BUILD_FLAG}"
+   CFLAGS="${CFLAGS} ${SHARED_COMPILE_FLAG} "
+   BUILD_CC_SHARED="${CC} ${SHARED_BUILD_FLAG}"
+else
+   EVSL_LIBSUFFIX=".a"
 fi
 
 if test "x$evsl_using_evsl_blas" = "xyes"
