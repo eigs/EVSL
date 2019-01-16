@@ -23,6 +23,9 @@
 /*! max number of Gram-Schmidt process in orthogonalization */
 #define NGS_MAX 2
 
+/*! timing level */
+#define EVSL_TIMING_LEVEL 0
+
 /*- - - - - - - - - error handler */
 #define CHKERR(ierr) assert(!(ierr))
 
@@ -86,12 +89,18 @@ void vec_iperm(int n, int *p, double *x, double *y);
 * This is the matvec function for the matrix A in evsldata
 */
 static inline void matvec_A(double *x, double *y) {
+#if EVSL_TIMING_LEVEL > 1
   CHKERR(!evsldata.Amv);
   double tms = evsl_timer();
+#endif
+
   evsldata.Amv->func(x, y, evsldata.Amv->data);
+
+#if EVSL_TIMING_LEVEL > 1
   double tme = evsl_timer();
   evslstat.t_mvA += tme - tms;
   evslstat.n_mvA ++;
+#endif
 }
 
 /**
@@ -99,12 +108,18 @@ static inline void matvec_A(double *x, double *y) {
 * This is the matvec function for the matrix B in evsldata
 */
 static inline void matvec_B(double *x, double *y) {
+#if EVSL_TIMING_LEVEL > 1
   CHKERR(!evsldata.Bmv);
   double tms = evsl_timer();
+#endif
+
   evsldata.Bmv->func(x, y, evsldata.Bmv->data);
+
+#if EVSL_TIMING_LEVEL > 1
   double tme = evsl_timer();
   evslstat.t_mvB += tme - tms;
   evslstat.n_mvB ++;
+#endif
 }
 
 /**
@@ -112,12 +127,18 @@ static inline void matvec_B(double *x, double *y) {
 * This is the solve function for the matrix B in evsldata
 */
 static inline void solve_B(double *x, double *y) {
+#if EVSL_TIMING_LEVEL > 1
   CHKERR(!evsldata.Bsol);
   double tms = evsl_timer();
+#endif
+
   evsldata.Bsol->func(x, y, evsldata.Bsol->data);
+
+#if EVSL_TIMING_LEVEL > 1
   double tme = evsl_timer();
   evslstat.t_svB += tme - tms;
   evslstat.n_svB ++;
+#endif
 }
 
 /**
@@ -125,12 +146,18 @@ static inline void solve_B(double *x, double *y) {
 * This is the solve function for the matrix B in evsldata
 */
 static inline void solve_LT(double *x, double *y) {
+#if EVSL_TIMING_LEVEL > 1
   CHKERR(!evsldata.LTsol);
   double tms = evsl_timer();
+#endif
+
   evsldata.LTsol->func(x, y, evsldata.LTsol->data);
+
+#if EVSL_TIMING_LEVEL > 1
   double tme = evsl_timer();
   evslstat.t_svLT += tme - tms;
   evslstat.n_svLT ++;
+#endif
 }
 
 /**
@@ -140,11 +167,17 @@ static inline void solve_LT(double *x, double *y) {
 static inline void solve_ASigB(EVSLASIGMABSol *sol, int n,
                                double *br, double *bz,
                                double *xr, double *xz) {
+#if EVSL_TIMING_LEVEL > 1
   double tms = evsl_timer();
+#endif
+
   (sol->func)(n, br, bz, xr, xz, sol->data);
+
+#if EVSL_TIMING_LEVEL > 1
   double tme = evsl_timer();
   evslstat.t_svASigB+= tme - tms;
   evslstat.n_svASigB ++;
+#endif
 }
 
 /**

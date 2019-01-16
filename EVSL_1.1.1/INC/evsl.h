@@ -233,9 +233,11 @@ int speye(int n, csrMat *A);
 /* extract upper triangular part of A */
 void triuCsr(csrMat *A, csrMat *U);
 #ifdef EVSL_USING_CUDA_GPU
-void matvec_cusparse(double *x, double *y, void *data);
-void evsl_copy_csr_to_gpu(csrMat *Acpu, csrMat *Agpu);
+void matvec_cusparse_csr(double *x, double *y, void *data);
+void evsl_create_csr_gpu(csrMat *Acpu, csrMat *Agpu);
 void evsl_free_csr_gpu(csrMat *csr);
+void matvec_cusparse_hyb(double *x, double *y, void *data);
+int evsl_create_hybMat(csrMat *A, hybMat *hyb);
 void evsl_free_hybMat(hybMat *hyb);
 #endif
 
@@ -260,9 +262,10 @@ int EVSLStart();
 int EVSLFinish();
 void SetDiagScal(double *ds);
 #ifdef EVSL_USING_CUDA_GPU
-int evsl_CreateHybMat(csrMat *A, hybMat *hyb);
-int SetAMatrix_device(hybMat *A);
-int SetBMatrix_device(hybMat *B);
+int SetAMatrix_device_hyb(hybMat *A);
+int SetBMatrix_device_hyb(hybMat *B);
+int SetAMatrix_device_csr(csrMat *A);
+int SetBMatrix_device_csr(csrMat *B);
 void evsl_device_query(int dev);
 void evsl_last_device_err();
 #endif

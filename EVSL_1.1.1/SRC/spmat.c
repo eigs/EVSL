@@ -135,6 +135,7 @@ void csr_copy(csrMat *A, csrMat *B, int allocB) {
     B->nrows = nrows;
     B->ncols = ncols;
   }
+  B->nnz = A->nnz;
   memcpy(B->ia, A->ia, (nrows+1)*sizeof(int));;
   memcpy(B->ja, A->ja, nnz*sizeof(int));
   memcpy(B->a,  A->a,  nnz*sizeof(double));
@@ -158,6 +159,7 @@ void free_coo(cooMat *coo) {
  */
 int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
   const int nnz = coo->nnz;
+  csr->nnz = nnz;
   //printf("@@@@ coo2csr, nnz %d\n", nnz);
   /* allocate memory */
   csr_resize(coo->nrows, coo->ncols, nnz, csr);
@@ -205,6 +207,7 @@ int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a,
                          csrMat *A) {
   int nnz = ia[nrow];
 
+  csr->nnz = nnz;
   csr_resize(nrow, ncol, nnz, A);
 
   memcpy(A->ia, ia, (nrow+1)*sizeof(int));
@@ -407,6 +410,7 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
     }
     C->ia[i+1] = k;
   }
+  C->nnz = k;
   C->ja = evsl_Realloc(C->ja, k, int);
   C->a = evsl_Realloc(C->a, k, double);
   return 0;
@@ -423,6 +427,7 @@ int speye(int n, csrMat *A) {
     A->a[i] = 1.0;
   }
   A->ia[n] = n;
+  A->nnz = n;
   return 0;
 }
 
@@ -513,33 +518,43 @@ void triuCsr(csrMat *A, csrMat *U) {
 
 #ifdef EVSL_USING_CUDA_GPU
 /**
-* @brief matvec for a cusparse HYB matrix, y = A*x.
-* void *data points to hybMat,
+* @brief matvec for a cusparse CSR matrix, y = A*x.
+* void *data points to csrMat,
 * compatible form with EVSLMatvec (see struct.h)
 *
 * @param[in] x Input vector
 * @param[out] y Output vector
-* @param[in] data HYB matrix
+* @param[in] data CSR matrix
 */
-void matvec_cusparse(double *x, double *y, void *data) {
-   hybMat *A = (hybMat *) data;
+void matvec_cusparse_csr(double *x, double *y, void *data) {
+   csrMat *A = (csrMat *) data;
    const double alpha = 1.0;
    const double beta = 0.0;
    cusparseStatus_t cusparseStat =
-      cusparseDhybmv(evsldata.cusparseH, CUSPARSE_OPERATION_NON_TRANSPOSE,
-                     &alpha, A->descr, A->hyb, x, &beta, y);
+      cusparseDcsrmv(evsldata.cusparseH, CUSPARSE_OPERATION_NON_TRANSPOSE,
+                     A->nrows, A->ncols, A->nnz,
+                     &alpha, A->descr, A->a, A->ia, A->ja, x, &beta, y);
+
+   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
 }
 
 /**
 * @brief create CSR on GPU and copy from host
 */
-void evsl_copy_csr_to_gpu(csrMat *Acpu, csrMat *Agpu)
+void evsl_create_csr_gpu(csrMat *Acpu, csrMat *Agpu)
 {
   int nnzA = Acpu->ia[Acpu->nrows];
 
   Agpu->owndata = 2;
   Agpu->nrows = Acpu->nrows;
   Agpu->ncols = Acpu->ncols;
+  Agpu->nnz   = Acpu->ia[Acpu->nrows];
+
+  cusparseStatus_t cusparseStat = cusparseCreateMatDescr(&Agpu->descr);
+  CHKERR(cusparseStat != CUSPARSE_STATUS_SUCCESS);
+
+  cusparseSetMatIndexBase(Agpu->descr, CUSPARSE_INDEX_BASE_ZERO);
+  cusparseSetMatType(Agpu->descr, CUSPARSE_MATRIX_TYPE_GENERAL);
 
   Agpu->ia = evsl_Malloc_device(Acpu->nrows + 1, int);
   Agpu->ja = evsl_Malloc_device(nnzA, int);
@@ -562,6 +577,77 @@ void evsl_free_csr_gpu(csrMat *csr)
   evsl_Free_device(csr->ia);
   evsl_Free_device(csr->ja);
   evsl_Free_device(csr->a);
+
+  cusparseStatus_t cusparseStat = cusparseDestroyMatDescr(csr->descr);
+  CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+}
+
+/*
+   if (CUSPARSE_STATUS_SUCCESS != cusparseStat) {
+      if (cusparseStat == CUSPARSE_STATUS_NOT_INITIALIZED) printf("err 1\n");
+      if (cusparseStat == CUSPARSE_STATUS_ALLOC_FAILED) printf("err 2\n");
+      if (cusparseStat == CUSPARSE_STATUS_INVALID_VALUE) printf("err 3\n");
+      if (cusparseStat == CUSPARSE_STATUS_ARCH_MISMATCH) printf("err 4\n");
+      if (cusparseStat == CUSPARSE_STATUS_MAPPING_ERROR) printf("err 5\n");
+      if (cusparseStat == CUSPARSE_STATUS_EXECUTION_FAILED) printf("err 6\n");
+      if (cusparseStat == CUSPARSE_STATUS_INTERNAL_ERROR) printf("err 7\n");
+      if (cusparseStat == CUSPARSE_STATUS_MATRIX_TYPE_NOT_SUPPORTED) printf("err 8\n");
+   }
+*/
+
+/**
+* @brief matvec for a cusparse HYB matrix, y = A*x.
+* void *data points to hybMat,
+* compatible form with EVSLMatvec (see struct.h)
+*
+* @param[in] x Input vector
+* @param[out] y Output vector
+* @param[in] data HYB matrix
+*/
+void matvec_cusparse_hyb(double *x, double *y, void *data) {
+   hybMat *A = (hybMat *) data;
+   const double alpha = 1.0;
+   const double beta = 0.0;
+   cusparseStatus_t cusparseStat =
+      cusparseDhybmv(evsldata.cusparseH, CUSPARSE_OPERATION_NON_TRANSPOSE,
+                     &alpha, A->descr, A->hyb, x, &beta, y);
+
+   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+}
+
+/**
+ * @brief create HYB matrix A on GPU
+ *
+ * @param[in] A The CSR matrix to set [on host].
+ * A cusparse HYB matrix will be generated
+ * */
+int evsl_create_hybMat(csrMat *A, hybMat *Ahyb) {
+
+  Ahyb->nrows = A->nrows;
+  Ahyb->ncols = A->ncols;
+
+  cusparseStatus_t cusparseStat = cusparseCreateMatDescr(&Ahyb->descr);
+  CHKERR(cusparseStat != CUSPARSE_STATUS_SUCCESS);
+
+  cusparseSetMatIndexBase(Ahyb->descr, CUSPARSE_INDEX_BASE_ZERO);
+  cusparseSetMatType(Ahyb->descr, CUSPARSE_MATRIX_TYPE_GENERAL);
+
+  cusparseStat = cusparseCreateHybMat(&Ahyb->hyb);
+  CHKERR(cusparseStat != CUSPARSE_STATUS_SUCCESS);
+
+  /* CSR on GPU */
+  csrMat Agpu;
+  evsl_create_csr_gpu(A, &Agpu);
+
+  /* convert to hyb */
+  cusparseStat = cusparseDcsr2hyb(evsldata.cusparseH, A->nrows, A->ncols,
+                                  Ahyb->descr, Agpu.a, Agpu.ia, Agpu.ja,
+                                  Ahyb->hyb, -1, CUSPARSE_HYB_PARTITION_AUTO);
+  CHKERR(cusparseStat != CUSPARSE_STATUS_SUCCESS);
+
+  evsl_free_csr_gpu(&Agpu);
+
+  return 0;
 }
 
 /**

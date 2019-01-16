@@ -250,15 +250,45 @@ void SetDiagScal(double *ds) {
 
 #ifdef EVSL_USING_CUDA_GPU
 /**
- * @brief Set the GPU HYB matrix A
+ * @brief Set the GPU CSR matrix A
  * @param[in] A The matrix to set
  * */
-int SetAMatrix_device(hybMat *A) {
+int SetAMatrix_device_csr(csrMat *A) {
   evsldata.n = A->ncols;
   if (!evsldata.Amv) {
      evsldata.Amv = evsl_Calloc(1, EVSLMatvec);
   }
-  evsldata.Amv->func = matvec_cusparse;
+  evsldata.Amv->func = matvec_cusparse_csr;
+  evsldata.Amv->data = (void *) A;
+
+  return 0;
+}
+
+/**
+ * @brief Set the GPU CSR matrix B
+ * @param[in] B The matrix to set
+ * */
+int SetBMatrix_device_csr(csrMat *B) {
+  evsldata.n = B->ncols;
+  if (!evsldata.Bmv) {
+     evsldata.Bmv = evsl_Calloc(1, EVSLMatvec);
+  }
+  evsldata.Bmv->func = matvec_cusparse_csr;
+  evsldata.Bmv->data = (void *) B;
+
+  return 0;
+}
+
+/**
+ * @brief Set the GPU HYB matrix A
+ * @param[in] A The matrix to set
+ * */
+int SetAMatrix_device_hyb(hybMat *A) {
+  evsldata.n = A->ncols;
+  if (!evsldata.Amv) {
+     evsldata.Amv = evsl_Calloc(1, EVSLMatvec);
+  }
+  evsldata.Amv->func = matvec_cusparse_hyb;
   evsldata.Amv->data = (void *) A;
 
   return 0;
@@ -268,48 +298,13 @@ int SetAMatrix_device(hybMat *A) {
  * @brief Set the GPU HYB matrix B
  * @param[in] B The matrix to set
  * */
-int SetBMatrix_device(hybMat *B) {
+int SetBMatrix_device_hyb(hybMat *B) {
   evsldata.n = B->ncols;
   if (!evsldata.Bmv) {
      evsldata.Bmv = evsl_Calloc(1, EVSLMatvec);
   }
-  evsldata.Bmv->func = matvec_cusparse;
+  evsldata.Bmv->func = matvec_cusparse_hyb;
   evsldata.Bmv->data = (void *) B;
-
-  return 0;
-}
-
-/**
- * @brief create HYB matrix A on GPU
- *
- * @param[in] A The CSR matrix to set [on host].
- * A cusparse HYB matrix will be generated
- * */
-int evsl_CreateHybMat(csrMat *A, hybMat *Ahyb) {
-
-  Ahyb->nrows = A->nrows;
-  Ahyb->ncols = A->ncols;
-
-  cusparseStatus_t cusparseStat = cusparseCreateMatDescr(&Ahyb->descr);
-  CHKERR(cusparseStat != CUSPARSE_STATUS_SUCCESS);
-
-  cusparseStat = cusparseCreateHybMat(&Ahyb->hyb);
-  CHKERR(cusparseStat != CUSPARSE_STATUS_SUCCESS);
-
-  cusparseSetMatIndexBase(Ahyb->descr, CUSPARSE_INDEX_BASE_ZERO);
-  cusparseSetMatType(Ahyb->descr, CUSPARSE_MATRIX_TYPE_GENERAL);
-
-  /* CSR on GPU */
-  csrMat Agpu;
-  evsl_copy_csr_to_gpu(A, &Agpu);
-
-  /* convert to hyb */
-  cusparseStat = cusparseDcsr2hyb(evsldata.cusparseH, A->nrows, A->ncols,
-                                  Ahyb->descr, Agpu.a, Agpu.ia, Agpu.ja,
-                                  Ahyb->hyb, -1, CUSPARSE_HYB_PARTITION_AUTO);
-  CHKERR(cusparseStat != CUSPARSE_STATUS_SUCCESS);
-
-  evsl_free_csr_gpu(&Agpu);
 
   return 0;
 }

@@ -28,11 +28,16 @@ typedef struct _cooMat {
  */
 typedef struct _csrMat {
   int owndata, /**< if owns (ia, ja, a) */
+      /* on_dev, */  /**< NOT IN USE: RESERVED FOR LATER if (ia, ja, a) are device ptr */
       nrows,   /**< number of rows */
       ncols,   /**< number of columns */
+      nnz,     /**< number of non-zeros */
       *ia,     /**< row pointers (of size nrows+1) */
       *ja;     /**< column indices (of size nnz) */
   double *a;   /**< numeric values (of size nnz) */
+#ifdef EVSL_USING_CUDA_GPU
+  cusparseMatDescr_t descr; /**< matrix descriptor for cusparse */
+#endif
 } csrMat;
 
 #ifdef EVSL_USING_CUDA_GPU

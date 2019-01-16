@@ -32,7 +32,9 @@
 
 int SymmTridEig(double *eigVal, double *eigVec, int n,
                 const double *diag, const double *sdiag) {
+#if EVSL_TIMING_LEVEL > 0
   double tms = evsl_timer();
+#endif
   // compute eigenvalues and eigenvectors or eigvalues only
   char jobz = eigVec ? 'V' : 'N';
   int nn = n;
@@ -62,9 +64,11 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
     save_vec(n-1, sdiag, "bet");
     exit(0);
   }
+#if EVSL_TIMING_LEVEL > 0
   double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
-  // return info
+#endif
+
   return info;
 }
 
@@ -90,7 +94,10 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
  * ----------------------------------------------------------------------- */
 int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
                  int *nevO, const double *diag, const double *sdiag) {
+#if EVSL_TIMING_LEVEL > 0
   double tms = evsl_timer();
+#endif
+
   char jobz = 'V';  // compute eigenvalues and eigenvectors
   char range = 'V'; // compute eigenvalues in an interval
 
@@ -141,9 +148,11 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   evsl_Free(iwork);
   evsl_Free(isuppz);
 
+#if EVSL_TIMING_LEVEL > 0
   double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
-  //
+#endif
+
   return info;
 }
 
@@ -158,7 +167,10 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
  *     @param[out] lam Eigenvalues
  *- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) {
+#if EVSL_TIMING_LEVEL > 0
   double tms = evsl_timer();
+#endif
+
   /* compute eigenvalues/vectors of A that n x n, symmetric
    * eigenvalues saved in lam: the eigenvalues in ascending order
    * eigenvectors saved in Q */
@@ -189,8 +201,11 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
     exit(0);
   }
   evsl_Free(work);
+
+#if EVSL_TIMING_LEVEL > 0
   double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
+#endif
 }
 
 /**
@@ -204,7 +219,10 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
  * @param[out] w Output
  **/
 void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, double *w) {
+#if EVSL_TIMING_LEVEL > 0
   double tms = evsl_timer();
+#endif
+
   double eta = 1.0 / sqrt(2.0);
   int i, one=1;
 #if USE_DGEMV
@@ -235,8 +253,11 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
   if (nrmv) {
     *nrmv = new_nrm;
   }
+
+#if EVSL_TIMING_LEVEL > 0
   double tme = evsl_timer();
   evslstat.t_reorth += tme - tms;
+#endif
 }
 
 /**
@@ -253,7 +274,10 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
  **/
 void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
                double *v, double *w) {
+#if EVSL_TIMING_LEVEL > 0
   double tms = evsl_timer();
+#endif
+
   int i, one=1;
 #if USE_DGEMV
   char cT = 'T', cN = 'N';
@@ -271,8 +295,11 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
     }
 #endif
   }
+
+#if EVSL_TIMING_LEVEL > 0
   double tme = evsl_timer();
   evslstat.t_reorth += tme - tms;
+#endif
 }
 
 //  max number of reorthogonalizations

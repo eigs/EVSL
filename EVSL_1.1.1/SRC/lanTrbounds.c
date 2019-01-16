@@ -95,7 +95,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit, int bndtype,
   /*-------------------- Eigen vectors of T */
   double *EvecT, *EvecT_device;
   EvecT = evsl_Malloc(lanm1_l*lanm1_l, double);
-#if EVSL_USING_CUDA_GPU
+#ifdef EVSL_USING_CUDA_GPU
   /* EvecT is on the host. Copy to device to compute Ritz vectors */
   EvecT_device = evsl_Malloc_device(lanm1_l*lanm1_l, double);
 #else
@@ -157,7 +157,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit, int bndtype,
       /*--------------------- s(k) = V(:,k)'* znew */
       s[k1] = evsl_ddot_device(&n, v, &one, znew, &one);
       /*--------------------- znew = znew - Z(:,1:k)*s(1:k) */
-#if EVSL_USING_CUDA_GPU
+#ifdef EVSL_USING_CUDA_GPU
       /* the dimension of s is very small <= 3, so do axpy's instead of dgemv to avoid
        * copy s to device */
       for (i=0; i<k; i++) {
@@ -311,7 +311,7 @@ int LanTrbounds(int lanm, int maxit, double tol, double *vinit, int bndtype,
                            vals in Rval, vecs in EvecT */
     SymEigenSolver(k, T, lanm1, EvecT, lanm1, Rval);
 
-#if EVSL_USING_CUDA_GPU
+#ifdef EVSL_USING_CUDA_GPU
     /* EvecT is on the host. Copy to device to compute Ritz vectors */
     evsl_memcpy_host_to_device(EvecT_device, EvecT, lanm1_l*lanm1_l*sizeof(double));
 #endif

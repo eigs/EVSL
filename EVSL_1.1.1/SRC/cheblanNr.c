@@ -58,7 +58,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
               polparams *pol, int *nevOut, double **lamo, double **Wo,
               double **reso, FILE *fstats) {
   //-------------------- to report timings/
-  double tall, tm1 = 0.0, tt;
+  double tall;
   tall = evsl_timer();
   const int ifGenEv = evsldata.ifGenEv;
   double tr0, tr1;
@@ -318,7 +318,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   EvecT = evsl_Malloc(kdim_l*kdim_l, double); // Eigen vectors of T
   SymmTridEig(EvalT, EvecT, kdim, dT, eT);
 
-#if EVSL_USING_CUDA_GPU
+#ifdef EVSL_USING_CUDA_GPU
   /* EvecT is on the host. Copy to device to compute Ritz vectors */
   EvecT_device = evsl_Malloc_device(kdim_l*kdim_l, double);
   evsl_memcpy_host_to_device(EvecT_device, EvecT, kdim_l*kdim_l*sizeof(double));
@@ -326,12 +326,14 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   EvecT_device = EvecT;
 #endif
 
-  tt = evsl_timer();
+#if EVSL_TIMING_LEVEL > 0
+  double tt = evsl_timer();
+#endif
   /*-------------------- done == compute Ritz vectors */
   Rvec = evsl_Malloc_device(nconv*n_l, double);       // holds computed Ritz vectors
 
   nev = 0;
-  for (i=0; i<count; i++) {
+  for (i = 0; i < count; i++) {
     flami = EvalT[i];
     //-------------------- reject eigenvalue if rho(lam)<bar
     if (flami < bar) {
@@ -395,7 +397,9 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
       nev++;
     }
   }
-  tm1 = evsl_timer() - tt;
+#if EVSL_TIMING_LEVEL > 0
+  tt = evsl_timer() - tt;
+#endif
 
   /*-------------------- Done.  output : */
   *nevOut = nev;
@@ -422,7 +426,9 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   tall = evsl_timer() - tall;
 
   evslstat.t_iter = tall;
-  evslstat.t_ritz = tm1;
+#if EVSL_TIMING_LEVEL > 0
+  evslstat.t_ritz = tt;
+#endif
 
   return 0;
 }

@@ -498,6 +498,20 @@ void free_pol(polparams *pol) {
   }
 }
 
+#ifdef EVSL_USING_CUDA_GPU
+/* vkp1[i] = t*(vkp1[i]-cc*vk[i]) - vkm1[i]; y[i] += s*vkp1[i]; */
+__global__ void evsl_chebAv_kernel(int n, int k, double t, double s, double cc, double *vkp1, double *vk,
+                                   double *vkm1, double *y) {
+   int tid = threadIdx.x + blockIdx.x * blockDim.x;
+   if (tid < n) {
+      double zi = k > 1 ? vkm1[tid] : 0.0;
+      double wi = t*(vkp1[tid] - cc*vk[tid]) - zi;
+      vkp1[tid] = wi;
+      y[tid] += s * wi;
+   }
+}
+#endif
+
 /**
  * @brief @b Computes y=P(A) v, where pn is a Cheb. polynomial expansion
  *
@@ -515,17 +529,17 @@ void free_pol(polparams *pol) {
  * @param[in, out] v is untouched
  **/
 int ChebAv(polparams *pol, double *v, double *y, double *w) {
+#if EVSL_TIMING_LEVEL > 0
   double tt = evsl_timer();
+#endif
   const int ifGenEv = evsldata.ifGenEv;
   int n = evsldata.n;
   /*-------------------- unpack pol */
   double *mu = pol->mu;
   double dd = pol->dd;
   double cc = pol->cc;
-  double ncc = -cc;
   int m = pol->deg;
   int one = 1;
-  double dmone = -1.0;
   /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   double *vk   = w;
   double *vkp1 = w+n;
@@ -565,14 +579,29 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
       y[i] += s*vkp1[i];
     }
     */
+#if EVSL_TIMING_LEVEL > 1
     double ts = evsl_timer();
+#endif
+
+#ifdef EVSL_USING_CUDA_GPU
+    const int bDim = 512;
+    int gDim = (n + bDim - 1) / bDim;
+    /* fuse 3 blas-1 into 1 kernel */
+    evsl_chebAv_kernel<<<gDim, bDim>>>(n, k, t, s, cc, vkp1, vk, vkm1, y);
+#else
+    double ncc = -cc;
+    double dmone = -1.0;
     evsl_daxpy_device(&n, &ncc, vk, &one, vkp1, &one);
     evsl_dscal_device(&n, &t, vkp1, &one);
     if (k > 1) {
       evsl_daxpy_device(&n, &dmone, vkm1, &one, vkp1, &one);
     }
     evsl_daxpy_device(&n, &s, vkp1, &one, y, &one);
+#endif
+
+#if EVSL_TIMING_LEVEL > 1
     evslstat.t_sth += evsl_timer() - ts;
+#endif
 
     /*-------------------- next: rotate vectors via pointer exchange */
     tmp = vkm1;
@@ -580,8 +609,11 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
     vk = vkp1;
     vkp1 = tmp;
   }
+
+#if EVSL_TIMING_LEVEL > 0
   evslstat.n_polAv ++;
   evslstat.t_polAv += evsl_timer() - tt;
+#endif
 
   return 0;
 }

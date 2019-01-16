@@ -48,6 +48,7 @@ int time_seeder() {
 #elif __linux__
 
 /* for Linux */
+#include <sys/time.h>
 #include <time.h>
 /**
  * @brief cheblan timer
@@ -61,6 +62,12 @@ double evsl_timer() {
 #endif
   clock_gettime (CLOCK_MONOTONIC /*CLOCK_PROCESS_CPUTIME_ID*/, &t) ;
   return ((double) (t.tv_sec) + 1e-9 * (double) (t.tv_nsec));
+  /*
+  struct timeval tim;
+  gettimeofday(&tim, NULL);
+  double t = tim.tv_sec + tim.tv_usec/1e6;
+  return(t);
+  */
 }
 
 /**

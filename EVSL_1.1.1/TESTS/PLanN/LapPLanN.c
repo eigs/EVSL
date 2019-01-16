@@ -95,13 +95,16 @@ int main(int argc, char *argv[]) {
   /*-------------------- define landos parameters */
   Mdeg = 300;
   nvec = 60;
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_device_query(0);
+#endif
   /*-------------------- start EVSL */
   EVSLStart();
 #ifdef EVSL_USING_CUDA_GPU
-  evsl_device_query(0);
-  hybMat Ahyb;
-  evsl_CreateHybMat(&Acsr, &Ahyb);
-  SetAMatrix_device(&Ahyb);
+  /*-------------------- set matrix A (csr on GPU) */
+  csrMat Acsr_gpu;
+  evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+  SetAMatrix_device_csr(&Acsr_gpu);
 #else
   /*-------------------- set matrix A */
   SetAMatrix(&Acsr);
@@ -270,7 +273,7 @@ int main(int argc, char *argv[]) {
   free_coo(&Acoo);
   free_csr(&Acsr);
 #ifdef EVSL_USING_CUDA_GPU
-  evsl_free_hybMat(&Ahyb);
+  evsl_free_csr_gpu(&Acsr_gpu);
 #endif
   evsl_Free(mu);
   fclose(fstats);

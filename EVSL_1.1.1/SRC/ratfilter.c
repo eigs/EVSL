@@ -441,7 +441,9 @@ void free_rat(ratparams *rat) {
  *
  */
 void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
+#if EVSL_TIMING_LEVEL > 0
   double tt = evsl_timer();
+#endif
   const int ifGenEv = evsldata.ifGenEv;
   int jj, kk, k=0, kf;
   int *mulp = rat->mulp;
@@ -507,7 +509,9 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
     k = kf;
   }
 
+#if EVSL_TIMING_LEVEL > 0
   evslstat.n_ratAv ++;
   evslstat.t_ratAv += evsl_timer() - tt;
+#endif
 }
 
