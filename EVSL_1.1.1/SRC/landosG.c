@@ -174,7 +174,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
       nwn += 3;
       /*-------------------- lucky breakdown test */
       if (beta * nwn < orthTol * wn) {
-        rand_double(n, vnew);
+        randn_double_device(n, vnew);
         if (ifGenEv) {
           /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
           CGS_DGKS2(n, k + 1, NGS_MAX, V, Z, vnew, wk);

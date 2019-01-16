@@ -55,7 +55,7 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
   //-------------------- Variables that persist through iterations
   double *v, *y;  // v=Vector for current iteration; y Stores y values
   int *ind;
-  v = evsl_Malloc(n, double);
+  v = evsl_Malloc_device(n, double);
   y = evsl_Calloc(npts, double);
   ind = evsl_Malloc(npts, int);
   /*-------------------- for tridiag. eigenvalue problem + lanczos
@@ -83,17 +83,17 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
 
   alp = evsl_Malloc(msteps, double);
   bet = evsl_Malloc(msteps, double);
-  V = evsl_Malloc((msteps + 1) * n_l, double);
+  V = evsl_Malloc_device((msteps + 1) * n_l, double);
   //-------------------- Lanczos loop for this vector
   for (m = 0; m < nvec; m++) {
-    randn_double(n, v);  // w = randn(size(A,1),1);
+    randn_double_device(n, v);  // w = randn(size(A,1),1);
     //--------------------Start of bulk of lanbound.c code
-    t = evsl_ddot(&n, v, &one, v, &one);
+    t = evsl_ddot_device(&n, v, &one, v, &one);
     //-------------------- normalize vector
     //                     v = can also  use DNRM2 instead.
     t = 1.0 / sqrt(t);
-    evsl_dscal(&n, &t, v, &one);
-    evsl_dcopy(&n, v, &one, V, &one);
+    evsl_dscal_device(&n, &t, v, &one);
+    evsl_dcopy_device(&n, v, &one, V, &one);
     double wn = 0.0;
     /*-------------------- main Lanczos loop */
     for (j = 0; j < msteps; j++) {
@@ -102,24 +102,23 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
       // w = w - bet * vold
       if (j) {
         nbet = -bet[j - 1];
-        evsl_daxpy(&n, &nbet, &V[(j - 1) * n_l], &one, &V[(j + 1) * n_l], &one);
+        evsl_daxpy_device(&n, &nbet, &V[(j - 1) * n_l], &one, &V[(j + 1) * n_l], &one);
       }
       /*-------------------- alp = w' * v */
-      alp[j] = evsl_ddot(&n, &V[(j + 1) * n_l], &one, &V[j * n_l], &one);
+      alp[j] = evsl_ddot_device(&n, &V[(j + 1) * n_l], &one, &V[j * n_l], &one);
       wn += alp[j] * alp[j];
       //-------------------- w = w - alp * v
       nalp = -alp[j];
-      evsl_daxpy(&n, &nalp, &V[j * n_l], &one, &V[(j + 1) * n_l], &one);
+      evsl_daxpy_device(&n, &nalp, &V[j * n_l], &one, &V[(j + 1) * n_l], &one);
       //-------------------- full reortho
       for (i = 0; i <= j; i++) {
-        t = evsl_ddot(&n, &V[(j + 1) * n_l], &one, &V[i * n_l], &one);
+        t = evsl_ddot_device(&n, &V[(j + 1) * n_l], &one, &V[i * n_l], &one);
         double mt = -t;
-        evsl_daxpy(&n, &mt, &V[i * n_l], &one, &V[(j + 1) * n_l], &one);
+        evsl_daxpy_device(&n, &mt, &V[i * n_l], &one, &V[(j + 1) * n_l], &one);
       }
-      bet[j] = evsl_ddot(&n, &V[(j + 1) * n_l], &one, &V[(j + 1) * n_l], &one);
+      bet[j] = evsl_ddot_device(&n, &V[(j + 1) * n_l], &one, &V[(j + 1) * n_l], &one);
       if (bet[j] * (j + 1) < orthTol * wn) {
-        fprintf(stdout, "lanbounds: lucky break, j=%d, beta=%e, break\n", j,
-                bet[j]);
+        fprintf(stdout, "lanbounds: lucky break, j=%d, beta=%e, break\n", j, bet[j]);
         msteps = j + 1;
         break;
       }
@@ -127,20 +126,20 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
         wn += 2.0 * bet[j];
         bet[j] = sqrt(bet[j]);
         t = 1.0 / bet[j];
-        evsl_dscal(&n, &t, &V[(j + 1) * n_l], &one);
+        evsl_dscal_device(&n, &t, &V[(j + 1) * n_l], &one);
       } else {  // Otherwise generate a new vector and redo the previous
                 // calculations on it
-        randn_double(n, v);  // w = randn(size(A,1),1);
+        randn_double_device(n, v);  // w = randn(size(A,1),1);
         for (i = 0; i <= j; i++) {
-          t = evsl_ddot(&n, &V[(j + 1) * n_l], &one, &V[i * n_l], &one);
+          t = evsl_ddot_device(&n, &V[(j + 1) * n_l], &one, &V[i * n_l], &one);
           double mt = -t;
-          evsl_daxpy(&n, &mt, &V[i * n_l], &one, &V[(j + 1) * n_l], &one);
+          evsl_daxpy_device(&n, &mt, &V[i * n_l], &one, &V[(j + 1) * n_l], &one);
         }
-        bet[j] = evsl_ddot(&n, &V[(j + 1) * n_l], &one, &V[(j + 1) * n_l], &one);
+        bet[j] = evsl_ddot_device(&n, &V[(j + 1) * n_l], &one, &V[(j + 1) * n_l], &one);
         wn += 2.0 * bet[j];
         bet[j] = sqrt(bet[j]);
         t = 1.0 / bet[j];
-        evsl_dscal(&n, &t, &V[(j + 1) * n_l], &one);
+        evsl_dscal_device(&n, &t, &V[(j + 1) * n_l], &one);
         bet[j] = 0;
       }
     }
@@ -187,9 +186,9 @@ int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
 
   evsl_Free(alp);
   evsl_Free(bet);
-  evsl_Free(V);
+  evsl_Free_device(V);
 
-  evsl_Free(v);
+  evsl_Free_device(v);
   evsl_Free(y);
   evsl_Free(ind);
 
