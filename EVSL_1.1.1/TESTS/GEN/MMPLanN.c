@@ -27,7 +27,8 @@ int main() {
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
 #ifdef EVSL_USING_CUDA_GPU
-  hybMat Ahyb, Bhyb;
+  csrMat Acsr_gpu;
+  csrMat Bcsr_gpu;
 #endif
   /* slicer parameters */
   int msteps = 40;
@@ -142,8 +143,8 @@ int main() {
       SetBSol(BSolDirect, Bsol);
       SetLTSol(LTSolDirect, Bsol);
 #ifdef EVSL_USING_CUDA_GPU
-      evsl_CreateHybMat(&Acsr, &Ahyb);
-      evsl_CreateHybMat(&Bcsr, &Bhyb);
+      evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+      evsl_create_csr_gpu(&Bcsr, &Bcsr_gpu);
 #endif
     } else {
       if (DiagScalB) {
@@ -164,15 +165,15 @@ int main() {
 #endif
       }
 #ifdef EVSL_USING_CUDA_GPU
-      evsl_CreateHybMat(&Acsr, &Ahyb);
-      evsl_CreateHybMat(&Bcsr, &Bhyb);
+      evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+      evsl_create_csr_gpu(&Bcsr, &Bcsr_gpu);
 #endif
       /*-------------------- use polynomial approx. to B^{-1} and B^{-1/2}
        *                     B is assumbed to be ``well-conditioned'' */
       /* compute eig bounds for B, set to std eig prob for now */
       SetStdEig();
 #ifdef EVSL_USING_CUDA_GPU
-      SetAMatrix_device(&Bhyb);
+      SetAMatrix_device_csr(&Bcsr_gpu);
 #else
       SetAMatrix(&Bcsr);
 #endif
@@ -189,9 +190,9 @@ int main() {
     }
 #ifdef EVSL_USING_CUDA_GPU
     /*-------------------- set the left-hand side matrix A */
-    SetAMatrix_device(&Ahyb);
+    SetAMatrix_device_csr(&Acsr_gpu);
     /*-------------------- set the right-hand side matrix B */
-    SetBMatrix_device(&Bhyb);
+    SetBMatrix_device_csr(&Bcsr_gpu);
 #else
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
@@ -341,8 +342,8 @@ int main() {
     free_coo(&Bcoo);
     free_csr(&Bcsr);
 #ifdef EVSL_USING_CUDA_GPU
-    evsl_free_hybMat(&Ahyb);
-    evsl_free_hybMat(&Bhyb);
+    evsl_free_csr_gpu(&Acsr_gpu);
+    evsl_free_csr_gpu(&Bcsr_gpu);
 #endif
     evsl_Free(alleigs);
     evsl_Free(counts);

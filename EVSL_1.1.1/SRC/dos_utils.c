@@ -123,6 +123,20 @@ int apfun(const double c, const double h, const double *const xi,
   return 0;
 }
 
+#ifdef EVSL_USING_CUDA_GPU
+/* vkp1[i] = t*(vkp1[i]-cc*vk[i]) - vkm1[i]; y[i] += s*vkp1[i]; */
+__global__ void evsl_pnav_kernel(int n, int k, double t, double s, double cc, double *vkp1, double *v_cur,
+                                 double *v_old, double *y) {
+   int tid = threadIdx.x + blockIdx.x * blockDim.x;
+   if (tid < n) {
+      double zi = k > 1 ? v_old[tid] : 0.0;
+      double wi = t*(vkp1[tid] - cc*v_cur[tid]) - zi;
+      vkp1[tid] = wi;
+      y[tid] += s * wi;
+   }
+}
+#endif
+
 /**
  * Computes y=P(A) v, where pn is a Cheb. polynomial expansion
  *
@@ -151,8 +165,6 @@ int pnav(double *mu, const int m, const double cc, const double dd, double *v,
   int k, one=1;
   double t1 = 1.0 / dd;
   double t2 = 2.0 / dd;
-  double ncc = -cc;
-  double dmone = -1.0;
   /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
 #if 0
   /* LEAVE HERE IT FOR REFERENCE */
@@ -187,14 +199,24 @@ int pnav(double *mu, const int m, const double cc, const double dd, double *v,
     double t = k == 1 ? t1 : t2;
 
     matvec_B(v_cur, vkp1);
+
+#ifdef EVSL_USING_CUDA_GPU
+    const int bDim = 512;
+    int gDim = (n + bDim - 1) / bDim;
+    /* fuse 3 blas-1 into 1 kernel */
+    evsl_pnav_kernel<<<gDim, bDim>>>(n, k, t, mu[k], cc, vkp1, v_cur, v_old, y);
+#else
+    double ncc = -cc;
+    double dmone = -1.0;
     evsl_daxpy_device(&n, &ncc, v_cur, &one, vkp1, &one);
-    /*-------------------- y = mu[k]*Vk + y */
     evsl_dscal_device(&n, &t, vkp1, &one);
+    /*-------------------- for degree 2 and up: */
     if (k > 1) {
       evsl_daxpy_device(&n, &dmone, v_old, &one, vkp1, &one);
     }
-    /*-------------------- for degree 2 and up: */
+    /*-------------------- y = mu[k]*Vk + y */
     evsl_daxpy_device(&n, &mu[k], vkp1, &one, y, &one);
+#endif
 #endif
     /*-------------------- next: rotate vectors via pointer exchange */
     double *tmp = vkm1;

@@ -24,7 +24,7 @@
 #define NGS_MAX 2
 
 /*! timing level */
-#define EVSL_TIMING_LEVEL 0
+#define EVSL_TIMING_LEVEL 1
 
 /*- - - - - - - - - error handler */
 #define CHKERR(ierr) assert(!(ierr))
