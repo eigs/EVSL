@@ -613,6 +613,7 @@ then
    NVCCBIN=${CC}
    CC="${CUCC} -ccbin=$NVCCBIN"
    LINK_CC="${CUCC} -ccbin=$NVCCBIN"
+   LINK_FC="${CUCC}"
    dnl CUDA SM
    if test "x$EVSL_CUDA_SM" = "x"
    then

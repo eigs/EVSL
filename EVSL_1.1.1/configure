@@ -5676,6 +5676,7 @@ done
    NVCCBIN=${CC}
    CC="${CUCC} -ccbin=$NVCCBIN"
    LINK_CC="${CUCC} -ccbin=$NVCCBIN"
+   LINK_FC="${CUCC}"
       if test "x$EVSL_CUDA_SM" = "x"
    then
       EVSL_CUDA_SM=60

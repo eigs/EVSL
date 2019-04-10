@@ -435,8 +435,9 @@ int find_pol(double *intv, polparams *pol) {
     chext(pol,aa,bb);
   } else {
     /*-------------------- give a starting degree - around 1/(half gap) */
-    min_deg = 2 + (int) 0.5/(bb-aa);
-    // min_deg = evsl_max(min_deg,2);
+    min_deg = 2 + 0.5/(bb-aa);
+    min_deg = evsl_max(min_deg, 2);
+    min_deg = evsl_min(min_deg, (max_deg+1)/2);
     // min_deg = 2;
     thresh = pol->thresh_int;
     //-------------------- this is a short-circuit for the
@@ -481,6 +482,7 @@ int find_pol(double *intv, polparams *pol) {
     pol->gam = gam;
     pol->deg = mbest;
   }
+  /* printf("min_deg %d, max_deg %d, deg %d\n", min_deg, max_deg, mbest); */
   //save_vec(pol->deg+1, mu, "OUT/mu.mtx");
   evsl_Free(v);
   evsl_Free(jac);

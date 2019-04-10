@@ -11,6 +11,9 @@ OBJ_CSR = csr_module.o
 
 LIB = -L${EVSL_BUILD_DIR}/lib -levsl
 LIB_EXT = $(LIBDIRECTSOL) $(LIBLAPACK_DIR) $(LIBLAPACK) $(LIBBLAS_DIR) $(LIBBLAS) $(LIBS_DIR) $(LIBS)
+ifeq ($(FC),gfortran)
+   LIB_EXT += -lgfortran
+endif
 
 all: LapPLanN.ex LapPLanR.ex LapPLanN_MatFree.ex LapRLanN.ex LapRLanR.ex
 

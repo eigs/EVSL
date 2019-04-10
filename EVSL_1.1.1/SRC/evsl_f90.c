@@ -61,7 +61,16 @@ void EVSLFORT(evsl_arr2csr,EVSL_ARR2CSR)(int *n, int *ia, int *ja,
   csr->ia = ia;
   csr->ja = ja;
   csr->a = a;
+#ifdef EVSL_USING_CUDA_GPU
+  csrMat *csr_gpu;
+  csr_gpu = evsl_Malloc(1, csrMat);
+  evsl_create_csr_gpu(csr, csr_gpu);
+  free_csr(csr);
+  evsl_Free(csr);
+  *csrf90 = (uintptr_t) csr_gpu;
+#else
   *csrf90 = (uintptr_t) csr;
+#endif
 }
 
 /** @brief Fortran interface to free a CSR matrix
@@ -69,7 +78,11 @@ void EVSLFORT(evsl_arr2csr,EVSL_ARR2CSR)(int *n, int *ia, int *ja,
  */
 void EVSLFORT(evsl_free_csr,EVSL_FREE_CSR)(uintptr_t *csrf90) {
   csrMat *csr = (csrMat *) (*csrf90);
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_free_csr_gpu(csr);
+#else
   free_csr(csr);
+#endif
   evsl_Free(csr);
 }
 
@@ -78,7 +91,11 @@ void EVSLFORT(evsl_free_csr,EVSL_FREE_CSR)(uintptr_t *csrf90) {
  */
 void EVSLFORT(evsl_seta_csr,EVSL_SETA_CSR)(uintptr_t *Af90) {
   csrMat *A = (csrMat *) (*Af90);
+#ifdef EVSL_USING_CUDA_GPU
+  SetAMatrix_device_csr(A);
+#else
   SetAMatrix(A);
+#endif
 }
 
 /** @brief Fortran interface to set matrix B from a CSR matrix
@@ -308,8 +325,8 @@ void EVSLFORT(evsl_cheblannr,EVSL_CHEBLANNR)(double *xintv, int *max_its, double
   double *vinit;
 
   n = evsldata.n;
-  vinit = evsl_Malloc(n, double);
-  rand_double(n, vinit);
+  vinit = evsl_Malloc_device(n, double);
+  rand_double_device(n, vinit);
 
   /* cast pointer */
   polparams *pol = (polparams *) (*polf90);
@@ -321,7 +338,7 @@ void EVSLFORT(evsl_cheblannr,EVSL_CHEBLANNR)(double *xintv, int *max_its, double
     printf("ChebLanNr error %d\n", ierr);
   }
 
-  evsl_Free(vinit);
+  evsl_Free_device(vinit);
   if (res) {
     evsl_Free(res);
   }
@@ -413,12 +430,17 @@ void EVSLFORT(evsl_get_nev,EVSL_GET_NEV)(int *nev) {
  */
 void EVSLFORT(evsl_copy_result,EVSL_COPY_RESULT)(double *val, double *vec) {
   memcpy(val, evsl_eigval_computed, evsl_nev_computed*sizeof(double));
+#ifdef EVSL_USING_CUDA_GPU
+  cudaMemcpy(vec, evsl_eigvec_computed, evsl_nev_computed*evsl_n*sizeof(double),
+             cudaMemcpyDeviceToHost);
+#else
   memcpy(vec, evsl_eigvec_computed, evsl_nev_computed*evsl_n*sizeof(double));
+#endif
   /* reset global variables */
   evsl_nev_computed = 0;
   evsl_n = 0;
   evsl_Free(evsl_eigval_computed);
-  evsl_Free(evsl_eigvec_computed);
+  evsl_Free_device(evsl_eigvec_computed);
   evsl_eigval_computed = NULL;
   evsl_eigvec_computed = NULL;
 }
