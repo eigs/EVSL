@@ -45,21 +45,20 @@ For questions/feedback send e-mail to Yousef Saad [saad@umn.edu]
 -----------------------------------------------------------------------
 
 An article describing EVSL is available from
-[arXiv](https://arxiv.org/abs/1802.05215), which 
+[SIAM Journal on Scientific Computing](https://epubs.siam.org/doi/abs/10.1137/18M1170935), which 
 can be cited as follows [bibtex entry] 
 ```
-@article{LiEigenvaluesSlicingLibrary2018a,
-  archivePrefix = {arXiv},
-  eprinttype = {arxiv},
-  eprint = {1802.05215},
-  primaryClass = {math},
-  title = {The {{Eigenvalues Slicing Library}} ({{EVSL}}): {{Algorithms}}, {{Implementation}}, and {{Software}}},
-  url = {http://arxiv.org/abs/1802.05215},
-  shorttitle = {The {{Eigenvalues Slicing Library}} ({{EVSL}})},
-  date = {2018-02-14},
-  keywords = {Mathematics - Numerical Analysis},
-  author = {Li, Ruipeng and Xi, Yuanzhe and Erlandson, Lucas and Saad, Yousef},
-}
+@article{doi:10.1137/18M1170935,
+author = {Li, R. and Xi, Y. and Erlandson, L. and Saad, Y.},
+title = {The Eigenvalues Slicing Library (EVSL): Algorithms, Implementation, and Software},
+journal = {SIAM Journal on Scientific Computing},
+volume = {41},
+number = {4},
+pages = {C393-C415},
+year = {2019},
+doi = {10.1137/18M1170935},
+URL = {https://doi.org/10.1137/18M1170935},
+eprint = {https://doi.org/10.1137/18M1170935}}
 ```
 
 A detailed documentation of the code can be found in the `Documentation'
