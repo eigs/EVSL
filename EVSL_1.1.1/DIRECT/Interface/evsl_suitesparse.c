@@ -112,7 +112,7 @@ cholmod_dense cholmod_X, cholmod_B, *cholmod_Y=NULL, *cholmod_E=NULL,
 /** @brief Solver function of B
  *
  * */
-void BSolDirect(double *b, double *x, void *data) {
+void BSolDirect(const double *b, double *x, void *data) {
   //int n;
 
   BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
@@ -212,7 +212,7 @@ void FreeBSolDirectData(void *vdata) {
 /** @brief Solver function of L^{T}
  *  x = L^{-T}*b
  * */
-void LTSolDirect(double *b, double *x, void *data) {
+void LTSolDirect(const double *b, double *x, void *data) {
   //int n;
 
   BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
@@ -246,7 +246,7 @@ void LTSolDirect(double *b, double *x, void *data) {
  * @warning: This function MUST be of this prototype
  *
  *------------------------------------------------------------------*/
-void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
+void ASIGMABSolDirect(int n, const double *br, const double *bi, double *xr,
                       double *xz, void *data) {
   void* Numeric = data;
   double Control[UMFPACK_CONTROL];

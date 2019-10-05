@@ -15,13 +15,13 @@
 
 /* functions for B solve */
 int  SetupBSolDirect(csrMat *B, void **data);
-void BSolDirect(double *b, double *x, void *data);
-void LTSolDirect(double *b, double *x, void *data);
+void BSolDirect(const double *b, double *x, void *data);
+void LTSolDirect(const double *b, double *x, void *data);
 void FreeBSolDirectData(void *data);
 
 /* functions for A-SIGMA*B solve */
 int  SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num, EVSL_Complex *zk, void **data);
-void ASIGMABSolDirect(int n, double *br, double *bi, double *xr, double *xz, void *data);
+void ASIGMABSolDirect(int n, const double *br, const double *bi, double *xr, double *xz, void *data);
 void FreeASIGMABSolDirect(int num, void **data);
 
 /* evsl_direct_f90.c */

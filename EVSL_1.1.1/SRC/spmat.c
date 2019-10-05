@@ -123,7 +123,7 @@ void free_csr(csrMat *csr) {
  *  @param[out] B Destination matrix
  *  @param[in] allocB Whether or not to allocate B
  */
-void csr_copy(csrMat *A, csrMat *B, int allocB) {
+void csr_copy(const csrMat *A, csrMat *B, int allocB) {
   int nrows = A->nrows;
   int ncols = A->ncols;
   int nnz = A->ia[nrows];
@@ -156,7 +156,7 @@ void free_coo(cooMat *coo) {
  * @param[in] coo COO matrix
  * @param[out] csr CSR matrix
  */
-int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
+int cooMat_to_csrMat(int cooidx, const cooMat *coo, csrMat *csr) {
   const int nnz = coo->nnz;
   //printf("@@@@ coo2csr, nnz %d\n", nnz);
   /* allocate memory */
@@ -201,7 +201,7 @@ int cooMat_to_csrMat(int cooidx, cooMat *coo, csrMat *csr) {
  * @param[in] a Values
  * @param[out] A output CSR matrix
  */
-int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a,
+int arrays_copyto_csrMat(int nrow, int ncol, const int *ia, const int *ja, const double *a,
                          csrMat *A) {
   int nnz = ia[nrow];
 
@@ -251,8 +251,8 @@ double dcsrinfnrm(csrMat *A){
  * @param[in] x Input vector
  * @param[out] y Output vector
  */
-void dcsrmv(char trans, int nrow, int ncol, double *a,
-    int *ia, int *ja, double *x, double *y) {
+void dcsrmv(char trans, int nrow, int ncol, const double *a,
+    const int *ia, const int *ja, const double *x, double *y) {
   int  len, jj=nrow;
   if (trans == 'N') {
     //#pragma omp parallel for schedule(guided)
@@ -303,7 +303,7 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
 * @param[out] y Output vector
 * @param[in] data CSR matrix
 */
-void matvec_csr(double *x, double *y, void *data) {
+void matvec_csr(const double *x, double *y, void *data) {
   csrMat *A = (csrMat *) data;
 #ifdef EVSL_USING_INTEL_MKL
   char cN = 'N';
@@ -322,7 +322,7 @@ void matvec_csr(double *x, double *y, void *data) {
 /** @brief inline function used by matadd
  * insert an element pointed by j of A (times t) to location k in C (row i)
  * */
-inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k,
+inline void matadd_insert(double t, const csrMat *A, csrMat *C, int i, int *k,
                           int *j, int *map) {
   /* if this entry already exists in C:
    * checking if it is the first entry of this row
@@ -363,7 +363,7 @@ inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k,
  * entry in C.ja and C.a for entry in A.ja[i] and A.a[i]
  * @param[out] mapB the same as mapA
  * */
-int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C,
+int matadd(double alp, double bet, const csrMat *A, const csrMat *B, csrMat *C,
            int *mapA, int *mapB) {
   int nnzA, nnzB, i, jA, jB, k;
   /* check dimension */
@@ -432,7 +432,7 @@ int speye(int n, csrMat *A) {
  * @param[in,out] A Coo Matrix to scale
  * @param[in] d The vector that contains d(i)
  */
-void diagScalCoo(cooMat *A, double *d) {
+void diagScalCoo(cooMat *A, const double *d) {
   int i, row, col, nnz = A->nnz;
   /* diagonal scaling for A */
   for (i=0; i<nnz; i++) {
@@ -448,7 +448,7 @@ void diagScalCoo(cooMat *A, double *d) {
  * @param[in,out] A CSR Matrix to scale
  * @param[in] d The vector that contains d(i)
  */
-void diagScalCsr(csrMat *A, double *d) {
+void diagScalCsr(csrMat *A, const double *d) {
   int i, j;
   /* diagonal scaling for A */
   for (i=0; i<A->nrows; i++) {
@@ -464,7 +464,7 @@ void diagScalCsr(csrMat *A, double *d) {
  * @param[in]  B Matrix to extract the diagonal
  * @param[out] d preallocated vector of lengeth B.nrows
  */
-void extrDiagCsr(csrMat *B, double *d) {
+void extrDiagCsr(const csrMat *B, double *d) {
   int i, j, nrows = B->nrows;
   for (i=0; i<nrows; i++) {
     d[i] = 0.0;
@@ -482,7 +482,7 @@ void extrDiagCsr(csrMat *B, double *d) {
  * @param[in]  A Matrix
  * @param[out] U Matrix
  */
-void triuCsr(csrMat *A, csrMat *U) {
+void triuCsr(const csrMat *A, csrMat *U) {
   EVSL_Int i, j;
   EVSL_Unsigned k = 0, nnzu = 0;
 

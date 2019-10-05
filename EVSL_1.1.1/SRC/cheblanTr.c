@@ -56,8 +56,8 @@
  * @warning memory allocation for W/vals/resW within this function
  *
  **/
-int ChebLanTr(int lanm, int nev, double *intv, int maxit,
-              double tol, double *vinit, polparams *pol, int *nev2,
+int ChebLanTr(int lanm, int nev, const double *intv, int maxit,
+              double tol, const double *vinit, const polparams *pol, int *nev2,
               double **vals, double **W, double **resW, FILE *fstats) {
   const int ifGenEv = evsldata.ifGenEv;
   /*-------------------- for stats */
@@ -71,31 +71,33 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     do_print = 0;
   }
   /* size of the matrix */
-  int n = evsldata.n;
-  size_t n_l = n;
+  const int n = evsldata.n;
+  const size_t n_l = n;
   /*--------------------- adjust lanm and maxit */
   lanm = evsl_min(lanm, n);
-  int lanm1=lanm+1;
-  size_t lanm1_l = lanm1;
+  const int lanm1=lanm+1;
+  const size_t lanm1_l = lanm1;
   /*  if use full lanczos, should not do more than n iterations */
   if (lanm == n) {
     maxit = evsl_min(maxit, n);
   }
   /*-------------------- this is needed to increment the space when we
                          discover more than nev eigenvalues in interval */
-  double nevInc = 0.2;   /* add 1  + 20% each time it is needed */
+  const double nevInc = 0.2;   /* add 1  + 20% each time it is needed */
   /*-------------------- if we have at least nev/ev_frac good candidate
                          eigenvalues from p(A) == then we restart to lock them in */
   //int evFrac = 2;
   /*--------------------   some constants frequently used */
   /* char cT='T'; */
-  char cN = 'N';
-  int one = 1;
-  double done=1.0, dmone=-1.0, dzero=0.0;
+  const char cN = 'N';
+  const int one = 1;
+  const double done=1.0;
+  const double dmone=-1.0;
+  const double dzero=0.0;
   /*-------------------- Ntest = when to start testing convergence */
   int Ntest = evsl_min(lanm, nev+50);
   /*--------------------   how often to test */
-  int cycle = 50;
+  const int cycle = 50;
   int i, ll, /* count, last_count,*/ jl, last_jl;
   /*-----------------------------------------------------------------------
     -----------------------------------------------------------------------*/
@@ -105,13 +107,14 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     *vals = NULL; *W = NULL; *resW = NULL;
     return 0;
   }
-  double aa = intv[0];
-  double bb = intv[1];
+  const double aa = intv[0];
+  const double bb = intv[1];
   /*-------------------- Assumption: polynomial pol computed before calling cheblanTr
                          pol.  approximates the delta function centered at 'gamB'
                          bar: a bar value to threshold Ritz values of p(A) */
   //int deg = pol->deg;
-  double gamB=pol->gam, bar=pol->bar;
+  const double gamB=pol->gam;
+  const double bar=pol->bar;
   /*-------------------- gamB must be within [-1, 1] */
   if (gamB > 1.0 || gamB < -1.0) {
     if (fstats) {
@@ -347,7 +350,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       }
       /*-------------------- znew = znew - beta*zold */
       if (zold) {
-        double nbeta = -beta;
+        const double nbeta = -beta;
         evsl_daxpy(&n, &nbeta, zold, &one, znew, &one);
       }
       /*-------------------- alpha = znew'*v */
@@ -356,7 +359,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       T[(k-1)*lanm1_l+(k-1)] = alpha;
       wn += fabs(alpha);
       /*-------------------- znew = znew - alpha*z */
-      double nalpha = -alpha;
+      const double nalpha = -alpha;
       evsl_daxpy(&n, &nalpha, z, &one, znew, &one);
       /*-------------------- FULL reortho to all previous Lan vectors */
       if (ifGenEv) {
@@ -395,7 +398,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
           matvec_B(vnew, znew);
           beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
-          double ibeta = 1.0 / beta;
+          const double ibeta = 1.0 / beta;
           evsl_dscal(&n, &ibeta, vnew, &one);
           evsl_dscal(&n, &ibeta, znew, &one);
           beta = 0.0;
@@ -405,13 +408,13 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
           /*   beta = norm(w) */
           CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
-          double ibeta = 1.0 / beta;
+          const double ibeta = 1.0 / beta;
           evsl_dscal(&n, &ibeta, vnew, &one);
           beta = 0.0;
         }
       } else {
         /*---------------------- vnew = vnew / beta */
-        double ibeta = 1.0 / beta;
+        const double ibeta = 1.0 / beta;
         evsl_dscal(&n, &ibeta, vnew, &one);
         if (ifGenEv) {
           /*-------------------- znew = znew / beta */
@@ -422,7 +425,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       T[k*lanm1_l+(k-1)] = beta;
       T[(k-1)*lanm1_l+k] = beta;
       /*---------------------- Restarting test */
-      int k1 = k-trlen-Ntest;
+      const int k1 = k-trlen-Ntest;
       if ( ((k1>=0) && (k1 % cycle == 0)) || (k == lanm) || it == maxit) {
         /*-------------------- solve eigen-problem for T(1:k,1:k)
                                vals in Rval, vecs in EvecT */

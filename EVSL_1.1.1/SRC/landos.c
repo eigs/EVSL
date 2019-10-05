@@ -34,8 +34,8 @@
  *
  *----------------------------------------------------------------------*/
 
-int LanDos(const int nvec, int msteps, int npts, double *xdos, double *ydos,
-           double *neig, const double *const intv) {
+int LanDos(int nvec, int msteps, int npts, double *xdos, double *ydos,
+           double *neig, const double *intv) {
   //--------------------
   const int ifGenEv = evsldata.ifGenEv;
   if (ifGenEv) {

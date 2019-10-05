@@ -34,9 +34,9 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
                 const double *diag, const double *sdiag) {
   double tms = evsl_timer();
   // compute eigenvalues and eigenvectors or eigvalues only
-  char jobz = eigVec ? 'V' : 'N';
-  int nn = n;
-  int ldz = n;
+  const char jobz = eigVec ? 'V' : 'N';
+  const int nn = n;
+  const int ldz = n;
   int info;  // output flag
   // copy diagonal and subdiagonal elements to alp and bet
   double *alp = eigVal;
@@ -90,9 +90,9 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
  * ----------------------------------------------------------------------- */
 int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
                  int *nevO, const double *diag, const double *sdiag) {
-  double tms = evsl_timer();
-  char jobz = 'V';  // compute eigenvalues and eigenvectors
-  char range = 'V'; // compute eigenvalues in an interval
+  const double tms = evsl_timer();
+  const char jobz = 'V';  // compute eigenvalues and eigenvectors
+  const char range = 'V'; // compute eigenvalues in an interval
 
   // this does not use mwlapack for mex files
   int info;
@@ -102,11 +102,11 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   isuppz = evsl_Malloc(2*n, int);
   //-------------------- real work array
   double *work;
-  int lwork = 18*n;
+  const int lwork = 18*n;
   work = evsl_Malloc(lwork, double);
   //-------------------- int work array
   int *iwork;
-  int liwork = 10*n;
+  const int liwork = 10*n;
   iwork = evsl_Calloc(liwork, int);
   //-------------------- copy diagonal + subdiagonal elements
   //                     to alp and bet
@@ -157,13 +157,13 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
  *     @param[in] ldq Leading dimension q
  *     @param[out] lam Eigenvalues
  *- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) {
+void SymEigenSolver(int n, const double *A, int lda, double *Q, int ldq, double *lam) {
   double tms = evsl_timer();
   /* compute eigenvalues/vectors of A that n x n, symmetric
    * eigenvalues saved in lam: the eigenvalues in ascending order
    * eigenvectors saved in Q */
-  char jobz='V';/* want eigenvectors */
-  char uplo='U';/* use upper triangular part of the matrix */
+  const char jobz='V';/* want eigenvectors */
+  const char uplo='U';/* use upper triangular part of the matrix */
   /*   copy A to Q */
   int i,j;
   for (i=0; i<n; i++) {
@@ -203,9 +203,9 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
  * @param[out] v Output
  * @param[out] w Output
  **/
-void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, double *w) {
-  double tms = evsl_timer();
-  double eta = 1.0 / sqrt(2.0);
+void CGS_DGKS(int n, int k, int i_max, const double *Q, double *v, double *nrmv, double *w) {
+  const double tms = evsl_timer();
+  const double eta = 1.0 / sqrt(2.0);
   int i, one=1;
 #if USE_DGEMV
   char cT = 'T', cN = 'N';
@@ -221,7 +221,7 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
 #else
     int j;
     for (j=0; j<k; j++) {
-       double t = -evsl_ddot(&n, &Q[j*n], &one, v, &one);
+       const double t = -evsl_ddot(&n, &Q[j*n], &one, v, &one);
        evsl_daxpy(&n, &t, &Q[j*n], &one, v, &one);
     }
 #endif
@@ -235,7 +235,7 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
   if (nrmv) {
     *nrmv = new_nrm;
   }
-  double tme = evsl_timer();
+  const double tme = evsl_timer();
   evslstat.t_reorth += tme - tms;
 }
 
@@ -251,13 +251,17 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
  * @param[out] v Output
  * @param[out] w Output
  **/
-void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
+void CGS_DGKS2(int n, int k, int i_max, const double *Z, const double *Q,
                double *v, double *w) {
-  double tms = evsl_timer();
-  int i, one=1;
+  const double tms = evsl_timer();
+  int i;
+  const int one=1;
 #if USE_DGEMV
-  char cT = 'T', cN = 'N';
-  double done=1.0, dmone=-1.0, dzero=0.0;
+  const char cT = 'T';
+  const char cN = 'N';
+  const double done=1.0;
+  const double dmone=-1.0;
+  const double dzero=0.0;
 #endif
   for (i=0; i<i_max; i++) {
 #if USE_DGEMV
@@ -266,12 +270,12 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
 #else
     int j;
     for (j=0; j<k; j++) {
-       double t = -evsl_ddot(&n, &Q[j*n], &one, v, &one);
+       const double t = -evsl_ddot(&n, &Q[j*n], &one, v, &one);
        evsl_daxpy(&n, &t, &Z[j*n], &one, v, &one);
     }
 #endif
   }
-  double tme = evsl_timer();
+  const double tme = evsl_timer();
   evslstat.t_reorth += tme - tms;
 }
 
@@ -287,17 +291,17 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
  *
  * @warning Aliasing happens in call to CGS_DGKS
  */
-void orth(double *V, int n, int k, double *Vo, double *work) {
+void orth(const double *V, int n, int k, double *Vo, double *work) {
   int i;
-  int one=1;
-  int nk = n*k;
+  const int one=1;
+  const int nk = n*k;
   evsl_dcopy(&nk, V, &one, Vo, &one);
-  double tt = evsl_ddot(&n, Vo, &one, Vo, &one);
+  const double tt = evsl_ddot(&n, Vo, &one, Vo, &one);
   double nrmv = sqrt(tt);
   double t = 1.0 / nrmv;
   evsl_dscal(&n, &t, Vo, &one);
   for (i = 1; i < k; i++) {
-    int istart = i*n;
+    const int istart = i*n;
     CGS_DGKS(n, i, NGS_MAX, Vo, Vo+istart, &nrmv, work);
     t = 1.0 / nrmv;
     evsl_dscal(&n, &t, Vo+istart, &one);

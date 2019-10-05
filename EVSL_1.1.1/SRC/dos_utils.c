@@ -12,14 +12,14 @@
  *  @param[in] a Number to take reciprocal of
  *  @return reciprocal of a
  */
-double rec(const double a) { return 1.0 / a; }  // Reciprocal
+double rec(double a) { return 1.0 / a; }  // Reciprocal
 
 /**
  * @brief Inverse  square root
  * @param[in] a number to take inverse square root of
  * @return inverse square root of a
  * */
-double isqrt(const double a) { return 1.0 / sqrt(a); }  // Inverse square root
+double isqrt(double a) { return 1.0 / sqrt(a); }  // Inverse square root
 
 /**
  * Initalize BSolDataPol: use L-S polynomial to approximate a function 'ffun'
@@ -92,7 +92,7 @@ void FreeBSolPolData(BSolDataPol *data) {
  * @param[out] x p(A)b
  * @param[in, out] data Data to be cast to BSolDataPol
  */
-void BSolPol(double *b, double *x, void *data) {
+void BSolPol(const double *b, double *x, void *data) {
   BSolDataPol *pol = (BSolDataPol *)data;
   pnav(pol->mu, pol->deg, pol->cc, pol->dd, b, x, pol->wk);
 }
@@ -114,8 +114,8 @@ void BSolPol(double *b, double *x, void *data) {
  *
  *----------------------------------------------------------------------*/
 
-int apfun(const double c, const double h, const double *const xi,
-          double (*ffun)(double), const int npts, double *yi) {
+int apfun(double c, double h, const double *const xi,
+          double (*ffun)(double), int npts, double *yi) {
   int i = 0;
   for (i = 0; i < npts; i++) {
     yi[i] = ffun(c + h * xi[i]);
@@ -140,19 +140,20 @@ int apfun(const double c, const double h, const double *const xi,
  * @b Workspace
  * @param[in,out] w Work vector of length 3*n [allocate before call
  **/
-int pnav(double *mu, const int m, const double cc, const double dd, double *v,
-         double *y, double *w) {  // Really just ChebAv
-  int n = evsldata.n;
+int pnav(const double *mu, int m, double cc, const double dd,
+         const double *v, double *y, double *w) {  // Really just ChebAv
+  const int n = evsldata.n;
   /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   double *vk = w;
   double *vkp1 = w + n;
   double *vkm1 = vkp1 + n;
   /*-------------------- */
-  int k, one=1;
-  double t1 = 1.0 / dd;
-  double t2 = 2.0 / dd;
-  double ncc = -cc;
-  double dmone = -1.0;
+  int k;
+  const int one=1;
+  const double t1 = 1.0 / dd;
+  const double t2 = 2.0 / dd;
+  const double ncc = -cc;
+  const double dmone = -1.0;
   /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
 #if 0
   /* LEAVE HERE IT FOR REFERENCE */
@@ -182,9 +183,9 @@ int pnav(double *mu, const int m, const double cc, const double dd, double *v,
   evsl_dscal(&n, mu, y, &one);
   /*-------------------- degree loop. k IS the degree */
   for (k = 1; k <= m; k++) {
-    double *v_cur = k == 1 ? v : vk;
-    double *v_old = k == 2 ? v : vkm1;
-    double t = k == 1 ? t1 : t2;
+    const double *v_cur = k == 1 ? v : vk;
+    const double *v_old = k == 2 ? v : vkm1;
+    const double t = k == 1 ? t1 : t2;
 
     matvec_B(v_cur, vkp1);
     evsl_daxpy(&n, &ncc, v_cur, &one, vkp1, &one);
@@ -228,7 +229,7 @@ int lsPol(double (*ffun)(double), BSolDataPol *pol) {
   pol->cc = (a + b) / 2;
   pol->dd = (b - a) / 2;
   /*------------------------- Number of points for Gauss-Chebyshev integration */
-  int maxDeg = pol->max_deg;
+  const int maxDeg = pol->max_deg;
   const int npts = maxDeg * 4;
   double *theti;
   theti = evsl_Malloc(npts, double);
@@ -307,4 +308,3 @@ int lsPol(double (*ffun)(double), BSolDataPol *pol) {
 
   return 0;
 }
-

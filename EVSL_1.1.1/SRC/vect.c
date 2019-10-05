@@ -149,7 +149,7 @@ void sort_double(int n, double *v, int *ind) {
  * @param[in] x Input vector
  * @param[out] y Output vector
  * */
-void vec_perm(int n, int *p, double *x, double *y) {
+void vec_perm(int n, const int *p, const double *x, double *y) {
   if (!p) {
     memcpy(y, x, n*sizeof(double));
   } else {
@@ -166,7 +166,7 @@ void vec_perm(int n, int *p, double *x, double *y) {
  * @param[in] p Permutation vector
  * @param[in] x Input vector
  * @param[in] y Output vector */
-void vec_iperm(int n, int *p, double *x, double *y) {
+void vec_iperm(int n, const int *p, const double *x, double *y) {
   if (!p) {
     memcpy(y, x, n*sizeof(double));
   } else {

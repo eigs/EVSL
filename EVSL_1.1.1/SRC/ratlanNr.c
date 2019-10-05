@@ -44,7 +44,7 @@
  *  @param[out] fstats   File stream which stats are printed to
  *
  * ------------------------------------------------------------ */
-int RatLanNr(double *intv, int maxit, double tol, double *vinit,
+int RatLanNr(const double *intv, int maxit, double tol, const double *vinit,
              ratparams *rat, int *nevOut, double **lamo, double **Wo,
              double **reso, FILE *fstats) {
   //-------------------- to report timings/
@@ -60,15 +60,16 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
     do_print = 0;
   }
   /*--------------------   frequently used constants  */
-  char cN = 'N';
-  int one = 1;
-  double done = 1.0, dzero = 0.0;
+  const char cN = 'N';
+  const int one = 1;
+  const double done = 1.0;
+  const double dzero = 0.0;
   /*--------------------   Ntest = when to start testing convergence */
-  int Ntest = 30;
+  const int Ntest = 30;
   /*--------------------   how often to test */
-  int cycle = 20;
+  const int cycle = 20;
   /* size of the matrix */
-  int n = evsldata.n;
+  const int n = evsldata.n;
   /* max num of its */
   maxit = evsl_min(n, maxit);
   /*-------------------- Caveat !!!: To prevent integer overflow, we save
@@ -81,14 +82,14 @@ int RatLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- Rational filter with pole at ((a+b)/2,(b-a)/2) with
     multiplicity pow, bar value equals 1/2        */
   /*-------------------- a, b, used for testing only at end */
-  double bar = 0.5;
+  const double bar = 0.5;
   if (check_intv(intv, fstats) < 0) {
     *nevOut = 0;
     *lamo = NULL; *Wo = NULL; *reso = NULL;
     return 0;
   }
-  double aa = intv[0];
-  double bb = intv[1];
+  const double aa = intv[0];
+  const double bb = intv[1];
   //int deg = rat->pow; // multiplicity of the pole
   /*-----------------------------------------------------------------------*
    * *Non-restarted* Lanczos iteration

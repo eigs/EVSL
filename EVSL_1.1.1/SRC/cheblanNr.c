@@ -54,8 +54,8 @@
  * @warning memory allocation for Wo/lamo/reso within this function
  *
  * ------------------------------------------------------------ */
-int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
-              polparams *pol, int *nevOut, double **lamo, double **Wo,
+int ChebLanNr(const double *intv, int maxit, double tol, const double *vinit,
+              const polparams *pol, int *nevOut, double **lamo, double **Wo,
               double **reso, FILE *fstats) {
   //-------------------- to report timings/
   double tall, tm1 = 0.0, tt;
@@ -70,15 +70,16 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     do_print = 0;
   }
   /*-------------------- frequently used constants  */
-  char cN = 'N';
-  int one = 1;
-  double done = 1.0, dzero = 0.0;
+  const char cN = 'N';
+  const int one = 1;
+  const double done = 1.0;
+  const double dzero = 0.0;
   /*-------------------- Ntest = when to start testing convergence */
-  int Ntest = 30;
+  const int Ntest = 30;
   /*-------------------- how often to test */
-  int cycle = 20;
+  const int cycle = 20;
   /* size of the matrix */
-  int n = evsldata.n;
+  const int n = evsldata.n;
   /* max num of its */
   maxit = evsl_min(n, maxit);
   /*-------------------- Caveat !!!: To prevent integer overflow, we save
@@ -91,17 +92,17 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
   /*-------------------- polynomial filter  approximates the delta
                          function centered at 'gamB'.
                          bar: a bar value to threshold Ritz values of p(A) */
-  double bar = pol->bar;
-  double gamB = pol->gam;
+  const double bar = pol->bar;
+  const double gamB = pol->gam;
   /*-------------------- interval [aa, bb], used for testing only at end */
   if (check_intv(intv, fstats) < 0) {
     *nevOut = 0;
     *lamo = NULL; *Wo = NULL; *reso = NULL;
     return 0;
   }
-  double aa = intv[0];
-  double bb = intv[1];
-  int deg = pol->deg;
+  const double aa = intv[0];
+  const double bb = intv[1];
+  const int deg = pol->deg;
   if (do_print) {
     fprintf(fstats, " ** Cheb Poly of deg = %d, gam = %.15e, bar: %.15e\n",
             deg, gamB, bar);

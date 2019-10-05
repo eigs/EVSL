@@ -22,7 +22,7 @@
  *    @note In-place version.
  *----------------------------------------------------------------------*/
 
-void simpson(double* xi, double* yi, int npts) {
+void simpson(const double* xi, double* yi, int npts) {
   double tc = 0.0, ti, tm, ysav;
   int i = 1;
   //-------------------- save yi[even_i]

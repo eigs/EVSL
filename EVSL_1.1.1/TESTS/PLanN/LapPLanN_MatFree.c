@@ -13,7 +13,7 @@
  * We provide a matvec routine, which only needs the stencil and grid sizes
  * The matvec routine and the associated data will need to be registered */
 /* matvec routine [it must be of this prototype] */
-void Lap2D3DMatvec(double *x, double *y, void *data);
+void Lap2D3DMatvec(const double *x, double *y, void *data);
 /* datatype for performing matvec for Laplacians */
 typedef struct _lapmv_t {
   int nx, ny, nz;
@@ -236,7 +236,7 @@ int main(int argc, char *argv[]) {
 }
 
 /*----------------- external matvec routine provided by users */
-void Lap2D3DMatvec(double *x, double *y, void *data) {
+void Lap2D3DMatvec(const double *x, double *y, void *data) {
   /* y = A * x
    * data: pointer to a struct that contains all needed data
    */

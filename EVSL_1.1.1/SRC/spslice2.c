@@ -22,7 +22,7 @@
  *
  *----------------------------------------------------------------------*/
 
-void spslicer2(double* xi, double* yi, int n_int, int npts, double* sli) {
+void spslicer2(const double* xi, double* yi, int n_int, int npts, double* sli) {
   /*-------------------- makes a call here to  integration by Simpson */
   double want;
   int k = 0;

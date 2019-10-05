@@ -18,7 +18,7 @@
  *    @param[out] lmax right bound of the desired interval containing all
  *    eigenvalues
  *----------------------------------------------------------------------*/
-int LanBounds(int msteps, double *v, double *lmin, double *lmax) {
+int LanBounds(int msteps, const double *v, double *lmin, double *lmax) {
   const int ifGenEv = evsldata.ifGenEv;
   double *alp, *bet, nbet, nalp, t, *V, *Z;
   int j, one=1, n;
