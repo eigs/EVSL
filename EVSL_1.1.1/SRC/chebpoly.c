@@ -581,9 +581,6 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
       y[i] += s*vkp1[i];
     }
     */
-#if EVSL_TIMING_LEVEL > 1
-    double ts = evsl_timer();
-#endif
 
 #ifdef EVSL_USING_CUDA_GPU
     const int bDim = 512;
@@ -599,10 +596,6 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
       evsl_daxpy_device(&n, &dmone, vkm1, &one, vkp1, &one);
     }
     evsl_daxpy_device(&n, &s, vkp1, &one, y, &one);
-#endif
-
-#if EVSL_TIMING_LEVEL > 1
-    evslstat.t_sth += evsl_timer() - ts;
 #endif
 
     /*-------------------- next: rotate vectors via pointer exchange */

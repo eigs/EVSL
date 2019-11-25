@@ -51,10 +51,10 @@ int main() {
   /*-------------------- stopping tol */
   tol = 1e-6;
   /*-------------------- start EVSL */
-  EVSLStart();
 #ifdef EVSL_USING_CUDA_GPU
   evsl_device_query(0);
 #endif
+  EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
   if (NULL == (fmat = fopen("matfile", "r"))) {
     fprintf(flog, "Can't open matfile...\n");

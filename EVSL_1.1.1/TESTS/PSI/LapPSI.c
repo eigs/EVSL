@@ -40,7 +40,6 @@ int main(int argc, char *argv[]) {
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
-  double *vinit;
   polparams pol;
   /*-------------------- matrix A: coo format and csr format */
   cooMat Acoo;
@@ -95,9 +94,19 @@ int main(int argc, char *argv[]) {
   Mdeg = 300;
   nvec = 60;
   /*-------------------- start EVSL */
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_device_query(0);
+#endif
   EVSLStart();
-   /*-------------------- set the left-hand side matrix A */
-   SetAMatrix(&Acsr);
+#ifdef EVSL_USING_CUDA_GPU
+  /*-------------------- set matrix A (csr on GPU) */
+  csrMat Acsr_gpu;
+  evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+  SetAMatrix_device_csr(&Acsr_gpu);
+#else
+  /*-------------------- set the left-hand side matrix A */
+  SetAMatrix(&Acsr);
+#endif
   //-------------------- call kpmdos
   mu = evsl_Malloc(Mdeg+1, double);
   double t = evsl_timer();
@@ -124,10 +133,6 @@ int main(int argc, char *argv[]) {
   //-------------------- # eigs per slice
   // ev_int = (int) (1 + ecount / ((double) nslices));
   //-------------------- initial vector
-  vinit = evsl_Malloc(n, double);
-  rand_double(n, vinit);
-  //-------------------- debug only :
-  //  save_vec(n, vinit, "OUT/vinit.mtx");
   //-------------------- For each slice call ChebLanr
   // set polynomial defaults
   // forced degree
@@ -166,9 +171,8 @@ int main(int argc, char *argv[]) {
             pol.type, pol.deg, pol.bar, pol.gam);
     //-------------------- then call ChenLanNr
 
-    double *V0;
-    V0 = evsl_Malloc(n*nev, double);
-    rand_double(n*nev, V0);
+    double *V0 = evsl_Malloc_device(n*nev, double);
+    rand_double_device(n*nev, V0);
 
     ierr = ChebSI(nev, xintv, max_its, tol, V0, &pol, &nevOut,
                   &lam, &Y, &res, fstats);
@@ -177,7 +181,6 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    evsl_Free(V0);
     /* sort the eigenvals: ascending order
      * ind: keep the orginal indices */
     ind = evsl_Malloc(nevOut, int);
@@ -214,17 +217,20 @@ int main(int argc, char *argv[]) {
     }
     //-------------------- free allocated space withing this scope
     if (lam)  evsl_Free(lam);
-    if (Y) evsl_Free(Y);
+    if (Y) evsl_Free_device(Y);
     if (res)  evsl_Free(res);
     free_pol(&pol);
     evsl_Free(ind);
     evsl_Free(lam_ex);
+    evsl_Free_device(V0);
   }
   //-------------------- free other allocated space
-  evsl_Free(vinit);
   evsl_Free(sli);
   free_coo(&Acoo);
   free_csr(&Acsr);
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_free_csr_gpu(&Acsr_gpu);
+#endif
   evsl_Free(mu);
   fclose(fstats);
   /*-------------------- finalize EVSL */

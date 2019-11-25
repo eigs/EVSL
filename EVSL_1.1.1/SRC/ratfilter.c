@@ -474,13 +474,13 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
       zkr = creal(omega[jj]);
       zkc = cimag(omega[jj]);
       /*---------------- initilize the right hand side */
-      memcpy(br, b, n*sizeof(double));
-      memcpy(bz, b, n*sizeof(double));
-      evsl_dscal(&n, &zkr, br, &one);
-      evsl_dscal(&n, &zkc, bz, &one);
+      evsl_memcpy_device_to_device(br, b, n*sizeof(double));
+      evsl_memcpy_device_to_device(bz, b, n*sizeof(double));
+      evsl_dscal_device(&n, &zkr, br, &one);
+      evsl_dscal_device(&n, &zkc, bz, &one);
       if (jj != kf-1) {
-        evsl_daxpy(&n, &done, xr, &one, br, &one);
-        evsl_daxpy(&n, &done, xz, &one, bz, &one);
+        evsl_daxpy_device(&n, &done, xr, &one, br, &one);
+        evsl_daxpy_device(&n, &done, xz, &one, bz, &one);
       }
       /*---------------- solve shifted system */
       if (ifGenEv) {
@@ -501,10 +501,10 @@ void RatFiltApply(int n, ratparams *rat, double *b, double *x, double *w6) {
     }
     /*------------------ solution (real part) */
     if (kk) {
-      evsl_daxpy(&n, &dtwo, xr, &one, x, &one);
+      evsl_daxpy_device(&n, &dtwo, xr, &one, x, &one);
     } else {
-      memcpy(x, xr, n*sizeof(double));
-      evsl_dscal(&n, &dtwo, x, &one);
+      evsl_memcpy_device_to_device(x, xr, n*sizeof(double));
+      evsl_dscal_device(&n, &dtwo, x, &one);
     }
     k = kf;
   }

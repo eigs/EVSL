@@ -315,19 +315,28 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
  * @warning Aliasing happens in call to CGS_DGKS
  */
 void orth(double *V, int n, int k, double *Vo, double *work) {
+#if EVSL_TIMING_LEVEL > 0
+  double tms = evsl_timer();
+  double told = evslstat.t_reorth; /* do not want record time in CGS */
+#endif
   int i;
   int one=1;
   int nk = n*k;
-  evsl_dcopy(&nk, V, &one, Vo, &one);
-  double tt = evsl_ddot(&n, Vo, &one, Vo, &one);
+  evsl_dcopy_device(&nk, V, &one, Vo, &one);
+  double tt = evsl_ddot_device(&n, Vo, &one, Vo, &one);
   double nrmv = sqrt(tt);
   double t = 1.0 / nrmv;
-  evsl_dscal(&n, &t, Vo, &one);
+  evsl_dscal_device(&n, &t, Vo, &one);
   for (i = 1; i < k; i++) {
     int istart = i*n;
     CGS_DGKS(n, i, NGS_MAX, Vo, Vo+istart, &nrmv, work);
     t = 1.0 / nrmv;
-    evsl_dscal(&n, &t, Vo+istart, &one);
+    evsl_dscal_device(&n, &t, Vo+istart, &one);
   }
+#if EVSL_TIMING_LEVEL > 0
+  double tme = evsl_timer();
+  evslstat.t_siorth += tme - tms;
+  evslstat.t_reorth = told;
+#endif
 }
 

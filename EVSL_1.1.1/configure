@@ -2839,7 +2839,12 @@ fi
 
 if test "x$evsl_using_Ccompiler" = "xyes" -a "x$CFLAGS" = "x"
 then
-   CFLAGS="-O2 -Wall "
+   if test "x$evsl_with_debug" = "xyes"
+   then
+      CFLAGS="-g -O0 -Wall "
+   else
+      CFLAGS="-O2 -Wall "
+   fi
 fi
 
 if test "x$evsl_with_fortran" = "xyes" -a "x$FC" = "x"
@@ -2890,7 +2895,12 @@ fi
 
 if test "x$evsl_with_fortran" = "xyes" -a "x$FCFLAGS" = "x"
 then
-   FCFLAGS="-O2 "
+   if test "x$evsl_with_debug" = "xyes"
+   then
+      CFLAGS="-g -O0 "
+   else
+      FCFLAGS="-O2 "
+   fi
 fi
 
 if test "x$evsl_using_CXXcompiler" = "xyes" -a "x$CXX" = "x"
@@ -5682,7 +5692,12 @@ done
       EVSL_CUDA_SM=60
    fi
    EVSL_CUDA_GENCODE="-gencode arch=compute_${EVSL_CUDA_SM},\"code=sm_${EVSL_CUDA_SM}\""
-   CUFLAGS+="-O2 ${EVSL_CUDA_GENCODE} -dc --x cu"
+   if test "x$evsl_with_debug" = "xyes"
+   then
+      CUFLAGS+="-g -O0 ${EVSL_CUDA_GENCODE} -dc --x cu"
+   else
+      CUFLAGS+="-O2 ${EVSL_CUDA_GENCODE} -dc --x cu"
+   fi
    CFLAGS="${CUFLAGS} -Xcompiler \"${CFLAGS}\""
    LDFLAGS="${EVSL_CUDA_GENCODE} -Xcompiler \"${LDFLAGS}\""
    LIBS+="-L\${CUDA_HOME}/lib64 -lcudart -lcublas -lcusparse -lcurand "

@@ -120,8 +120,8 @@
 #define evsl_Realloc_device(ptr, old_count, old_type, new_count, new_type) \
 (\
  /* printf("[%s:%d] DEVICE_ReALLOC %ld bytes\n", __FILE__,__LINE__, (size_t)(sizeof(type) * (count))) ,*/ \
- (type *) _evsl_Realloc_device( (void *)ptr, (size_t)(sizeof(old_type) * (old_count)),  \
-                                             (size_t)(sizeof(new_type) * (new_count)) ) \
+ (new_type *) _evsl_Realloc_device( (void *)ptr, (size_t)(sizeof(old_type) * (old_count)),  \
+                                                 (size_t)(sizeof(new_type) * (new_count)) ) \
 )
 
 /**
@@ -298,6 +298,8 @@ void evsl_daxpy_device(int *n, double *a, double *x, int *incx, double *y, int *
 void evsl_dcopy_device(int *n, double *x, int *incx, double *y, int *incy);
 void evsl_dgemv_device(const char *trans, int *m, int *n, double *alpha, double *a, int *lda,
                        double *x, int *incx, double *beta, double *y, int *incy);
+void evsl_dgemm_device(const char *transa, const char *transb, int *m, int * n, int *k, 
+                       double *alpha, double *a, int *lda, double *b, int *ldb, double *beta, double *c, int *ldc);
 void evsl_element_mult_device(int n, double *a, double *b);
 void evsl_element_divide_device(int n, double *a, double *b);
 

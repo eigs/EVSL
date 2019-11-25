@@ -49,6 +49,9 @@ int main () {
   Mdeg = 300;
   nvec = 60;
   /*-------------------- start EVSL */
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_device_query(0);
+#endif
   EVSLStart();
   //-------------------- interior eigensolver parameters
   double *mu = evsl_Malloc(Mdeg+1, double);
@@ -119,11 +122,18 @@ int main () {
       exit(7);
     }
     /*-------------------- set the left-hand side matrix A */
+#ifdef EVSL_USING_CUDA_GPU
+  /*-------------------- set matrix A (csr on GPU) */
+    csrMat Acsr_gpu;
+    evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+    SetAMatrix_device_csr(&Acsr_gpu);
+#else
     SetAMatrix(&Acsr);
+#endif
     /*-------------------- define ChebLanTr parameters */
     alleigs = evsl_Malloc(n, double);
-    vinit = evsl_Malloc(n, double);
-    rand_double(n, vinit);
+    vinit = evsl_Malloc_device(n, double);
+    rand_double_device(n, vinit);
     /*-------------------- get lambda_min lambda_max estimates */
     ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bounds for A: [%.15e, %.15e]\n", lmin, lmax);
@@ -199,7 +209,8 @@ int main () {
       find_pol(xintv, &pol);
       fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
               pol.type, pol.deg, pol.bar, pol.gam);
-      //-------------------- Call ChebLanTr
+      //-------------------- Call ChebLanTr: note that when using CUDA
+      //                     vinit (input) and Y (output) are device memory
       ierr = ChebLanTr(mlan, nev, xintv, max_its, tol, vinit,
                        &pol, &nevOut, &lam, &Y, &res, fstats);
       if (ierr) {
@@ -227,7 +238,7 @@ int main () {
       counts[sl] = nevOut;
       //-------------------- free memory within this loop
       if (lam) evsl_Free(lam);
-      if (Y) evsl_Free(Y);
+      if (Y) evsl_Free_device(Y);
       if (res) evsl_Free(res);
       evsl_Free(ind);
       free_pol(&pol);
@@ -244,9 +255,12 @@ int main () {
     /*-------------------- free memory */
     evsl_Free(counts);
     evsl_Free(sli);
-    evsl_Free(vinit);
+    evsl_Free_device(vinit);
     free_coo(&Acoo);
     free_csr(&Acsr);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_free_csr_gpu(&Acsr_gpu);
+#endif
     evsl_Free(alleigs);
     if (fstats != stdout) fclose(fstats);
     /*-------------------- end matrix loop */

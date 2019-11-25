@@ -184,7 +184,7 @@ int main () {
     fprintf(fstats,"Step 2: In each slice compute %d eigenvalues ... \n", nev);
     /*-------------------- MAIN intv LOOP: for each sclice Do: */
     totcnt = 0;
-    for (sl =0; sl<n_intv; sl++) {
+    for (sl = 0; sl < n_intv; sl++) {
       fprintf(fstats,"======================================================\n");
       double *lam, *Y, *res;
       int *ind;
@@ -266,7 +266,7 @@ int main () {
     free_coo(&Acoo);
     free_csr(&Acsr);
 #ifdef EVSL_USING_CUDA_GPU
-  evsl_free_csr_gpu(&Acsr_gpu);
+    evsl_free_csr_gpu(&Acsr_gpu);
 #endif
     evsl_Free(alleigs);
     if (fstats != stdout) fclose(fstats);

@@ -29,6 +29,10 @@ int main() {
   /*-------------------- matrices A, B: coo format and csr format */
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr, Acsr0, Bcsr0;
+#ifdef EVSL_USING_CUDA_GPU
+  csrMat Acsr_gpu;
+  csrMat Bcsr_gpu;
+#endif
   double *sqrtdiag = NULL;
   /* slicer parameters */
   int msteps = 40;
@@ -46,6 +50,9 @@ int main() {
   /*-------------------- Polynomial approximation to B and sqrtB*/
   BSolDataPol Bsol, Bsqrtsol;
   /*-------------------- start EVSL */
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_device_query(0);
+#endif
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
   if (NULL == (fmat = fopen("matfile", "r"))) {
@@ -139,13 +146,21 @@ int main() {
     if (sqrtdiag) {
       evsl_Free(sqrtdiag);
     }
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+    evsl_create_csr_gpu(&Bcsr, &Bcsr_gpu);
+#endif
 
     /*---------------- Set EVSL to solve std eig problem to
      *---------------- compute the range of the spectrum of B */
     SetStdEig();
+#ifdef EVSL_USING_CUDA_GPU
+    SetAMatrix_device_csr(&Bcsr_gpu);
+#else
     SetAMatrix(&Bcsr);
-    vinit = evsl_Malloc(n, double);
-    rand_double(n, vinit);
+#endif
+    vinit = evsl_Malloc_device(n, double);
+    rand_double_device(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
     /*-------------------- Use polynomial to solve B and sqrt(B) */
     /*-------------------- Setup the Bsol and Bsqrtsol struct */
@@ -155,15 +170,22 @@ int main() {
     SetLTSol(BSolPol, (void *)&Bsqrtsol);
     printf("The degree for LS polynomial approximations to B^{-1} and B^{-1/2} "
            "are %d and %d\n", Bsol.deg, Bsqrtsol.deg);
+#ifdef EVSL_USING_CUDA_GPU
+    /*-------------------- set the left-hand side matrix A */
+    SetAMatrix_device_csr(&Acsr_gpu);
+    /*-------------------- set the right-hand side matrix B */
+    SetBMatrix_device_csr(&Bcsr_gpu);
+#else
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
     SetBMatrix(&Bcsr);
+#endif
     /*-------------------- for generalized eigenvalue problem */
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
     //-------------------- initial vector
-    rand_double(n, vinit);
+    rand_double_device(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n",
             lmin, lmax);
@@ -209,6 +231,12 @@ int main() {
      * so we can recover them */
     csr_copy(&Acsr0, &Acsr, 0); /* 0 stands for no memory alloc */
     csr_copy(&Bcsr0, &Bcsr, 0);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_free_csr_gpu(&Acsr_gpu);
+    evsl_free_csr_gpu(&Bcsr_gpu);
+    evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+    evsl_create_csr_gpu(&Bcsr, &Bcsr_gpu);
+#endif
 
     //-------------------- For each slice call RatLanrNr
     for (sl = 0; sl < nslices; sl++) {
@@ -248,7 +276,8 @@ int main() {
       //-------------------- maximal Lanczos iterations
       max_its = evsl_max(4 * nev, 300);
       max_its = evsl_min(max_its, n);
-      //-------------------- RationalLanNr
+      //-------------------- RationalLanNr: note that when using CUDA
+      //                     vinit (input) and Y (output) are device memory
       ierr = RatLanNr(intv, max_its, tol, vinit, &rat, &nev2, &lam, &Y, &res,
                       fstats);
       if (ierr) {
@@ -276,7 +305,7 @@ int main() {
       if (lam)
         evsl_Free(lam);
       if (Y)
-        evsl_Free(Y);
+        evsl_Free_device(Y);
       if (res)
         evsl_Free(res);
       FreeASIGMABSolDirect(rat.num, solshiftdata);
@@ -293,12 +322,16 @@ int main() {
         fprintf(fmtout, "%.15e\n", alleigs[j]);
       fclose(fmtout);
     }
-    evsl_Free(vinit);
+    evsl_Free_device(vinit);
     evsl_Free(sli);
     free_coo(&Acoo);
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_free_csr_gpu(&Acsr_gpu);
+    evsl_free_csr_gpu(&Bcsr_gpu);
+#endif
     free_csr(&Acsr0);
     free_csr(&Bcsr0);
     evsl_Free(alleigs);

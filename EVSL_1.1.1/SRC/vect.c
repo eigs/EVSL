@@ -345,6 +345,19 @@ void evsl_dgemv_device(const char *trans, int *m, int *n, double *alpha, double 
 #endif
 }
 
+void evsl_dgemm_device(const char *transa, const char *transb, int *m, int * n, int *k, double *alpha, double *a, int *lda, double *b, int *ldb, double *beta, double *c, int *ldc)
+{
+#ifdef EVSL_USING_CUDA_GPU
+   cublasOperation_t cublas_transa = (*transa == 'T' || *transa == 't') ? CUBLAS_OP_T : CUBLAS_OP_N;
+   cublasOperation_t cublas_transb = (*transb == 'T' || *transb == 't') ? CUBLAS_OP_T : CUBLAS_OP_N;
+   cublasStatus_t cublasStat = cublasDgemm(evsldata.cublasH, cublas_transa, cublas_transb, *m, *n, *k,
+                                           alpha, a, *lda, b, *ldb, beta, c, *ldc);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   evsl_dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+#endif
+}
+
 #ifdef EVSL_USING_CUDA_GPU
 __global__ void evsl_element_mult_kernel(int n, double *a, double *b) {
    int tid = threadIdx.x + blockIdx.x * blockDim.x;

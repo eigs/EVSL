@@ -58,7 +58,7 @@ double evsl_timer() {
   /* POSIX C 1993 timer, requires -librt */
   struct timespec t;
 #ifdef EVSL_USING_CUDA_GPU
-  cudaThreadSynchronize();
+  cudaDeviceSynchronize();
 #endif
   clock_gettime (CLOCK_MONOTONIC /*CLOCK_PROCESS_CPUTIME_ID*/, &t) ;
   return ((double) (t.tv_sec) + 1e-9 * (double) (t.tv_nsec));

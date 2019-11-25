@@ -133,11 +133,11 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   int it = 0;
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *T;
-  V = evsl_Malloc(n_l*lanm1, double);
+  V = evsl_Malloc_device(n_l*lanm1, double);
   /*-------------------- for gen eig prob, storage for Z = B * V */
   double *Z;
   if (ifGenEv) {
-    Z = evsl_Malloc(n_l*lanm1, double);
+    Z = evsl_Malloc_device(n_l*lanm1, double);
   } else {
     Z = V;
   }
@@ -146,13 +146,13 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   /*-------------------- Lam, Y: the converged (locked) Ritz values/vectors
                          res: related residual norms */
   double *Y, *Lam, *res;
-  Y = evsl_Malloc(n_l*nev, double);
+  Y = evsl_Malloc_device(n_l*nev, double);
   Lam = evsl_Malloc(nev, double);
   res = evsl_Malloc(nev, double);
   double *BY = NULL;
   /*-------------------- for gen eig prob, storage for B*Y */
   if (ifGenEv) {
-    BY = evsl_Malloc(n_l*nev, double);
+    BY = evsl_Malloc_device(n_l*nev, double);
   }
   /*-------------------- lock =  number of locked vectors */
   int lock = 0;
@@ -162,42 +162,47 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   double *Rval, *Rvec, *resi, *BRvec = NULL;
   Rval = evsl_Malloc(lanm, double);
   resi = evsl_Malloc(lanm, double);
-  Rvec = evsl_Malloc(n_l*lanm, double);
+  Rvec = evsl_Malloc_device(n_l*lanm, double);
   if (ifGenEv) {
-    BRvec = evsl_Malloc(n_l*lanm, double);
+    BRvec = evsl_Malloc_device(n_l*lanm, double);
   }
   /*-------------------- Eigen vectors of T */
-  double *EvecT;
+  double *EvecT, *EvecT_device;
   EvecT = evsl_Malloc(lanm1_l*lanm1_l, double);
+#ifdef EVSL_USING_CUDA_GPU
+  EvecT_device = evsl_Malloc_device(lanm1_l*lanm1_l, double);
+#else
+  EvecT_device = EvecT;
+#endif
   /*-------------------- s used by TR (the ``spike'' of 1st block in Tm)*/
   double *s;
   s = evsl_Malloc(lanm, double);
   /*-------------------- alloc some work space */
   double *work, *vrand = NULL;
   size_t work_size = ifGenEv ? 4*n_l : 3*n_l;
-  work = evsl_Malloc(work_size, double);
+  work = evsl_Malloc_device(work_size, double);
 #if FILTER_VINIT
   /*------------------  Filter the initial vector*/
   ChebAv(pol, vinit, V, work);
-  vrand = evsl_Malloc(n, double);
+  vrand = evsl_Malloc_device(n, double);
 #else
   /*-------------------- copy initial vector to V(:,1)   */
-  evsl_dcopy(&n, vinit, &one, V, &one);
+  evsl_dcopy_device(&n, vinit, &one, V, &one);
 #endif
   /*-------------------- normalize it */
   double t;
   if (ifGenEv) {
     /* B norm */
     matvec_B(V, Z);
-    t = 1.0 / sqrt(evsl_ddot(&n, V, &one, Z, &one));
+    t = 1.0 / sqrt(evsl_ddot_device(&n, V, &one, Z, &one));
     /* z = B*v */
-    evsl_dscal(&n, &t, Z, &one);
+    evsl_dscal_device(&n, &t, Z, &one);
   } else {
     /* 2-norm */
-    t = 1.0 / evsl_dnrm2(&n, V, &one);
+    t = 1.0 / evsl_dnrm2_device(&n, V, &one);
   }
   /* unit B-norm or 2-norm */
-  evsl_dscal(&n, &t, V, &one);
+  evsl_dscal_device(&n, &t, V, &one);
   /*-------------------- main (restarted Lan) outer loop */
   while (it < maxit) {
     /*-------------------- for ortho test */
@@ -244,9 +249,9 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         wn += fabs(Rval[i]);
       }
       /*--------------------- s(k) = V(:,k)'* znew */
-      s[k1] = evsl_ddot(&n, v, &one, znew, &one);
+      s[k1] = evsl_ddot_device(&n, v, &one, znew, &one);
       /*--------------------- znew = znew - Z(:,1:k)*s(1:k) */
-      evsl_dgemv(&cN, &n, &k, &dmone, Z, &n, s, &one, &done, znew, &one);
+      evsl_dgemv_device(&cN, &n, &k, &dmone, Z, &n, s, &one, &done, znew, &one);
       /*-------------------- expand T matrix to k-by-k, arrow-head shape
                              T = [T, s(1:k-1)] then T = [T; s(1:k)'] */
       for (i=0; i<k1; i++) {
@@ -260,10 +265,10 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         /*-------------------- vnew = B \ znew */
         solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
-        beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
+        beta = sqrt(evsl_ddot_device(&n, vnew, &one, znew, &one));
       } else {
         /*-------------------- beta = norm(w) */
-        beta = evsl_dnrm2(&n, vnew, &one);
+        beta = evsl_dnrm2_device(&n, vnew, &one);
       }
       wn += 2.0 * beta;
       nwn += 3*k;
@@ -274,10 +279,10 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         }
 #if FILTER_VINIT
         /* filter random vector */
-        rand_double(n, vrand);
+        rand_double_device(n, vrand);
         ChebAv(pol, vrand, vnew, work);
 #else
-        rand_double(n, vnew);
+        rand_double_device(n, vnew);
 #endif
         if (ifGenEv) {
           /* orthogonalize against locked vectors first, v = v - Y*(B*Y)'*v */
@@ -285,10 +290,10 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
           matvec_B(vnew, znew);
-          beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
+          beta = sqrt(evsl_ddot_device(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
-          evsl_dscal(&n, &ibeta, vnew, &one);
-          evsl_dscal(&n, &ibeta, znew, &one);
+          evsl_dscal_device(&n, &ibeta, vnew, &one);
+          evsl_dscal_device(&n, &ibeta, znew, &one);
           beta = 0.0;
         } else {
           /* orthogonalize against locked vectors first, w = w - Y*Y'*w */
@@ -297,15 +302,15 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           /*   beta = norm(w) */
           CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
           double ibeta = 1.0 / beta;
-          evsl_dscal(&n, &ibeta, vnew, &one);
+          evsl_dscal_device(&n, &ibeta, vnew, &one);
           beta = 0.0;
         }
       } else {
         /*------------------- w = w / beta */
         double ibeta = 1.0 / beta;
-        evsl_dscal(&n, &ibeta, vnew, &one);
+        evsl_dscal_device(&n, &ibeta, vnew, &one);
         if (ifGenEv) {
-          evsl_dscal(&n, &ibeta, znew, &one);
+          evsl_dscal_device(&n, &ibeta, znew, &one);
         }
       }
       /*------------------- T(k+1,k) = beta; T(k,k+1) = beta; */
@@ -348,16 +353,16 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       /*-------------------- znew = znew - beta*zold */
       if (zold) {
         double nbeta = -beta;
-        evsl_daxpy(&n, &nbeta, zold, &one, znew, &one);
+        evsl_daxpy_device(&n, &nbeta, zold, &one, znew, &one);
       }
       /*-------------------- alpha = znew'*v */
-      double alpha = evsl_ddot(&n, v, &one, znew, &one);
+      double alpha = evsl_ddot_device(&n, v, &one, znew, &one);
       /*-------------------- T(k,k) = alpha */
       T[(k-1)*lanm1_l+(k-1)] = alpha;
       wn += fabs(alpha);
       /*-------------------- znew = znew - alpha*z */
       double nalpha = -alpha;
-      evsl_daxpy(&n, &nalpha, z, &one, znew, &one);
+      evsl_daxpy_device(&n, &nalpha, z, &one, znew, &one);
       /*-------------------- FULL reortho to all previous Lan vectors */
       if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
@@ -365,7 +370,7 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         /*-------------------- vnew = B \ znew */
         solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
-        beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
+        beta = sqrt(evsl_ddot_device(&n, vnew, &one, znew, &one));
       } else {
         /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
         /*   beta = norm(w) */
@@ -382,11 +387,11 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         }
 #if FILTER_VINIT
         /* filter random vector */
-        rand_double(n, vrand);
+        rand_double_device(n, vrand);
         ChebAv(pol, vrand, vnew, work);
 #else
         /* generate a new init vector*/
-        rand_double(n, vnew);
+        rand_double_device(n, vnew);
 #endif
         if (ifGenEv) {
           /* orthogonalize against locked vectors first, w = w - Y*(B*Y)'*w */
@@ -394,10 +399,10 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(n, k, NGS_MAX, V, Z, vnew, work);
           matvec_B(vnew, znew);
-          beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
+          beta = sqrt(evsl_ddot_device(&n, vnew, &one, znew, &one));
           double ibeta = 1.0 / beta;
-          evsl_dscal(&n, &ibeta, vnew, &one);
-          evsl_dscal(&n, &ibeta, znew, &one);
+          evsl_dscal_device(&n, &ibeta, vnew, &one);
+          evsl_dscal_device(&n, &ibeta, znew, &one);
           beta = 0.0;
         } else {
           /* orthogonalize against locked vectors first, w = w - Y*Y'*w */
@@ -406,16 +411,16 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
           /*   beta = norm(w) */
           CGS_DGKS(n, k, NGS_MAX, V, vnew, &beta, work);
           double ibeta = 1.0 / beta;
-          evsl_dscal(&n, &ibeta, vnew, &one);
+          evsl_dscal_device(&n, &ibeta, vnew, &one);
           beta = 0.0;
         }
       } else {
         /*---------------------- vnew = vnew / beta */
         double ibeta = 1.0 / beta;
-        evsl_dscal(&n, &ibeta, vnew, &one);
+        evsl_dscal_device(&n, &ibeta, vnew, &one);
         if (ifGenEv) {
           /*-------------------- znew = znew / beta */
-          evsl_dscal(&n, &ibeta, znew, &one);
+          evsl_dscal_device(&n, &ibeta, znew, &one);
         }
       }
       /*-------------------- T(k,k+1) = T(k+1,k) = beta */
@@ -522,11 +527,14 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     }
     //exit(0);
     //fprintf(fstats, "beta = %.1e\n", beta);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_memcpy_host_to_device(EvecT_device, EvecT, lanm1_l*lanm1_l*sizeof(double));
+#endif
     /*---------------------- Compute the Ritz vectors:
      *                       Rvec(:,1:jl) = V(:,1:k) * EvecT(:,1:jl) */
-    evsl_dgemm(&cN, &cN, &n, &jl, &k, &done, V, &n, EvecT, &lanm1, &dzero, Rvec, &n);
+    evsl_dgemm_device(&cN, &cN, &n, &jl, &k, &done, V, &n, EvecT_device, &lanm1, &dzero, Rvec, &n);
     if (ifGenEv) {
-      evsl_dgemm(&cN, &cN, &n, &jl, &k, &done, Z, &n, EvecT, &lanm1, &dzero, BRvec, &n);
+      evsl_dgemm_device(&cN, &cN, &n, &jl, &k, &done, Z, &n, EvecT_device, &lanm1, &dzero, BRvec, &n);
     }
     /*-------------------- Pass-2: check if Ritz vals of A are in [a,b] */
     /*                     number of Ritz values in [a,b] */
@@ -546,10 +554,10 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       if (ifGenEv) {
         /* B-norm, w2 = B*y */
         matvec_B(y, w2);
-        t = sqrt(evsl_ddot(&n, y, &one, w2, &one));
+        t = sqrt(evsl_ddot_device(&n, y, &one, w2, &one));
       } else {
         /* 2-norm */
-        t = evsl_dnrm2(&n, y, &one);
+        t = evsl_dnrm2_device(&n, y, &one);
       }
       /*-------------------- return code 2 --> zero eigenvector found */
       if (t == 0.0) {
@@ -557,17 +565,17 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
       }
       /*-------------------- scal y */
       t = 1.0 / t;
-      evsl_dscal(&n, &t, y, &one);
+      evsl_dscal_device(&n, &t, y, &one);
       /*-------------------- scal B*y */
       if (ifGenEv) {
-        evsl_dscal(&n, &t, w2, &one);
+        evsl_dscal_device(&n, &t, w2, &one);
       }
       /*-------------------- w = A*y */
       matvec_A(y, w);
       /*-------------------- Ritzval: t3 = (y'*w)/(y'*y) or
        *                              t3 = (y'*w)/(y'*B*y) */
       /*-------------------- Rayleigh quotient */
-      double t3 = evsl_ddot(&n, y, &one, w, &one);
+      double t3 = evsl_ddot_device(&n, y, &one, w, &one);
       /*--------------------  if lambda (==t3) is in [a,b] */
       if (t3 >= aa - EVSL_DBL_EPS_MULT * DBL_EPSILON && t3 <= bb + EVSL_DBL_EPS_MULT * DBL_EPSILON) {
         ll++;
@@ -575,34 +583,35 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         double nt3 = -t3;
         if (ifGenEv) {
           /* w = w - t3*w2, w2 = B*y,  (w=A*y-t3*B*y) */
-          evsl_daxpy(&n, &nt3, w2, &one, w, &one);
+          evsl_daxpy_device(&n, &nt3, w2, &one, w, &one);
         } else {
           /*-------------------- w = w - t3*y, (w=A*y-t3*y) */
-          evsl_daxpy(&n, &nt3, y, &one, w, &one);
+          evsl_daxpy_device(&n, &nt3, y, &one, w, &one);
         }
         /*-------------------- res0 = 2-norm of w */
-        res0 = evsl_dnrm2(&n, w, &one);
+        res0 = evsl_dnrm2_device(&n, w, &one);
         /*-------------------- test res. of this Ritz pair against tol */
         /* r = resi[i];*/
         r = res0;
         if (r < tol) {
           //-------------------- check if need to realloc
           if (lock >= nev) {
+            int old_nev = nev;
             nev += 1 + (int) (nev*nevInc);
             if (do_print) {
               fprintf(fstats, "-- More eigval found: realloc space for %d evs\n", nev);
             }
-            Y = evsl_Realloc(Y, nev*n_l, double);
+            Y = evsl_Realloc_device(Y, old_nev*n_l, double, nev*n_l, double);
             if (ifGenEv) {
-              BY = evsl_Realloc(BY, nev*n_l, double);
+              BY = evsl_Realloc_device(BY, old_nev*n_l, double, nev*n_l, double);
             }
             Lam = evsl_Realloc(Lam, nev, double);
             res = evsl_Realloc(res, nev, double);
           }
           /*--------------------   accept (t3, y) */
-          evsl_dcopy(&n, y, &one, Y+lock*n_l, &one);
+          evsl_dcopy_device(&n, y, &one, Y+lock*n_l, &one);
           if (ifGenEv) {
-            evsl_dcopy(&n, By, &one, BY+lock*n_l, &one);
+            evsl_dcopy_device(&n, By, &one, BY+lock*n_l, &one);
           }
           Lam[lock] = t3;
           res[lock] = res0;
@@ -610,9 +619,9 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
         } else {
           /*-------------------- restart; move Ritz pair for TR to front */
           Rval[trlen] = Rval[i];
-          evsl_dcopy(&n, y, &one, V+trlen*n_l, &one);
+          evsl_dcopy_device(&n, y, &one, V+trlen*n_l, &one);
           if (ifGenEv) {
-            evsl_dcopy(&n, By, &one, Z+trlen*n_l, &one);
+            evsl_dcopy_device(&n, By, &one, Z+trlen*n_l, &one);
           }
           /* special vector for TR that is the bottom row of
            * eigenvectors of Tm */
@@ -653,9 +662,9 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
     /*-------------------- prepare to restart.  First zero out all T */
     memset(T, 0, lanm1_l*lanm1_l*sizeof(double));
     /*-------------------- move starting vector vector V(:,k+1);  V(:,trlen+1) = V(:,k+1) */
-    evsl_dcopy(&n, V+k*n_l, &one, V+trlen*n_l, &one);
+    evsl_dcopy_device(&n, V+k*n_l, &one, V+trlen*n_l, &one);
     if (ifGenEv) {
-      evsl_dcopy(&n, Z+k*n_l, &one, Z+trlen*n_l, &one);
+      evsl_dcopy_device(&n, Z+k*n_l, &one, Z+trlen*n_l, &one);
     }
   } /* outer loop (it) */
 
@@ -670,21 +679,24 @@ int ChebLanTr(int lanm, int nev, double *intv, int maxit,
   *W = Y;
   *resW = res;
   /*-------------------- free arrays */
-  evsl_Free(V);
+  evsl_Free_device(V);
   evsl_Free(T);
   evsl_Free(Rval);
   evsl_Free(resi);
   evsl_Free(EvecT);
-  evsl_Free(Rvec);
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_Free_device(EvecT_device);
+#endif
+  evsl_Free_device(Rvec);
   evsl_Free(s);
-  evsl_Free(work);
+  evsl_Free_device(work);
   if (vrand) {
-    evsl_Free(vrand);
+    evsl_Free_device(vrand);
   }
   if (ifGenEv) {
-    evsl_Free(Z);
-    evsl_Free(BY);
-    evsl_Free(BRvec);
+    evsl_Free_device(Z);
+    evsl_Free_device(BY);
+    evsl_Free_device(BRvec);
   }
   /*-------------------- record stats */
   tall = evsl_timer() - tall;
