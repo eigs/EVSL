@@ -1,5 +1,7 @@
 program driver
 
+    !!! This driver does not work with CUDA enabled EVSL !!!
+
     use csrmatrix ! This is where our matrix class is stored
 
     implicit none

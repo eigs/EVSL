@@ -324,8 +324,6 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
     ASBdata->x = evsl_Malloc(nrow, cs_complex_t);
 #ifdef EVSL_USING_CUDA_GPU
     ASBdata->w = evsl_Malloc(2*nrow, double);
-#else
-    ASBdata->w = NULL;
 #endif
     data[i] = ASBdata;
 

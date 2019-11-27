@@ -22,6 +22,10 @@ typedef struct _BSolDataDirect {
   MKL_INT iparm[64];
   /* upper triangular matrix */
   csrMat U;
+#ifdef EVSL_USING_CUDA_GPU
+  /* workspace for solve, of size 2*n, only for GPU runs */
+  double *w;
+#endif
 } BSolDataDirect;
 
 
@@ -37,6 +41,10 @@ typedef struct _ASBSolDataDirect {
   MKL_Complex16 *a;
   /* workspace for solve, of size n */
   MKL_Complex16 *b, *x;
+#ifdef EVSL_USING_CUDA_GPU
+  /* workspace for solve, of size 2*n, only for GPUs */
+  double *w;
+#endif
 } ASBSolDataDirect;
 
 /** @brief Setup the B-sol by computing the Cholesky factorization of B
@@ -178,6 +186,10 @@ int SetupBSolDirect(csrMat *B, void **data) {
   printf ("\nFactorization completed ... ");
   */
 
+#ifdef EVSL_USING_CUDA_GPU
+  Bsol_data->w = evsl_Malloc(2*n, double);
+#endif
+
   *data = (void *) Bsol_data;
 
   double tme = evsl_timer();
@@ -207,6 +219,16 @@ void BSolDirect(double *b, double *x, void *data) {
   MKL_INT *ia = U->ia;
   MKL_INT *ja = U->ja;
   double  *a  = U->a;
+
+#ifdef EVSL_USING_CUDA_GPU
+  double *w = Bsol_data->w;
+  double *x_device = x;
+  double *b_host = w;
+  double *x_host = w + n;
+  evsl_memcpy_device_to_host(b_host, b, n*sizeof(double));
+  b = b_host;
+  x = x_host;
+#endif
 
   /* ------------------------------------------------------------- */
   /*  Back substitution and iterative refinement.                  */
@@ -238,6 +260,10 @@ void BSolDirect(double *b, double *x, void *data) {
   }
   */
   /*printf ("\nSolve completed ... ");*/
+
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_memcpy_host_to_device(x_device, x, n*sizeof(double));
+#endif
 }
 
 /** @brief Solver function of L^{T}
@@ -262,6 +288,16 @@ void LTSolDirect(double *b, double *x, void *data) {
   MKL_INT *ja = U->ja;
   double  *a  = U->a;
 
+#ifdef EVSL_USING_CUDA_GPU
+  double *w = Bsol_data->w;
+  double *x_device = x;
+  double *b_host = w;
+  double *x_host = w + n;
+  evsl_memcpy_device_to_host(b_host, b, n*sizeof(double));
+  b = b_host;
+  x = x_host;
+#endif
+
   /* 333: like phase=33, but only backward substitution */
   MKL_INT phase = 333;
   pardiso(Bsol_data->pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja,
@@ -272,6 +308,10 @@ void LTSolDirect(double *b, double *x, void *data) {
     exit (3);
   }
   /*printf ("\nSolve completed ... ");*/
+
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_memcpy_host_to_device(x_device, x, n*sizeof(double));
+#endif
 }
 
 /** @brief Free solver data
@@ -311,6 +351,9 @@ void FreeBSolDirectData(void *data) {
   /*printf ("\nTermination completed ... ");*/
 
   free_csr(U);
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_Free(w);
+#endif
   evsl_Free(data);
 }
 
@@ -483,6 +526,9 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
     ASBdata->a = UCz;
     ASBdata->b = evsl_Malloc(nrow, MKL_Complex16);
     ASBdata->x = evsl_Malloc(nrow, MKL_Complex16);
+#ifdef EVSL_USING_CUDA_GPU
+    ASBdata->w = evsl_Malloc(2*nrow, double);
+#endif
     data[i] = ASBdata;
   } /* for (i=...)*/
 
@@ -532,6 +578,15 @@ void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
   MKL_Complex16 *b = sol_data->b;
   MKL_Complex16 *x = sol_data->x;
 
+#ifdef EVSL_USING_CUDA_GPU
+  double *r_host = sol_data->w;
+  double *i_host = sol_data->w + n;
+  evsl_memcpy_device_to_host(r_host, br, n*sizeof(double));
+  evsl_memcpy_device_to_host(i_host, bi, n*sizeof(double));
+  br = r_host;
+  bi = i_host;
+#endif
+
   /* copy rhs */
   for (i = 0; i < n; i++) {
     b[i].real = br[i];
@@ -573,11 +628,23 @@ void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
   exit(0);
   */
 
+#ifdef EVSL_USING_CUDA_GPU
+  double *xr_device = xr;
+  double *xz_device = xz;
+  xr = r_host;
+  xz = i_host;
+#endif
+
   /* copy sol */
   for (i = 0; i < n; i++) {
     xr[i] = x[i].real;
     xz[i] = x[i].imag;
   }
+
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_memcpy_host_to_device(xr_device, xr, n*sizeof(double));
+  evsl_memcpy_host_to_device(xz_device, xz, n*sizeof(double));
+#endif
 }
 
 /**
@@ -620,6 +687,9 @@ void FreeASIGMABSolDirect(int num, void **data) {
     evsl_Free(sol_data->a);
     evsl_Free(sol_data->b);
     evsl_Free(sol_data->x);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_Free(soldata->w);
+#endif
     evsl_Free(sol_data);
   }
 }

@@ -29,7 +29,7 @@ program driver
     integer, dimension(:), pointer :: ia, iat
     integer, dimension(:), pointer :: ja, jat
 
-    integer*8 :: rat, asigbss, csr, dummy
+    integer*8 :: rat, asigbss, csr, csr_device, dummy
 
     ! Loop varialbe declarations
     integer :: i, j, k, zero, one
@@ -156,7 +156,10 @@ program driver
     ! Set the A matrix in EVSL global data to point to the arrays built here
     call EVSL_ARR2CSR_F90(n, ia, ja, vals, csr)
 
-    call EVSL_SETA_CSR_F90(csr)
+    ! A matrix on device [for non-GPU case, just another copy of CSR]
+    call EVSL_ARR2DEVICECSR_F90(n, ia, ja, vals, csr_device)
+
+    call EVSL_SETA_DEVICECSR_F90(csr_device)
 
     ! kmpdos in EVSL for the DOS for dividing the spectrum
     ! Set up necessary variables for kpmdos
@@ -211,6 +214,8 @@ program driver
     deallocate(sli)
 
     call EVSL_FREE_CSR_F90(csr)
+
+    call EVSL_FREE_DEVICECSR_F90(csr_device)
 
     call EVSL_FINISH_F90()
 

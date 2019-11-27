@@ -27,7 +27,7 @@ LapPLanN.ex: $(OBJS_PN)
 	@mkdir -p OUT
 
 LapPLanR.ex: $(OBJS_PR)
-	$(LINK_FC) $(LDFLAGS) -o $@ $(OBJS_PN) $(LIB) $(LIB_EXT)
+	$(LINK_FC) $(LDFLAGS) -o $@ $(OBJS_PR) $(LIB) $(LIB_EXT)
 	@mkdir -p OUT
 
 LapPLanN_MatFree.ex: $(OBJS_PN_MatFree)

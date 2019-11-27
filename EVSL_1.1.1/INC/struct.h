@@ -213,23 +213,24 @@ extern evslData evsldata;
  *
  */
 typedef struct _evslstat {
-  /* timing [level-1 funcs] */
+  /* timing [level-0 funcs] */
   double t_setBsv;
   double t_setASigBsv;
   double t_iter;
+  /* timing [level-1 funcs] */
+  double t_polAv;
+  double t_reorth;
+  double t_siorth;
+  double t_ritz;
+  double t_eig;
   /* timing [level-2 funcs] */
   double t_mvA;
   double t_mvB;
   double t_svB;
   double t_svLT;
   double t_svASigB;
-  double t_reorth;
-  double t_eig;
-  double t_blas;
-  double t_ritz;
-  double t_polAv;
+  double t_blas; //TODO
   double t_ratAv;
-  double t_sth;
   size_t n_mvA;
   size_t n_mvB;
   size_t n_svB;
@@ -237,7 +238,7 @@ typedef struct _evslstat {
   size_t n_svASigB;
   size_t n_polAv;
   size_t n_ratAv;
-  /* memory */
+  /* memory TODO */
   size_t alloced;
   size_t alloced_total;
   size_t alloced_max;

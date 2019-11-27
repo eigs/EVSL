@@ -143,11 +143,11 @@ program driver
     ! Initialize the EVSL global data
     call EVSL_START_F90()
 
-    ! Get a CSR struct from EVSL
-    call EVSL_ARR2CSR_F90(n, ia, ja, vals, csr)
+    ! Get a CSR struct from EVSL [on GPU if EVSL is configured with CUDA]
+    call EVSL_ARR2DEVICECSR_F90(n, ia, ja, vals, csr)
 
     ! Set A
-    call EVSL_SETA_CSR_F90(csr)
+    call EVSL_SETA_DEVICECSR_F90(csr)
 
     ! kmpdos in EVSL for the DOS for dividing the spectrum
     ! Set up necessary variables for kpmdos
@@ -198,7 +198,7 @@ program driver
     enddo
     deallocate(sli)
 
-    call EVSL_FREE_CSR_F90(csr)
+    call EVSL_FREE_DEVICECSR_F90(csr)
 
     ! Clean up the EVSL global data.
     call EVSL_FINISH_F90()
