@@ -297,9 +297,9 @@ AC_ARG_WITH(metis-dir,
 AS_HELP_STRING([--with-metis-dir=DIR],
                [DIR is the build directory of metis (5.1.0) (http://glaros.dtc.umn.edu/gkhome/metis/metis/overview), e.g., /usr/local/metis-5.1.0/build/Linux-x86_64]),
 [for metis_dir in $withval; do
-    METIS_DIR+="$metis_dir "
+    METIS_DIR+="$metis_dir"
  done;
- evsl_with_metis=no]
+ evsl_with_metis=yes]
 )
 
 AC_ARG_WITH(extra-lib-name,

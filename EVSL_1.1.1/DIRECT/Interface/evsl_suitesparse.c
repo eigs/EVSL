@@ -235,7 +235,7 @@ void FreeBSolDirectData(void *vdata) {
   /* finish cholmod */
   CHOLMOD(finish)(cc);
 #ifdef EVSL_USING_CUDA_GPU
-  evsl_Free(w);
+  evsl_Free(data->w);
 #endif
   evsl_Free(vdata);
 }
@@ -457,7 +457,7 @@ void FreeASIGMABSolDirect(int num, void **data) {
     ASBSolDataDirect *sol_data = (ASBSolDataDirect *) data[i];
     umfpack_zl_free_numeric(&sol_data->Numeric);
 #ifdef EVSL_USING_CUDA_GPU
-    evsl_Free(soldata->w);
+    evsl_Free(sol_data->w);
 #endif
     evsl_Free(sol_data);
   }

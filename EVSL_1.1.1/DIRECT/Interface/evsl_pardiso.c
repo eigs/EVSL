@@ -352,7 +352,7 @@ void FreeBSolDirectData(void *data) {
 
   free_csr(U);
 #ifdef EVSL_USING_CUDA_GPU
-  evsl_Free(w);
+  evsl_Free(Bsol_data->w);
 #endif
   evsl_Free(data);
 }
@@ -688,7 +688,7 @@ void FreeASIGMABSolDirect(int num, void **data) {
     evsl_Free(sol_data->b);
     evsl_Free(sol_data->x);
 #ifdef EVSL_USING_CUDA_GPU
-    evsl_Free(soldata->w);
+    evsl_Free(sol_data->w);
 #endif
     evsl_Free(sol_data);
   }

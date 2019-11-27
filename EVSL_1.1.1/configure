@@ -2620,9 +2620,9 @@ fi
 # Check whether --with-metis-dir was given.
 if test "${with_metis_dir+set}" = set; then :
   withval=$with_metis_dir; for metis_dir in $withval; do
-    METIS_DIR+="$metis_dir "
+    METIS_DIR+="$metis_dir"
  done;
- evsl_with_metis=no
+ evsl_with_metis=yes
 
 fi
 

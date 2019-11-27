@@ -49,9 +49,11 @@ void _evsl_Free(void *ptr)
    free(ptr);
 }
 
-#ifdef EVSL_USING_CUDA_GPU
+/* GPU memory management, which call the CPU counterparts if not configured with CUDA 
+ * i.e., (device == host) */
 void *_evsl_Malloc_device(size_t nbytes)
 {
+#ifdef EVSL_USING_CUDA_GPU
    void *ptr;
    cudaError_t stat = cudaMalloc(&ptr, nbytes);
 
@@ -63,25 +65,35 @@ void *_evsl_Malloc_device(size_t nbytes)
       CHKERR(1);
    }
    return ptr;
+#else
+   return _evsl_Malloc(nbytes);
+#endif
 }
 
 void *_evsl_Calloc_device(size_t count, size_t nbytes)
 {
+#ifdef EVSL_USING_CUDA_GPU
    void *ptr = _evsl_Malloc_device(count * nbytes);
    cudaError_t stat = cudaMemset(ptr, 0, count * nbytes);
    CHKERR(stat != cudaSuccess);
    return ptr;
+#else
+   return _evsl_Calloc(count, nbytes);
+#endif
 }
 
 void _evsl_Free_device(void *ptr)
 {
+#ifdef EVSL_USING_CUDA_GPU
    if (!ptr)
    {
       return;
    }
-
    cudaError_t stat = cudaFree(ptr);
    CHKERR(stat != cudaSuccess);
+#else
+   _evsl_Free(ptr);
+#endif
 }
 
 /**
@@ -90,14 +102,17 @@ void _evsl_Free_device(void *ptr)
  */
 void *_evsl_Realloc_device(void *old_ptr, size_t old_nbytes, size_t new_nbytes)
 {
+#ifdef EVSL_USING_CUDA_GPU
    void *new_ptr = _evsl_Malloc_device(new_nbytes);
    cudaError_t stat = cudaMemcpy(new_ptr, old_ptr, evsl_min(old_nbytes, new_nbytes), cudaMemcpyDeviceToDevice);
    CHKERR(stat != cudaSuccess);
    _evsl_Free_device(old_ptr);
 
    return new_ptr;
-}
+#else
+   return _evsl_Realloc(old_ptr, new_nbytes);
 #endif
+}
 
 void evsl_memcpy_device_to_host(void *dst, void *src, size_t nbytes) {
 #ifdef EVSL_USING_CUDA_GPU

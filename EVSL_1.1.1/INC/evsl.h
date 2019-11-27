@@ -84,9 +84,8 @@
 )
 
 /**
- * @brief GPU memory management. Call the CPU counterparts if not configured with CUDA
+ * @brief GPU memory management
  */
-#ifdef EVSL_USING_CUDA_GPU
 
 /**
  * @brief A cuda-malloc wrapper which provides basic error checking
@@ -135,16 +134,6 @@
  ptr = NULL \
 )
 
-#else
-
-/* Call the CPU counterparts if not configured with CUDA (device == host) */
-#define evsl_Malloc_device(count, type) evsl_Malloc(count, type)
-#define evsl_Calloc_device(count, type) evsl_Calloc(count, type)
-#define evsl_Realloc_device(ptr, old_count, old_type, new_count, new_type) evsl_Realloc(ptr, new_count, new_type)
-#define evsl_Free_device(ptr) evsl_Free(ptr)
-
-#endif
-
 /*- - - - - - - - - cheblanNr.c */
 int ChebLanNr(double *intv, int maxit, double tol, double *vinit, polparams *pol, int *nevOut, double **lamo, double **Wo, double **reso, FILE *fstats);
 
@@ -174,12 +163,10 @@ void *_evsl_Malloc(size_t nbytes);
 void *_evsl_Calloc(size_t count, size_t nbytes);
 void *_evsl_Realloc(void *ptr, size_t nbytes);
 void _evsl_Free(void *ptr);
-#ifdef EVSL_USING_CUDA_GPU
 void *_evsl_Malloc_device(size_t nbytes);
 void *_evsl_Calloc_device(size_t count, size_t nbytes);
 void *_evsl_Realloc_device(void *old_ptr, size_t old_nbytes, size_t new_nbytes);
 void _evsl_Free_device(void *ptr);
-#endif
 void evsl_memcpy_device_to_host(void *dst, void *src, size_t nbytes);
 void evsl_memcpy_device_to_device(void *dst, void *src, size_t nbytes);
 void evsl_memcpy_host_to_device(void *dst, void *src, size_t nbytes);
