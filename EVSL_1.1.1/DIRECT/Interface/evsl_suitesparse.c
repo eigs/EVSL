@@ -13,7 +13,19 @@
 typedef struct _BSolDataDirect {
   cholmod_factor *LB;
   cholmod_common cm;
+#ifdef EVSL_USING_CUDA_GPU
+  /* workspace for solve, of size 2*n, only for GPUs */
+  double *w;
+#endif
 } BSolDataDirect;
+
+typedef struct _ASBSolDataDirect {
+  void *Numeric;
+#ifdef EVSL_USING_CUDA_GPU
+  /* workspace for solve, of size 4*n, only for GPUs */
+  double *w;
+#endif
+} ASBSolDataDirect;
 
 /** @file evsl_suitesparse.c
  *  @brief Default solver function for solving shifted systems and factoring B
@@ -113,15 +125,23 @@ cholmod_dense cholmod_X, cholmod_B, *cholmod_Y=NULL, *cholmod_E=NULL,
  *
  * */
 void BSolDirect(double *b, double *x, void *data) {
-  //int n;
-
   BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
   cholmod_factor *LB;
   cholmod_common *cc;
 
   LB = Bsol_data->LB;
   cc = &Bsol_data->cm;
-  //n = LB->n;
+
+#ifdef EVSL_USING_CUDA_GPU
+  int n = LB->n;
+  double *w = Bsol_data->w;
+  double *x_device = x;
+  double *b_host = w;
+  double *x_host = w + n;
+  evsl_memcpy_device_to_host(b_host, b, n*sizeof(double));
+  b = b_host;
+  x = x_host;
+#endif
 
   /* give the wrapper data */
   cholmod_X.x = x;
@@ -131,6 +151,10 @@ void BSolDirect(double *b, double *x, void *data) {
   cholmod_dense *cholmod_Xp = &cholmod_X;
   CHOLMOD(solve2)(CHOLMOD_A, LB, &cholmod_B, NULL,
                   &cholmod_Xp, NULL, &cholmod_Y, &cholmod_E, cc);
+
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_memcpy_host_to_device(x_device, x, n*sizeof(double));
+#endif
 }
 
 /** @brief Setup the B-sol by computing the Cholesky factorization of B
@@ -187,6 +211,10 @@ int SetupBSolDirect(csrMat *B, void **data) {
   arr_to_cholmod_dense(n, 1, NULL, &cholmod_X);
   arr_to_cholmod_dense(n, 1, NULL, &cholmod_B);
 
+#ifdef EVSL_USING_CUDA_GPU
+  Bsol_data->w = evsl_Malloc(2*n, double);
+#endif
+
   *data = (void *) Bsol_data;
 
   double tme = evsl_timer();
@@ -206,6 +234,9 @@ void FreeBSolDirectData(void *vdata) {
   CHOLMOD(free_dense)(&cholmod_W, cc);
   /* finish cholmod */
   CHOLMOD(finish)(cc);
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_Free(data->w);
+#endif
   evsl_Free(vdata);
 }
 
@@ -213,15 +244,23 @@ void FreeBSolDirectData(void *vdata) {
  *  x = L^{-T}*b
  * */
 void LTSolDirect(double *b, double *x, void *data) {
-  //int n;
-
   BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
   cholmod_factor *LB;
   cholmod_common *cc;
 
   LB = Bsol_data->LB;
   cc = &Bsol_data->cm;
-  //n = LB->n;
+
+#ifdef EVSL_USING_CUDA_GPU
+  int n = LB->n;
+  double *w = Bsol_data->w;
+  double *x_device = x;
+  double *b_host = w;
+  double *x_host = w + n;
+  evsl_memcpy_device_to_host(b_host, b, n*sizeof(double));
+  b = b_host;
+  x = x_host;
+#endif
 
   /* XXX are these always safe ? */
   cholmod_B.x = b;
@@ -232,6 +271,10 @@ void LTSolDirect(double *b, double *x, void *data) {
   cholmod_dense *cholmod_Xp = &cholmod_X;
   CHOLMOD(solve2)(CHOLMOD_Pt, LB, cholmod_W, NULL,
                   &cholmod_Xp, NULL, &cholmod_Y, &cholmod_E, cc);
+
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_memcpy_host_to_device(x_device, x, n*sizeof(double));
+#endif
 }
 
 /**
@@ -248,12 +291,33 @@ void LTSolDirect(double *b, double *x, void *data) {
  *------------------------------------------------------------------*/
 void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
                       double *xz, void *data) {
-  void* Numeric = data;
+  ASBSolDataDirect *sol_data = (ASBSolDataDirect *) data;
+  void* Numeric = sol_data->Numeric;
   double Control[UMFPACK_CONTROL];
   umfpack_zl_defaults(Control);
   Control[UMFPACK_IRSTEP] = 0; // no iterative refinement for umfpack
+#ifdef EVSL_USING_CUDA_GPU
+  double *br_host = sol_data->w;
+  double *bi_host = sol_data->w + n;
+  double *xr_host = sol_data->w + 2*n;
+  double *xz_host = sol_data->w + 3*n;
+  double *xr_device = xr;
+  double *xz_device = xz;
+  evsl_memcpy_device_to_host(br_host, br, n*sizeof(double));
+  evsl_memcpy_device_to_host(bi_host, bi, n*sizeof(double));
+  br = br_host;
+  bi = bi_host;
+  xr = xr_host;
+  xz = xz_host;
+#endif
+
   umfpack_zl_solve(UMFPACK_A, NULL, NULL, NULL, NULL, xr, xz, br, bi,
                    Numeric, Control, NULL);
+
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_memcpy_host_to_device(xr_device, xr, n*sizeof(double));
+  evsl_memcpy_host_to_device(xz_device, xz, n*sizeof(double));
+#endif
 }
 
 /** @brief setup the default solver for A - SIGMA B
@@ -279,6 +343,7 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
   SuiteSparse_long *Cp, *Ci;
   double *Cx, *Cz, zkr1;
   void *Symbolic=NULL, *Numeric=NULL;
+  ASBSolDataDirect *ASBdata;
 
   nrow = A->nrows;
   ncol = A->ncols;
@@ -317,6 +382,7 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
    * for each pole we shift with B and factorize */
   zkr1 = 0.0;
   for (i=0; i<num; i++) {
+    ASBdata = evsl_Malloc(1, ASBSolDataDirect);
     /* the complex shift for pole i */
     double zkr = creal(zk[i]);
     double zkc = cimag(zk[i]);
@@ -350,8 +416,14 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
       printf("umfpack_zl_numeric failed and exit, %d\n", status);
       return 1;
     }
+
+    ASBdata->Numeric = Numeric;
+#ifdef EVSL_USING_CUDA_GPU
+    ASBdata->w = evsl_Malloc(4*nrow, double);
+#endif
+
     /* save the data */
-    data[i] = Numeric;
+    data[i] = ASBdata;
     /* for the next shift */
     zkr1 = zkr;
   } /* for (i=...)*/
@@ -382,7 +454,12 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
 void FreeASIGMABSolDirect(int num, void **data) {
   int i;
   for (i=0; i<num; i++) {
-    umfpack_zl_free_numeric(&data[i]);
+    ASBSolDataDirect *sol_data = (ASBSolDataDirect *) data[i];
+    umfpack_zl_free_numeric(&sol_data->Numeric);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_Free(sol_data->w);
+#endif
+    evsl_Free(sol_data);
   }
 }
 

@@ -9,6 +9,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "EVSL_config.h"
+
+#ifdef EVSL_USING_CUDA_GPU
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+#include <cusparse.h>
+#include <curand.h>
+#endif
+
 #include "struct.h"
 
 #define EVSL_PI 3.14159265358979323846
@@ -75,6 +83,57 @@
  ptr = NULL \
 )
 
+/**
+ * @brief GPU memory management
+ */
+
+/**
+ * @brief A cuda-malloc wrapper which provides basic error checking
+ * @param count Number of elements to be allocated
+ * @param type Type of elements to be allocated
+ */
+#define evsl_Malloc_device(count, type) \
+(\
+ /* printf("[%s:%d] DEVICE_MALLOC %ld bytes\n", __FILE__,__LINE__, (size_t)(sizeof(type) * (count))) ,*/ \
+ (type *) _evsl_Malloc_device( (size_t)(sizeof(type) * (count)) ) \
+)
+
+/**
+ * @brief A cuda-calloc wrapper which provides basic error checking
+ * @param count Number of elements to be allocated
+ * @param type Type of elements to be allocated
+ */
+#define evsl_Calloc_device(count, type) \
+(\
+ /* printf("[%s:%d] DEVICE_CALLOC %ld bytes\n", __FILE__,__LINE__, (size_t)(sizeof(type) * (count))) ,*/ \
+ (type *) _evsl_Calloc_device( (size_t)(count), (size_t)sizeof(type) ) \
+)
+
+/**
+ * @brief A cuda-realloc wrapper which provides basic error checking
+ * @param old_count Number of elements previously allocated
+ * @param new_count Number of elements to be allocated
+ * @param old_type Type of elements previous allocated
+ * @param new_type Type of elements to be allocated
+ */
+#define evsl_Realloc_device(ptr, old_count, old_type, new_count, new_type) \
+(\
+ /* printf("[%s:%d] DEVICE_ReALLOC %ld bytes\n", __FILE__,__LINE__, (size_t)(sizeof(type) * (count))) ,*/ \
+ (new_type *) _evsl_Realloc_device( (void *)ptr, (size_t)(sizeof(old_type) * (old_count)),  \
+                                                 (size_t)(sizeof(new_type) * (new_count)) ) \
+)
+
+/**
+ * @brief A cuda-free wrapper which sets NULL
+ * @param ptr Pointer to a memory block previously allocated with evsl_Malloc_device,
+ *        evsl_Calloc_device or evsl_Realloc_device
+ */
+#define evsl_Free_device(ptr) \
+(\
+ _evsl_Free_device((void *)ptr), \
+ ptr = NULL \
+)
+
 /*- - - - - - - - - cheblanNr.c */
 int ChebLanNr(double *intv, int maxit, double tol, double *vinit, polparams *pol, int *nevOut, double **lamo, double **Wo, double **reso, FILE *fstats);
 
@@ -104,6 +163,14 @@ void *_evsl_Malloc(size_t nbytes);
 void *_evsl_Calloc(size_t count, size_t nbytes);
 void *_evsl_Realloc(void *ptr, size_t nbytes);
 void _evsl_Free(void *ptr);
+void *_evsl_Malloc_device(size_t nbytes);
+void *_evsl_Calloc_device(size_t count, size_t nbytes);
+void *_evsl_Realloc_device(void *old_ptr, size_t old_nbytes, size_t new_nbytes);
+void _evsl_Free_device(void *ptr);
+void evsl_memcpy_device_to_host(void *dst, void *src, size_t nbytes);
+void evsl_memcpy_device_to_device(void *dst, void *src, size_t nbytes);
+void evsl_memcpy_host_to_device(void *dst, void *src, size_t nbytes);
+void evsl_memset_device(void * ptr, int value, size_t nbytes);
 
 /*- - - - - - - - - exDos.c */
 int exDOS(double *vals, int n, int npts, double *x, double *y, double *intv);
@@ -152,6 +219,14 @@ int matadd(double alp, double bet, csrMat *A, csrMat *B, csrMat *C, int *mapA, i
 int speye(int n, csrMat *A);
 /* extract upper triangular part of A */
 void triuCsr(csrMat *A, csrMat *U);
+#ifdef EVSL_USING_CUDA_GPU
+void matvec_cusparse_csr(double *x, double *y, void *data);
+void evsl_create_csr_gpu(csrMat *Acpu, csrMat *Agpu);
+void evsl_free_csr_gpu(csrMat *csr);
+void matvec_cusparse_hyb(double *x, double *y, void *data);
+int evsl_create_hybMat(csrMat *A, hybMat *hyb);
+void evsl_free_hybMat(hybMat *hyb);
+#endif
 
 int arrays_copyto_csrMat(int nrow, int ncol, int *ia, int *ja, double *a, csrMat *A);
 /*- - - - - - - - - evsl.c */
@@ -173,6 +248,14 @@ int EVSLStart();
 /* finalize EVSL */
 int EVSLFinish();
 void SetDiagScal(double *ds);
+#ifdef EVSL_USING_CUDA_GPU
+int SetAMatrix_device_hyb(hybMat *A);
+int SetBMatrix_device_hyb(hybMat *B);
+int SetAMatrix_device_csr(csrMat *A);
+int SetBMatrix_device_csr(csrMat *B);
+void evsl_device_query(int dev);
+void evsl_last_device_err();
+#endif
 
 /*- - - - - - - - - spslicer.c */
 int spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts);
@@ -187,11 +270,25 @@ double evsl_timer();
 /*- - - - - - - - - vect.c */
 // generate a random vector
 void rand_double(int n, double *v);
+void rand_double_device(int n, double *v);
 // generate a normally distributed random vector
 void randn_double(int n, double *v);
+void randn_double_device(int n, double *v);
 // sort a vector
 void sort_double(int n, double *v, int *ind);
 void linspace(double a, double b, int num, double *arr);
+
+double evsl_dnrm2_device(int *n, double *x, int *incr);
+void evsl_dscal_device(int *n, double *a, double *x, int *incr);
+double evsl_ddot_device(int *n, double *x, int *incx, double *y, int *incy);
+void evsl_daxpy_device(int *n, double *a, double *x, int *incx, double *y, int *incy);
+void evsl_dcopy_device(int *n, double *x, int *incx, double *y, int *incy);
+void evsl_dgemv_device(const char *trans, int *m, int *n, double *alpha, double *a, int *lda,
+                       double *x, int *incx, double *beta, double *y, int *incy);
+void evsl_dgemm_device(const char *transa, const char *transb, int *m, int * n, int *k, 
+                       double *alpha, double *a, int *lda, double *b, int *ldb, double *beta, double *c, int *ldc);
+void evsl_element_mult_device(int n, double *a, double *b);
+void evsl_element_divide_device(int n, double *a, double *b);
 
 /*- - - - - - - - - stats.c */
 void StatsPrint(FILE *fstats);
@@ -205,9 +302,13 @@ void EVSLFORT(evsl_start,EVSL_START)();
 void EVSLFORT(evsl_finish,EVSL_FINISH)();
 void EVSLFORT(evsl_coo2csr,EVSL_COO2CSR)(int *n, int *nnz, int *ir, int *jc, double *vv, uintptr_t *csrf90);
 void EVSLFORT(evsl_arr2csr,EVSL_ARR2CSR)(int *n, int *ia, int *ja, double *a, uintptr_t *csrf90);
+void EVSLFORT(evsl_arr2devicecsr,EVSL_ARR2DEVICECSR)(int *n, int *ia, int *ja, double *a, uintptr_t *csrf90);
 void EVSLFORT(evsl_free_csr,EVSL_FREE_CSR)(uintptr_t *csrf90);
+void EVSLFORT(evsl_free_devicecsr,EVSL_FREE_DEVICECSR)(uintptr_t *csrf90);
 void EVSLFORT(evsl_seta_csr,EVSL_SETA_CSR)(uintptr_t *Af90);
+void EVSLFORT(evsl_seta_devicecsr,EVSL_SETA_DEVICECSR)(uintptr_t *Af90);
 void EVSLFORT(evsl_setb_csr,EVSL_SETB_CSR)(uintptr_t *Bf90);
+void EVSLFORT(evsl_setb_devicecsr,EVSL_SETB_DEVICECSR)(uintptr_t *Bf90);
 void EVSLFORT(evsl_setamv,EVSL_SETAMV)(int *n, void *func, void *data);
 void EVSLFORT(evsl_setbmv,EVSL_SETBMV)(int *n, void *func, void *data);
 void EVSLFORT(evsl_setbsol,EVSL_SETBSOL)(void *func, void *data);

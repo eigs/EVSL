@@ -24,12 +24,12 @@ void StatsPrint(FILE *fstats) {
   double t_svLT = stats->t_svLT;
   double t_svASigB = stats->t_svASigB;
   double t_reorth = stats->t_reorth;
+  double t_siorth = stats->t_siorth;
   double t_eig = stats->t_eig;
   double t_blas = stats->t_blas;
   double t_ritz = stats->t_ritz;
   double t_polAv = stats->t_polAv;
   double t_ratAv = stats->t_ratAv;
-  double t_sth = stats->t_sth;
   size_t n_mvA = stats->n_mvA;
   size_t n_mvB = stats->n_mvB;
   size_t n_svB = stats->n_svB;
@@ -57,11 +57,11 @@ void StatsPrint(FILE *fstats) {
   if (n_svLT)    { fprintf(fstats, "   Solve with LT            :  %f (%8ld, avg %f)\n",  t_svLT, n_svLT, t_svLT / n_svLT); }
   if (n_svASigB) { fprintf(fstats, "   Solve with A-SIGMA*B     :  %f (%8ld, avg %f)\n",  t_svASigB, n_svASigB, t_svASigB / n_svASigB); }
   if (t_reorth)  { fprintf(fstats, "   Reorthogonalization      :  %f\n", t_reorth); }
+  if (t_siorth)  { fprintf(fstats, "   SIorthogonalization      :  %f\n", t_siorth); }
   if (t_eig)     { fprintf(fstats, "   LAPACK eig               :  %f\n", t_eig); }
   if (t_blas)    { fprintf(fstats, "   Other BLAS               :  %f\n", t_blas); }
   if (t_ritz)    { fprintf(fstats, "   Compute Ritz vectors     :  %f\n", t_ritz); }
   /* if (t_sth)     { fprintf(fstats, "   Some other thing timed   :  %f\n", t_sth); } */
-  if (t_sth)     { fprintf(fstats, "   Other                    :  %f\n", t_sth); }
   /* memory */
   /*
   if (alloced_total > 1e9) {

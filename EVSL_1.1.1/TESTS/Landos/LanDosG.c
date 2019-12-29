@@ -57,6 +57,10 @@ int main(int argc, char *argv[]) {
 
   cooMat Acoo, Bcoo; /* A, B */
   csrMat Acsr, Bcsr; /* A, B */
+#ifdef EVSL_USING_CUDA_GPU
+  csrMat Acsr_gpu;
+  csrMat Bcsr_gpu;
+#endif
   double *sqrtdiag = NULL;
 
   FILE *flog = stdout, *fmat = NULL;
@@ -162,12 +166,21 @@ int main(int argc, char *argv[]) {
     diagScalCsr(&Acsr, sqrtdiag);
     diagScalCsr(&Bcsr, sqrtdiag);
 
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+    evsl_create_csr_gpu(&Bcsr, &Bcsr_gpu);
+#endif
+
     /*---------------- Set EVSL to solve std eig problem to
      *                 compute the range of the spectrum of B */
     SetStdEig();
+#ifdef EVSL_USING_CUDA_GPU
+    SetAMatrix_device_csr(&Bcsr_gpu);
+#else
     SetAMatrix(&Bcsr);
-    double *vinit = evsl_Malloc(n, double);
-    rand_double(n, vinit);
+#endif
+    double *vinit = evsl_Malloc_device(n, double);
+    rand_double_device(n, vinit);
     double lmin = 0.0, lmax = 0.0;
     ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
     if (ierr) {
@@ -183,14 +196,21 @@ int main(int argc, char *argv[]) {
     SetLTSol(BSolPol, (void *)&BSqrtInv);
     printf(" The degree for LS polynomial approximations to B^{-1} and B^{-1/2} "
            "are %d and %d\n", BInv.deg, BSqrtInv.deg);
+#ifdef EVSL_USING_CUDA_GPU
+    /*-------------------- set the left-hand side matrix A */
+    SetAMatrix_device_csr(&Acsr_gpu);
+    /*-------------------- set the right-hand side matrix B */
+    SetBMatrix_device_csr(&Bcsr_gpu);
+#else
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
     SetBMatrix(&Bcsr);
+#endif
     /*-------------------- Solve Gen Eig problem */
     SetGenEig();
     /*-------------------- eig bounds for B\A */
-    rand_double(n, vinit);
+    rand_double_device(n, vinit);
     ierr = LanTrbounds(40, 200, 1e-10, vinit, 1, &lmin, &lmax, fstats);
     if (ierr) {
       fprintf(flog, "Could not run LanTrBounds: %i", ierr);
@@ -248,7 +268,11 @@ int main(int argc, char *argv[]) {
     free_coo(&Bcoo);
     free_csr(&Acsr);
     free_csr(&Bcsr);
-    evsl_Free(vinit);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_free_csr_gpu(&Acsr_gpu);
+    evsl_free_csr_gpu(&Bcsr_gpu);
+#endif
+    evsl_Free_device(vinit);
     FreeBSolPolData(&BInv);
     FreeBSolPolData(&BSqrtInv);
 

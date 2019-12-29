@@ -26,6 +26,10 @@ int main() {
   /*-------------------- matrices A, B: coo format and csr format */
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
+#ifdef EVSL_USING_CUDA_GPU
+  csrMat Acsr_gpu;
+  csrMat Bcsr_gpu;
+#endif
   /* slicer parameters */
   Mdeg = 50;
   nvec = 40;
@@ -40,6 +44,9 @@ int main() {
   /*-------------------- stopping tol */
   tol = 1e-6;
   /*-------------------- start EVSL */
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_device_query(0);
+#endif
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
   if (NULL == (fmat = fopen("matfile", "r"))) {
@@ -129,16 +136,25 @@ int main() {
     /*-------------------- set the solver for B and LT */
     SetBSol(BSolDirect, Bsol);
     SetLTSol(LTSolDirect, Bsol);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+    evsl_create_csr_gpu(&Bcsr, &Bcsr_gpu);
+    /*-------------------- set the left-hand side matrix A */
+    SetAMatrix_device_csr(&Acsr_gpu);
+    /*-------------------- set the right-hand side matrix B */
+    SetBMatrix_device_csr(&Bcsr_gpu);
+#else
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
     SetBMatrix(&Bcsr);
+#endif
     /*-------------------- for generalized eigenvalue problem */
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
     //-------------------- initial vector
-    vinit = evsl_Malloc(n, double);
-    rand_double(n, vinit);
+    vinit = evsl_Malloc_device(n, double);
+    rand_double_device(n, vinit);
     ierr = LanTrbounds(50, 200, 1e-12, vinit, 1, &lmin, &lmax, fstats);
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n",
             lmin, lmax);
@@ -235,7 +251,7 @@ int main() {
       if (lam)
         evsl_Free(lam);
       if (Y)
-        evsl_Free(Y);
+        evsl_Free_device(Y);
       if (res)
         evsl_Free(res);
       free_pol(&pol);
@@ -250,12 +266,16 @@ int main() {
         fprintf(fmtout, "%.15e\n", alleigs[j]);
       fclose(fmtout);
     }
-    evsl_Free(vinit);
+    evsl_Free_device(vinit);
     evsl_Free(sli);
     free_coo(&Acoo);
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_free_csr_gpu(&Acsr_gpu);
+    evsl_free_csr_gpu(&Bcsr_gpu);
+#endif
     FreeBSolDirectData(Bsol);
     evsl_Free(alleigs);
     evsl_Free(counts);

@@ -61,6 +61,9 @@ int main () {
   Mdeg = 300;
   nvec = 60;
   /*-------------------- start EVSL */
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_device_query(0);
+#endif
   EVSLStart();
 
   // interior eigensolver parameters
@@ -135,12 +138,19 @@ int main () {
       fprintf(flog, "HB FORMAT  not supported (yet) * \n");
       exit(7);
     }
+#ifdef EVSL_USING_CUDA_GPU
+    /*-------------------- set matrix A (csr on GPU) */
+    csrMat Acsr_gpu;
+    evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+    SetAMatrix_device_csr(&Acsr_gpu);
+#else
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
+#endif
     /*-------------------- define ChebLanTr parameters */
     alleigs = evsl_Malloc(n, double);
-    vinit = evsl_Malloc(n, double);
-    rand_double(n, vinit);
+    vinit = evsl_Malloc_device(n, double);
+    rand_double_device(n, vinit);
     /*-------------------- get lambda_min lambda_max estimates */
     ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
     //    lmin = lmin-0.1; lmax = lmax+0.1;
@@ -195,6 +205,7 @@ int main () {
       double *lam, *Y, *res;
       int *ind;
       //--------------------
+      StatsReset();
       a = sli[sl];
       b = sli[sl+1];
       fprintf(fstats, " subinterval: [% 12.4e , % 12.4e]\n", a, b);
@@ -205,10 +216,8 @@ int main () {
       xintv[1] = b;
       //-------------------- random initial guess
       double *V0;
-      V0 = evsl_Malloc(n*nev, double);
-      for (i=0; i<n*nev; i++){
-        V0[i] = rand() / ((double)RAND_MAX);
-      }
+      V0 = evsl_Malloc_device(n*nev, double);
+      rand_double_device(n*nev, V0);
       //-------------------- filtered subspace iteration
       set_pol_def(&pol);
       // can change default values here e.g.
@@ -246,11 +255,12 @@ int main () {
       counts[sl] = nevOut;
       //-------------------- free memory allocated in this loop
       if (lam)  evsl_Free(lam);
-      if (Y)  evsl_Free(Y);
+      if (Y)  evsl_Free_device(Y);
       if (res)  evsl_Free(res);
       evsl_Free(ind);
       free_pol(&pol);
-      evsl_Free(V0);
+      evsl_Free_device(V0);
+      StatsPrint(fstats);
       /*-------------------- end slice loop */
     }
     fprintf(fstats," --> Total eigenvalues found = %d\n",totcnt);
@@ -264,9 +274,12 @@ int main () {
     /*-------------------- free rest of allocated memory */
     evsl_Free(counts);
     evsl_Free(sli);
-    evsl_Free(vinit);
+    evsl_Free_device(vinit);
     free_coo(&Acoo);
     free_csr(&Acsr);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_free_csr_gpu(&Acsr_gpu);
+#endif
     evsl_Free(alleigs);
     if (fstats != stdout) fclose(fstats);
     /*-------------------- end matrix loop */
@@ -276,6 +289,7 @@ int main () {
   fclose( fmat );
   /*-------------------- finalize EVSL */
   EVSLFinish();
+
   return 0;
 }
 

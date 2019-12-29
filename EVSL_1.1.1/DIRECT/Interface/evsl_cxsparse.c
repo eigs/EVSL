@@ -16,7 +16,7 @@ typedef struct _BSolDataDirect {
   cs_dis *S;
   /* numeric factor */
   cs_din *N;
-  /* workspace for solve, of size n */
+  /* workspace for solve, of size n; 3*n for GPU runs */
   double *w;
 } BSolDataDirect;
 
@@ -29,6 +29,10 @@ typedef struct _ASBSolDataDirect {
   cs_cin *N;
   /* workspace for solve, of size n */
   cs_complex_t *b, *x;
+#ifdef EVSL_USING_CUDA_GPU
+  /* workspace for solve, of size 2*n, only for GPUs */
+  double *w;
+#endif
 } ASBSolDataDirect;
 
 
@@ -116,8 +120,11 @@ int SetupBSolDirect(csrMat *B, void **data) {
   Bsol_data->n = n;
   Bsol_data->S = S;
   Bsol_data->N = N;
+#ifdef EVSL_USING_CUDA_GPU
+  Bsol_data->w = evsl_Malloc(3*n, double);
+#else
   Bsol_data->w = evsl_Malloc(n, double);
-
+#endif
   *data = (void *) Bsol_data;
 
   double tme = evsl_timer();
@@ -136,10 +143,23 @@ void BSolDirect(double *b, double *x, void *data) {
   int n = Bsol_data->n;
   double *w = Bsol_data->w;
 
+#ifdef EVSL_USING_CUDA_GPU
+  double *x_device = x;
+  double *b_host = w + n;
+  double *x_host = w + 2*n;
+  evsl_memcpy_device_to_host(b_host, b, n*sizeof(double));
+  b = b_host;
+  x = x_host;
+#endif
+
   cs_di_ipvec (S->pinv, b, w, n) ;   /* w = P*b */
   cs_di_lsolve (N->L, w) ;           /* w = L\w */
   cs_di_ltsolve (N->L, w) ;          /* w = L'\w */
   cs_di_pvec (S->pinv, w, x, n) ;    /* x = P'*w */
+
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_memcpy_host_to_device(x_device, x, n*sizeof(double));
+#endif
 }
 
 /** @brief Solver function of L^{T}
@@ -152,9 +172,22 @@ void LTSolDirect(double *b, double *x, void *data) {
   int n = Bsol_data->n;
   double *w = Bsol_data->w;
 
+#ifdef EVSL_USING_CUDA_GPU
+  double *x_device = x;
+  double *b_host = w + n;
+  double *x_host = w + 2*n;
+  evsl_memcpy_device_to_host(b_host, b, n*sizeof(double));
+  b = b_host;
+  x = x_host;
+#endif
+
   memcpy(w, b, n*sizeof(double));    /* w = b */
   cs_di_ltsolve (N->L, w) ;          /* w = L'\w */
   cs_di_pvec (S->pinv, w, x, n) ;    /* x = P'*w */
+
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_memcpy_host_to_device(x_device, x, n*sizeof(double));
+#endif
 }
 
 /** @brief Free solver data
@@ -289,6 +322,9 @@ int SetupASIGMABSolDirect(csrMat *A, csrMat *BB, int num,
     ASBdata->N = N;
     ASBdata->b = evsl_Malloc(nrow, cs_complex_t);
     ASBdata->x = evsl_Malloc(nrow, cs_complex_t);
+#ifdef EVSL_USING_CUDA_GPU
+    ASBdata->w = evsl_Malloc(2*nrow, double);
+#endif
     data[i] = ASBdata;
 
     /* for the next shift */
@@ -333,6 +369,16 @@ void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
   cs_cin *N = sol_data->N;
   cs_complex_t *b = sol_data->b;
   cs_complex_t *x = sol_data->x;
+
+#ifdef EVSL_USING_CUDA_GPU
+  double *r_host = sol_data->w;
+  double *i_host = sol_data->w + n;
+  evsl_memcpy_device_to_host(r_host, br, n*sizeof(double));
+  evsl_memcpy_device_to_host(i_host, bi, n*sizeof(double));
+  br = r_host;
+  bi = i_host;
+#endif
+
   /* copy rhs */
   for (i=0; i<n; i++) {
     b[i] = br[i] + bi[i] * I;
@@ -341,11 +387,24 @@ void ASIGMABSolDirect(int n, double *br, double *bi, double *xr,
   cs_ci_lsolve (N->L, x) ;               /* x = L\x */
   cs_ci_usolve (N->U, x) ;               /* x = U\x */
   cs_ci_ipvec (S->q, x, b, n) ;          /* b(q) = x */
+
+#ifdef EVSL_USING_CUDA_GPU
+  double *xr_device = xr;
+  double *xz_device = xz;
+  xr = r_host;
+  xz = i_host;
+#endif
+
   /* copy sol */
   for (i=0; i<n; i++) {
     xr[i] = creal(b[i]);
     xz[i] = cimag(b[i]);
   }
+
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_memcpy_host_to_device(xr_device, xr, n*sizeof(double));
+  evsl_memcpy_host_to_device(xz_device, xz, n*sizeof(double));
+#endif
 }
 
 /**
@@ -361,6 +420,9 @@ void FreeASIGMABSolDirect(int num, void **data) {
     cs_ci_nfree(soldata->N);
     evsl_Free(soldata->b);
     evsl_Free(soldata->x);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_Free(soldata->w);
+#endif
     evsl_Free(soldata);
   }
 }

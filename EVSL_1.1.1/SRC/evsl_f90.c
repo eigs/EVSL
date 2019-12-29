@@ -64,12 +64,45 @@ void EVSLFORT(evsl_arr2csr,EVSL_ARR2CSR)(int *n, int *ia, int *ja,
   *csrf90 = (uintptr_t) csr;
 }
 
+void EVSLFORT(evsl_arr2devicecsr,EVSL_ARR2DEVICECSR)(int *n, int *ia, int *ja,
+                                                     double *a, uintptr_t *csrf90) {
+  csrMat *csr;
+  csr = evsl_Malloc(1, csrMat);
+  /* does not own the data */
+  csr->owndata = 0;
+  csr->nrows = *n;
+  csr->ncols = *n;
+  csr->ia = ia;
+  csr->ja = ja;
+  csr->a = a;
+#ifdef EVSL_USING_CUDA_GPU
+  csrMat *csr_gpu;
+  csr_gpu = evsl_Malloc(1, csrMat);
+  evsl_create_csr_gpu(csr, csr_gpu);
+  free_csr(csr);
+  evsl_Free(csr);
+  *csrf90 = (uintptr_t) csr_gpu;
+#else
+  *csrf90 = (uintptr_t) csr;
+#endif
+}
+
 /** @brief Fortran interface to free a CSR matrix
  * @param[in] csrf90 : CSR pointer
  */
 void EVSLFORT(evsl_free_csr,EVSL_FREE_CSR)(uintptr_t *csrf90) {
   csrMat *csr = (csrMat *) (*csrf90);
   free_csr(csr);
+  evsl_Free(csr);
+}
+
+void EVSLFORT(evsl_free_devicecsr,EVSL_FREE_DEVICECSR)(uintptr_t *csrf90) {
+  csrMat *csr = (csrMat *) (*csrf90);
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_free_csr_gpu(csr);
+#else
+  free_csr(csr);
+#endif
   evsl_Free(csr);
 }
 
@@ -81,12 +114,30 @@ void EVSLFORT(evsl_seta_csr,EVSL_SETA_CSR)(uintptr_t *Af90) {
   SetAMatrix(A);
 }
 
+void EVSLFORT(evsl_seta_devicecsr,EVSL_SETA_DEVICECSR)(uintptr_t *Af90) {
+  csrMat *A = (csrMat *) (*Af90);
+#ifdef EVSL_USING_CUDA_GPU
+  SetAMatrix_device_csr(A);
+#else
+  SetAMatrix(A);
+#endif
+}
+
 /** @brief Fortran interface to set matrix B from a CSR matrix
  * @param[in] Bf90 : CSR pointer of B
  */
 void EVSLFORT(evsl_setb_csr,EVSL_SETB_CSR)(uintptr_t *Bf90) {
   csrMat *B = (csrMat *) (*Bf90);
   SetBMatrix(B);
+}
+
+void EVSLFORT(evsl_setb_devicecsr,EVSL_SETB_DEVICECSR)(uintptr_t *Bf90) {
+  csrMat *B = (csrMat *) (*Bf90);
+#ifdef EVSL_USING_CUDA_GPU
+  SetBMatrix_device_csr(B);
+#else
+  SetBMatrix(B);
+#endif
 }
 
 /** @brief Fortran interface for SetAMatvec
@@ -151,11 +202,11 @@ void EVSLFORT(evsl_set_geneig,EVSL_SET_GENEIG)() {
 void EVSLFORT(evsl_lanbounds,EVSL_LANBOUNDS)(int *nsteps, double *lmin, double *lmax) {
   int n = evsldata.n;
   double *vinit;
-  vinit = evsl_Malloc(n, double);
-  rand_double(n, vinit);
+  vinit = evsl_Malloc_device(n, double);
+  rand_double_device(n, vinit);
   LanTrbounds(50, *nsteps, 1e-10, vinit, 1, lmin, lmax, NULL);
   //LanBounds(*nsteps, vinit, lmin, lmax);
-  evsl_Free(vinit);
+  evsl_Free_device(vinit);
 }
 
 /** @brief Fortran interface for kpmdos and spslicer
@@ -273,8 +324,8 @@ void EVSLFORT(evsl_cheblantr,EVSL_CHEBLANTR)(int *mlan, int *nev, double *xintv,
   double *vinit;
 
   n = evsldata.n;
-  vinit = evsl_Malloc(n, double);
-  rand_double(n, vinit);
+  vinit = evsl_Malloc_device(n, double);
+  rand_double_device(n, vinit);
 
   /* cast pointer */
   polparams *pol = (polparams *) (*polf90);
@@ -286,7 +337,7 @@ void EVSLFORT(evsl_cheblantr,EVSL_CHEBLANTR)(int *mlan, int *nev, double *xintv,
     printf("ChebLanTr error %d\n", ierr);
   }
 
-  evsl_Free(vinit);
+  evsl_Free_device(vinit);
   if (res) {
     evsl_Free(res);
   }
@@ -308,8 +359,8 @@ void EVSLFORT(evsl_cheblannr,EVSL_CHEBLANNR)(double *xintv, int *max_its, double
   double *vinit;
 
   n = evsldata.n;
-  vinit = evsl_Malloc(n, double);
-  rand_double(n, vinit);
+  vinit = evsl_Malloc_device(n, double);
+  rand_double_device(n, vinit);
 
   /* cast pointer */
   polparams *pol = (polparams *) (*polf90);
@@ -321,7 +372,7 @@ void EVSLFORT(evsl_cheblannr,EVSL_CHEBLANNR)(double *xintv, int *max_its, double
     printf("ChebLanNr error %d\n", ierr);
   }
 
-  evsl_Free(vinit);
+  evsl_Free_device(vinit);
   if (res) {
     evsl_Free(res);
   }
@@ -343,8 +394,8 @@ void EVSLFORT(evsl_ratlannr,EVSL_RATLANNR)(double *xintv, int *max_its, double *
   double *vinit;
 
   n = evsldata.n;
-  vinit = evsl_Malloc(n, double);
-  rand_double(n, vinit);
+  vinit = evsl_Malloc_device(n, double);
+  rand_double_device(n, vinit);
 
   /* cast pointer */
   ratparams *rat = (ratparams *) (*ratf90);
@@ -356,7 +407,7 @@ void EVSLFORT(evsl_ratlannr,EVSL_RATLANNR)(double *xintv, int *max_its, double *
     printf("RatLanNr error %d\n", ierr);
   }
 
-  evsl_Free(vinit);
+  evsl_Free_device(vinit);
   if (res) {
     evsl_Free(res);
   }
@@ -378,8 +429,8 @@ void EVSLFORT(evsl_ratlantr,EVSL_RATLANTR)(int *lanm, int *nev, double *xintv,
   double *vinit;
 
   n = evsldata.n;
-  vinit = evsl_Malloc(n, double);
-  rand_double(n, vinit);
+  vinit = evsl_Malloc_device(n, double);
+  rand_double_device(n, vinit);
 
   /* cast pointer */
   ratparams *rat = (ratparams *) (*ratf90);
@@ -391,7 +442,7 @@ void EVSLFORT(evsl_ratlantr,EVSL_RATLANTR)(int *lanm, int *nev, double *xintv,
     printf("RatLanNr error %d\n", ierr);
   }
 
-  evsl_Free(vinit);
+  evsl_Free_device(vinit);
   if (res) {
     evsl_Free(res);
   }
@@ -413,12 +464,12 @@ void EVSLFORT(evsl_get_nev,EVSL_GET_NEV)(int *nev) {
  */
 void EVSLFORT(evsl_copy_result,EVSL_COPY_RESULT)(double *val, double *vec) {
   memcpy(val, evsl_eigval_computed, evsl_nev_computed*sizeof(double));
-  memcpy(vec, evsl_eigvec_computed, evsl_nev_computed*evsl_n*sizeof(double));
+  evsl_memcpy_device_to_host(vec, evsl_eigvec_computed, evsl_nev_computed*evsl_n*sizeof(double));
   /* reset global variables */
   evsl_nev_computed = 0;
   evsl_n = 0;
   evsl_Free(evsl_eigval_computed);
-  evsl_Free(evsl_eigvec_computed);
+  evsl_Free_device(evsl_eigvec_computed);
   evsl_eigval_computed = NULL;
   evsl_eigvec_computed = NULL;
 }

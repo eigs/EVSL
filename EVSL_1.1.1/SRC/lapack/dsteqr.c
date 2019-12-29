@@ -17,7 +17,7 @@ static integer c__2 = 2;
     doublereal d__1, d__2;
 
     /* Builtin functions */
-    double sqrt(doublereal), d_sign(doublereal *, doublereal *);
+    double /* sqrt(doublereal), */ d_sign(doublereal *, doublereal *);
 
     /* Local variables */
     doublereal b, c__, f, g;

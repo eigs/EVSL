@@ -12,7 +12,7 @@ doublereal dlansy_(const char *norm, const char *uplo, integer *n, doublereal *a
     doublereal ret_val, d__1, d__2, d__3;
 
     /* Builtin functions */
-    double sqrt(doublereal);
+    /*double sqrt(doublereal);*/
 
     /* Local variables */
     integer i__, j;

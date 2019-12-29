@@ -26,7 +26,10 @@ int main() {
   /*-------------------- matrices A, B: coo format and csr format */
   cooMat Acoo, Bcoo;
   csrMat Acsr, Bcsr;
-  /* csrMat Acsr0, Bcsr0; */
+#ifdef EVSL_USING_CUDA_GPU
+  csrMat Acsr_gpu;
+  csrMat Bcsr_gpu;
+#endif
   /* slicer parameters */
   int msteps = 40;
   nvec = 10;
@@ -43,11 +46,14 @@ int main() {
   int         BsolDeg = 200;  /* Max degree to aproximate B with */
   double      BsolTol = 1e-6; /* Tolerance in polynomial approximation */
   int         DiagScalB = 1;  /* Apply diagonal scaling to A and B */
-  double     *Sqrtdiag = NULL;
+  double     *Sqrtdiag = NULL, *Sqrtdiag_device = NULL;
 
   /*-------------------- stopping tol */
   tol = 1e-6;
   /*-------------------- start EVSL */
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_device_query(0);
+#endif
   EVSLStart();
   /*------------------ file "matfile" contains paths to matrices */
   if (NULL == (fmat = fopen("matfile", "r"))) {
@@ -127,8 +133,8 @@ int main() {
     }
     alleigs = evsl_Malloc(n, double);
     /*-------------------- initial vector */
-    vinit = evsl_Malloc(n, double);
-    rand_double(n, vinit);
+    vinit = evsl_Malloc_device(n, double);
+    rand_double_device(n, vinit);
     /*-------------------- B^{-1} */
     if (Bsol_direct) {
       /*-------------------- use direct solver as the solver for B */
@@ -136,12 +142,12 @@ int main() {
       /*-------------------- set the solver for B and LT */
       SetBSol(BSolDirect, Bsol);
       SetLTSol(LTSolDirect, Bsol);
+#ifdef EVSL_USING_CUDA_GPU
+      evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+      evsl_create_csr_gpu(&Bcsr, &Bcsr_gpu);
+#endif
     } else {
       if (DiagScalB) {
-        /*
-        csr_copy(&Acsr, &Acsr0, 1);
-        csr_copy(&Bcsr, &Bcsr0, 1);
-        */
         /* For FEM matrices, diagonal scaling is often found useful to
          * improve condition */
         Sqrtdiag = evsl_Calloc(n, double);
@@ -151,12 +157,26 @@ int main() {
         }
         diagScalCsr(&Acsr, Sqrtdiag);
         diagScalCsr(&Bcsr, Sqrtdiag);
+#ifdef EVSL_USING_CUDA_GPU
+        Sqrtdiag_device = evsl_Malloc_device(n, double);
+        evsl_memcpy_host_to_device(Sqrtdiag_device, Sqrtdiag, n*sizeof(double));
+#else
+        Sqrtdiag_device = Sqrtdiag;
+#endif
       }
+#ifdef EVSL_USING_CUDA_GPU
+      evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+      evsl_create_csr_gpu(&Bcsr, &Bcsr_gpu);
+#endif
       /*-------------------- use polynomial approx. to B^{-1} and B^{-1/2}
        *                     B is assumbed to be ``well-conditioned'' */
       /* compute eig bounds for B, set to std eig prob for now */
       SetStdEig();
+#ifdef EVSL_USING_CUDA_GPU
+      SetAMatrix_device_csr(&Bcsr_gpu);
+#else
       SetAMatrix(&Bcsr);
+#endif
       double lminB, lmaxB;
       LanTrbounds(50, 200, 1e-10, vinit, 1, &lminB, &lmaxB, fstats);
       fprintf(fstats, "lmin, lmax of B: %e %e (lmax/lmin = %e)\n", lminB, lmaxB, lmaxB/lminB);
@@ -168,10 +188,17 @@ int main() {
       SetBSol (BSolPol, &BsolPol);
       SetLTSol(BSolPol, &BsqrtsolPol);
     }
+#ifdef EVSL_USING_CUDA_GPU
+    /*-------------------- set the left-hand side matrix A */
+    SetAMatrix_device_csr(&Acsr_gpu);
+    /*-------------------- set the right-hand side matrix B */
+    SetBMatrix_device_csr(&Bcsr_gpu);
+#else
     /*-------------------- set the left-hand side matrix A */
     SetAMatrix(&Acsr);
     /*-------------------- set the right-hand side matrix B */
     SetBMatrix(&Bcsr);
+#endif
     /*-------------------- for generalized eigenvalue problem */
     SetGenEig();
     /*-------------------- step 0: get eigenvalue bounds */
@@ -248,32 +275,23 @@ int main() {
 
       /* in the case of digonal scaling, recover Y and recompute residual */
       if (Sqrtdiag) {
-        double *v1 = evsl_Malloc(n, double);
-        double *v2 = evsl_Malloc(n, double);
-        int one = 1;
+        double *v1 = evsl_Malloc_device(n, double);
+        double *v2 = evsl_Malloc_device(n, double);
         for (i = 0; i < nev2; i++) {
+          int one = 1;
           double *yi = Y+i*n;
           double t = -lam[i];
-          matvec_csr(yi, v1, &Acsr);
-          matvec_csr(yi, v2, &Bcsr);
-          evsl_daxpy(&n, &t, v2, &one, v1, &one);
-          for (j = 0; j < n; j++) {
-            v1[j] *= Sqrtdiag[j];
-          }
-          res[i] = evsl_dnrm2(&n, v1, &one);
-
-          for (j = 0; j < n; j++) {
-            yi[j] /= Sqrtdiag[j];
-          }
-          /*
-          matvec_csr(yi, v1, &Acsr0);
-          matvec_csr(yi, v2, &Bcsr0);
-          DAXPY(&n, &t, v2, &one, v1, &one);
-          res[i] = DNRM2(&n, v1, &one);
-          */
+          evsldata.Amv->func(yi, v1, evsldata.Amv->data);
+          evsldata.Bmv->func(yi, v2, evsldata.Bmv->data);
+          evsl_daxpy_device(&n, &t, v2, &one, v1, &one);
+          /* v1[j] *= Sqrtdiag[j] */
+          evsl_element_mult_device(n, Sqrtdiag_device, v1);
+          res[i] = evsl_dnrm2_device(&n, v1, &one);
+          /* yi[j] /= Sqrtdiag[j] */
+          evsl_element_divide_device(n, Sqrtdiag_device, yi);
         }
-        evsl_Free(v1);
-        evsl_Free(v2);
+        evsl_Free_device(v1);
+        evsl_Free_device(v2);
       }
 
       /* sort the eigenvals: ascending order
@@ -297,14 +315,16 @@ int main() {
         evsl_Free(lam);
       }
       if (Y) {
-        evsl_Free(Y);
+        evsl_Free_device(Y);
       }
       if (res) {
         evsl_Free(res);
       }
       free_pol(&pol);
       evsl_Free(ind);
+      StatsPrint(fstats);
     } // for (sl=0; sl<nslices; sl++)
+
     //-------------------- free other allocated space
     fprintf(fstats, " --> Total eigenvalues found = %d\n", totcnt);
     sprintf(path, "OUT/EigsOut_Lan_MMPLanN_(%s_%s)", io.MatNam1, io.MatNam2);
@@ -315,12 +335,16 @@ int main() {
       }
       fclose(fmtout);
     }
-    evsl_Free(vinit);
+    evsl_Free_device(vinit);
     evsl_Free(sli);
     free_coo(&Acoo);
     free_csr(&Acsr);
     free_coo(&Bcoo);
     free_csr(&Bcsr);
+#ifdef EVSL_USING_CUDA_GPU
+    evsl_free_csr_gpu(&Acsr_gpu);
+    evsl_free_csr_gpu(&Bcsr_gpu);
+#endif
     evsl_Free(alleigs);
     evsl_Free(counts);
     evsl_Free(xdos);
@@ -331,6 +355,11 @@ int main() {
     if (Sqrtdiag) {
       evsl_Free(Sqrtdiag);
     }
+#ifdef EVSL_USING_CUDA_GPU
+    if (Sqrtdiag_device) {
+      evsl_Free_device(Sqrtdiag_device);
+    }
+#endif
     if (Bsol_direct) {
       FreeBSolDirectData(Bsol);
     } else {

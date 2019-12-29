@@ -32,7 +32,9 @@
 
 int SymmTridEig(double *eigVal, double *eigVec, int n,
                 const double *diag, const double *sdiag) {
+#if EVSL_TIMING_LEVEL > 0
   double tms = evsl_timer();
+#endif
   // compute eigenvalues and eigenvectors or eigvalues only
   char jobz = eigVec ? 'V' : 'N';
   int nn = n;
@@ -62,9 +64,11 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
     save_vec(n-1, sdiag, "bet");
     exit(0);
   }
+#if EVSL_TIMING_LEVEL > 0
   double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
-  // return info
+#endif
+
   return info;
 }
 
@@ -90,7 +94,10 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
  * ----------------------------------------------------------------------- */
 int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
                  int *nevO, const double *diag, const double *sdiag) {
+#if EVSL_TIMING_LEVEL > 0
   double tms = evsl_timer();
+#endif
+
   char jobz = 'V';  // compute eigenvalues and eigenvectors
   char range = 'V'; // compute eigenvalues in an interval
 
@@ -141,9 +148,11 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   evsl_Free(iwork);
   evsl_Free(isuppz);
 
+#if EVSL_TIMING_LEVEL > 0
   double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
-  //
+#endif
+
   return info;
 }
 
@@ -158,7 +167,10 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
  *     @param[out] lam Eigenvalues
  *- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) {
+#if EVSL_TIMING_LEVEL > 0
   double tms = evsl_timer();
+#endif
+
   /* compute eigenvalues/vectors of A that n x n, symmetric
    * eigenvalues saved in lam: the eigenvalues in ascending order
    * eigenvectors saved in Q */
@@ -189,8 +201,11 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
     exit(0);
   }
   evsl_Free(work);
+
+#if EVSL_TIMING_LEVEL > 0
   double tme = evsl_timer();
   evslstat.t_eig += tme - tms;
+#endif
 }
 
 /**
@@ -204,28 +219,31 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
  * @param[out] w Output
  **/
 void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, double *w) {
+#if EVSL_TIMING_LEVEL > 0
   double tms = evsl_timer();
+#endif
+
   double eta = 1.0 / sqrt(2.0);
   int i, one=1;
 #if USE_DGEMV
   char cT = 'T', cN = 'N';
   double done=1.0, dmone=-1.0, dzero=0.0;
 #endif
-  double old_nrm = evsl_dnrm2(&n, v, &one);
+  double old_nrm = evsl_dnrm2_device(&n, v, &one);
   double new_nrm = 0.0;
 
   for (i=0; i<i_max; i++) {
 #if USE_DGEMV
-    evsl_dgemv(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
-    evsl_dgemv(&cN, &n, &k, &dmone, Q, &n, w, &one, &done,  v, &one);
+    evsl_dgemv_device(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
+    evsl_dgemv_device(&cN, &n, &k, &dmone, Q, &n, w, &one, &done,  v, &one);
 #else
     int j;
     for (j=0; j<k; j++) {
-       double t = -evsl_ddot(&n, &Q[j*n], &one, v, &one);
-       evsl_daxpy(&n, &t, &Q[j*n], &one, v, &one);
+       double t = -evsl_ddot_device(&n, &Q[j*n], &one, v, &one);
+       evsl_daxpy_device(&n, &t, &Q[j*n], &one, v, &one);
     }
 #endif
-    new_nrm = evsl_dnrm2(&n, v, &one);
+    new_nrm = evsl_dnrm2_device(&n, v, &one);
     if (new_nrm > eta * old_nrm) {
       break;
     }
@@ -235,8 +253,11 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
   if (nrmv) {
     *nrmv = new_nrm;
   }
+
+#if EVSL_TIMING_LEVEL > 0
   double tme = evsl_timer();
   evslstat.t_reorth += tme - tms;
+#endif
 }
 
 /**
@@ -253,7 +274,10 @@ void CGS_DGKS(int n, int k, int i_max, double *Q, double *v, double *nrmv, doubl
  **/
 void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
                double *v, double *w) {
+#if EVSL_TIMING_LEVEL > 0
   double tms = evsl_timer();
+#endif
+
   int i, one=1;
 #if USE_DGEMV
   char cT = 'T', cN = 'N';
@@ -261,18 +285,21 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
 #endif
   for (i=0; i<i_max; i++) {
 #if USE_DGEMV
-    evsl_dgemv(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
-    evsl_dgemv(&cN, &n, &k, &dmone, Z, &n, w, &one, &done,  v, &one);
+    evsl_dgemv_device(&cT, &n, &k, &done,  Q, &n, v, &one, &dzero, w, &one);
+    evsl_dgemv_device(&cN, &n, &k, &dmone, Z, &n, w, &one, &done,  v, &one);
 #else
     int j;
     for (j=0; j<k; j++) {
-       double t = -evsl_ddot(&n, &Q[j*n], &one, v, &one);
-       evsl_daxpy(&n, &t, &Z[j*n], &one, v, &one);
+       double t = -evsl_ddot_device(&n, &Q[j*n], &one, v, &one);
+       evsl_daxpy_device(&n, &t, &Z[j*n], &one, v, &one);
     }
 #endif
   }
+
+#if EVSL_TIMING_LEVEL > 0
   double tme = evsl_timer();
   evslstat.t_reorth += tme - tms;
+#endif
 }
 
 //  max number of reorthogonalizations
@@ -288,19 +315,28 @@ void CGS_DGKS2(int n, int k, int i_max, double *Z, double *Q,
  * @warning Aliasing happens in call to CGS_DGKS
  */
 void orth(double *V, int n, int k, double *Vo, double *work) {
+#if EVSL_TIMING_LEVEL > 0
+  double tms = evsl_timer();
+  double told = evslstat.t_reorth; /* do not want record time in CGS */
+#endif
   int i;
   int one=1;
   int nk = n*k;
-  evsl_dcopy(&nk, V, &one, Vo, &one);
-  double tt = evsl_ddot(&n, Vo, &one, Vo, &one);
+  evsl_dcopy_device(&nk, V, &one, Vo, &one);
+  double tt = evsl_ddot_device(&n, Vo, &one, Vo, &one);
   double nrmv = sqrt(tt);
   double t = 1.0 / nrmv;
-  evsl_dscal(&n, &t, Vo, &one);
+  evsl_dscal_device(&n, &t, Vo, &one);
   for (i = 1; i < k; i++) {
     int istart = i*n;
     CGS_DGKS(n, i, NGS_MAX, Vo, Vo+istart, &nrmv, work);
     t = 1.0 / nrmv;
-    evsl_dscal(&n, &t, Vo+istart, &one);
+    evsl_dscal_device(&n, &t, Vo+istart, &one);
   }
+#if EVSL_TIMING_LEVEL > 0
+  double tme = evsl_timer();
+  evslstat.t_siorth += tme - tms;
+  evslstat.t_reorth = told;
+#endif
 }
 

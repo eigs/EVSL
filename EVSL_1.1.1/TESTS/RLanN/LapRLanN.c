@@ -96,9 +96,18 @@ int main(int argc, char *argv[]) {
   Mdeg = 300;
   nvec = 60;
   /*-------------------- start EVSL */
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_device_query(0);
+#endif
   EVSLStart();
   /*-------------------- set the left-hand side matrix A */
+#ifdef EVSL_USING_CUDA_GPU
+  csrMat Acsr_gpu;
+  evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+  SetAMatrix_device_csr(&Acsr_gpu);
+#else
   SetAMatrix(&Acsr);
+#endif
   //-------------------- call kpmdos
   mu = evsl_Malloc(Mdeg+1, double);
   double t = evsl_timer();
@@ -125,8 +134,8 @@ int main(int argc, char *argv[]) {
   //-------------------- # eigs per slice
   ev_int = (int) (1 + ecount / ((double) nslices));
   //-------------------- initial vector
-  vinit = evsl_Malloc(n, double);
-  rand_double(n, vinit);
+  vinit = evsl_Malloc_device(n, double);
+  rand_double_device(n, vinit);
   //-------------------- For each slice call RatLanrNr
   for (sl=0; sl<nslices; sl++) {
     printf("======================================================\n");
@@ -167,7 +176,8 @@ int main(int argc, char *argv[]) {
     nev = ev_int+2;
     //-------------------- maximal Lanczos iterations
     max_its = evsl_max(4*nev,300);  max_its = evsl_min(max_its, n);
-    //-------------------- RationalLanNr
+    //-------------------- RationalLanNr: note that when using CUDA
+    //                     vinit (input) and Y (output) are device memory
     ierr = RatLanNr(intv, max_its, tol, vinit, &rat, &nev2, &lam,
                     &Y, &res, fstats);
     if (ierr) {
@@ -210,7 +220,7 @@ int main(int argc, char *argv[]) {
     }
     //-------------------- free allocated space withing this scope
     if (lam) evsl_Free(lam);
-    if (Y) evsl_Free(Y);
+    if (Y) evsl_Free_device(Y);
     if (res) evsl_Free(res);
     evsl_Free(ind);
     evsl_Free(lam_ex);
@@ -220,10 +230,13 @@ int main(int argc, char *argv[]) {
     StatsPrint(fstats);
   } //for (sl=0; sl<nslices; sl++)
   //-------------------- free other allocated space
-  evsl_Free(vinit);
+  evsl_Free_device(vinit);
   evsl_Free(sli);
   free_coo(&Acoo);
   free_csr(&Acsr);
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_free_csr_gpu(&Acsr_gpu);
+#endif
   evsl_Free(mu);
   fclose(fstats);
   /*-------------------- finalize EVSL */

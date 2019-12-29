@@ -144,9 +144,9 @@ program driver
     call EVSL_START_F90()
 
     ! Set the A matrix in EVSL global data to point to the arrays built here
-    call EVSL_ARR2CSR_F90(n, ia, ja, vals, csr)
+    call EVSL_ARR2DEVICECSR_F90(n, ia, ja, vals, csr)
 
-    call EVSL_SETA_CSR_F90(csr)
+    call EVSL_SETA_DEVICECSR_F90(csr)
 
     ! kmpdos in EVSL for the DOS for dividing the spectrum
     ! Set up necessary variabls for kpmdos
@@ -197,7 +197,7 @@ program driver
     enddo
     deallocate(sli)
 
-    call EVSL_FREE_CSR_F90(csr)
+    call EVSL_FREE_DEVICECSR_F90(csr)
 
     call EVSL_FINISH_F90()
 

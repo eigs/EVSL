@@ -8,7 +8,7 @@
     doublereal d__1, d__2;
 
     /* Builtin functions */
-    double log(doublereal), pow_di(doublereal *, integer *), sqrt(doublereal);
+    double /* log(doublereal),*/ pow_di(doublereal *, integer *)/*, sqrt(doublereal)*/;
 
     /* Local variables */
     integer i__;

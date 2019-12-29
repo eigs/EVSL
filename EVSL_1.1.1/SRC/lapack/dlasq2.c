@@ -16,7 +16,7 @@ static integer c__11 = 11;
     doublereal d__1, d__2;
 
     /* Builtin functions */
-    double sqrt(doublereal);
+    /* double sqrt(doublereal); */
 
     /* Local variables */
     doublereal d__, e;

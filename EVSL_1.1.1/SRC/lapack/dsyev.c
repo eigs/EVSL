@@ -16,7 +16,7 @@ static doublereal c_b17 = 1.;
     doublereal d__1;
 
     /* Builtin functions */
-    double sqrt(doublereal);
+    /*double sqrt(doublereal);*/
 
     /* Local variables */
     integer nb;

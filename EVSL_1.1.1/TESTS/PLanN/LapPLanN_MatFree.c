@@ -102,6 +102,9 @@ int main(int argc, char *argv[]) {
   /*-------------------- define kpmdos parameters */
   Mdeg = 300;
   nvec = 60;
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_device_query(0);
+#endif
   /*-------------------- start EVSL */
   EVSLStart();
   /*-------------------- without forming the matrix,
@@ -135,12 +138,12 @@ int main(int argc, char *argv[]) {
   //-------------------- # eigs per slice
   ev_int = (int) (1 + ecount / ((double) nslices));
   //-------------------- initial vector
-  vinit = evsl_Malloc(n, double);
-  rand_double(n, vinit);
+  vinit = evsl_Malloc_device(n, double);
+  rand_double_device(n, vinit);
   //-------------------- debug only :
   //  save_vec(n, vinit, "OUT/vinit.mtx");
   //-------------------- For each slice call ChebLanr
-  for (sl =0; sl<nslices; sl++){
+  for (sl =0; sl<nslices; sl++) {
     printf("======================================================\n");
     int nev2;
     double *lam, *Y, *res;
@@ -176,7 +179,8 @@ int main(int argc, char *argv[]) {
 
     fprintf(fstats, " polynomial [type = %d], deg %d, bar %e gam %e\n",
             pol.type, pol.deg, pol.bar, pol.gam);
-    //-------------------- then call ChenLanNr
+    /*-------------------- then call ChenLanNr: note that when using CUDA
+                           vinit (input) and Y (output) are device memory */
     ierr = ChebLanNr(xintv, mlan, tol, vinit, &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebLanNr error %d\n", ierr);
@@ -218,15 +222,21 @@ int main(int argc, char *argv[]) {
       }
     }
     //-------------------- free allocated space withing this scope
-    if (lam)  evsl_Free(lam);
-    if (Y)  evsl_Free(Y);
-    if (res)  evsl_Free(res);
+    if (lam) {
+       evsl_Free(lam);
+    }
+    if (Y) {
+       evsl_Free_device(Y);
+    }
+    if (res) {
+       evsl_Free(res);
+    }
     free_pol(&pol);
     evsl_Free(ind);
     evsl_Free(lam_ex);
   }
   //-------------------- free other allocated space
-  evsl_Free(vinit);
+  evsl_Free_device(vinit);
   evsl_Free(sli);
   evsl_Free(mu);
   fclose(fstats);
@@ -235,11 +245,51 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-/*----------------- external matvec routine provided by users */
+/* y = A * x
+ * MatVec routine provided by users.
+ * Example: 7-pt stencil
+ * data: pointer to a struct that contains all needed data
+ */
+#ifdef EVSL_USING_CUDA_GPU
+__global__ void
+Lap2D3DMatvecCUDA(int nx, int ny, int nz, double *x, double *y,
+                  double s0, double s1, double s2, double s3, double s4,
+                  double s5, double s6) {
+   int n, i, j, k, p;
+   n = nx * ny * nz;
+   p = blockIdx.x * blockDim.x + threadIdx.x;
+   if (p < n) {
+      i = p;
+      k = i / (nx*ny); i -= k*nx*ny;
+      j = i / nx; i -= j * nx;
+
+      y[p] = s0 * x[p];
+      // x-1, x+1
+      if (i>0)    { y[p] += s1 * x[p-1]; }
+      if (i<nx-1) { y[p] += s2 * x[p+1]; }
+      // y-1, y+1
+      if (j>0)    { y[p] += s3 * x[p-nx]; }
+      if (j<ny-1) { y[p] += s4 * x[p+nx]; }
+      // z-1, z+1
+      if (k>0)    { y[p] += s5 * x[p-nx*ny]; }
+      if (k<nz-1) { y[p] += s6 * x[p+nx*ny]; }
+   }
+}
+
 void Lap2D3DMatvec(double *x, double *y, void *data) {
-  /* y = A * x
-   * data: pointer to a struct that contains all needed data
-   */
+  lapmv_t *lapmv = (lapmv_t *) data;
+  int nx = lapmv->nx;
+  int ny = lapmv->ny;
+  int nz = lapmv->nz;
+  int n = nx * ny * nz;
+  double *stencil = lapmv->stencil;
+  int bdim = 1024;
+  int gdim = (n + bdim - 1) / bdim;
+  Lap2D3DMatvecCUDA<<<gdim, bdim>>>(nx, ny, nz, x, y, stencil[0], stencil[1],
+        stencil[2], stencil[3], stencil[4], stencil[5], stencil[6]);
+}
+#else
+void Lap2D3DMatvec(double *x, double *y, void *data) {
   lapmv_t *lapmv = (lapmv_t *) data;
   int nx = lapmv->nx;
   int ny = lapmv->ny;
@@ -265,4 +315,5 @@ void Lap2D3DMatvec(double *x, double *y, void *data) {
     }
   }
 }
+#endif
 

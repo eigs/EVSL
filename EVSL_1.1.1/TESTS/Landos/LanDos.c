@@ -32,6 +32,9 @@ int main(int argc, char *argv[]) {
 
   cooMat Acoo;
   csrMat Acsr;
+#ifdef EVSL_USING_CUDA_GPU
+  csrMat Acsr_gpu;
+#endif
 
   /*-------------------- IO */
   FILE *fstats = NULL;
@@ -40,10 +43,16 @@ int main(int argc, char *argv[]) {
 
   /* initial vector: random */
   /*-------------------- start EVSL */
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_device_query(0);
+#endif
   EVSLStart();
   /*  Generate the Laplacian matrix (which we can trivially get eigenvalues for*/
   lapgen(num, num, num, &Acoo);
   cooMat_to_csrMat(0, &Acoo, &Acsr);
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_create_csr_gpu(&Acsr, &Acsr_gpu);
+#endif
 
   // /*-------------------- path to write the output files*/
   char path[1024];
@@ -72,10 +81,14 @@ int main(int argc, char *argv[]) {
   double *ydos = evsl_Malloc(npts, double); /* Calculated DOS y */
 
   SetStdEig();
+#ifdef EVSL_USING_CUDA_GPU
+  SetAMatrix_device_csr(&Acsr_gpu);
+#else
   SetAMatrix(&Acsr);
+#endif
 
-  double *vinit = evsl_Malloc(n, double);
-  rand_double(n, vinit);
+  double *vinit = evsl_Malloc_device(n, double);
+  rand_double_device(n, vinit);
   double lmin = 0.0, lmax = 0.0;
   ierr = LanTrbounds(50, 200, 1e-8, vinit, 1, &lmin, &lmax, fstats);
 
@@ -103,7 +116,10 @@ int main(int argc, char *argv[]) {
   }
   free_coo(&Acoo);
   free_csr(&Acsr);
-  evsl_Free(vinit);
+#ifdef EVSL_USING_CUDA_GPU
+  evsl_free_csr_gpu(&Acsr_gpu);
+#endif
+  evsl_Free_device(vinit);
   /* --------------------Make OUT dir if it doesn't exist */
   struct stat st = {0};
   if (stat("OUT", &st) == -1) {

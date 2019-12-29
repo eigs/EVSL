@@ -47,8 +47,11 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
   size_t n_l = n;
   const int ifGenEv = evsldata.ifGenEv;
 
+  /* some RanGen requires n is multiple of 2, so alloc 1 more element for vinit */
+  int n2 = ((n & 1) == 1) ? n+1 : n;
+
   double *vinit;
-  vinit = evsl_Malloc(n, double);
+  vinit = evsl_Malloc_device(n2, double);
 
   int *ind;
   ind = evsl_Malloc(npts, int);
@@ -66,10 +69,10 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
    *-----------------------------------------------------------------------
    -------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   double *V, *dT, *eT, *Z;
-  V = evsl_Calloc(n_l * (maxit + 1), double);
+  V = evsl_Malloc_device(n_l * (maxit + 1), double);
   if (ifGenEv) {
     /* storage for Z = B * V */
-    Z = evsl_Calloc(n_l * (maxit + 1), double);
+    Z = evsl_Malloc_device(n_l * (maxit + 1), double);
   } else {
     /* Z and V are the same */
     Z = V;
@@ -96,9 +99,10 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
   /*-------------------- u  is just a pointer. wk == work space */
   double *wk;
   const size_t wk_size = ifGenEv ? 6 * n_l : 4 * n_l;
-  wk = evsl_Malloc(wk_size, double);
+  wk = evsl_Malloc_device(wk_size, double);
+
   for (m = 0; m < nvec; m++) {
-    randn_double(n, vinit);
+    randn_double_device(n2, vinit);
     /*-------------------- copy initial vector to Z(:,1) */
     /* Filter the initial vector */
     if (ifGenEv) {
@@ -109,15 +113,15 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
     if (ifGenEv) {
       /* B norm */
       matvec_B(V, Z);
-      t = 1.0 / sqrt(evsl_ddot(&n, V, &one, Z, &one));
-      evsl_dscal(&n, &t, Z, &one);
+      t = 1.0 / sqrt(evsl_ddot_device(&n, V, &one, Z, &one));
+      evsl_dscal_device(&n, &t, Z, &one);
     } else {
       /* 2-norm */
-      t = 1.0 / evsl_dnrm2(&n, vinit, &one);  // add a test here.
-      evsl_dcopy(&n, vinit, &one, V, &one);
+      t = 1.0 / evsl_dnrm2_device(&n, vinit, &one);  // TODO: add a test here.
+      evsl_dcopy_device(&n, vinit, &one, V, &one);
     }
     /* unit B^{-1}-norm or 2-norm */
-    evsl_dscal(&n, &t, V, &one);
+    evsl_dscal_device(&n, &t, V, &one);
     /*-------------------- for ortho test */
     double wn = 0.0;
     int nwn = 0;
@@ -143,16 +147,16 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
       /*------------------ znew = znew - beta*zold */
       if (zold) {
         nbeta = -beta;
-        evsl_daxpy(&n, &nbeta, zold, &one, znew, &one);
+        evsl_daxpy_device(&n, &nbeta, zold, &one, znew, &one);
       }
       /*-------------------- alpha = znew'*v */
-      alpha = evsl_ddot(&n, v, &one, znew, &one);
+      alpha = evsl_ddot_device(&n, v, &one, znew, &one);
       /*-------------------- T(k,k) = alpha */
       dT[k] = alpha;
       wn += fabs(alpha);
       /*-------------------- znew = znew - alpha*z */
       nalpha = -alpha;
-      evsl_daxpy(&n, &nalpha, z, &one, znew, &one);
+      evsl_daxpy_device(&n, &nalpha, z, &one, znew, &one);
       /*-------------------- FULL reortho to all previous Lan vectors */
       if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
@@ -160,7 +164,7 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
         /* vnew = B \ znew */
         solve_B(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
-        beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
+        beta = sqrt(evsl_ddot_device(&n, vnew, &one, znew, &one));
       } else {
         /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
         /* beta = norm(vnew) */
@@ -170,18 +174,18 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
       nwn += 3;
       /*-------------------- lucky breakdown test */
       if (beta * nwn < orthTol * wn) {
-        rand_double(n, vnew);
+        randn_double_device(n, vnew);
         if (ifGenEv) {
           /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
           CGS_DGKS2(n, k + 1, NGS_MAX, V, Z, vnew, wk);
           /* -------------- NOTE: B-matvec */
           matvec_B(vnew, znew);
-          beta = sqrt(evsl_ddot(&n, vnew, &one, znew, &one));
+          beta = sqrt(evsl_ddot_device(&n, vnew, &one, znew, &one));
           /*-------------------- vnew = vnew / beta */
           t = 1.0 / beta;
-          evsl_dscal(&n, &t, vnew, &one);
+          evsl_dscal_device(&n, &t, vnew, &one);
           /*-------------------- znew = znew / beta */
-          evsl_dscal(&n, &t, znew, &one);
+          evsl_dscal_device(&n, &t, znew, &one);
           beta = 0.0;
         } else {
           /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
@@ -189,16 +193,16 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
           CGS_DGKS(n, k + 1, NGS_MAX, V, vnew, &beta, wk);
           /*-------------------- vnew = vnew / beta */
           t = 1.0 / beta;
-          evsl_dscal(&n, &t, vnew, &one);
+          evsl_dscal_device(&n, &t, vnew, &one);
           beta = 0.0;
         }
       } else {
         /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
-        evsl_dscal(&n, &t, vnew, &one);
+        evsl_dscal_device(&n, &t, vnew, &one);
         if (ifGenEv) {
           /*-------------------- znew = znew / beta */
-          evsl_dscal(&n, &t, znew, &one);
+          evsl_dscal_device(&n, &t, znew, &one);
         }
       }
       /*-------------------- T(k+1,k) = beta */
@@ -226,7 +230,8 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
                      exp(-((xdos[ind[j]] - t) * (xdos[ind[j]] - t)) / sigma2);
       }
     }
-  }
+  } /* end of main loop */
+
   double scaling = 1.0 / (nvec * sqrt(sigma2 * EVSL_PI));
   /* y = ydos * scaling */
   evsl_dscal(&npts, &scaling, y, &one);
@@ -235,17 +240,17 @@ int LanDosG(const int nvec, const int msteps, int npts, double *xdos, double *yd
   *neig = y[npts - 1] * n;
   evsl_Free(gamma2);
   /*-------------------- free arrays */
-  evsl_Free(vinit);
-  evsl_Free(V);
+  evsl_Free_device(vinit);
+  evsl_Free_device(V);
   evsl_Free(dT);
   evsl_Free(eT);
   evsl_Free(EvalT);
   evsl_Free(EvecT);
-  evsl_Free(wk);
+  evsl_Free_device(wk);
   evsl_Free(y);
   evsl_Free(ind);
   if (ifGenEv) {
-    evsl_Free(Z);
+    evsl_Free_device(Z);
   }
 
   return 0;

@@ -26,8 +26,7 @@
  * @param[out] ecnt estimated num of eigenvalues in the interval of interest
  *
  *----------------------------------------------------------------------*/
-int kpmdos(int Mdeg, int damping, int nvec, double *intv,
-    double *mu, double *ecnt) {
+int kpmdos(int Mdeg, int damping, int nvec, double *intv, double *mu, double *ecnt) {
   /*-------------------- initialize variables */
   const int ifGenEv = evsldata.ifGenEv;
   int n = evsldata.n;
@@ -35,16 +34,16 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   double *w = NULL;
   /*-------------------- workspace for generalized eigenvalue prob */
   if (ifGenEv) {
-    w = evsl_Malloc(n, double);
+    w = evsl_Malloc_device(n, double);
   }
-  vkp1 = evsl_Malloc(n, double);
-  v = evsl_Malloc(n, double);
-  vkm1 = evsl_Malloc(n, double);
-  vk = evsl_Malloc(n, double);
+  vkp1 = evsl_Malloc_device(n, double);
+  v = evsl_Malloc_device(n, double);
+  vkm1 = evsl_Malloc_device(n, double);
+  vk = evsl_Malloc_device(n, double);
   jac = evsl_Malloc(Mdeg+1, double);
   double *tmp,  ctr, wid;
   double scal, t, tcnt, beta1, beta2, aa, bb;
-  int k, k1, i, m, mdegp1, one=1;
+  int k, k1, m, mdegp1, one=1;
   //-------------------- check if the interval is valid
   if (check_intv(intv, stdout) < 0) {
     return -1;
@@ -66,33 +65,35 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   dampcf(Mdeg, damping, jac);
   /*-------------------- readjust jac[0] it was divided by 2 */
   jac[0] = 1.0;
-  memset(mu,0,(Mdeg+1)*sizeof(double));
+  memset(mu, 0, (Mdeg+1)*sizeof(double));
   /*-------------------- seed the random generator */
-  //i = time_seeder();
-  //srand(i);
+  /*
+  i = time_seeder();
+  srand(i);
+  */
   tcnt = 0.0;
   /*-------------------- for random loop */
   for (m=0; m<nvec; m++) {
     if (ifGenEv) {
       /* unit 2-norm v */
-      rand_double(n, v);
-      t = 1.0 / evsl_dnrm2(&n, v, &one);
-      evsl_dscal(&n, &t, v, &one);
+      rand_double_device(n, v);
+      t = 1.0 / evsl_dnrm2_device(&n, v, &one);
+      evsl_dscal_device(&n, &t, v, &one);
       /*  w = L^{-T}*v */
       solve_LT(v, w);
       /* v = B*w */
       matvec_B(w, v);
-      //t = evsl_ddot(&n, v, &one, w, &one);
-      memcpy(vk, w, n*sizeof(double));
+      /* t = evsl_ddot(&n, v, &one, w, &one); */
+      evsl_memcpy_device_to_device(vk, w, n*sizeof(double));
     } else {
       /* unit 2-norm */
-      rand_double(n, v);
-      t = 1.0 / evsl_dnrm2(&n, v, &one);
-      evsl_dscal(&n, &t, v, &one);
-      memcpy(vk, v, n*sizeof(double));
+      rand_double_device(n, v);
+      t = 1.0 / evsl_dnrm2_device(&n, v, &one);
+      evsl_dscal_device(&n, &t, v, &one);
+      evsl_memcpy_device_to_device(vk, v, n*sizeof(double));
     }
 
-    memset(vkm1, 0, n*sizeof(double));
+    evsl_memset_device(vkm1, 0, n*sizeof(double));
     mu[0] += jac[0];
     //-------------------- for eigCount
     tcnt -= jac[0]*(beta2-beta1);
@@ -108,9 +109,12 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
       }
       scal = k==0 ? 1.0 : 2.0;
       scal /= wid;
-      for (i=0; i<n; i++) {
-        vkp1[i] = scal*(vkp1[i]-ctr*vk[i]) - vkm1[i];
-      }
+      /* vkp1[i] = scal*(vkp1[i]-ctr*vk[i]) - vkm1[i] */
+      double alp = -ctr;
+      evsl_daxpy_device(&n, &alp, vk, &one, vkp1, &one);
+      evsl_dscal_device(&n, &scal, vkp1, &one);
+      alp = -1.0;
+      evsl_daxpy_device(&n, &alp, vkm1, &one, vkp1, &one);
       //-------------------- rotate pointers to exchange vectors
       tmp = vkm1;
       vkm1 = vk;
@@ -118,7 +122,7 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
       vkp1 = tmp;
       /*-------------------- accumulate dot products for DOS expansion */
       k1 = k+1;
-      t = 2*jac[k1] * evsl_ddot(&n, vk, &one, v, &one);
+      t = 2*jac[k1] * evsl_ddot_device(&n, vk, &one, v, &one);
       mu[k1] += t;
       /*-------------------- for eig. counts */
       tcnt -= t*(sin(k1*beta2)-sin(k1*beta1))/k1;
@@ -131,13 +135,13 @@ int kpmdos(int Mdeg, int damping, int nvec, double *intv,
   tcnt *= t*((double) n);
   *ecnt = tcnt;
   /*-------------------- free memory  */
-  evsl_Free(vkp1);
-  evsl_Free(v);
-  evsl_Free(vkm1);
-  evsl_Free(vk);
+  evsl_Free_device(vkp1);
+  evsl_Free_device(v);
+  evsl_Free_device(vkm1);
+  evsl_Free_device(vk);
   evsl_Free(jac);
   if (ifGenEv) {
-    evsl_Free(w);
+    evsl_Free_device(w);
   }
 
   return 0;

@@ -8,6 +8,9 @@
  * @param[out] n vector
  */
 
+/**
+ * Generates a uniform distributed random vector of length n, [-1, 1]
+ */
 void rand_double(int n, double *v) {
   int i;
   double t = ((double) RAND_MAX)/2.0;
@@ -44,6 +47,93 @@ void randn_double(int n, double *v) {
     v[i] = Z0;
   }
 }
+
+/* https://docs.nvidia.com/cuda/curand/group__HOST.html#group__HOST*/
+
+#define CURAND_METHOD 3 /* 1: generate 32-bit quasirandom numbers, and then convert to double
+                           2: generate uniformly distributed doubles directly with cuRand
+                           3: generate on host and copy to device */
+
+#ifdef EVSL_USING_CUDA_GPU
+#if CURAND_METHOD == 1
+__global__ void evsl_rand_double_cudakernel(int n, unsigned int *ui, double *d) {
+   int tid = threadIdx.x + blockIdx.x * blockDim.x;
+   if (tid < n) {
+      const double t = ((double) 0xFFFFFFFF) / 2.0;
+      d[tid] = (ui[tid] - t) / t;
+   }
+}
+#else
+__global__ void evsl_rand_double_cudakernel(int n, double *d) {
+   int tid = threadIdx.x + blockIdx.x * blockDim.x;
+   if (tid < n) {
+      d[tid] = d[tid] * 2.0 - 1.0;
+   }
+}
+#endif
+#endif
+
+/**
+ * Generates a uniform distributed random vector of length n, [-1, 1]
+ * on device
+ */
+void rand_double_device(int n, double *v) {
+#ifdef EVSL_USING_CUDA_GPU
+#if CURAND_METHOD == 1 || CURAND_METHOD == 2
+  int bDim = 512;
+  int gDim = (n + bDim - 1) / bDim;
+#endif
+#if CURAND_METHOD == 1
+  unsigned int *d_uint = evsl_Malloc_device(n, unsigned int);
+  curandStatus_t curandStatus = curandGenerate(evsldata.curandGen, d_uint, n);
+  CHKERR(CURAND_STATUS_SUCCESS != curandStatus);
+  evsl_rand_double_cudakernel<<<gDim, bDim>>>(n, d_uint, v);
+  evsl_Free_device(d_uint);
+#elif CURAND_METHOD == 2
+  curandStatus_t curandStatus = curandGenerateUniformDouble(evsldata.curandGen, v, n);
+  CHKERR(CURAND_STATUS_SUCCESS != curandStatus);
+  evsl_rand_double_cudakernel<<<gDim, bDim>>>(n, v);
+#else
+  double *h_v = evsl_Malloc(n, double);
+  rand_double(n, h_v);
+  evsl_memcpy_host_to_device(v, h_v, n*sizeof(double));
+  evsl_Free(h_v);
+#endif
+#else
+  rand_double(n, v);
+#endif
+}
+
+/*
+  if (CURAND_STATUS_SUCCESS != curandStatus) {
+     if (curandStatus == CURAND_STATUS_NOT_INITIALIZED) printf("1 \n");
+     if (curandStatus == CURAND_STATUS_PREEXISTING_FAILURE) printf("2 \n");
+     if (curandStatus == CURAND_STATUS_LAUNCH_FAILURE) printf("3 \n");
+     if (curandStatus == CURAND_STATUS_LENGTH_NOT_MULTIPLE) printf("4 \n");
+     if (curandStatus == CURAND_STATUS_DOUBLE_PRECISION_REQUIRED) printf("5 \n");
+  }
+*/
+
+/**
+ * Generates a normally distributed random vector of length n on device
+ * on device
+ */
+void randn_double_device(int n, double *v) {
+#ifdef EVSL_USING_CUDA_GPU
+#if CURAND_METHOD == 2
+  curandStatus_t curandStatus = curandGenerateNormalDouble(evsldata.curandGen, v, n, 0.0, 1.0);
+  CHKERR(CURAND_STATUS_SUCCESS != curandStatus);
+#else
+  double *h_v = evsl_Malloc(n, double);
+  randn_double(n, h_v);
+  evsl_memcpy_host_to_device(v, h_v, n*sizeof(double));
+  evsl_Free(h_v);
+#endif
+#else
+  randn_double(n, v);
+#endif
+}
+
 
 /**
  * Sets all elements of v to t
@@ -176,3 +266,141 @@ void vec_iperm(int n, int *p, double *x, double *y) {
     }
   }
 }
+
+/**
+ * BLAS routines that are performed on device (CUBLAS)
+ * When EVSL is not configured with CUDA, these are just wrappers to BLAS calls
+ */
+/*
+   if (CUBLAS_STATUS_SUCCESS != cublasStat) {
+   if (cublasStat == CUBLAS_STATUS_NOT_INITIALIZED) printf("err 1\n");
+   if (cublasStat == CUBLAS_STATUS_ALLOC_FAILED) printf("err 2\n");
+   if (cublasStat == CUBLAS_STATUS_INVALID_VALUE) printf("err 3\n");
+   if (cublasStat == CUBLAS_STATUS_ARCH_MISMATCH) printf("err 4\n");
+   if (cublasStat == CUBLAS_STATUS_MAPPING_ERROR) printf("err 5\n");
+   if (cublasStat == CUBLAS_STATUS_EXECUTION_FAILED) printf("err 6\n");
+   if (cublasStat == CUBLAS_STATUS_INTERNAL_ERROR) printf("err 7\n");
+   if (cublasStat == CUBLAS_STATUS_NOT_SUPPORTED) printf("err 8\n");
+   if (cublasStat == CUBLAS_STATUS_LICENSE_ERROR) printf("err 9\n");
+   }
+*/
+double evsl_dnrm2_device(int *n, double *x, int *incr) {
+   double t;
+#ifdef EVSL_USING_CUDA_GPU
+   cublasStatus_t cublasStat = cublasDnrm2(evsldata.cublasH, *n, x, *incr, &t);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   t = evsl_dnrm2(n, x, incr);
+#endif
+   return t;
+}
+
+void evsl_dscal_device(int *n, double *a, double *x, int *incr) {
+#ifdef EVSL_USING_CUDA_GPU
+   cublasStatus_t cublasStat = cublasDscal(evsldata.cublasH, *n, a, x, *incr);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   evsl_dscal(n, a, x, incr);
+#endif
+}
+
+double evsl_ddot_device(int *n, double *x, int *incx, double *y, int *incy) {
+   double t;
+#ifdef EVSL_USING_CUDA_GPU
+   cublasStatus_t cublasStat = cublasDdot(evsldata.cublasH, *n, x, *incx, y, *incy, &t);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   t = evsl_ddot(n, x, incx, y, incy);
+#endif
+   return t;
+}
+
+void evsl_daxpy_device(int *n, double *a, double *x, int *incx, double *y, int *incy) {
+#ifdef EVSL_USING_CUDA_GPU
+   cublasStatus_t cublasStat = cublasDaxpy(evsldata.cublasH, *n, a, x, *incx, y, *incy);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   evsl_daxpy(n, a, x, incx, y, incy);
+#endif
+}
+
+void evsl_dcopy_device(int *n, double *x, int *incx, double *y, int *incy) {
+#ifdef EVSL_USING_CUDA_GPU
+   cublasStatus_t cublasStat = cublasDcopy(evsldata.cublasH, *n, x, *incx, y, *incy);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   evsl_dcopy(n, x, incx, y, incy);
+#endif
+}
+
+void evsl_dgemv_device(const char *trans, int *m, int *n, double *alpha, double *a, int *lda,
+                       double *x, int *incx, double *beta, double *y, int *incy) {
+#ifdef EVSL_USING_CUDA_GPU
+   cublasOperation_t cublas_trans = (*trans == 'T' || *trans == 't') ? CUBLAS_OP_T : CUBLAS_OP_N;
+   cublasStatus_t cublasStat = cublasDgemv(evsldata.cublasH, cublas_trans, *m, *n,
+                                           alpha, a, *lda, x, *incx, beta, y, *incy);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   evsl_dgemv(trans, m, n, alpha, a, lda, x, incx, beta, y, incy);
+#endif
+}
+
+void evsl_dgemm_device(const char *transa, const char *transb, int *m, int * n, int *k, double *alpha, double *a, int *lda, double *b, int *ldb, double *beta, double *c, int *ldc)
+{
+#ifdef EVSL_USING_CUDA_GPU
+   cublasOperation_t cublas_transa = (*transa == 'T' || *transa == 't') ? CUBLAS_OP_T : CUBLAS_OP_N;
+   cublasOperation_t cublas_transb = (*transb == 'T' || *transb == 't') ? CUBLAS_OP_T : CUBLAS_OP_N;
+   cublasStatus_t cublasStat = cublasDgemm(evsldata.cublasH, cublas_transa, cublas_transb, *m, *n, *k,
+                                           alpha, a, *lda, b, *ldb, beta, c, *ldc);
+   CHKERR(CUBLAS_STATUS_SUCCESS != cublasStat);
+#else
+   evsl_dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+#endif
+}
+
+#ifdef EVSL_USING_CUDA_GPU
+__global__ void evsl_element_mult_kernel(int n, double *a, double *b) {
+   int tid = threadIdx.x + blockIdx.x * blockDim.x;
+   if (tid < n) {
+      b[tid] *= a[tid];
+   }
+}
+#endif
+
+/* b := a .* b */
+void evsl_element_mult_device(int n, double *a, double *b) {
+#ifdef EVSL_USING_CUDA_GPU
+  int bDim = 512;
+  int gDim = (n + bDim - 1) / bDim;
+  evsl_element_mult_kernel<<<gDim, bDim>>>(n, a, b);
+#else
+  int i;
+  for (i = 0; i < n; i++) {
+     b[i] *= a[i];
+  }
+#endif
+}
+
+#ifdef EVSL_USING_CUDA_GPU
+__global__ void evsl_element_divide_kernel(int n, double *a, double *b) {
+   int tid = threadIdx.x + blockIdx.x * blockDim.x;
+   if (tid < n) {
+      b[tid] /= a[tid];
+   }
+}
+#endif
+
+/* b := a ./ b */
+void evsl_element_divide_device(int n, double *a, double *b) {
+#ifdef EVSL_USING_CUDA_GPU
+  int bDim = 512;
+  int gDim = (n + bDim - 1) / bDim;
+  evsl_element_divide_kernel<<<gDim, bDim>>>(n, a, b);
+#else
+  int i;
+  for (i = 0; i < n; i++) {
+     b[i] /= a[i];
+  }
+#endif
+}
+

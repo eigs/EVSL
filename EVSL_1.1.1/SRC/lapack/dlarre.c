@@ -18,7 +18,7 @@ static integer c__2 = 2;
     doublereal d__1, d__2, d__3;
 
     /* Builtin functions */
-    double sqrt(doublereal), log(doublereal);
+    /* double sqrt(doublereal), log(doublereal); */
 
     /* Local variables */
     integer i__, j;

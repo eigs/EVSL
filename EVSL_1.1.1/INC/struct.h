@@ -28,12 +28,29 @@ typedef struct _cooMat {
  */
 typedef struct _csrMat {
   int owndata, /**< if owns (ia, ja, a) */
+      /* on_dev, */  /**< NOT IN USE: RESERVED FOR LATER if (ia, ja, a) are device ptr */
       nrows,   /**< number of rows */
       ncols,   /**< number of columns */
+      nnz,     /**< number of non-zeros */
       *ia,     /**< row pointers (of size nrows+1) */
       *ja;     /**< column indices (of size nnz) */
   double *a;   /**< numeric values (of size nnz) */
+#ifdef EVSL_USING_CUDA_GPU
+  cusparseMatDescr_t descr; /**< matrix descriptor for cusparse */
+#endif
 } csrMat;
+
+#ifdef EVSL_USING_CUDA_GPU
+/*!
+ * @brief cusparse HYB matrix format on GPU
+ */
+typedef struct _hybMat {
+  int nrows,   /**< number of rows */
+      ncols;   /**< number of columns */
+  cusparseMatDescr_t descr;
+  cusparseHybMat_t   hyb;
+} hybMat;
+#endif
 
 /*!
  * @brief  parameters for polynomial filter
@@ -167,6 +184,11 @@ typedef struct _evsldata {
   EVSLLTSol *LTsol;         /**< function and data for LT solve */
   double *ds;               /**< diagonal scaling matrix D,
                                  D^{-1}*A*D^{-1} = lambda * D^{-1}*B*D^{-1} */
+#ifdef EVSL_USING_CUDA_GPU
+  cublasHandle_t cublasH;
+  cusparseHandle_t cusparseH;
+  curandGenerator_t curandGen;
+#endif
 } evslData;
 
 /*
@@ -191,23 +213,24 @@ extern evslData evsldata;
  *
  */
 typedef struct _evslstat {
-  /* timing [level-1 funcs] */
+  /* timing [level-0 funcs] */
   double t_setBsv;
   double t_setASigBsv;
   double t_iter;
+  /* timing [level-1 funcs] */
+  double t_polAv;
+  double t_reorth;
+  double t_siorth;
+  double t_ritz;
+  double t_eig;
   /* timing [level-2 funcs] */
   double t_mvA;
   double t_mvB;
   double t_svB;
   double t_svLT;
   double t_svASigB;
-  double t_reorth;
-  double t_eig;
-  double t_blas;
-  double t_ritz;
-  double t_polAv;
+  double t_blas; //TODO
   double t_ratAv;
-  double t_sth;
   size_t n_mvA;
   size_t n_mvB;
   size_t n_svB;
@@ -215,7 +238,7 @@ typedef struct _evslstat {
   size_t n_svASigB;
   size_t n_polAv;
   size_t n_ratAv;
-  /* memory */
+  /* memory TODO */
   size_t alloced;
   size_t alloced_total;
   size_t alloced_max;

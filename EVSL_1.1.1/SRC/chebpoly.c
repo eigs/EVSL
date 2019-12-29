@@ -286,7 +286,7 @@ int indexofSmallestElement(double *array, int size){
  * @warning mu must be preallocated
 **/
 int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
-	    double *thcOut){
+            double *thcOut){
   int MaxIterBalan = 30;     // max steps in Newton to balance interval
   double tolBal;
   // do 2 newton steps -- if OK exit otherwise
@@ -318,12 +318,12 @@ int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
    /*-------------------- test for doing a form of bisection */
     if (fval >0){
       if((thN < thb) || (thN > tha))
-	thN = 0.5*(thc+tha);
+         thN = 0.5*(thc+tha);
       thb = thc;
       thc = thN;
     } else {
       if((thN < thb) || (thN > tha) )
-	thN = 0.5*(thc+thb);
+         thN = 0.5*(thc+thb);
       tha = thc;
       thc = thN;
     }
@@ -435,8 +435,9 @@ int find_pol(double *intv, polparams *pol) {
     chext(pol,aa,bb);
   } else {
     /*-------------------- give a starting degree - around 1/(half gap) */
-    min_deg = 2 + (int) 0.5/(bb-aa);
-    // min_deg = evsl_max(min_deg,2);
+    min_deg = 2 + 0.5/(bb-aa);
+    min_deg = evsl_max(min_deg, 2);
+    min_deg = evsl_min(min_deg, (max_deg+1)/2);
     // min_deg = 2;
     thresh = pol->thresh_int;
     //-------------------- this is a short-circuit for the
@@ -481,6 +482,7 @@ int find_pol(double *intv, polparams *pol) {
     pol->gam = gam;
     pol->deg = mbest;
   }
+  /* printf("min_deg %d, max_deg %d, deg %d\n", min_deg, max_deg, mbest); */
   //save_vec(pol->deg+1, mu, "OUT/mu.mtx");
   evsl_Free(v);
   evsl_Free(jac);
@@ -497,6 +499,20 @@ void free_pol(polparams *pol) {
     evsl_Free(pol->mu);
   }
 }
+
+#ifdef EVSL_USING_CUDA_GPU
+/* vkp1[i] = t*(vkp1[i]-cc*vk[i]) - vkm1[i]; y[i] += s*vkp1[i]; */
+__global__ void evsl_chebAv_kernel(int n, int k, double t, double s, double cc, double *vkp1, double *vk,
+                                   double *vkm1, double *y) {
+   int tid = threadIdx.x + blockIdx.x * blockDim.x;
+   if (tid < n) {
+      double zi = k > 1 ? vkm1[tid] : 0.0;
+      double wi = t*(vkp1[tid] - cc*vk[tid]) - zi;
+      vkp1[tid] = wi;
+      y[tid] += s * wi;
+   }
+}
+#endif
 
 /**
  * @brief @b Computes y=P(A) v, where pn is a Cheb. polynomial expansion
@@ -515,17 +531,17 @@ void free_pol(polparams *pol) {
  * @param[in, out] v is untouched
  **/
 int ChebAv(polparams *pol, double *v, double *y, double *w) {
+#if EVSL_TIMING_LEVEL > 0
   double tt = evsl_timer();
+#endif
   const int ifGenEv = evsldata.ifGenEv;
   int n = evsldata.n;
   /*-------------------- unpack pol */
   double *mu = pol->mu;
   double dd = pol->dd;
   double cc = pol->cc;
-  double ncc = -cc;
   int m = pol->deg;
   int one = 1;
-  double dmone = -1.0;
   /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   double *vk   = w;
   double *vkp1 = w+n;
@@ -537,17 +553,12 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
   /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
   /* we have to do this copy, because we don't want to alter the
    * elements in v */
-  memcpy(vk, v, n*sizeof(double));
+  evsl_memcpy_device_to_device(vk, v, n*sizeof(double));
   //memset(vkm1, 0, n*sizeof(double));
   /*-------------------- special case: k == 0 */
   s = mu[0];
-  /*
-  for (i=0; i<n; i++) {
-    y[i] = s*vk[i];
-  }
-  */
-  memcpy(y, v, n*sizeof(double));
-  evsl_dscal(&n, &s, y, &one);
+  evsl_memcpy_device_to_device(y, v, n*sizeof(double));
+  evsl_dscal_device(&n, &s, y, &one);
 
   /*-------------------- degree loop. k IS the degree */
   for (k=1; k<=m; k++) {
@@ -570,14 +581,22 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
       y[i] += s*vkp1[i];
     }
     */
-    double ts = evsl_timer();
-    evsl_daxpy(&n, &ncc, vk, &one, vkp1, &one);
-    evsl_dscal(&n, &t, vkp1, &one);
+
+#ifdef EVSL_USING_CUDA_GPU
+    const int bDim = 512;
+    int gDim = (n + bDim - 1) / bDim;
+    /* fuse 3 blas-1 into 1 kernel */
+    evsl_chebAv_kernel<<<gDim, bDim>>>(n, k, t, s, cc, vkp1, vk, vkm1, y);
+#else
+    double ncc = -cc;
+    double dmone = -1.0;
+    evsl_daxpy_device(&n, &ncc, vk, &one, vkp1, &one);
+    evsl_dscal_device(&n, &t, vkp1, &one);
     if (k > 1) {
-      evsl_daxpy(&n, &dmone, vkm1, &one, vkp1, &one);
+      evsl_daxpy_device(&n, &dmone, vkm1, &one, vkp1, &one);
     }
-    evsl_daxpy(&n, &s, vkp1, &one, y, &one);
-    evslstat.t_sth += evsl_timer() - ts;
+    evsl_daxpy_device(&n, &s, vkp1, &one, y, &one);
+#endif
 
     /*-------------------- next: rotate vectors via pointer exchange */
     tmp = vkm1;
@@ -585,8 +604,11 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
     vk = vkp1;
     vkp1 = tmp;
   }
+
+#if EVSL_TIMING_LEVEL > 0
   evslstat.n_polAv ++;
   evslstat.t_polAv += evsl_timer() - tt;
+#endif
 
   return 0;
 }
