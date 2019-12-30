@@ -312,7 +312,7 @@ void SolFuncC(int n, double *br, double *bz, double *xr, double *xz, void *data)
  ```
  with `CUDA_HOME` and `EVSL_CUDA_SM` (the default is 60) set properly. 
  All the test drivers in `TESTS` should work on GPUs with the exception of `Fortran/LapPLanN_MatFree.f90` that requires
- writing CUDA fortran kernels (with PGI CUDA Fortran). It should be clear from these drivers that how the user needs 
+ writing CUDA fortran kernels (with PGI CUDA Fortran). It should be clear from these drivers how the user needs 
  to handle the GPU memory for the matrices and vectors that are given to EVSL solvers.
 
 -----------------------------------------------------------------------
