@@ -310,48 +310,6 @@ int SetBMatrix_device_hyb(hybMat *B) {
 }
 
 /**
- * @brief Query CUDA device and set device
- *
- * @param[in] set_dev: the device number to set
- * */
-void evsl_device_query(int set_dev) {
-  int deviceCount, dev;
-  cudaGetDeviceCount(&deviceCount);
-  printf("=========================================\n");
-  if (deviceCount == 0) {
-    printf("There is no device supporting CUDA\n");
-  }
-
-  for (dev = 0; dev < deviceCount; ++dev) {
-    cudaDeviceProp deviceProp;
-    cudaGetDeviceProperties(&deviceProp, dev);
-    if (dev == 0) {
-      if (deviceProp.major == 9999 && deviceProp.minor == 9999)
-        printf("There is no device supporting CUDA.\n");
-      else if (deviceCount == 1)
-        printf("There is 1 device supporting CUDA\n");
-      else
-        printf("There are %d devices supporting CUDA\n", deviceCount);
-    }
-    printf("\nDevice %d: \"%s\"\n", dev, deviceProp.name);
-    printf("  Major revision number:          %d\n",
-           deviceProp.major);
-    printf("  Minor revision number:          %d\n",
-           deviceProp.minor);
-    printf("  Total amount of global memory:  %.2f GB\n",
-           deviceProp.totalGlobalMem/1e9);
-  }
-
-  dev = set_dev;
-  CHKERR(dev < 0 || dev >= deviceCount);
-  cudaSetDevice(dev);
-  cudaDeviceProp deviceProp;
-  cudaGetDeviceProperties(&deviceProp, dev);
-  printf("\nRunning on Device %d: \"%s\"\n", dev, deviceProp.name);
-  printf("=========================================\n");
-}
-
-/**
  * @brief Get the last CUDA device error
  * */
 void evsl_last_device_err() {

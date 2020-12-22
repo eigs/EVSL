@@ -500,20 +500,6 @@ void free_pol(polparams *pol) {
   }
 }
 
-#ifdef EVSL_USING_CUDA_GPU
-/* vkp1[i] = t*(vkp1[i]-cc*vk[i]) - vkm1[i]; y[i] += s*vkp1[i]; */
-__global__ void evsl_chebAv_kernel(int n, int k, double t, double s, double cc, double *vkp1, double *vk,
-                                   double *vkm1, double *y) {
-   int tid = threadIdx.x + blockIdx.x * blockDim.x;
-   if (tid < n) {
-      double zi = k > 1 ? vkm1[tid] : 0.0;
-      double wi = t*(vkp1[tid] - cc*vk[tid]) - zi;
-      vkp1[tid] = wi;
-      y[tid] += s * wi;
-   }
-}
-#endif
-
 /**
  * @brief @b Computes y=P(A) v, where pn is a Cheb. polynomial expansion
  *
@@ -583,10 +569,8 @@ int ChebAv(polparams *pol, double *v, double *y, double *w) {
     */
 
 #ifdef EVSL_USING_CUDA_GPU
-    const int bDim = 512;
-    int gDim = (n + bDim - 1) / bDim;
     /* fuse 3 blas-1 into 1 kernel */
-    evsl_chebAv_kernel<<<gDim, bDim>>>(n, k, t, s, cc, vkp1, vk, vkm1, y);
+    evsl_chebAv_device(n, k, t, s, cc, vkp1, vk, vkm1, y);
 #else
     double ncc = -cc;
     double dmone = -1.0;

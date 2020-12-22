@@ -123,20 +123,6 @@ int apfun(const double c, const double h, const double *const xi,
   return 0;
 }
 
-#ifdef EVSL_USING_CUDA_GPU
-/* vkp1[i] = t*(vkp1[i]-cc*vk[i]) - vkm1[i]; y[i] += s*vkp1[i]; */
-__global__ void evsl_pnav_kernel(int n, int k, double t, double s, double cc, double *vkp1, double *v_cur,
-                                 double *v_old, double *y) {
-   int tid = threadIdx.x + blockIdx.x * blockDim.x;
-   if (tid < n) {
-      double zi = k > 1 ? v_old[tid] : 0.0;
-      double wi = t*(vkp1[tid] - cc*v_cur[tid]) - zi;
-      vkp1[tid] = wi;
-      y[tid] += s * wi;
-   }
-}
-#endif
-
 /**
  * Computes y=P(A) v, where pn is a Cheb. polynomial expansion
  *
@@ -201,10 +187,8 @@ int pnav(double *mu, const int m, const double cc, const double dd, double *v,
     matvec_B(v_cur, vkp1);
 
 #ifdef EVSL_USING_CUDA_GPU
-    const int bDim = 512;
-    int gDim = (n + bDim - 1) / bDim;
     /* fuse 3 blas-1 into 1 kernel */
-    evsl_pnav_kernel<<<gDim, bDim>>>(n, k, t, mu[k], cc, vkp1, v_cur, v_old, y);
+    evsl_pnav_device(n, k, t, mu[k], cc, vkp1, v_cur, v_old, y);
 #else
     double ncc = -cc;
     double dmone = -1.0;

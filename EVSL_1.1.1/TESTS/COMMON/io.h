@@ -35,9 +35,17 @@ typedef enum {
   NA
 } ARG_TYPE;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int get_matrix_info( FILE *fmat, io_t *pio );
 int read_coo_MM(const char *matfile, int idxin, int idxout, cooMat *Acoo);
 int findarg(const char *argname, ARG_TYPE type, void *val, int argc, char **argv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

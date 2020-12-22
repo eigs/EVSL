@@ -3,6 +3,10 @@ include ../../makefile.in
 INCLUDES = -I${EVSL_BUILD_DIR}/include -I../COMMON
 EXTRA = ../COMMON/io.o ../COMMON/mmio.o ../COMMON/lapl.o
 
+ifeq ($(EVSL_WITH_CUDA), YES)
+INCLUDES += -I${CUDA_HOME}/include
+endif
+
 # Object files
 OBJS_L          = LapPLanN.o         $(EXTRA)
 OBJS_MM         = MMPLanN.o          $(EXTRA)

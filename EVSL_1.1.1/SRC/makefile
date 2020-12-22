@@ -3,8 +3,13 @@ include ../makefile.in
 SRC_DIRS = blas lapack
 
 INCLUDES = -I../INC
-ifeq ($(INTEL_MKL), 1)
+
+ifeq ($(EVSL_WITH_MKL), YES)
 INCLUDES += -I${MKLROOT}/include
+endif
+
+ifeq ($(EVSL_WITH_CUDA), YES)
+INCLUDES += -I${CUDA_HOME}/include
 endif
 
 # Object files
@@ -14,6 +19,12 @@ cheblanTr.c  dos_utils.c  evsl_f90.c     lanbounds.c  lanTrbounds.c  ratlanNr.c 
 chebpoly.c   dumps.c      evsl_memory.c  landos.c     misc_la.c      ratlanTr.c   spslice2.c  timing.c
 
 OBJS = ${SRC:.c=.o}
+
+CUSRC = evsl_cuda.cu
+
+ifeq ($(EVSL_WITH_CUDA), YES)
+OBJS += ${CUSRC:.cu=.o}
+endif
 
 all: $(OBJS)
 	@ \

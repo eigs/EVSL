@@ -601,6 +601,9 @@ then
       LIBS+=" TODO "
       fi
    fi
+   EVSL_WITH_MKL="YES"
+else
+   EVSL_WITH_MKL="NO"
 fi
 
 dnl *********************************************************************
@@ -621,8 +624,8 @@ then
    dnl let CC/CXX and LINK be CUCC and let host compiler be CC
    AC_CHECK_PROGS(CUCC, nvcc)
    NVCCBIN=${CC}
-   CC="${CUCC} -ccbin=$NVCCBIN"
-   LINK_CC="${CUCC} -ccbin=$NVCCBIN"
+   CUCC="${CUCC} -ccbin=$NVCCBIN"
+   LINK_CC="${CUCC}"
    LINK_FC="${CUCC}"
    dnl CUDA SM
    if test "x$EVSL_CUDA_SM" = "x"
@@ -636,9 +639,12 @@ then
    else
       CUFLAGS+="-O2 ${EVSL_CUDA_GENCODE} -dc --x cu"
    fi
-   CFLAGS="${CUFLAGS} -Xcompiler \"${CFLAGS}\""
+   CUFLAGS="${CUFLAGS} -Xcompiler \"${CFLAGS}\""
    LDFLAGS="${EVSL_CUDA_GENCODE} -Xcompiler \"${LDFLAGS}\""
    LIBS+="-L\${CUDA_HOME}/lib64 -lcudart -lcublas -lcusparse -lcurand "
+   EVSL_WITH_CUDA="YES"
+else
+   EVSL_WITH_CUDA="NO"
 fi
 
 dnl *********************************************************************
@@ -783,10 +789,13 @@ dnl *********************************************************************
 dnl * compilers and load flags
 dnl *********************************************************************
 AC_SUBST(CC)
+AC_SUBST(CUCC)
 AC_SUBST(FC)
 AC_SUBST(CFLAGS)
+AC_SUBST(CUFLAGS)
 AC_SUBST(FCFLAGS)
 AC_SUBST(LDFLAGS)
+AC_SUBST(EVSL_WITH_CUDA)
 
 AC_SUBST(LINK_FC)
 AC_SUBST(LINK_CC)
@@ -804,8 +813,7 @@ AC_SUBST(LIBLAPACK_DIR)
 dnl *********************************************************************
 dnl * INTEL MKL related information
 dnl *********************************************************************
-EVSL_USE_MKL=0
-AC_SUBST(EVSL_USE_INTEL_MKL)
+AC_SUBST(EVSL_WITH_MKL)
 
 dnl *********************************************************************
 dnl * Direct solver

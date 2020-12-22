@@ -29,6 +29,10 @@
 /*- - - - - - - - - error handler */
 #define CHKERR(ierr) assert(!(ierr))
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*- - - - - - - - - chebpoly.c */
 int chebxCoefd(int m, double gam, int damping, double *mu);
 int dampcf(int m, int damping, double *jac);
@@ -82,6 +86,10 @@ int time_seeder();
 void vecset(int n, double t, double *v);
 void vec_perm(int n, int *p, double *x, double *y);
 void vec_iperm(int n, int *p, double *x, double *y);
+
+#ifdef __cplusplus
+}
+#endif
 
 /*------------------- inline functions */
 /**

@@ -636,7 +636,7 @@ SUITESPARSE_DIR
 METIS_DIR
 DIRECTSOL_INTERFACE
 DIRECTSOL
-EVSL_USE_INTEL_MKL
+EVSL_WITH_MKL
 LIBLAPACK_DIR
 LIBLAPACK
 LIBBLAS_DIR
@@ -647,6 +647,8 @@ BUILD_CC_SHARED
 BUILD_FC_SHARED
 LINK_CC
 LINK_FC
+EVSL_WITH_CUDA
+CUFLAGS
 CUCC
 CUDA_HOME
 EGREP
@@ -5606,6 +5608,9 @@ $as_echo "$as_me: WARNING: ************************************************" >&2
             LIBS+=" TODO "
       fi
    fi
+   EVSL_WITH_MKL="YES"
+else
+   EVSL_WITH_MKL="NO"
 fi
 
 if test "$evsl_using_cuda" = "yes"
@@ -5684,8 +5689,8 @@ fi
 done
 
    NVCCBIN=${CC}
-   CC="${CUCC} -ccbin=$NVCCBIN"
-   LINK_CC="${CUCC} -ccbin=$NVCCBIN"
+   CUCC="${CUCC} -ccbin=$NVCCBIN"
+   LINK_CC="${CUCC}"
    LINK_FC="${CUCC}"
       if test "x$EVSL_CUDA_SM" = "x"
    then
@@ -5698,9 +5703,12 @@ done
    else
       CUFLAGS+="-O2 ${EVSL_CUDA_GENCODE} -dc --x cu"
    fi
-   CFLAGS="${CUFLAGS} -Xcompiler \"${CFLAGS}\""
+   CUFLAGS="${CUFLAGS} -Xcompiler \"${CFLAGS}\""
    LDFLAGS="${EVSL_CUDA_GENCODE} -Xcompiler \"${LDFLAGS}\""
    LIBS+="-L\${CUDA_HOME}/lib64 -lcudart -lcublas -lcusparse -lcurand "
+   EVSL_WITH_CUDA="YES"
+else
+   EVSL_WITH_CUDA="NO"
 fi
 
 if test "x$evsl_using_shared_lib" = "xyes"
@@ -5895,7 +5903,9 @@ fi
 
 
 
-EVSL_USE_MKL=0
+
+
+
 
 
 

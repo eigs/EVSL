@@ -134,6 +134,10 @@
  ptr = NULL \
 )
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*- - - - - - - - - cheblanNr.c */
 int ChebLanNr(double *intv, int maxit, double tol, double *vinit, polparams *pol, int *nevOut, double **lamo, double **Wo, double **reso, FILE *fstats);
 
@@ -255,6 +259,8 @@ int SetAMatrix_device_csr(csrMat *A);
 int SetBMatrix_device_csr(csrMat *B);
 void evsl_device_query(int dev);
 void evsl_last_device_err();
+void evsl_pnav_device(int n, int k, double t, double s, double cc, double *vkp1, double *v_cur, double *v_old, double *y);
+void evsl_chebAv_device(int n, int k, double t, double s, double cc, double *vkp1, double *vk, double *vkm1, double *y);
 #endif
 
 /*- - - - - - - - - spslicer.c */
@@ -295,9 +301,6 @@ void StatsPrint(FILE *fstats);
 void StatsReset();
 
 /* evsl_f90.c: */
-#ifdef __cplusplus
-extern "C" {
-#endif
 void EVSLFORT(evsl_start,EVSL_START)();
 void EVSLFORT(evsl_finish,EVSL_FINISH)();
 void EVSLFORT(evsl_coo2csr,EVSL_COO2CSR)(int *n, int *nnz, int *ir, int *jc, double *vv, uintptr_t *csrf90);
@@ -327,6 +330,7 @@ void EVSLFORT(evsl_ratlannr,EVSL_RATLANNR)(double *xintv, int *max_its, double *
 void EVSLFORT(evsl_ratlantr,EVSL_RATLANTR)(int *lanm, int *nev, double *xintv, int *max_its, double *tol, uintptr_t *ratf90);
 void EVSLFORT(evsl_get_nev,EVSL_GET_NEV)(int *nev);
 void EVSLFORT(evsl_copy_result,EVSL_COPY_RESULT)(double *val, double *vec);
+
 #ifdef __cplusplus
 }
 #endif
