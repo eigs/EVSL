@@ -1,9 +1,17 @@
 #include "cs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void *_evsl_Malloc(size_t nbytes);
 void *_evsl_Calloc(size_t count, size_t nbytes);
 void *_evsl_Realloc(void *ptr, size_t nbytes);
 void _evsl_Free(void *ptr);
+
+#ifdef __cplusplus
+}
+#endif
 
 /* wrapper for malloc */
 void *cs_malloc (CS_INT n, size_t size)

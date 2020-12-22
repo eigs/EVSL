@@ -1,5 +1,3 @@
-#include <math.h>
-#include <float.h>
 #include "lapl.h"
 
 /**-----------------------------------------------------------------------
@@ -109,4 +107,38 @@ int exeiglap3(int nx, int ny, int nz, double a, double b, int *m, double **vo) {
   *vo = v;
   return 0;
 }
+
+#ifndef EVSL_USING_CUDA_GPU
+/**-----------------------------------------------------------------------
+ *
+ * @brief Matvec with Laplacian in the form of constant stencils
+ */
+void Lap2D3DMatvec(double *x, double *y, void *data) {
+  lapmv_t *lapmv = (lapmv_t *) data;
+  int nx = lapmv->nx;
+  int ny = lapmv->ny;
+  int nz = lapmv->nz;
+  double *stencil = lapmv->stencil;
+  int i,j,k,p;
+
+  for (k=0; k<nz; k++) {
+    for (j=0; j<ny; j++) {
+      for (i=0; i<nx; i++) {
+        p = k*nx*ny + j*nx + i;
+        y[p] = stencil[0] * x[p];
+        // x-1, x+1
+        if (i>0)    { y[p] += stencil[1] * x[p-1]; }
+        if (i<nx-1) { y[p] += stencil[2] * x[p+1]; }
+        // y-1, y+1
+        if (j>0)    { y[p] += stencil[3] * x[p-nx]; }
+        if (j<ny-1) { y[p] += stencil[4] * x[p+nx]; }
+        // z-1, z+1
+        if (k>0)    { y[p] += stencil[5] * x[p-nx*ny]; }
+        if (k<nz-1) { y[p] += stencil[6] * x[p+nx*ny]; }
+      }
+    }
+  }
+}
+#endif
+
 

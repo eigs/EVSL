@@ -5,6 +5,7 @@ EXTRA = ../COMMON/io.o ../COMMON/mmio.o ../COMMON/lapl.o
 
 ifeq ($(EVSL_WITH_CUDA), YES)
 INCLUDES += -I${CUDA_HOME}/include
+EXTRA += ../COMMON/cuda_utils.o
 endif
 
 # Object files
