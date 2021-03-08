@@ -325,7 +325,7 @@ void matvec_csr(double *x, double *y, void *data) {
 /** @brief inline function used by matadd
  * insert an element pointed by j of A (times t) to location k in C (row i)
  * */
-inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k,
+static inline void matadd_insert(double t, csrMat *A, csrMat *C, int i, int *k,
                           int *j, int *map) {
   /* if this entry already exists in C:
    * checking if it is the first entry of this row
