@@ -309,7 +309,7 @@ int ChebLanNr(double *intv, int maxit, double tol, double *vinit,
     tr0 = tr1;
   } /* end of the main loop */
 
-  if (k >= maxit) {
+  if (k >= maxit && do_print) {
      fprintf(fstats, "The max number of iterations [%d] has been reached. The eigenvalues computed may not have converged\n", maxit);
   }
 
