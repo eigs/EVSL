@@ -279,6 +279,7 @@ int SetBMatrix_device_csr(csrMat *B) {
   return 0;
 }
 
+#ifdef EVSL_USING_CUSPARSE_HYB
 /**
  * @brief Set the GPU HYB matrix A
  * @param[in] A The matrix to set
@@ -308,6 +309,7 @@ int SetBMatrix_device_hyb(hybMat *B) {
 
   return 0;
 }
+#endif
 
 /**
  * @brief Get the last CUDA device error

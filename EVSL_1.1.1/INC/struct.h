@@ -37,10 +37,17 @@ typedef struct _csrMat {
   double *a;   /**< numeric values (of size nnz) */
 #ifdef EVSL_USING_CUDA_GPU
   cusparseMatDescr_t descr; /**< matrix descriptor for cusparse */
+  char *dBuffer; /* GPU matvec may require buffer array */
 #endif
 } csrMat;
 
 #ifdef EVSL_USING_CUDA_GPU
+
+#if CUSPARSE_VERSION < 11000
+#define EVSL_USING_CUSPARSE_HYB
+#endif
+
+#ifdef EVSL_USING_CUSPARSE_HYB
 /*!
  * @brief cusparse HYB matrix format on GPU
  */
@@ -50,6 +57,7 @@ typedef struct _hybMat {
   cusparseMatDescr_t descr;
   cusparseHybMat_t   hyb;
 } hybMat;
+#endif
 #endif
 
 /*!
