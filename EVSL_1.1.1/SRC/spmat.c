@@ -530,10 +530,92 @@ void matvec_cusparse_csr(double *x, double *y, void *data) {
    csrMat *A = (csrMat *) data;
    const double alpha = 1.0;
    const double beta = 0.0;
-   cusparseStatus_t cusparseStat =
+   cusparseStatus_t cusparseStat;
+#if CUSPARSE_VERSION >= 11000
+   const cudaDataType        data_type  = CUDA_R_64F;
+   const cusparseIndexType_t index_type = CUSPARSE_INDEX_32I;
+   const cusparseIndexBase_t index_base = CUSPARSE_INDEX_BASE_ZERO;
+   cusparseSpMatDescr_t      matA;
+
+   cusparseStat =
+      cusparseCreateCsr(&matA,
+                        A->nrows,
+                        A->ncols,
+                        A->nnz,
+                        A->ia,
+                        A->ja,
+                        A->a,
+                        index_type,
+                        index_type,
+                        index_base,
+                        data_type);
+
+   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+
+   char *dBuffer = A->dBuffer;
+   cusparseDnVecDescr_t vecX, vecY;
+
+   cusparseStat = cusparseCreateDnVec(&vecX, A->ncols, x, data_type);
+   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+   cusparseStat = cusparseCreateDnVec(&vecY, A->nrows, y, data_type);
+   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+
+   if (!dBuffer)
+   {
+      size_t bufferSize = 0;
+      cusparseStat =
+         cusparseSpMV_bufferSize(evsldata.cusparseH,
+                                 CUSPARSE_OPERATION_NON_TRANSPOSE,
+                                 &alpha,
+                                 matA,
+                                 vecX,
+                                 &beta,
+                                 vecY,
+                                 data_type,
+#if CUSPARSE_VERSION >= 11400
+                                 CUSPARSE_SPMV_CSR_ALG2,
+#else
+                                 CUSPARSE_CSRMV_ALG2,
+#endif
+                                 &bufferSize);
+
+      CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+
+      dBuffer = evsl_Malloc_device(bufferSize, char);
+
+      A->dBuffer = dBuffer;
+   }
+
+   cusparseStat =
+      cusparseSpMV(evsldata.cusparseH,
+                   CUSPARSE_OPERATION_NON_TRANSPOSE,
+                   &alpha,
+                   matA,
+                   vecX,
+                   &beta,
+                   vecY,
+                   data_type,
+#if CUSPARSE_VERSION >= 11400
+                   CUSPARSE_SPMV_CSR_ALG2,
+#else
+                   CUSPARSE_CSRMV_ALG2,
+#endif
+                   dBuffer);
+
+   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+
+   cusparseStat = cusparseDestroySpMat(matA);
+   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+   cusparseStat = cusparseDestroyDnVec(vecX);
+   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+   cusparseStat = cusparseDestroyDnVec(vecY);
+   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+#else
+   cusparseStat =
       cusparseDcsrmv(evsldata.cusparseH, CUSPARSE_OPERATION_NON_TRANSPOSE,
                      A->nrows, A->ncols, A->nnz,
                      &alpha, A->descr, A->a, A->ia, A->ja, x, &beta, y);
+#endif
 
    CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
 }
@@ -563,6 +645,8 @@ void evsl_create_csr_gpu(csrMat *Acpu, csrMat *Agpu)
   cudaMemcpy(Agpu->ia, Acpu->ia, (Acpu->nrows+1)*sizeof(int), cudaMemcpyHostToDevice);
   cudaMemcpy(Agpu->ja, Acpu->ja, nnzA*sizeof(int),            cudaMemcpyHostToDevice);
   cudaMemcpy(Agpu->a,  Acpu->a,  nnzA*sizeof(double),         cudaMemcpyHostToDevice);
+
+  Agpu->dBuffer = NULL;
 }
 
 /**
@@ -570,16 +654,16 @@ void evsl_create_csr_gpu(csrMat *Acpu, csrMat *Agpu)
 */
 void evsl_free_csr_gpu(csrMat *csr)
 {
-  /* if it does not own the data, do nothing */
-  if (!csr->owndata) {
-    return;
+  if (csr->owndata) {
+    evsl_Free_device(csr->ia);
+    evsl_Free_device(csr->ja);
+    evsl_Free_device(csr->a);
   }
-  evsl_Free_device(csr->ia);
-  evsl_Free_device(csr->ja);
-  evsl_Free_device(csr->a);
 
   cusparseStatus_t cusparseStat = cusparseDestroyMatDescr(csr->descr);
   CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
+
+  evsl_Free_device(csr->dBuffer);
 }
 
 /*
@@ -595,6 +679,7 @@ void evsl_free_csr_gpu(csrMat *csr)
    }
 */
 
+#ifdef EVSL_USING_CUSPARSE_HYB
 /**
 * @brief matvec for a cusparse HYB matrix, y = A*x.
 * void *data points to hybMat,
@@ -660,5 +745,6 @@ void evsl_free_hybMat(hybMat *hyb) {
    cusparseStat = cusparseDestroyHybMat(hyb->hyb);
    CHKERR(CUSPARSE_STATUS_SUCCESS != cusparseStat);
 }
+#endif
 #endif
 

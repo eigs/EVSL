@@ -331,7 +331,6 @@ AS_HELP_STRING([--with-cuda],
 [evsl_using_cuda=no]
 )
 
-
 dnl *********************************************************************
 dnl * Set default AR value if not defined by the user
 dnl *********************************************************************
@@ -527,11 +526,14 @@ fi
 dnl *********************************************************************
 dnl * MKL
 dnl *********************************************************************
+AS_IF([test "x$evsl_using_intel_mkl" = "xyes" || test "x$evsl_using_mkl_pardiso" = "xyes"],
+      [AC_CHECK_HEADERS(["${MKLROOT}/include/mkl.h"], [evsl_found_mkl=yes],[evsl_found_mkl=no])],
+      [])
+
 if test "x$evsl_using_intel_mkl" = "xyes" || test "x$evsl_using_mkl_pardiso" = "xyes"
 then
    AC_SUBST(MKLROOT)
    AC_DEFINE(EVSL_USING_INTEL_MKL, 1, [Using Intel MKL for BLAS, LAPACK and SpMV])
-   AC_CHECK_HEADERS(["${MKLROOT}/include/mkl.h"], [evsl_found_mkl=yes],[evsl_found_mkl=no])
    if test "x$evsl_found_mkl" != "xyes"
    then
       AC_MSG_WARN([************************************************])
@@ -609,10 +611,13 @@ fi
 dnl *********************************************************************
 dnl * CUDA
 dnl *********************************************************************
+AS_IF([test "x$evsl_using_cuda" = "xyes"],
+      [AC_CHECK_HEADERS(["${CUDA_HOME}/include/cuda.h"], [evsl_found_cuda=yes], [evsl_found_cuda=no])],
+      [])
+
 if test "$evsl_using_cuda" = "yes"
 then
    AC_SUBST(CUDA_HOME)
-   AC_CHECK_HEADERS(["${CUDA_HOME}/include/cuda.h"], [evsl_found_cuda=yes], [evsl_found_cuda=no])
    if test "x$evsl_found_cuda" != "xyes"
    then
       AC_MSG_WARN([****************************************************])
@@ -750,14 +755,6 @@ fi
 
 if test "x$evsl_using_mkl_pardiso" = "xyes"
 then
-   AC_SUBST(MKLROOT)
-   AC_CHECK_HEADERS(["${MKLROOT}/include/mkl.h"], [evsl_found_mkl=yes],[evsl_found_mkl=no])
-   if test "x$evsl_found_mkl" != "xyes"
-   then
-      AC_MSG_WARN([************************************************])
-      AC_MSG_WARN([unable to find mkl.h. Ensure that MKLROOT is set])
-      AC_MSG_WARN([************************************************])
-   fi
    DIRECTSOL="MKL_PARDISO"
    DIRECTSOL_INTERFACE="evsl_pardiso.o"
 fi

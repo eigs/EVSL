@@ -651,10 +651,10 @@ EVSL_WITH_CUDA
 CUFLAGS
 CUCC
 CUDA_HOME
+MKLROOT
 EGREP
 GREP
 CPP
-MKLROOT
 ac_ct_CXX
 CXXFLAGS
 FCLIBS
@@ -2661,7 +2661,6 @@ else
   evsl_using_cuda=no
 
 fi
-
 
 
 if test "x$AR" = "x"
@@ -5120,13 +5119,7 @@ then
    LIBS+="-framework Accelerate "
 fi
 
-if test "x$evsl_using_intel_mkl" = "xyes" || test "x$evsl_using_mkl_pardiso" = "xyes"
-then
-
-
-$as_echo "#define EVSL_USING_INTEL_MKL 1" >>confdefs.h
-
-   ac_ext=c
+ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -5531,7 +5524,8 @@ fi
 done
 
 
-for ac_header in "${MKLROOT}/include/mkl.h"
+if test "x$evsl_using_intel_mkl" = "xyes" || test "x$evsl_using_mkl_pardiso" = "xyes"; then :
+  for ac_header in "${MKLROOT}/include/mkl.h"
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -5545,6 +5539,14 @@ else
 fi
 
 done
+
+fi
+
+if test "x$evsl_using_intel_mkl" = "xyes" || test "x$evsl_using_mkl_pardiso" = "xyes"
+then
+
+
+$as_echo "#define EVSL_USING_INTEL_MKL 1" >>confdefs.h
 
    if test "x$evsl_found_mkl" != "xyes"
    then
@@ -5613,10 +5615,8 @@ else
    EVSL_WITH_MKL="NO"
 fi
 
-if test "$evsl_using_cuda" = "yes"
-then
-
-   for ac_header in "${CUDA_HOME}/include/cuda.h"
+if test "x$evsl_using_cuda" = "xyes"; then :
+  for ac_header in "${CUDA_HOME}/include/cuda.h"
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -5630,6 +5630,11 @@ else
 fi
 
 done
+
+fi
+
+if test "$evsl_using_cuda" = "yes"
+then
 
    if test "x$evsl_found_cuda" != "xyes"
    then
@@ -5830,31 +5835,6 @@ fi
 
 if test "x$evsl_using_mkl_pardiso" = "xyes"
 then
-
-   for ac_header in "${MKLROOT}/include/mkl.h"
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
- evsl_found_mkl=yes
-else
-  evsl_found_mkl=no
-fi
-
-done
-
-   if test "x$evsl_found_mkl" != "xyes"
-   then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ************************************************" >&5
-$as_echo "$as_me: WARNING: ************************************************" >&2;}
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unable to find mkl.h. Ensure that MKLROOT is set" >&5
-$as_echo "$as_me: WARNING: unable to find mkl.h. Ensure that MKLROOT is set" >&2;}
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ************************************************" >&5
-$as_echo "$as_me: WARNING: ************************************************" >&2;}
-   fi
    DIRECTSOL="MKL_PARDISO"
    DIRECTSOL_INTERFACE="evsl_pardiso.o"
 fi
