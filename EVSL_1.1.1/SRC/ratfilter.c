@@ -35,7 +35,7 @@ void contQuad(int method, int n, EVSL_Complex* zk) {
     }
     evsl_dstev(&JOBZ, &n, D, beta, Z, &n, WORK, &INFO);
     for (i=0; i<n; i++) {
-      tmp2 = I*M_PI/2.0*(1.0-D[i]);
+      tmp2 = I*EVSL_PI/2.0*(1.0-D[i]);
       zk[i] = cexp(tmp2);
     }
     evsl_Free(beta);
@@ -44,7 +44,7 @@ void contQuad(int method, int n, EVSL_Complex* zk) {
     evsl_Free(WORK);
   } else if (method == 1) {
     for (i=0; i<n; i++) {
-      tmp2 = M_PI*I*(2*(i+1)-1)/(2.0*n);
+      tmp2 = EVSL_PI*I*(2*(i+1)-1)/(2.0*n);
       zk[i] = cexp(tmp2);
     }
   }

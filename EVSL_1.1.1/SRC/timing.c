@@ -1,6 +1,3 @@
-#include <math.h>
-#include <unistd.h>
-#include <stdio.h>
 #include "internal_header.h"
 
 /**
@@ -8,12 +5,25 @@
  * @brief Timer
  */
 
+/**
+  * @brief Uses the timer to generate a seed to be used
+  * for srand..
+  */
+int time_seeder() {
+  double t1,t2;
+  int iseed, zero=0;
+  t1   = evsl_timer();
+  t1  = 1.e+09*frexp(t1, &zero);
+  t1  = modf(t1, &t2);
+  iseed = (int)(1.e+05*t1);
+  return (iseed);
+}
+
 #if defined(__APPLE__) && defined(__MACH__)
 
 /* for Mac */
 #include <mach/mach.h>
 #include <mach/mach_time.h>
-#include <math.h>
 
 /**
  * @brief evsl timer for mac
@@ -32,20 +42,13 @@ double evsl_timer() {
   return t;
 }
 
-/**
- * @brief Uses the timer to generate a seed to be used for srand.
- */
-int time_seeder() {
-  double t1,t2;
-  int iseed, zero=0;
-  t1   = evsl_timer();
-  t1  = 1.e+09*frexp(t1, &zero);
-  t1  = modf(t1, &t2);
-  iseed = (int)(1.e+05*t1);
-  return (iseed);
-}
+#elif defined(__linux__)
 
-#elif __linux__
+/* see https://stackoverflow.com/questions/40515557/compilation-error-on-clock-gettime-and-clock-monotonic/40515669 */
+#ifdef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 199309L
+#endif
 
 /* for Linux */
 #include <sys/time.h>
@@ -68,20 +71,6 @@ double evsl_timer() {
   double t = tim.tv_sec + tim.tv_usec/1e6;
   return(t);
   */
-}
-
-/**
-  * @brief Uses the timer to generate a seed to be used
-  * for srand..
-  */
-int time_seeder() {
-  double t1,t2;
-  int iseed, zero=0;
-  t1   = evsl_timer();
-  t1  = 1.e+09*frexp(t1, &zero);
-  t1  = modf(t1, &t2);
-  iseed = (int)(1.e+05*t1);
-  return (iseed);
 }
 
 #endif
